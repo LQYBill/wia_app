@@ -61,12 +61,12 @@
     watch: {
       url (val) {
         if(val){
-         this.uploadAction = window._CONFIG['domianURL']+val
+         this.uploadAction = window._CONFIG['domainURL']+val
         }
       }
     },
     created () {
-      this.uploadAction = window._CONFIG['domianURL']+this.url
+      this.uploadAction = window._CONFIG['domainURL']+this.url
     },
 
     methods:{

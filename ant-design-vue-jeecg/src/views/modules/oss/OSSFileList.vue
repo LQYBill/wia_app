@@ -137,10 +137,10 @@
     },
     computed: {
       uploadAction() {
-        return window._CONFIG['domianURL'] + this.url.upload;
+        return window._CONFIG['domainURL'] + this.url.upload;
       },
       minioUploadAction() {
-        return window._CONFIG['domianURL'] + this.url.minioUpload;
+        return window._CONFIG['domainURL'] + this.url.minioUpload;
       },
     },
     methods: {

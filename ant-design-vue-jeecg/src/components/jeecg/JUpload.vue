@@ -63,7 +63,7 @@
     name: 'JUpload',
     data(){
       return {
-        uploadAction:window._CONFIG['domianURL']+"/sys/common/upload",
+        uploadAction:window._CONFIG['domainURL']+"/sys/common/upload",
         headers:{},
         fileList: [],
         newFileList: [],

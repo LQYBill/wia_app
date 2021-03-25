@@ -39,7 +39,7 @@ export const JeecgThirdLoginMixin = {
     ...mapActions(['ThirdLogin']),
     //第三方登录
     onThirdLogin(source) {
-      let url = window._CONFIG['domianURL'] + `/sys/thirdLogin/render/${source}`
+      let url = window._CONFIG['domainURL'] + `/sys/thirdLogin/render/${source}`
       window.open(url, `login ${source}`, 'height=500, width=500, top=0, left=0, toolbar=no, menubar=no, scrollbars=no, resizable=no,location=n o, status=no')
       let that = this
       that.thirdType = source
