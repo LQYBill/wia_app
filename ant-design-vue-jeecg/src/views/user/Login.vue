@@ -27,26 +27,6 @@
             </a-input>
           </a-form-item>
 
-          <a-row :gutter="0">
-            <a-col :span="16">
-              <a-form-item>
-                <a-input
-                  v-decorator="['inputCode',validatorRules.inputCode]"
-                  size="large"
-                  type="text"
-                  @change="inputCodeChange"
-                  placeholder="请输入验证码">
-                  <a-icon slot="prefix" type="smile" :style="{ color: 'rgba(0,0,0,.25)' }"/>
-                </a-input>
-              </a-form-item>
-            </a-col>
-            <a-col :span="8" style="text-align: right">
-              <img v-if="requestCodeSuccess" style="margin-top: 2px;" :src="randCodeImage" @click="handleChangeCheckCode"/>
-              <img v-else style="margin-top: 2px;" src="../../assets/checkcode.png" @click="handleChangeCheckCode"/>
-            </a-col>
-          </a-row>
-
-
         </a-tab-pane>
         <a-tab-pane key="tab2" tab="手机号登录">
           <a-form-item>
@@ -158,22 +138,14 @@
           password:{rules: [{ required: true, message: '请输入密码!',validator: 'click'}]},
           mobile:{rules: [{validator:this.validateMobile}]},
           captcha:{rule: [{ required: true, message: '请输入验证码!'}]},
-          inputCode:{rules: [{ required: true, message: '请输入验证码!'}]}
         },
-        verifiedCode:"",
-        inputCodeContent:"",
-        inputCodeNull:true,
         currentUsername:"",
-        currdatetime:'',
-        randCodeImage:'',
-        requestCodeSuccess:false,
       }
     },
     created () {
       this.currdatetime = new Date().getTime();
       Vue.ls.remove(ACCESS_TOKEN)
       this.getRouterData();
-      this.handleChangeCheckCode();
       // update-begin- --- author:scott ------ date:20190805 ---- for:密码加密逻辑暂时注释掉，有点问题
       //this.getEncrypte();
       // update-end- --- author:scott ------ date:20190805 ---- for:密码加密逻辑暂时注释掉，有点问题
@@ -200,7 +172,7 @@
         that.loginBtn = true;
         // 使用账户密码登录
         if (that.customActiveKey === 'tab1') {
-          that.form.validateFields([ 'username', 'password','inputCode', 'rememberMe' ], { force: true }, (err, values) => {
+          that.form.validateFields([ 'username', 'password', 'rememberMe' ], { force: true }, (err, values) => {
             if (!err) {
               loginParams.username = values.username
               // update-begin- --- author:scott ------ date:20190805 ---- for:密码加密逻辑暂时注释掉，有点问题
@@ -209,8 +181,6 @@
               loginParams.password = values.password
               loginParams.remember_me = values.rememberMe
               // update-begin- --- author:scott ------ date:20190805 ---- for:密码加密逻辑暂时注释掉，有点问题
-              loginParams.captcha = that.inputCodeContent
-              loginParams.checkKey = that.currdatetime
               console.log("登录参数",loginParams)
               that.Login(loginParams).then((res) => {
                 this.$refs.loginSelect.show(res.result)
@@ -290,21 +260,6 @@
           this.stepCaptchaVisible = false
         })
       },
-      handleChangeCheckCode(){
-        this.form.setFieldsValue({inputCode: ''});
-        this.currdatetime = new Date().getTime();
-        getAction(`/sys/randomImage/${this.currdatetime}`).then(res=>{
-          if(res.success){
-            this.randCodeImage = res.result
-            this.requestCodeSuccess=true
-          }else{
-            this.$message.error(res.message)
-            this.requestCodeSuccess=false
-          }
-        }).catch(()=>{
-          this.requestCodeSuccess=false
-        })
-      },
       loginSuccess () {
         this.$router.push({ path: "/dashboard/analysis" }).catch(()=>{
           console.log('登录跳转首页出错,这个错误从哪里来的')
@@ -328,10 +283,6 @@
           description: errMsg,
           duration: 4,
         });
-        //密码错误后更新验证码
-        if(errMsg.indexOf('密码错误')>0){
-          this.handleChangeCheckCode();
-        }
         this.loginBtn = false;
       },
       validateMobile(rule,value,callback){
@@ -341,19 +292,6 @@
           callback("您的手机号码格式不正确!");
         }
 
-      },
-      validateInputCode(rule,value,callback){
-        if(!value || this.verifiedCode==this.inputCodeContent){
-          callback();
-        }else{
-          callback("您输入的验证码不正确!");
-        }
-      },
-      generateCode(value){
-        this.verifiedCode = value.toLowerCase()
-      },
-      inputCodeChange(e){
-        this.inputCodeContent = e.target.value
       },
       loginSelectOk(){
         this.loginSuccess()

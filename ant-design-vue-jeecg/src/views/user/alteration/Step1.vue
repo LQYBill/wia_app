@@ -49,37 +49,14 @@
     data() {
       return {
         form: this.$form.createForm(this),
-        inputCodeContent: "",
-        inputCodeNull: true,
-        verifiedCode: "",
         validatorRules: {
           username: {rules: [{required: false}, {validator: this.validateInputUsername}]},
-          inputCode: {rules: [{required: true, message: '请输入验证码!'}]},
-        },
-        randCodeImage:'',
-        requestCodeSuccess:true,
-        currdatetime:''
-
+        }
       }
     },
     created(){
-      this.handleChangeCheckCode();
     },
     methods: {
-      handleChangeCheckCode(){
-        this.currdatetime = new Date().getTime();
-        getAction(`/sys/randomImage/${this.currdatetime}`).then(res=>{
-          if(res.success){
-            this.randCodeImage = res.result
-            this.requestCodeSuccess=true
-          }else{
-            this.$message.error(res.message)
-            this.requestCodeSuccess=false
-          }
-        }).catch(()=>{
-          this.requestCodeSuccess=false
-        })
-      },
       nextStep() {
         let that = this
         this.form.validateFields((err, values) => {
@@ -93,8 +70,6 @@
               isPhone = true
             } else {
               params.username = username;
-            }
-            that.validateInputCode().then(()=>{
               getAction("/sys/user/querySysUser", params).then((res) => {
                 if (res.success) {
                   var userList = {
@@ -107,39 +82,10 @@
                   })
                 }
               });
-            })
+            }
           }
         })
 
-      },
-      validateInputCode() {
-        return new Promise((resolve,reject)=>{
-          postAction("/sys/checkCaptcha",{
-            captcha:this.inputCodeContent,
-            checkKey:this.currdatetime
-          }).then(res=>{
-            if(res.success){
-              resolve();
-            }else{
-              this.$message.error(res.message)
-              reject();
-            }
-          });
-        })
-      },
-      inputCodeChange(e) {
-        this.inputCodeContent = e.target.value;
-        console.log(this.inputCodeContent)
-        if (!e.target.value || 0 == e.target.value) {
-          this.inputCodeNull = true
-        } else {
-          this.inputCodeContent = this.inputCodeContent.toLowerCase()
-          this.inputCodeNull = false
-        }
-      },
-      generateCode(value) {
-        this.verifiedCode = value.toLowerCase();
-        console.log(this.verifiedCode);
       },
       validateInputUsername(rule, value, callback) {
         console.log(value);
