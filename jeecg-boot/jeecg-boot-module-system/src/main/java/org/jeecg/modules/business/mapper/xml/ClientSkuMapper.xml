@@ -12,5 +12,5 @@
 		SELECT * 
 		FROM  client_sku
 		WHERE
-			 sku_id = #{mainId} 	</select>
+			 client_id = #{mainId} 	</select>
 </mapper>

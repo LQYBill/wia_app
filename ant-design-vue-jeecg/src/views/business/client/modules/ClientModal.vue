@@ -13,9 +13,7 @@
 </template>
 
 <script>
-
   import ClientForm from './ClientForm'
-
   export default {
     name: 'ClientModal',
     components: {
@@ -24,7 +22,6 @@
     data() {
       return {
         title:'',
-        width:800,
         visible: false,
         disableSubmit: false
       }

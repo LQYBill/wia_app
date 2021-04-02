@@ -1,5 +1,38 @@
-package org.jeecg.modules.business.controller;
+package org.jeecg.modules.business.client.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.shiro.SecurityUtils;
+import org.jeecg.common.api.vo.Result;
+import org.jeecg.common.aspect.annotation.AutoLog;
+import org.jeecg.common.system.query.QueryGenerator;
+import org.jeecg.common.system.vo.LoginUser;
+import org.jeecg.common.util.oConvertUtils;
+import org.jeecg.modules.business.entity.Client;
+import org.jeecg.modules.business.entity.ClientSku;
+import org.jeecg.modules.business.entity.Shop;
+import org.jeecg.modules.business.service.IClientService;
+import org.jeecg.modules.business.service.IClientSkuService;
+import org.jeecg.modules.business.service.IShopService;
+import org.jeecg.modules.business.vo.ClientPage;
+import org.jeecgframework.poi.excel.ExcelImportUtil;
+import org.jeecgframework.poi.excel.def.NormalExcelConstants;
+import org.jeecgframework.poi.excel.entity.ExportParams;
+import org.jeecgframework.poi.excel.entity.ImportParams;
+import org.jeecgframework.poi.excel.view.JeecgEntityExcelView;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+import org.springframework.web.servlet.ModelAndView;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -7,42 +40,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.jeecgframework.poi.excel.ExcelImportUtil;
-import org.jeecgframework.poi.excel.def.NormalExcelConstants;
-import org.jeecgframework.poi.excel.entity.ExportParams;
-import org.jeecgframework.poi.excel.entity.ImportParams;
-import org.jeecgframework.poi.excel.view.JeecgEntityExcelView;
-import org.jeecg.common.system.vo.LoginUser;
-import org.apache.shiro.SecurityUtils;
-import org.jeecg.common.api.vo.Result;
-import org.jeecg.common.system.query.QueryGenerator;
-import org.jeecg.common.util.oConvertUtils;
-import org.jeecg.modules.business.entity.ClientSku;
-import org.jeecg.modules.business.entity.Client;
-import org.jeecg.modules.business.vo.ClientPage;
-import org.jeecg.modules.business.service.IClientService;
-import org.jeecg.modules.business.service.IClientSkuService;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import lombok.extern.slf4j.Slf4j;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import org.jeecg.common.aspect.annotation.AutoLog;
-
- /**
+/**
  * @Description: 客户
  * @Author: jeecg-boot
- * @Date:   2021-04-01
+ * @Date:   2021-04-02
  * @Version: V1.0
  */
 @Api(tags="客户")
@@ -52,6 +53,8 @@ import org.jeecg.common.aspect.annotation.AutoLog;
 public class ClientController {
 	@Autowired
 	private IClientService clientService;
+	@Autowired
+	private IShopService shopService;
 	@Autowired
 	private IClientSkuService clientSkuService;
 	
@@ -89,7 +92,7 @@ public class ClientController {
 	public Result<?> add(@RequestBody ClientPage clientPage) {
 		Client client = new Client();
 		BeanUtils.copyProperties(clientPage, client);
-		clientService.saveMain(client, clientPage.getClientSkuList());
+		clientService.saveMain(client, clientPage.getShopList(),clientPage.getClientSkuList());
 		return Result.OK("添加成功！");
 	}
 	
@@ -109,7 +112,7 @@ public class ClientController {
 		if(clientEntity==null) {
 			return Result.error("未找到对应数据");
 		}
-		clientService.updateMain(client, clientPage.getClientSkuList());
+		clientService.updateMain(client, clientPage.getShopList(),clientPage.getClientSkuList());
 		return Result.OK("编辑成功!");
 	}
 	
@@ -165,12 +168,33 @@ public class ClientController {
 	 * @param id
 	 * @return
 	 */
-	@AutoLog(value = "客户名下SKU通过主表ID查询")
-	@ApiOperation(value="客户名下SKU主表ID查询", notes="客户名下SKU-通主表ID查询")
+	@AutoLog(value = "店铺-通过主表ID查询")
+	@ApiOperation(value="店铺-通过主表ID查询", notes="店铺-通过主表ID查询")
+	@GetMapping(value = "/queryShopByMainId")
+	public Result<?> queryShopListByMainId(@RequestParam(name="id",required=true) String id) {
+		List<Shop> shopList = shopService.selectByMainId(id);
+		IPage <Shop> page = new Page<>();
+		page.setRecords(shopList);
+		page.setTotal(shopList.size());
+		return Result.OK(page);
+	}
+	/**
+	 * 通过id查询
+	 *
+	 * @param id
+	 * @return
+	 */
+	@AutoLog(value = "客户名下SKU-通过主表ID查询")
+	@ApiOperation(value="客户名下SKU-通过主表ID查询", notes="客户名下SKU-通过主表ID查询")
 	@GetMapping(value = "/queryClientSkuByMainId")
 	public Result<?> queryClientSkuListByMainId(@RequestParam(name="id",required=true) String id) {
+		log.info(id);
 		List<ClientSku> clientSkuList = clientSkuService.selectByMainId(id);
-		return Result.OK(clientSkuList);
+		log.info(clientSkuList.toString());
+		IPage <ClientSku> page = new Page<>();
+		page.setRecords(clientSkuList);
+		page.setTotal(clientSkuList.size());
+		return Result.OK(page);
 	}
 
     /**
@@ -202,6 +226,8 @@ public class ClientController {
       for (Client main : clientList) {
           ClientPage vo = new ClientPage();
           BeanUtils.copyProperties(main, vo);
+          List<Shop> shopList = shopService.selectByMainId(main.getId());
+          vo.setShopList(shopList);
           List<ClientSku> clientSkuList = clientSkuService.selectByMainId(main.getId());
           vo.setClientSkuList(clientSkuList);
           pageList.add(vo);
@@ -238,7 +264,7 @@ public class ClientController {
               for (ClientPage page : list) {
                   Client po = new Client();
                   BeanUtils.copyProperties(page, po);
-                  clientService.saveMain(po, page.getClientSkuList());
+                  clientService.saveMain(po, page.getShopList(),page.getClientSkuList());
               }
               return Result.OK("文件导入成功！数据行数:" + list.size());
           } catch (Exception e) {

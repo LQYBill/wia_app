@@ -1,7 +1,9 @@
 package org.jeecg.modules.business.service.impl;
 
 import org.jeecg.modules.business.entity.Client;
+import org.jeecg.modules.business.entity.Shop;
 import org.jeecg.modules.business.entity.ClientSku;
+import org.jeecg.modules.business.mapper.ShopMapper;
 import org.jeecg.modules.business.mapper.ClientSkuMapper;
 import org.jeecg.modules.business.mapper.ClientMapper;
 import org.jeecg.modules.business.service.IClientService;
@@ -16,7 +18,7 @@ import java.util.Collection;
 /**
  * @Description: 客户
  * @Author: jeecg-boot
- * @Date:   2021-04-01
+ * @Date:   2021-04-02
  * @Version: V1.0
  */
 @Service
@@ -25,12 +27,21 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
 	@Autowired
 	private ClientMapper clientMapper;
 	@Autowired
+	private ShopMapper shopMapper;
+	@Autowired
 	private ClientSkuMapper clientSkuMapper;
 	
 	@Override
 	@Transactional
-	public void saveMain(Client client, List<ClientSku> clientSkuList) {
+	public void saveMain(Client client, List<Shop> shopList,List<ClientSku> clientSkuList) {
 		clientMapper.insert(client);
+		if(shopList!=null && shopList.size()>0) {
+			for(Shop entity:shopList) {
+				//外键设置
+				entity.setOwnerId(client.getId());
+				shopMapper.insert(entity);
+			}
+		}
 		if(clientSkuList!=null && clientSkuList.size()>0) {
 			for(ClientSku entity:clientSkuList) {
 				//外键设置
@@ -42,13 +53,21 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
 
 	@Override
 	@Transactional
-	public void updateMain(Client client,List<ClientSku> clientSkuList) {
+	public void updateMain(Client client,List<Shop> shopList,List<ClientSku> clientSkuList) {
 		clientMapper.updateById(client);
 		
 		//1.先删除子表数据
+		shopMapper.deleteByMainId(client.getId());
 		clientSkuMapper.deleteByMainId(client.getId());
 		
 		//2.子表数据重新插入
+		if(shopList!=null && shopList.size()>0) {
+			for(Shop entity:shopList) {
+				//外键设置
+				entity.setOwnerId(client.getId());
+				shopMapper.insert(entity);
+			}
+		}
 		if(clientSkuList!=null && clientSkuList.size()>0) {
 			for(ClientSku entity:clientSkuList) {
 				//外键设置
@@ -61,6 +80,7 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
 	@Override
 	@Transactional
 	public void delMain(String id) {
+		shopMapper.deleteByMainId(id);
 		clientSkuMapper.deleteByMainId(id);
 		clientMapper.deleteById(id);
 	}
@@ -69,6 +89,7 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
 	@Transactional
 	public void delBatchMain(Collection<? extends Serializable> idList) {
 		for(Serializable id:idList) {
+			shopMapper.deleteByMainId(id.toString());
 			clientSkuMapper.deleteByMainId(id.toString());
 			clientMapper.deleteById(id);
 		}
