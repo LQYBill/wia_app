@@ -1,7 +1,12 @@
 package org.jeecg.modules.business.service;
 
+import org.jeecg.modules.business.entity.ShippingDiscount;
 import org.jeecg.modules.business.entity.Sku;
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.jeecg.modules.business.entity.SkuPrice;
+
+import java.io.Serializable;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -13,4 +18,26 @@ import java.util.List;
 public interface ISkuService extends IService<Sku> {
 
 	public List<Sku> selectByMainId(String mainId);
+
+	/**
+	 * 添加一对多
+	 *
+	 */
+	public void saveMain(Sku sku,List<SkuPrice> skuPriceList,List<ShippingDiscount> shippingDiscountList) ;
+
+	/**
+	 * 修改一对多
+	 *
+	 */
+	public void updateMain(Sku sku, List<SkuPrice> skuPriceList, List<ShippingDiscount> shippingDiscountList);
+
+	/**
+	 * 删除一对多
+	 */
+	public void delMain (String id);
+
+	/**
+	 * 批量删除一对多
+	 */
+	public void delBatchMain (Collection<? extends Serializable> idList);
 }
