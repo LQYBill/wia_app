@@ -96,14 +96,13 @@ public class PlatformOrder implements Serializable {
 	@Excel(name = "物流挂号费", width = 15)
     @ApiModelProperty(value = "物流挂号费")
     private java.math.BigDecimal fretFee;
-	/**采购发票号*/
-	@Excel(name = "采购发票号", width = 15, dictTable = "purchase_order", dicText = "invoice_number", dicCode = "id")
-    @Dict(dictTable = "purchase_order", dicText = "invoice_number", dicCode = "id")
-    @ApiModelProperty(value = "采购发票号")
-    private String purchaseInvoiceNumber;
 	/**物流发票号*/
 	@Excel(name = "物流发票号", width = 15, dictTable = "shipping_invoice", dicText = "invoice_number", dicCode = "id")
     @Dict(dictTable = "shipping_invoice", dicText = "invoice_number", dicCode = "id")
     @ApiModelProperty(value = "物流发票号")
     private String shippingInvoiceNumber;
+	/**状态*/
+	@Excel(name = "状态", width = 15)
+    @ApiModelProperty(value = "状态")
+    private String status;
 }

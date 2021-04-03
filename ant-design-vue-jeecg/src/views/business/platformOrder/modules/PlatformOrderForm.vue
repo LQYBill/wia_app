@@ -60,13 +60,13 @@
             </a-form-model-item>
           </a-col>
           <a-col :xs="24" :sm="12">
-            <a-form-model-item label="采购发票号" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="purchaseInvoiceNumber">
-              <j-search-select-tag v-model="model.purchaseInvoiceNumber" dict="purchase_order,invoice_number,id" />
+            <a-form-model-item label="物流发票号" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="shippingInvoiceNumber">
+              <j-search-select-tag v-model="model.shippingInvoiceNumber" dict="shipping_invoice,invoice_number,id" />
             </a-form-model-item>
           </a-col>
           <a-col :xs="24" :sm="12">
-            <a-form-model-item label="物流发票号" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="shippingInvoiceNumber">
-              <j-search-select-tag v-model="model.shippingInvoiceNumber" dict="shipping_invoice,invoice_number,id" />
+            <a-form-model-item label="状态" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="status">
+              <a-input v-model="model.status" placeholder="请输入状态" ></a-input>
             </a-form-model-item>
           </a-col>
         </a-row>

@@ -210,14 +210,14 @@
             dataIndex: 'fretFee',
           },
           {
-            title: '采购发票号',
-            align: 'center',
-            dataIndex: 'purchaseInvoiceNumber_dictText'
-          },
-          {
             title: '物流发票号',
             align: 'center',
             dataIndex: 'shippingInvoiceNumber_dictText'
+          },
+          {
+            title: '状态',
+            align: 'center',
+            dataIndex: 'status',
           },
           {
             title: '操作',
@@ -272,8 +272,8 @@
         fieldList.push({type:'string',value:'country',text:'订单收件人国家',dictCode:''})
         fieldList.push({type:'string',value:'postcode',text:'订单收件人邮编',dictCode:''})
         fieldList.push({type:'BigDecimal',value:'fretFee',text:'物流挂号费',dictCode:''})
-        fieldList.push({type:'sel_search',value:'purchaseInvoiceNumber',text:'采购发票号',dictTable:'purchase_order', dictText:'invoice_number', dictCode:'id'})
         fieldList.push({type:'sel_search',value:'shippingInvoiceNumber',text:'物流发票号',dictTable:'shipping_invoice', dictText:'invoice_number', dictCode:'id'})
+        fieldList.push({type:'string',value:'status',text:'状态',dictCode:''})
         this.superFieldList = fieldList
       }
     }

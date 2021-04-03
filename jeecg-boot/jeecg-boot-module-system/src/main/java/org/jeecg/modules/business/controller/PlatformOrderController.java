@@ -168,12 +168,15 @@ public class PlatformOrderController {
 	 * @param id
 	 * @return
 	 */
-	@AutoLog(value = "平台订单内容通过主表ID查询")
-	@ApiOperation(value="平台订单内容主表ID查询", notes="平台订单内容-通主表ID查询")
+	@AutoLog(value = "平台订单内容-通过主表ID查询")
+	@ApiOperation(value="平台订单内容-通过主表ID查询", notes="平台订单内容-通过主表ID查询")
 	@GetMapping(value = "/queryPlatformOrderContentByMainId")
 	public Result<?> queryPlatformOrderContentListByMainId(@RequestParam(name="id",required=true) String id) {
 		List<PlatformOrderContent> platformOrderContentList = platformOrderContentService.selectByMainId(id);
-		return Result.OK(platformOrderContentList);
+		IPage <PlatformOrderContent> page = new Page<>();
+		page.setRecords(platformOrderContentList);
+		page.setTotal(platformOrderContentList.size());
+		return Result.OK(page);
 	}
 
     /**
