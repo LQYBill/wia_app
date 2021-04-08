@@ -6,11 +6,11 @@
 		DELETE 
 		FROM  platform_order_content 
 		WHERE
-			 id = #{mainId} 	</delete>
+			platform_order_id = #{mainId} 	</delete>
 	
 	<select id="selectByMainId" parameterType="java.lang.String" resultType="org.jeecg.modules.business.entity.PlatformOrderContent">
 		SELECT * 
 		FROM  platform_order_content
 		WHERE
-			 id = #{mainId} 	</select>
+			 platform_order_id = #{mainId} 	</select>
 </mapper>
