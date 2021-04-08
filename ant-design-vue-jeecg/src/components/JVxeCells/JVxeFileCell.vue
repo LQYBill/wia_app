@@ -92,7 +92,7 @@
       /** 上传请求地址 */
       uploadAction() {
         if (!this.originColumn.action) {
-          return window._CONFIG['domianURL'] + '/sys/common/upload'
+          return window._CONFIG['domainURL'] + '/sys/common/upload'
         } else {
           return this.originColumn.action
         }
