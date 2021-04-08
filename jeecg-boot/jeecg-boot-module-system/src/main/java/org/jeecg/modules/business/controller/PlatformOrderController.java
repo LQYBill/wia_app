@@ -45,7 +45,7 @@ import org.jeecg.common.aspect.annotation.AutoLog;
  /**
  * @Description: 平台订单表
  * @Author: jeecg-boot
- * @Date:   2021-04-03
+ * @Date:   2021-04-08
  * @Version: V1.0
  */
 @Api(tags="平台订单表")
@@ -168,15 +168,12 @@ public class PlatformOrderController {
 	 * @param id
 	 * @return
 	 */
-	@AutoLog(value = "平台订单内容-通过主表ID查询")
-	@ApiOperation(value="平台订单内容-通过主表ID查询", notes="平台订单内容-通过主表ID查询")
+	@AutoLog(value = "平台订单内容通过主表ID查询")
+	@ApiOperation(value="平台订单内容主表ID查询", notes="平台订单内容-通主表ID查询")
 	@GetMapping(value = "/queryPlatformOrderContentByMainId")
 	public Result<?> queryPlatformOrderContentListByMainId(@RequestParam(name="id",required=true) String id) {
 		List<PlatformOrderContent> platformOrderContentList = platformOrderContentService.selectByMainId(id);
-		IPage <PlatformOrderContent> page = new Page<>();
-		page.setRecords(platformOrderContentList);
-		page.setTotal(platformOrderContentList.size());
-		return Result.OK(page);
+		return Result.OK(platformOrderContentList);
 	}
 
     /**

@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.jeecgframework.poi.excel.annotation.Excel;
 import java.util.Date;
-import org.jeecg.common.aspect.annotation.Dict;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.io.UnsupportedEncodingException;
@@ -17,7 +16,7 @@ import java.io.UnsupportedEncodingException;
 /**
  * @Description: 平台订单内容
  * @Author: jeecg-boot
- * @Date:   2021-04-03
+ * @Date:   2021-04-08
  * @Version: V1.0
  */
 @ApiModel(value="platform_order对象", description="平台订单表")
@@ -48,11 +47,10 @@ public class PlatformOrderContent implements Serializable {
     private Date updateTime;
 	/**平台订单ID*/
 	@Excel(name = "平台订单ID", width = 15, dictTable = "platform_order", dicText = "", dicCode = "id")
-	@Dict(dictTable = "platform_order", dicText = "", dicCode = "id")
     @ApiModelProperty(value = "平台订单ID")
     private String platformOrderId;
 	/**SKU ID*/
-	@Dict(dictTable = "sku", dicText = "erp_code", dicCode = "id")
+	@Excel(name = "SKU ID", width = 15, dictTable = "sku", dicText = "erp_code", dicCode = "id")
     @ApiModelProperty(value = "SKU ID")
     private String skuId;
 	/**SKU数量*/
@@ -71,4 +69,7 @@ public class PlatformOrderContent implements Serializable {
 	@Excel(name = "服务总费用", width = 15)
     @ApiModelProperty(value = "服务总费用")
     private java.math.BigDecimal serviceFee;
+	/**sku状态*/
+    @ApiModelProperty(value = "sku状态")
+    private Integer status;
 }

@@ -17,7 +17,7 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * @Description: 平台订单表
  * @Author: jeecg-boot
- * @Date:   2021-04-03
+ * @Date:   2021-04-08
  * @Version: V1.0
  */
 @Data

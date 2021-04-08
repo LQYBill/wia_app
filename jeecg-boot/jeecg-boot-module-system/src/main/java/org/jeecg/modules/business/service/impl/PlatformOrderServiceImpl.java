@@ -16,7 +16,7 @@ import java.util.Collection;
 /**
  * @Description: 平台订单表
  * @Author: jeecg-boot
- * @Date:   2021-04-03
+ * @Date:   2021-04-08
  * @Version: V1.0
  */
 @Service
@@ -34,7 +34,7 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
 		if(platformOrderContentList!=null && platformOrderContentList.size()>0) {
 			for(PlatformOrderContent entity:platformOrderContentList) {
 				//外键设置
-				entity.setSkuId(platformOrder.getId());
+				entity.setStatus(platformOrder.getStatus());
 				platformOrderContentMapper.insert(entity);
 			}
 		}
@@ -52,7 +52,7 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
 		if(platformOrderContentList!=null && platformOrderContentList.size()>0) {
 			for(PlatformOrderContent entity:platformOrderContentList) {
 				//外键设置
-				entity.setSkuId(platformOrder.getId());
+				entity.setStatus(platformOrder.getStatus());
 				platformOrderContentMapper.insert(entity);
 			}
 		}

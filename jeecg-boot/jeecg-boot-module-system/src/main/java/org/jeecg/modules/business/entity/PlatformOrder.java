@@ -17,7 +17,7 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * @Description: 平台订单表
  * @Author: jeecg-boot
- * @Date:   2021-04-03
+ * @Date:   2021-04-08
  * @Version: V1.0
  */
 @ApiModel(value="platform_order对象", description="平台订单表")
@@ -104,5 +104,5 @@ public class PlatformOrder implements Serializable {
 	/**状态*/
 	@Excel(name = "状态", width = 15)
     @ApiModelProperty(value = "状态")
-    private String status;
+    private Integer status;
 }
