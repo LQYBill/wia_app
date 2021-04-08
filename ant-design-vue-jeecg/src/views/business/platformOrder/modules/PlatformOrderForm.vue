@@ -138,7 +138,7 @@
               title: '平台订单ID',
               key: 'platformOrderId',
               type: FormTypes.sel_search,
-              dictCode:"platform_order,,id",
+              dictCode:"platform_order,id,id",
               width:"200px",
               placeholder: '请输入${title}',
               defaultValue:'',
@@ -179,6 +179,14 @@
             {
               title: '服务总费用',
               key: 'serviceFee',
+              type: FormTypes.input,
+              width:"200px",
+              placeholder: '请输入${title}',
+              defaultValue:'',
+            },
+            {
+              title: 'sku状态',
+              key: 'status',
               type: FormTypes.input,
               width:"200px",
               placeholder: '请输入${title}',
