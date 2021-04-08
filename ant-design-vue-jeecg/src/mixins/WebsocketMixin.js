@@ -22,7 +22,7 @@ export const WebsocketMixin = {
       if(!this.socketUrl.endsWith('/')){
         this.socketUrl = this.socketUrl + '/'
       }
-      var url = window._CONFIG['domianURL'].replace("https://","wss://").replace("http://","ws://") + this.socketUrl + userId + "/" + token;
+      var url = window._CONFIG['domainURL'].replace("https://","wss://").replace("http://","ws://") + this.socketUrl + userId + "/" + token;
       this.websock = new WebSocket(url);
       this.websock.onopen = this.websocketOnopen;
       this.websock.onerror = this.websocketOnerror;

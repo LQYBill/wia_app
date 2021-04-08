@@ -262,7 +262,7 @@ export const JeecgListMixin = {
     /* 导出 */
     handleExportXls2(){
       let paramsStr = encodeURI(JSON.stringify(this.getQueryParams()));
-      let url = `${window._CONFIG['domianURL']}/${this.url.exportXlsUrl}?paramsStr=${paramsStr}`;
+      let url = `${window._CONFIG['domainURL']}/${this.url.exportXlsUrl}?paramsStr=${paramsStr}`;
       window.location.href = url;
     },
     handleExportXls(fileName){
@@ -304,7 +304,7 @@ export const JeecgListMixin = {
           // this.$message.success(`${info.file.name} 文件上传成功`);
           if (info.file.response.code === 201) {
             let { message, result: { msg, fileUrl, fileName } } = info.file.response
-            let href = window._CONFIG['domianURL'] + fileUrl
+            let href = window._CONFIG['domainURL'] + fileUrl
             this.$warning({
               title: message,
               content: (<div>

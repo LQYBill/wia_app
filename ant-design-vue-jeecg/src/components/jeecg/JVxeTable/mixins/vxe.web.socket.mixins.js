@@ -49,7 +49,7 @@ const vs = {
   initialWebSocket() {
     if (this.ws === null) {
       const userId = store.getters.userInfo.id
-      const domain = window._CONFIG['domianURL'].replace('https://', 'wss://').replace('http://', 'ws://')
+      const domain = window._CONFIG['domainURL'].replace('https://', 'wss://').replace('http://', 'ws://')
       const url = `${domain}/vxeSocket/${userId}/${this.pageId}`
 
       this.ws = new WebSocket(url)

@@ -48,7 +48,7 @@
     name: 'JImageUpload',
     data(){
       return {
-        uploadAction:window._CONFIG['domianURL']+"/sys/common/upload",
+        uploadAction:window._CONFIG['domainURL']+"/sys/common/upload",
         uploadLoading:false,
         picUrl:false,
         headers:{},

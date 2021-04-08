@@ -105,7 +105,7 @@
         url: {
           add: "/test/order/addCustomer",
           edit: "/test/order/editCustomer",
-          fileUpload: window._CONFIG['domianURL'] + "/sys/common/upload",
+          fileUpload: window._CONFIG['domainURL'] + "/sys/common/upload",
           getOrderCustomerList: "/test/order/listOrderCustomerByMainId",
         },
         validatorRules: {
