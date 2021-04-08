@@ -12,10 +12,10 @@
 
     <!-- 操作按钮区域 begin -->
     <div class="table-operator">
-      <a-button type="primary" icon="plus" @click="handleAdd">新增</a-button>
-      <a-button type="primary" icon="download" @click="handleExportXls('客户')">导出</a-button>
+      <a-button type="primary" icon="plus" @click="handleAdd">{{ $t("add") }}</a-button>
+      <a-button type="primary" icon="download" @click="handleExportXls('客户')">{{$t("export")}}</a-button>
       <a-upload name="file" :showUploadList="false" :multiple="false" :headers="tokenHeader" :action="importExcelUrl" @change="handleImportExcel">
-        <a-button type="primary" icon="import">导入</a-button>
+        <a-button type="primary" icon="import">{{$t('import')}}</a-button>
       </a-upload>
       <!-- 高级查询区域 -->
       <j-super-query :fieldList="superFieldList" ref="superQueryModal" @handleSuperQuery="handleSuperQuery"></j-super-query>
@@ -23,11 +23,11 @@
         <a-menu slot="overlay">
           <a-menu-item key="1" @click="batchDel">
             <a-icon type="delete"/>
-            <span>删除</span>
+            <span>{{$t("delete")}}</span>
           </a-menu-item>
         </a-menu>
         <a-button>
-          <span>批量操作</span>
+          <span>{{$t("batchOperation")}}</span>
           <a-icon type="down"/>
         </a-button>
       </a-dropdown>
@@ -39,10 +39,10 @@
 
       <a-alert type="info" showIcon style="margin-bottom: 16px;">
         <template slot="message">
-          <span>已选择</span>
+          <span>{{$t("selected")}}</span>
           <a style="font-weight: 600;padding: 0 4px;">{{ selectedRowKeys.length }}</a>
-          <span>项</span>
-          <a style="margin-left: 24px" @click="onClearSelected">清空</a>
+          <span>{{$t("items")}}</span>
+          <a style="margin-left: 24px" @click="onClearSelected">{{$t("clear")}}</a>
         </template>
       </a-alert>
 
@@ -98,21 +98,21 @@
             size="small"
             @click="downloadFile(text)"
           >
-            <span>下载</span>
+            <span>{{$t("download")}}</span>
           </a-button>
         </template>
 
         <template slot="action" slot-scope="text, record">
-          <a @click="handleEdit(record)">编辑</a>
+          <a @click="handleEdit(record)">{{$t("edit")}}</a>
           <a-divider type="vertical"/>
           <a-dropdown>
             <a class="ant-dropdown-link">
-              <span>更多 <a-icon type="down"/></span>
+              <span>{{$t("more")}} <a-icon type="down"/></span>
             </a>
             <a-menu slot="overlay">
               <a-menu-item>
-                <a-popconfirm title="确定删除吗?" @confirm="handleDelete(record.id)">
-                  <a>删除</a>
+                <a-popconfirm :title="$t('deleteConfirmation')" @confirm="handleDelete(record.id)">
+                  <a>{{$t("delete")}}</a>
                 </a-popconfirm>
               </a-menu-item>
             </a-menu>

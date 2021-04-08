@@ -1,0 +1,28 @@
+{
+  "nameConvention": "key: Camel-Case",
+  "lang": "English",
+  "add": "Add",
+  "export": "Export",
+  "import": "Import",
+  "adSearch": "Advanced Search",
+  "delete": "Delete",
+  "selected": "Selected",
+  "items": "items",
+  "clear": "Clear all",
+  "download": "Download",
+  "edit": "Edit",
+  "more": "More",
+  "batchOperation": "Operations",
+  "deleteConfirmation": "Are you sure you want to delete ?",
+  "familyName": "Family Name",
+  "firstName": "First Name",
+  "abbreviation": "Abbreviation",
+  "email":"Email",
+  "telephone": "Telephone",
+  "city": "City",
+  "country": "Country",
+  "Currency": "Currency",
+  "postCode": "Postal Code"
+
+
+}
