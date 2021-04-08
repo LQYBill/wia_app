@@ -138,7 +138,7 @@
               title: '平台订单ID',
               key: 'platformOrderId',
               type: FormTypes.sel_search,
-              dictCode:"platform_order,id,id",
+              dictCode:"platform_order,platform_order_id,id",
               width:"200px",
               placeholder: '请输入${title}',
               defaultValue:'',
