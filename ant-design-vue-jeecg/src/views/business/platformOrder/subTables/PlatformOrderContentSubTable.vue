@@ -87,6 +87,11 @@
             align: 'center',
             dataIndex: 'serviceFee',
           },
+          {
+            title: 'sku状态',
+            align: 'center',
+            dataIndex: 'status',
+          },
         ],
         url: {
           listByMainId: '/business/platformOrder/queryPlatformOrderContentByMainId',
