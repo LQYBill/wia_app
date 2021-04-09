@@ -14,6 +14,7 @@ import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.common.util.oConvertUtils;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
+import org.jeecg.modules.business.service.IClientPlatformOrderService;
 import org.jeecg.modules.business.service.IPlatformOrderContentService;
 import org.jeecg.modules.business.service.IPlatformOrderService;
 import org.jeecg.modules.business.vo.PlatformOrderPage;
@@ -53,6 +54,8 @@ public class ClientPlatformOrderController {
    private IPlatformOrderService platformOrderService;
    @Autowired
    private IPlatformOrderContentService platformOrderContentService;
+   @Autowired
+   private IClientPlatformOrderService clientPlatformOrderService;
 
    /**
     * 分页列表查询
@@ -66,14 +69,13 @@ public class ClientPlatformOrderController {
    @AutoLog(value = "平台订单表-分页列表查询")
    @ApiOperation(value="平台订单表-分页列表查询", notes="平台订单表-分页列表查询")
    @GetMapping(value = "/list")
-   public Result<?> queryPageList(PlatformOrder platformOrder,
+   public Result<List<PlatformOrderPage>> queryPageList(PlatformOrder platformOrder,
                                   @RequestParam(name="pageNo", defaultValue="1") Integer pageNo,
                                   @RequestParam(name="pageSize", defaultValue="10") Integer pageSize,
                                   HttpServletRequest req) {
-       QueryWrapper<PlatformOrder> queryWrapper = QueryGenerator.initQueryWrapper(platformOrder, req.getParameterMap());
-       Page<PlatformOrder> page = new Page<PlatformOrder>(pageNo, pageSize);
-       IPage<PlatformOrder> pageList = platformOrderService.page(page, queryWrapper);
-       return Result.OK(pageList);
+
+       log.info("query for client platform orders");
+       return Result.OK(clientPlatformOrderService.getPlatformOrderList());
    }
 
    /**

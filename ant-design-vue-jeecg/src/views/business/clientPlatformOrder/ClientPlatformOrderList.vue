@@ -56,7 +56,6 @@
         :loading="loading"
         :columns="columns"
         :dataSource="dataSource"
-        :pagination="ipagination"
         :expandedRowKeys="expandedRowKeys"
         :rowSelection="{selectedRowKeys, onChange: onSelectChange}"
         @expand="handleExpand"
@@ -246,7 +245,7 @@
     },
     computed: {
       importExcelUrl() {
-        return window._CONFIG['domianURL'] + this.url.importExcelUrl
+        return window._CONFIG['domainURL'] + this.url.importExcelUrl
       }
     },
     methods: {
