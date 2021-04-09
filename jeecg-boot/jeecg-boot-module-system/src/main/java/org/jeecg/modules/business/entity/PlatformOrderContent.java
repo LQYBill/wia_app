@@ -46,7 +46,7 @@ public class PlatformOrderContent implements Serializable {
     @ApiModelProperty(value = "更新日期")
     private Date updateTime;
 	/**平台订单ID*/
-	@Excel(name = "平台订单ID", width = 15, dictTable = "platform_order", dicText = "", dicCode = "id")
+	@Excel(name = "平台订单ID", width = 15, dictTable = "platform_order", dicText = "platform_order_id", dicCode = "id")
     @ApiModelProperty(value = "平台订单ID")
     private String platformOrderId;
 	/**SKU ID*/
