@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
 import org.jeecg.modules.business.entity.Client;
 import org.jeecg.modules.business.entity.ClientSku;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
@@ -13,6 +14,7 @@ import java.util.List;
  * @Date:   2021-04-02
  * @Version: V1.0
  */
+@Repository
 public interface ClientUserMapper {
 
 	String selectByUserId(@Param("userId") String userId);

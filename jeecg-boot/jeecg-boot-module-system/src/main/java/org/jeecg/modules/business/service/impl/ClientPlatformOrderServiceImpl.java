@@ -1,21 +1,15 @@
 package org.jeecg.modules.business.service.impl;
 
-import cn.hutool.core.util.PageUtil;
-import com.alibaba.druid.sql.PagerUtils;
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.shiro.SecurityUtils;
 import org.jeecg.common.system.vo.LoginUser;
-import org.jeecg.modules.business.entity.Client;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.mapper.ClientUserMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
 import org.jeecg.modules.business.service.IClientPlatformOrderService;
-import org.jeecg.modules.business.service.IPlatformOrderService;
 import org.jeecg.modules.business.vo.PlatformOrderPage;
-import org.jeecg.modules.system.util.SecurityUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,13 +30,17 @@ import java.util.stream.Collectors;
 @Service
 public class ClientPlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, PlatformOrder> implements IClientPlatformOrderService {
 
-    @Autowired
-    private PlatformOrderMapper platformOrderMapper;
-    @Autowired
-    private PlatformOrderContentMapper platformOrderContentMapper;
+    private final PlatformOrderMapper platformOrderMapper;
+    private final PlatformOrderContentMapper platformOrderContentMapper;
+    private final ClientUserMapper clientUserMapper;
 
     @Autowired
-    private ClientUserMapper clientUserMapper;
+    public ClientPlatformOrderServiceImpl(PlatformOrderMapper platformOrderMapper, PlatformOrderContentMapper platformOrderContentMapper, ClientUserMapper clientUserMapper) {
+        this.platformOrderMapper = platformOrderMapper;
+        this.platformOrderContentMapper = platformOrderContentMapper;
+        this.clientUserMapper = clientUserMapper;
+    }
+
 
     @Override
     @Transactional

@@ -42,220 +42,224 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.jeecg.common.aspect.annotation.AutoLog;
 
- /**
+/**
  * @Description: 物流渠道
  * @Author: jeecg-boot
- * @Date:   2021-04-03
+ * @Date: 2021-04-03
  * @Version: V1.0
  */
-@Api(tags="物流渠道")
+@Api(tags = "物流渠道")
 @RestController
 @RequestMapping("/business/logisticChannel")
 @Slf4j
 public class LogisticChannelController {
-	@Autowired
-	private ILogisticChannelService logisticChannelService;
-	@Autowired
-	private ILogisticChannelPriceService logisticChannelPriceService;
-	
-	/**
-	 * 分页列表查询
-	 *
-	 * @param logisticChannel
-	 * @param pageNo
-	 * @param pageSize
-	 * @param req
-	 * @return
-	 */
-	@AutoLog(value = "物流渠道-分页列表查询")
-	@ApiOperation(value="物流渠道-分页列表查询", notes="物流渠道-分页列表查询")
-	@GetMapping(value = "/list")
-	public Result<?> queryPageList(LogisticChannel logisticChannel,
-								   @RequestParam(name="pageNo", defaultValue="1") Integer pageNo,
-								   @RequestParam(name="pageSize", defaultValue="10") Integer pageSize,
-								   HttpServletRequest req) {
-		QueryWrapper<LogisticChannel> queryWrapper = QueryGenerator.initQueryWrapper(logisticChannel, req.getParameterMap());
-		Page<LogisticChannel> page = new Page<LogisticChannel>(pageNo, pageSize);
-		IPage<LogisticChannel> pageList = logisticChannelService.page(page, queryWrapper);
-		return Result.OK(pageList);
-	}
-	
-	/**
-	 *   添加
-	 *
-	 * @param logisticChannelPage
-	 * @return
-	 */
-	@AutoLog(value = "物流渠道-添加")
-	@ApiOperation(value="物流渠道-添加", notes="物流渠道-添加")
-	@PostMapping(value = "/add")
-	public Result<?> add(@RequestBody LogisticChannelPage logisticChannelPage) {
-		LogisticChannel logisticChannel = new LogisticChannel();
-		BeanUtils.copyProperties(logisticChannelPage, logisticChannel);
-		logisticChannelService.saveMain(logisticChannel, logisticChannelPage.getLogisticChannelPriceList());
-		return Result.OK("添加成功！");
-	}
-	
-	/**
-	 *  编辑
-	 *
-	 * @param logisticChannelPage
-	 * @return
-	 */
-	@AutoLog(value = "物流渠道-编辑")
-	@ApiOperation(value="物流渠道-编辑", notes="物流渠道-编辑")
-	@PutMapping(value = "/edit")
-	public Result<?> edit(@RequestBody LogisticChannelPage logisticChannelPage) {
-		LogisticChannel logisticChannel = new LogisticChannel();
-		BeanUtils.copyProperties(logisticChannelPage, logisticChannel);
-		LogisticChannel logisticChannelEntity = logisticChannelService.getById(logisticChannel.getId());
-		if(logisticChannelEntity==null) {
-			return Result.error("未找到对应数据");
-		}
-		logisticChannelService.updateMain(logisticChannel, logisticChannelPage.getLogisticChannelPriceList());
-		return Result.OK("编辑成功!");
-	}
-	
-	/**
-	 *   通过id删除
-	 *
-	 * @param id
-	 * @return
-	 */
-	@AutoLog(value = "物流渠道-通过id删除")
-	@ApiOperation(value="物流渠道-通过id删除", notes="物流渠道-通过id删除")
-	@DeleteMapping(value = "/delete")
-	public Result<?> delete(@RequestParam(name="id",required=true) String id) {
-		logisticChannelService.delMain(id);
-		return Result.OK("删除成功!");
-	}
-	
-	/**
-	 *  批量删除
-	 *
-	 * @param ids
-	 * @return
-	 */
-	@AutoLog(value = "物流渠道-批量删除")
-	@ApiOperation(value="物流渠道-批量删除", notes="物流渠道-批量删除")
-	@DeleteMapping(value = "/deleteBatch")
-	public Result<?> deleteBatch(@RequestParam(name="ids",required=true) String ids) {
-		this.logisticChannelService.delBatchMain(Arrays.asList(ids.split(",")));
-		return Result.OK("批量删除成功！");
-	}
-	
-	/**
-	 * 通过id查询
-	 *
-	 * @param id
-	 * @return
-	 */
-	@AutoLog(value = "物流渠道-通过id查询")
-	@ApiOperation(value="物流渠道-通过id查询", notes="物流渠道-通过id查询")
-	@GetMapping(value = "/queryById")
-	public Result<?> queryById(@RequestParam(name="id",required=true) String id) {
-		LogisticChannel logisticChannel = logisticChannelService.getById(id);
-		if(logisticChannel==null) {
-			return Result.error("未找到对应数据");
-		}
-		return Result.OK(logisticChannel);
+    private final ILogisticChannelService logisticChannelService;
+    private final ILogisticChannelPriceService logisticChannelPriceService;
 
-	}
-	
-	/**
-	 * 通过id查询
-	 *
-	 * @param id
-	 * @return
-	 */
-	@AutoLog(value = "物流渠道价格通过主表ID查询")
-	@ApiOperation(value="物流渠道价格主表ID查询", notes="物流渠道价格-通主表ID查询")
-	@GetMapping(value = "/queryLogisticChannelPriceByMainId")
-	public Result<?> queryLogisticChannelPriceListByMainId(@RequestParam(name="id",required=true) String id) {
-		List<LogisticChannelPrice> logisticChannelPriceList = logisticChannelPriceService.selectByMainId(id);
-		return Result.OK(logisticChannelPriceList);
-	}
-
-    /**
-    * 导出excel
-    *
-    * @param request
-    * @param logisticChannel
-    */
-    @RequestMapping(value = "/exportXls")
-    public ModelAndView exportXls(HttpServletRequest request, LogisticChannel logisticChannel) {
-      // Step.1 组装查询条件查询数据
-      QueryWrapper<LogisticChannel> queryWrapper = QueryGenerator.initQueryWrapper(logisticChannel, request.getParameterMap());
-      LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
-
-      //Step.2 获取导出数据
-      List<LogisticChannel> queryList = logisticChannelService.list(queryWrapper);
-      // 过滤选中数据
-      String selections = request.getParameter("selections");
-      List<LogisticChannel> logisticChannelList = new ArrayList<LogisticChannel>();
-      if(oConvertUtils.isEmpty(selections)) {
-          logisticChannelList = queryList;
-      }else {
-          List<String> selectionList = Arrays.asList(selections.split(","));
-          logisticChannelList = queryList.stream().filter(item -> selectionList.contains(item.getId())).collect(Collectors.toList());
-      }
-
-      // Step.3 组装pageList
-      List<LogisticChannelPage> pageList = new ArrayList<LogisticChannelPage>();
-      for (LogisticChannel main : logisticChannelList) {
-          LogisticChannelPage vo = new LogisticChannelPage();
-          BeanUtils.copyProperties(main, vo);
-          List<LogisticChannelPrice> logisticChannelPriceList = logisticChannelPriceService.selectByMainId(main.getId());
-          vo.setLogisticChannelPriceList(logisticChannelPriceList);
-          pageList.add(vo);
-      }
-
-      // Step.4 AutoPoi 导出Excel
-      ModelAndView mv = new ModelAndView(new JeecgEntityExcelView());
-      mv.addObject(NormalExcelConstants.FILE_NAME, "物流渠道列表");
-      mv.addObject(NormalExcelConstants.CLASS, LogisticChannelPage.class);
-      mv.addObject(NormalExcelConstants.PARAMS, new ExportParams("物流渠道数据", "导出人:"+sysUser.getRealname(), "物流渠道"));
-      mv.addObject(NormalExcelConstants.DATA_LIST, pageList);
-      return mv;
+    @Autowired
+    public LogisticChannelController(ILogisticChannelService logisticChannelService, ILogisticChannelPriceService logisticChannelPriceService) {
+        this.logisticChannelService = logisticChannelService;
+        this.logisticChannelPriceService = logisticChannelPriceService;
     }
 
     /**
-    * 通过excel导入数据
-    *
-    * @param request
-    * @param response
-    * @return
-    */
+     * 分页列表查询
+     *
+     * @param logisticChannel
+     * @param pageNo
+     * @param pageSize
+     * @param req
+     * @return
+     */
+    @AutoLog(value = "物流渠道-分页列表查询")
+    @ApiOperation(value = "物流渠道-分页列表查询", notes = "物流渠道-分页列表查询")
+    @GetMapping(value = "/list")
+    public Result<?> queryPageList(LogisticChannel logisticChannel,
+                                   @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
+                                   @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
+                                   HttpServletRequest req) {
+        QueryWrapper<LogisticChannel> queryWrapper = QueryGenerator.initQueryWrapper(logisticChannel, req.getParameterMap());
+        Page<LogisticChannel> page = new Page<LogisticChannel>(pageNo, pageSize);
+        IPage<LogisticChannel> pageList = logisticChannelService.page(page, queryWrapper);
+        return Result.OK(pageList);
+    }
+
+    /**
+     * 添加
+     *
+     * @param logisticChannelPage
+     * @return
+     */
+    @AutoLog(value = "物流渠道-添加")
+    @ApiOperation(value = "物流渠道-添加", notes = "物流渠道-添加")
+    @PostMapping(value = "/add")
+    public Result<?> add(@RequestBody LogisticChannelPage logisticChannelPage) {
+        LogisticChannel logisticChannel = new LogisticChannel();
+        BeanUtils.copyProperties(logisticChannelPage, logisticChannel);
+        logisticChannelService.saveMain(logisticChannel, logisticChannelPage.getLogisticChannelPriceList());
+        return Result.OK("添加成功！");
+    }
+
+    /**
+     * 编辑
+     *
+     * @param logisticChannelPage
+     * @return
+     */
+    @AutoLog(value = "物流渠道-编辑")
+    @ApiOperation(value = "物流渠道-编辑", notes = "物流渠道-编辑")
+    @PutMapping(value = "/edit")
+    public Result<?> edit(@RequestBody LogisticChannelPage logisticChannelPage) {
+        LogisticChannel logisticChannel = new LogisticChannel();
+        BeanUtils.copyProperties(logisticChannelPage, logisticChannel);
+        LogisticChannel logisticChannelEntity = logisticChannelService.getById(logisticChannel.getId());
+        if (logisticChannelEntity == null) {
+            return Result.error("未找到对应数据");
+        }
+        logisticChannelService.updateMain(logisticChannel, logisticChannelPage.getLogisticChannelPriceList());
+        return Result.OK("编辑成功!");
+    }
+
+    /**
+     * 通过id删除
+     *
+     * @param id
+     * @return
+     */
+    @AutoLog(value = "物流渠道-通过id删除")
+    @ApiOperation(value = "物流渠道-通过id删除", notes = "物流渠道-通过id删除")
+    @DeleteMapping(value = "/delete")
+    public Result<?> delete(@RequestParam(name = "id", required = true) String id) {
+        logisticChannelService.delMain(id);
+        return Result.OK("删除成功!");
+    }
+
+    /**
+     * 批量删除
+     *
+     * @param ids
+     * @return
+     */
+    @AutoLog(value = "物流渠道-批量删除")
+    @ApiOperation(value = "物流渠道-批量删除", notes = "物流渠道-批量删除")
+    @DeleteMapping(value = "/deleteBatch")
+    public Result<?> deleteBatch(@RequestParam(name = "ids", required = true) String ids) {
+        this.logisticChannelService.delBatchMain(Arrays.asList(ids.split(",")));
+        return Result.OK("批量删除成功！");
+    }
+
+    /**
+     * 通过id查询
+     *
+     * @param id
+     * @return
+     */
+    @AutoLog(value = "物流渠道-通过id查询")
+    @ApiOperation(value = "物流渠道-通过id查询", notes = "物流渠道-通过id查询")
+    @GetMapping(value = "/queryById")
+    public Result<?> queryById(@RequestParam(name = "id", required = true) String id) {
+        LogisticChannel logisticChannel = logisticChannelService.getById(id);
+        if (logisticChannel == null) {
+            return Result.error("未找到对应数据");
+        }
+        return Result.OK(logisticChannel);
+
+    }
+
+    /**
+     * 通过id查询
+     *
+     * @param id
+     * @return
+     */
+    @AutoLog(value = "物流渠道价格通过主表ID查询")
+    @ApiOperation(value = "物流渠道价格主表ID查询", notes = "物流渠道价格-通主表ID查询")
+    @GetMapping(value = "/queryLogisticChannelPriceByMainId")
+    public Result<?> queryLogisticChannelPriceListByMainId(@RequestParam(name = "id", required = true) String id) {
+        List<LogisticChannelPrice> logisticChannelPriceList = logisticChannelPriceService.selectByMainId(id);
+        return Result.OK(logisticChannelPriceList);
+    }
+
+    /**
+     * 导出excel
+     *
+     * @param request
+     * @param logisticChannel
+     */
+    @RequestMapping(value = "/exportXls")
+    public ModelAndView exportXls(HttpServletRequest request, LogisticChannel logisticChannel) {
+        // Step.1 组装查询条件查询数据
+        QueryWrapper<LogisticChannel> queryWrapper = QueryGenerator.initQueryWrapper(logisticChannel, request.getParameterMap());
+        LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+
+        //Step.2 获取导出数据
+        List<LogisticChannel> queryList = logisticChannelService.list(queryWrapper);
+        // 过滤选中数据
+        String selections = request.getParameter("selections");
+        List<LogisticChannel> logisticChannelList = new ArrayList<LogisticChannel>();
+        if (oConvertUtils.isEmpty(selections)) {
+            logisticChannelList = queryList;
+        } else {
+            List<String> selectionList = Arrays.asList(selections.split(","));
+            logisticChannelList = queryList.stream().filter(item -> selectionList.contains(item.getId())).collect(Collectors.toList());
+        }
+
+        // Step.3 组装pageList
+        List<LogisticChannelPage> pageList = new ArrayList<LogisticChannelPage>();
+        for (LogisticChannel main : logisticChannelList) {
+            LogisticChannelPage vo = new LogisticChannelPage();
+            BeanUtils.copyProperties(main, vo);
+            List<LogisticChannelPrice> logisticChannelPriceList = logisticChannelPriceService.selectByMainId(main.getId());
+            vo.setLogisticChannelPriceList(logisticChannelPriceList);
+            pageList.add(vo);
+        }
+
+        // Step.4 AutoPoi 导出Excel
+        ModelAndView mv = new ModelAndView(new JeecgEntityExcelView());
+        mv.addObject(NormalExcelConstants.FILE_NAME, "物流渠道列表");
+        mv.addObject(NormalExcelConstants.CLASS, LogisticChannelPage.class);
+        mv.addObject(NormalExcelConstants.PARAMS, new ExportParams("物流渠道数据", "导出人:" + sysUser.getRealname(), "物流渠道"));
+        mv.addObject(NormalExcelConstants.DATA_LIST, pageList);
+        return mv;
+    }
+
+    /**
+     * 通过excel导入数据
+     *
+     * @param request
+     * @param response
+     * @return
+     */
     @RequestMapping(value = "/importExcel", method = RequestMethod.POST)
     public Result<?> importExcel(HttpServletRequest request, HttpServletResponse response) {
-      MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
-      Map<String, MultipartFile> fileMap = multipartRequest.getFileMap();
-      for (Map.Entry<String, MultipartFile> entity : fileMap.entrySet()) {
-          MultipartFile file = entity.getValue();// 获取上传文件对象
-          ImportParams params = new ImportParams();
-          params.setTitleRows(2);
-          params.setHeadRows(1);
-          params.setNeedSave(true);
-          try {
-              List<LogisticChannelPage> list = ExcelImportUtil.importExcel(file.getInputStream(), LogisticChannelPage.class, params);
-              for (LogisticChannelPage page : list) {
-                  LogisticChannel po = new LogisticChannel();
-                  BeanUtils.copyProperties(page, po);
-                  logisticChannelService.saveMain(po, page.getLogisticChannelPriceList());
-              }
-              return Result.OK("文件导入成功！数据行数:" + list.size());
-          } catch (Exception e) {
-              log.error(e.getMessage(),e);
-              return Result.error("文件导入失败:"+e.getMessage());
-          } finally {
-              try {
-                  file.getInputStream().close();
-              } catch (IOException e) {
-                  e.printStackTrace();
-              }
-          }
-      }
-      return Result.OK("文件导入失败！");
+        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+        Map<String, MultipartFile> fileMap = multipartRequest.getFileMap();
+        for (Map.Entry<String, MultipartFile> entity : fileMap.entrySet()) {
+            MultipartFile file = entity.getValue();// 获取上传文件对象
+            ImportParams params = new ImportParams();
+            params.setTitleRows(2);
+            params.setHeadRows(1);
+            params.setNeedSave(true);
+            try {
+                List<LogisticChannelPage> list = ExcelImportUtil.importExcel(file.getInputStream(), LogisticChannelPage.class, params);
+                for (LogisticChannelPage page : list) {
+                    LogisticChannel po = new LogisticChannel();
+                    BeanUtils.copyProperties(page, po);
+                    logisticChannelService.saveMain(po, page.getLogisticChannelPriceList());
+                }
+                return Result.OK("文件导入成功！数据行数:" + list.size());
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+                return Result.error("文件导入失败:" + e.getMessage());
+            } finally {
+                try {
+                    file.getInputStream().close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return Result.OK("文件导入失败！");
     }
 
 }
