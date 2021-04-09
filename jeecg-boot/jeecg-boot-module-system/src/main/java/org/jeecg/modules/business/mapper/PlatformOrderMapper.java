@@ -2,7 +2,9 @@ package org.jeecg.modules.business.mapper;
 
 import java.util.List;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import org.apache.ibatis.annotations.Param;
+import org.jeecg.modules.business.entity.Client;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -14,4 +16,5 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  */
 public interface PlatformOrderMapper extends BaseMapper<PlatformOrder> {
 
+    List<PlatformOrder> selectByClientId(@Param("clientId")String clientId);
 }

@@ -1,6 +1,6 @@
 
 --  redis监控菜单sql
-INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_route`, `is_leaf`, `keep_alive`, `hidden`, `description`, `status`, `del_flag`, `rule_flag`, `create_by`, `create_time`, `update_by`, `update_time`, `internal_or_external`) VALUES ('1352200630711652354', 'f0675b52d89100ee88472b6800754a08', 'redis监控', '{{ window._CONFIG[\'domianURL\'] }}/jmreport/view/1352160857479581696', 'layouts/IframePageView', NULL, NULL, '1', NULL, '1', '1.00', '0', '', '1', '1', '0', '0', NULL, '1', '0', '0', 'admin', '2021-01-21 18:25:28', 'admin', '2021-01-22 16:49:43', '0');
+INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_route`, `is_leaf`, `keep_alive`, `hidden`, `description`, `status`, `del_flag`, `rule_flag`, `create_by`, `create_time`, `update_by`, `update_time`, `internal_or_external`) VALUES ('1352200630711652354', 'f0675b52d89100ee88472b6800754a08', 'redis监控', '{{ window._CONFIG[\'domainURL\'] }}/jmreport/view/1352160857479581696', 'layouts/IframePageView', NULL, NULL, '1', NULL, '1', '1.00', '0', '', '1', '1', '0', '0', NULL, '1', '0', '0', 'admin', '2021-01-21 18:25:28', 'admin', '2021-01-22 16:49:43', '0');
 
 
 

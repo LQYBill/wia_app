@@ -102,7 +102,7 @@ export const transitRESTful = {
 
 export {
   // imgView,
-  // doMian,
+  // domain,
   addRole,
   editRole,
   checkRoleCode,

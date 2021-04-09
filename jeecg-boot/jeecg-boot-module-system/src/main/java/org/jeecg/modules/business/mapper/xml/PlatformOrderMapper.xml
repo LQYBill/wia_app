@@ -2,4 +2,12 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.jeecg.modules.business.mapper.PlatformOrderMapper">
 
+    <select id="selectByClientId" parameterType="java.lang.String" resultType="org.jeecg.modules.business.entity.PlatformOrder">
+        SELECT p.*
+        FROM platform_order p
+                 JOIN shop s ON p.shop_id = s.id
+                 JOIN client c ON s.owner_id = c.id
+
+        where c.id = #{clientId} 	</select>
+
 </mapper>

@@ -270,7 +270,7 @@
     },
     computed: {
       importExcelUrl() {
-        return window._CONFIG['domianURL'] + this.url.importExcelUrl
+        return window._CONFIG['domainURL'] + this.url.importExcelUrl
       }
     },
     methods: {

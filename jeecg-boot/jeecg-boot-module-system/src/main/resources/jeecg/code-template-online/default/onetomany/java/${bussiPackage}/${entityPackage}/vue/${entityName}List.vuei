@@ -332,7 +332,7 @@
     },
     computed: {
       importExcelUrl: function(){
-        <#noparse>return `${window._CONFIG['domianURL']}/${this.url.importExcelUrl}`;</#noparse>
+        <#noparse>return `${window._CONFIG['domainURL']}/${this.url.importExcelUrl}`;</#noparse>
       }
     },
     methods: {

@@ -192,7 +192,7 @@ public class PlatformOrderController {
       List<PlatformOrder> queryList = platformOrderService.list(queryWrapper);
       // 过滤选中数据
       String selections = request.getParameter("selections");
-      List<PlatformOrder> platformOrderList = new ArrayList<PlatformOrder>();
+      List<PlatformOrder> platformOrderList;
       if(oConvertUtils.isEmpty(selections)) {
           platformOrderList = queryList;
       }else {

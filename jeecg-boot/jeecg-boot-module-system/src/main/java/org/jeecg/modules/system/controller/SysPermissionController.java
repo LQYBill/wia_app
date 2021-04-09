@@ -641,7 +641,7 @@ public class SysPermissionController {
 
 	/**
 	 * 判断是否外网URL 例如： http://localhost:8080/jeecg-boot/swagger-ui.html#/ 支持特殊格式： {{
-	 * window._CONFIG['domianURL'] }}/druid/ {{ JS代码片段 }}，前台解析会自动执行JS代码片段
+	 * window._CONFIG['domainURL'] }}/druid/ {{ JS代码片段 }}，前台解析会自动执行JS代码片段
 	 * 
 	 * @return
 	 */

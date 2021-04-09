@@ -16,4 +16,5 @@ public interface PlatformOrderContentMapper extends BaseMapper<PlatformOrderCont
 	public boolean deleteByMainId(@Param("mainId") String mainId);
     
 	public List<PlatformOrderContent> selectByMainId(@Param("mainId") String mainId);
+
 }
