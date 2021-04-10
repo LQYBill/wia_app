@@ -13,4 +13,16 @@
 		FROM  platform_order_content
 		WHERE
 			 platform_order_id = #{mainId} 	</select>
+
+	<select id="queryOrdersInfo" parameterType="java.lang.String" resultType="org.jeecg.modules.business.vo.OrdersStatisticInfo">
+		SELECT SUM(quantity) AS 'skuQuantity', COUNT(p.sku_id) AS 'productQuantity', SUM(quantity * price) AS 'previewPrice'
+		FROM platform_order_content
+		    JOIN
+		    (SELECT sku_id, price
+			 FROM sku_price
+			 GROUP BY sku_id
+			 HAVING MAX(date)
+		    ) p ON p.sku_id = platform_order_content.sku_id
+		WHERE platform_order_content.platform_order_id IN (${orderIds})
+	</select>
 </mapper>

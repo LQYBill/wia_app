@@ -9,6 +9,7 @@ import org.jeecg.modules.business.mapper.ClientUserMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
 import org.jeecg.modules.business.service.IClientPlatformOrderService;
+import org.jeecg.modules.business.vo.OrdersStatisticInfo;
 import org.jeecg.modules.business.vo.PlatformOrderPage;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,58 +42,10 @@ public class ClientPlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMap
         this.clientUserMapper = clientUserMapper;
     }
 
-
-    @Override
-    @Transactional
-    public void saveMain(PlatformOrder platformOrder, List<PlatformOrderContent> platformOrderContentList) {
-        platformOrderMapper.insert(platformOrder);
-        if (platformOrderContentList != null && platformOrderContentList.size() > 0) {
-            for (PlatformOrderContent entity : platformOrderContentList) {
-                //外键设置
-                entity.setStatus(platformOrder.getStatus());
-                platformOrderContentMapper.insert(entity);
-            }
-        }
-    }
-
-    @Override
-    @Transactional
-    public void updateMain(PlatformOrder platformOrder, List<PlatformOrderContent> platformOrderContentList) {
-        platformOrderMapper.updateById(platformOrder);
-
-        //1.先删除子表数据
-        platformOrderContentMapper.deleteByMainId(platformOrder.getId());
-
-        //2.子表数据重新插入
-        if (platformOrderContentList != null && platformOrderContentList.size() > 0) {
-            for (PlatformOrderContent entity : platformOrderContentList) {
-                //外键设置
-                entity.setStatus(platformOrder.getStatus());
-                platformOrderContentMapper.insert(entity);
-            }
-        }
-    }
-
-    @Override
-    @Transactional
-    public void delMain(String id) {
-        platformOrderContentMapper.deleteByMainId(id);
-        platformOrderMapper.deleteById(id);
-    }
-
-    @Override
-    @Transactional
-    public void delBatchMain(Collection<? extends Serializable> idList) {
-        for (Serializable id : idList) {
-            platformOrderContentMapper.deleteByMainId(id.toString());
-            platformOrderMapper.deleteById(id);
-        }
-    }
-
     public List<PlatformOrderPage> getPlatformOrderList() {
         LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
         String clientId = clientUserMapper.selectByUserId(sysUser.getId());
-        if (null == clientId){
+        if (null == clientId) {
             return Collections.emptyList();
         }
         List<PlatformOrder> orders = platformOrderMapper.selectByClientId(clientId);
@@ -106,5 +59,11 @@ public class ClientPlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMap
                     return vo;
                 }
         ).collect(Collectors.toList());
+    }
+
+    @Override
+    public OrdersStatisticInfo getPlatformOrdersStatisticInfo(List<String> orderIds) {
+        String ids = orderIds.stream().collect(Collectors.joining("','", "'", "'"));
+        return platformOrderContentMapper.queryOrdersInfo(ids);
     }
 }

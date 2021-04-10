@@ -15,7 +15,7 @@ export default api
 export function postAction(url,parameter) {
   return axios({
     url: url,
-    method:'post' ,
+    method:'post',
     data: parameter
   })
 }

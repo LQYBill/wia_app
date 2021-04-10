@@ -3,6 +3,7 @@ package org.jeecg.modules.business.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
+import org.jeecg.modules.business.vo.OrdersStatisticInfo;
 import org.jeecg.modules.business.vo.PlatformOrderPage;
 
 import java.io.Serializable;
@@ -17,27 +18,7 @@ import java.util.List;
  */
 public interface IClientPlatformOrderService extends IService<PlatformOrder> {
 
-	/**
-	 * 添加一对多
-	 * 
-	 */
-	public void saveMain(PlatformOrder platformOrder,List<PlatformOrderContent> platformOrderContentList) ;
-	
-	/**
-	 * 修改一对多
-	 * 
-	 */
-	public void updateMain(PlatformOrder platformOrder,List<PlatformOrderContent> platformOrderContentList);
-	
-	/**
-	 * 删除一对多
-	 */
-	public void delMain (String id);
-	
-	/**
-	 * 批量删除一对多
-	 */
-	public void delBatchMain (Collection<? extends Serializable> idList);
-
 	List<PlatformOrderPage> getPlatformOrderList();
+
+	OrdersStatisticInfo getPlatformOrdersStatisticInfo(List<String> orderIds);
 }

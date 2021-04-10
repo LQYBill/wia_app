@@ -4,9 +4,11 @@ import java.util.List;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import org.jeecg.modules.business.entity.Client;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.jeecg.modules.business.vo.OrdersStatisticInfo;
 
 /**
  * @Description: 平台订单表

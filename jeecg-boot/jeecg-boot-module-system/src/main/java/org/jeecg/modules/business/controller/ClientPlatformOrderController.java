@@ -1,8 +1,6 @@
 package org.jeecg.modules.business.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -17,26 +15,20 @@ import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.service.IClientPlatformOrderService;
 import org.jeecg.modules.business.service.IPlatformOrderContentService;
 import org.jeecg.modules.business.service.IPlatformOrderService;
+import org.jeecg.modules.business.vo.OrdersStatisticInfo;
 import org.jeecg.modules.business.vo.PlatformOrderPage;
-import org.jeecgframework.poi.excel.ExcelImportUtil;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
 import org.jeecgframework.poi.excel.entity.ExportParams;
-import org.jeecgframework.poi.excel.entity.ImportParams;
 import org.jeecgframework.poi.excel.view.JeecgEntityExcelView;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -64,89 +56,26 @@ public class ClientPlatformOrderController {
     }
 
     /**
-     * 分页列表查询
+     * Query all platform orders for current client.
      *
-     * @param platformOrder
-     * @param pageNo
-     * @param pageSize
-     * @param req
-     * @return
+     * @return all platform orders of current client
      */
-    @AutoLog(value = "平台订单表-分页列表查询")
-    @ApiOperation(value = "平台订单表-分页列表查询", notes = "平台订单表-分页列表查询")
+    @AutoLog(value = "当前客户的平台订单列表查询")
+    @ApiOperation(value = "当前客户的平台订单列表查询", notes = "当前客户的平台订单列表查询")
     @GetMapping(value = "/list")
-    public Result<List<PlatformOrderPage>> queryPageList(PlatformOrder platformOrder,
-                                                         @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
-                                                         @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
-                                                         HttpServletRequest req) {
-
-        log.info("query for client platform orders");
+    public Result<List<PlatformOrderPage>> queryAllPlatformOrder() {
+        log.info("Query for client platform orders");
         return Result.OK(clientPlatformOrderService.getPlatformOrderList());
     }
 
-    /**
-     * 添加
-     *
-     * @param platformOrderPage
-     * @return
-     */
-    @AutoLog(value = "平台订单表-添加")
-    @ApiOperation(value = "平台订单表-添加", notes = "平台订单表-添加")
-    @PostMapping(value = "/add")
-    public Result<?> add(@RequestBody PlatformOrderPage platformOrderPage) {
-        PlatformOrder platformOrder = new PlatformOrder();
-        BeanUtils.copyProperties(platformOrderPage, platformOrder);
-        platformOrderService.saveMain(platformOrder, platformOrderPage.getPlatformOrderContentList());
-        return Result.OK("添加成功！");
+
+    @PostMapping(value = "/computeInfo", consumes = "application/json", produces = "application/json")
+    public Result<OrdersStatisticInfo> queryOrdersStatisticInfo(@RequestBody List<String> orderIds) {
+        log.info("Calculating statistic information for orders: {}",orderIds);
+        OrdersStatisticInfo ordersInfo = clientPlatformOrderService.getPlatformOrdersStatisticInfo(orderIds);
+        return Result.OK(ordersInfo);
     }
 
-    /**
-     * 编辑
-     *
-     * @param platformOrderPage
-     * @return
-     */
-    @AutoLog(value = "平台订单表-编辑")
-    @ApiOperation(value = "平台订单表-编辑", notes = "平台订单表-编辑")
-    @PutMapping(value = "/edit")
-    public Result<?> edit(@RequestBody PlatformOrderPage platformOrderPage) {
-        PlatformOrder platformOrder = new PlatformOrder();
-        BeanUtils.copyProperties(platformOrderPage, platformOrder);
-        PlatformOrder platformOrderEntity = platformOrderService.getById(platformOrder.getId());
-        if (platformOrderEntity == null) {
-            return Result.error("未找到对应数据");
-        }
-        platformOrderService.updateMain(platformOrder, platformOrderPage.getPlatformOrderContentList());
-        return Result.OK("编辑成功!");
-    }
-
-    /**
-     * 通过id删除
-     *
-     * @param id
-     * @return
-     */
-    @AutoLog(value = "平台订单表-通过id删除")
-    @ApiOperation(value = "平台订单表-通过id删除", notes = "平台订单表-通过id删除")
-    @DeleteMapping(value = "/delete")
-    public Result<?> delete(@RequestParam(name = "id", required = true) String id) {
-        platformOrderService.delMain(id);
-        return Result.OK("删除成功!");
-    }
-
-    /**
-     * 批量删除
-     *
-     * @param ids
-     * @return
-     */
-    @AutoLog(value = "平台订单表-批量删除")
-    @ApiOperation(value = "平台订单表-批量删除", notes = "平台订单表-批量删除")
-    @DeleteMapping(value = "/deleteBatch")
-    public Result<?> deleteBatch(@RequestParam(name = "ids", required = true) String ids) {
-        this.platformOrderService.delBatchMain(Arrays.asList(ids.split(",")));
-        return Result.OK("批量删除成功！");
-    }
 
     /**
      * 通过id查询
@@ -163,7 +92,6 @@ public class ClientPlatformOrderController {
             return Result.error("未找到对应数据");
         }
         return Result.OK(platformOrder);
-
     }
 
     /**
@@ -221,45 +149,6 @@ public class ClientPlatformOrderController {
         mv.addObject(NormalExcelConstants.PARAMS, new ExportParams("平台订单表数据", "导出人:" + sysUser.getRealname(), "平台订单表"));
         mv.addObject(NormalExcelConstants.DATA_LIST, pageList);
         return mv;
-    }
-
-    /**
-     * 通过excel导入数据
-     *
-     * @param request
-     * @param response
-     * @return
-     */
-    @RequestMapping(value = "/importExcel", method = RequestMethod.POST)
-    public Result<?> importExcel(HttpServletRequest request, HttpServletResponse response) {
-        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
-        Map<String, MultipartFile> fileMap = multipartRequest.getFileMap();
-        for (Map.Entry<String, MultipartFile> entity : fileMap.entrySet()) {
-            MultipartFile file = entity.getValue();// 获取上传文件对象
-            ImportParams params = new ImportParams();
-            params.setTitleRows(2);
-            params.setHeadRows(1);
-            params.setNeedSave(true);
-            try {
-                List<PlatformOrderPage> list = ExcelImportUtil.importExcel(file.getInputStream(), PlatformOrderPage.class, params);
-                for (PlatformOrderPage page : list) {
-                    PlatformOrder po = new PlatformOrder();
-                    BeanUtils.copyProperties(page, po);
-                    platformOrderService.saveMain(po, page.getPlatformOrderContentList());
-                }
-                return Result.OK("文件导入成功！数据行数:" + list.size());
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-                return Result.error("文件导入失败:" + e.getMessage());
-            } finally {
-                try {
-                    file.getInputStream().close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return Result.OK("文件导入失败！");
     }
 
 }

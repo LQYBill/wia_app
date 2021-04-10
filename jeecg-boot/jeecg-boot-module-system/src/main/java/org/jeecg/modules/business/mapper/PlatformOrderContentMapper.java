@@ -4,6 +4,7 @@ import java.util.List;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
+import org.jeecg.modules.business.vo.OrdersStatisticInfo;
 
 /**
  * @Description: 平台订单内容
@@ -16,5 +17,12 @@ public interface PlatformOrderContentMapper extends BaseMapper<PlatformOrderCont
 	public boolean deleteByMainId(@Param("mainId") String mainId);
     
 	public List<PlatformOrderContent> selectByMainId(@Param("mainId") String mainId);
+
+	/**
+	 * Get order infos
+	 * @param orderIds the string that can fit in WHERE clause
+	 * @return
+	 */
+	OrdersStatisticInfo queryOrdersInfo(String orderIds);
 
 }
