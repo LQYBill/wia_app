@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import org.jeecg.common.aspect.annotation.Dict;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.jeecgframework.poi.excel.annotation.Excel;
 import java.util.Date;
@@ -71,5 +72,5 @@ public class PlatformOrderContent implements Serializable {
     private java.math.BigDecimal serviceFee;
 	/**sku状态*/
     @ApiModelProperty(value = "sku状态")
-    private Integer status;
+    private String status;
 }

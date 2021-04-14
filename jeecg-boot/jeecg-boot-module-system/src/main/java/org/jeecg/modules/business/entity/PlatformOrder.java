@@ -104,5 +104,5 @@ public class PlatformOrder implements Serializable {
 	/**状态*/
 	@Excel(name = "状态", width = 15)
     @ApiModelProperty(value = "状态")
-    private Integer status;
+    private String status;
 }
