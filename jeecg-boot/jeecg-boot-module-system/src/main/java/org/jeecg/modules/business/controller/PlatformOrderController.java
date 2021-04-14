@@ -179,7 +179,10 @@ public class PlatformOrderController {
     @GetMapping(value = "/queryPlatformOrderContentByMainId")
     public Result<?> queryPlatformOrderContentListByMainId(@RequestParam(name = "id", required = true) String id) {
         List<PlatformOrderContent> platformOrderContentList = platformOrderContentService.selectByMainId(id);
-        return Result.OK(platformOrderContentList);
+        IPage<PlatformOrderContent> page = new Page<>();
+        page.setRecords(platformOrderContentList);
+        page.setTotal(platformOrderContentList.size());
+        return Result.OK(page);
     }
 
     /**

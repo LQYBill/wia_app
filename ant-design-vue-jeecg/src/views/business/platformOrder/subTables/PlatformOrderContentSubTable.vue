@@ -60,12 +60,12 @@
           {
             title: '平台订单ID',
             align: 'center',
-            dataIndex: 'platformOrderId'
+            dataIndex: 'platformOrderId_dictText'
           },
           {
             title: 'SKU ID',
             align: 'center',
-            dataIndex: 'skuId'
+            dataIndex: 'skuId_dictText'
           },
           {
             title: 'SKU数量',
@@ -117,7 +117,7 @@
           id: record.id
         }).then((res) => {
           if (res.success) {
-            this.dataSource = res.result
+            this.dataSource = res.result.records
           }
         }).finally(() => {
           this.loading = false

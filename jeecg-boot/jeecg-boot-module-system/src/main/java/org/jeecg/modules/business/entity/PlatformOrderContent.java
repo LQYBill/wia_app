@@ -48,10 +48,12 @@ public class PlatformOrderContent implements Serializable {
     private Date updateTime;
 	/**平台订单ID*/
 	@Excel(name = "平台订单ID", width = 15, dictTable = "platform_order", dicText = "platform_order_id", dicCode = "id")
+    @Dict(dictTable = "platform_order", dicText = "platform_order_id", dicCode = "id")
     @ApiModelProperty(value = "平台订单ID")
     private String platformOrderId;
 	/**SKU ID*/
 	@Excel(name = "SKU ID", width = 15, dictTable = "sku", dicText = "erp_code", dicCode = "id")
+	@Dict(dictTable = "sku", dicText = "erp_code", dicCode = "id")
     @ApiModelProperty(value = "SKU ID")
     private String skuId;
 	/**SKU数量*/
