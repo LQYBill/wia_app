@@ -35,6 +35,7 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
 			for(PlatformOrderContent entity:platformOrderContentList) {
 				//外键设置
 				entity.setStatus(platformOrder.getStatus());
+				entity.setPlatformOrderId(platformOrder.getId());
 				platformOrderContentMapper.insert(entity);
 			}
 		}
