@@ -90,7 +90,7 @@
           {
             title: 'sku状态',
             align: 'center',
-            dataIndex: 'status',
+            dataIndex: 'status_dictText',
           },
         ],
         url: {

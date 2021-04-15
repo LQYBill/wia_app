@@ -12,7 +12,6 @@ import org.jeecgframework.poi.excel.annotation.Excel;
 import java.util.Date;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import java.io.UnsupportedEncodingException;
 
 /**
  * @Description: 平台订单内容
@@ -73,6 +72,8 @@ public class PlatformOrderContent implements Serializable {
     @ApiModelProperty(value = "服务总费用")
     private java.math.BigDecimal serviceFee;
 	/**sku状态*/
-    @ApiModelProperty(value = "sku状态")
-    private String status;
+    @ApiModelProperty(value = "SKU 状态")
+    @Excel(name = "SKU 状态", width = 15, dictTable = "sku_status", dicText = "status_text", dicCode = "status_code")
+    @Dict(dictTable = "sku_status", dicText = "status_text", dicCode = "status_code")
+    private Integer status;
 }

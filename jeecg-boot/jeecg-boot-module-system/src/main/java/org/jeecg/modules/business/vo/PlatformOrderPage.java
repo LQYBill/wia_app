@@ -99,9 +99,10 @@ public class PlatformOrderPage {
 	@ApiModelProperty(value = "物流发票号")
     private String shippingInvoiceNumber;
 	/**状态*/
-	@Excel(name = "状态", width = 15)
+	@Excel(name = "状态", width = 15, dictTable = "sku_status", dicText = "status_text", dicCode = "status_code")
+	@Dict(dictTable = "sku_status", dicText = "status_text", dicCode = "status_code")
 	@ApiModelProperty(value = "状态")
-    private String status;
+    private Integer status;
 	
 	@ExcelCollection(name="平台订单内容")
 	@ApiModelProperty(value = "平台订单内容")
