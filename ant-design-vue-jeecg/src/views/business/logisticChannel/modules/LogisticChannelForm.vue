@@ -26,7 +26,7 @@
           </a-col>
           <a-col :span="24" >
             <a-form-model-item label="是否使用抛重" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="useVolumetricWeight">
-              <j-dict-select-tag type="radio" v-model="model.useVolumetricWeight" dictCode="" placeholder="请选择是否使用抛重" />
+              <j-dict-select-tag type="radio" v-model="model.useVolumetricWeight" dictCode="volume_weight" placeholder="请选择是否使用抛重" />
             </a-form-model-item>
           </a-col>
           <a-col :span="24" >

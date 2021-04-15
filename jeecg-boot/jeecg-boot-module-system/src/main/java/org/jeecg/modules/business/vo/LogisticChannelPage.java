@@ -60,8 +60,8 @@ public class LogisticChannelPage {
 	@ApiModelProperty(value = "公司名称")
     private String company;
 	/**是否使用抛重*/
-	@Excel(name = "是否使用抛重", width = 15, dicCode = "volumn_weight")
-    @Dict(dicCode = "volumn_weight")
+	@Excel(name = "是否使用抛重", width = 15, dicCode = "volume_weight")
+    @Dict(dicCode = "volume_weight")
 	@ApiModelProperty(value = "是否使用抛重")
     private Integer useVolumetricWeight;
 	/**抛重系数*/
