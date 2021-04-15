@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import org.jeecg.common.aspect.annotation.Dict;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.jeecgframework.poi.excel.annotation.Excel;
 import java.util.Date;
@@ -46,6 +47,7 @@ public class Sku implements Serializable {
     private Date updateTime;
 	/**商品ID*/
     @ApiModelProperty(value = "商品ID")
+    @Dict(dictTable = "product", dicText = "code", dicCode = "id")
     private String productId;
 	/**ERP中商品代码*/
 	@Excel(name = "ERP中商品代码", width = 15)
