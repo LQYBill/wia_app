@@ -10,6 +10,8 @@ import org.jeecg.common.aspect.annotation.Dict;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.jeecgframework.poi.excel.annotation.Excel;
 import java.util.Date;
+import java.util.Objects;
+
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
@@ -76,4 +78,17 @@ public class PlatformOrderContent implements Serializable {
     @Excel(name = "SKU 状态", width = 15, dictTable = "sku_status", dicText = "status_text", dicCode = "status_code")
     @Dict(dictTable = "sku_status", dicText = "status_text", dicCode = "status_code")
     private Integer status;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PlatformOrderContent content = (PlatformOrderContent) o;
+        return id.equals(content.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

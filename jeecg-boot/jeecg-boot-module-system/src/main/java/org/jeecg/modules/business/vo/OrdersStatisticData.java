@@ -9,10 +9,12 @@ import java.math.BigDecimal;
  * This class is used to display details of multiple orders
  */
 @Data
-public class OrdersStatisticInfo {
+public class OrdersStatisticData {
     private final int totalQuantity;
 
     private final int skuNumber;
 
-    private final BigDecimal estimatedPrice;
+    private final BigDecimal estimatedTotalPrice;
+
+    private BigDecimal reducedAmount;
 }

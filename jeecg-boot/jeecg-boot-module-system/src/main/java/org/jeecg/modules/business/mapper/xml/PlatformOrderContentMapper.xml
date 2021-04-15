@@ -14,10 +14,10 @@
 		WHERE
 			 platform_order_id = #{mainId} 	</select>
 
-	<select id="queryOrdersInfo" parameterType="java.lang.String" resultType="org.jeecg.modules.business.vo.OrdersStatisticInfo">
-		SELECT SUM(quantity) AS 'skuQuantity', COUNT(p.sku_id) AS 'productQuantity', SUM(quantity * price) AS 'previewPrice'
+	<select id="queryOrdersInfo" parameterType="java.lang.String" resultType="org.jeecg.modules.business.vo.OrdersStatisticData">
+		SELECT SUM(quantity) AS 'totalQuantity', COUNT(DISTINCT platform_order_content.sku_id) AS 'skuNumber', SUM(quantity * price) AS 'estimatedTotalPrice'
 		FROM platform_order_content
-		    JOIN
+		    LEFT JOIN
 		    (SELECT sku_id, price
 			 FROM sku_price
 			 GROUP BY sku_id

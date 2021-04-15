@@ -2,12 +2,9 @@ package org.jeecg.modules.business.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.jeecg.modules.business.entity.PlatformOrder;
-import org.jeecg.modules.business.entity.PlatformOrderContent;
-import org.jeecg.modules.business.vo.OrdersStatisticInfo;
+import org.jeecg.modules.business.vo.OrdersStatisticData;
 import org.jeecg.modules.business.vo.PlatformOrderPage;
 
-import java.io.Serializable;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -20,5 +17,5 @@ public interface IClientPlatformOrderService extends IService<PlatformOrder> {
 
 	List<PlatformOrderPage> getPlatformOrderList();
 
-	OrdersStatisticInfo getPlatformOrdersStatisticInfo(List<String> orderIds);
+	OrdersStatisticData getPlatformOrdersStatisticData(List<String> orderIds);
 }

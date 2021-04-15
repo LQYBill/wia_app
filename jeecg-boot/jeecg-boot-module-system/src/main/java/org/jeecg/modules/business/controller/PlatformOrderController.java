@@ -81,7 +81,7 @@ public class PlatformOrderController {
                                    @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
                                    HttpServletRequest req) {
         QueryWrapper<PlatformOrder> queryWrapper = QueryGenerator.initQueryWrapper(platformOrder, req.getParameterMap());
-        Page<PlatformOrder> page = new Page<PlatformOrder>(pageNo, pageSize);
+        Page<PlatformOrder> page = new Page<>(pageNo, pageSize);
         IPage<PlatformOrder> pageList = platformOrderService.page(page, queryWrapper);
         return Result.OK(pageList);
     }

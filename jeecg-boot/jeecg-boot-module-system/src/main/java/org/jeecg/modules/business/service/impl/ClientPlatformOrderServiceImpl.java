@@ -4,20 +4,20 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.shiro.SecurityUtils;
 import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.modules.business.entity.PlatformOrder;
-import org.jeecg.modules.business.entity.PlatformOrderContent;
+import org.jeecg.modules.business.entity.Promotion;
 import org.jeecg.modules.business.mapper.ClientUserMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
+import org.jeecg.modules.business.mapper.PromotionMapper;
 import org.jeecg.modules.business.service.IClientPlatformOrderService;
-import org.jeecg.modules.business.vo.OrdersStatisticInfo;
+import org.jeecg.modules.business.vo.OrdersStatisticData;
 import org.jeecg.modules.business.vo.PlatformOrderPage;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.io.Serializable;
-import java.util.Collection;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -34,17 +34,25 @@ public class ClientPlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMap
     private final PlatformOrderMapper platformOrderMapper;
     private final PlatformOrderContentMapper platformOrderContentMapper;
     private final ClientUserMapper clientUserMapper;
+    private final PromotionMapper promotionMapper;
 
     @Autowired
-    public ClientPlatformOrderServiceImpl(PlatformOrderMapper platformOrderMapper, PlatformOrderContentMapper platformOrderContentMapper, ClientUserMapper clientUserMapper) {
+    public ClientPlatformOrderServiceImpl(PlatformOrderMapper platformOrderMapper,
+                                          PlatformOrderContentMapper platformOrderContentMapper,
+                                          ClientUserMapper clientUserMapper,
+                                          PromotionMapper promotionMapper) {
         this.platformOrderMapper = platformOrderMapper;
         this.platformOrderContentMapper = platformOrderContentMapper;
         this.clientUserMapper = clientUserMapper;
+        this.promotionMapper = promotionMapper;
     }
 
+    @Override
     public List<PlatformOrderPage> getPlatformOrderList() {
+        // search client id for current user
         LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
         String clientId = clientUserMapper.selectByUserId(sysUser.getId());
+        // in case of other roles
         if (null == clientId) {
             return Collections.emptyList();
         }
@@ -62,8 +70,34 @@ public class ClientPlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMap
     }
 
     @Override
-    public OrdersStatisticInfo getPlatformOrdersStatisticInfo(List<String> orderIds) {
+    public OrdersStatisticData getPlatformOrdersStatisticData(List<String> orderIds) {
         String ids = orderIds.stream().collect(Collectors.joining("','", "'", "'"));
-        return platformOrderContentMapper.queryOrdersInfo(ids);
+        OrdersStatisticData data = platformOrderContentMapper.queryOrdersInfo(ids);
+
+        // calculate reduced amount for all orders
+        BigDecimal reducedAmount = orderIds.stream()
+                .map(platformOrderContentMapper::selectByMainId)
+                .reduce(
+                        new ArrayList<>(),
+                        (result, element) -> {
+                            result.addAll(element);
+                            return result;
+                        }
+                )
+                .stream()
+                .map(
+                        c -> {
+                            Promotion p = promotionMapper.findBySku(c.getSkuId());
+                            if (null != p) {
+                                return p.simulateExemption(c.getQuantity());
+                            } else {
+                                return BigDecimal.ZERO;
+                            }
+                        }
+                )
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        data.setReducedAmount(reducedAmount);
+        return data;
     }
 }

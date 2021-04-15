@@ -1,6 +1,8 @@
 package org.jeecg.modules.business.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +17,7 @@ import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.service.IClientPlatformOrderService;
 import org.jeecg.modules.business.service.IPlatformOrderContentService;
 import org.jeecg.modules.business.service.IPlatformOrderService;
-import org.jeecg.modules.business.vo.OrdersStatisticInfo;
+import org.jeecg.modules.business.vo.OrdersStatisticData;
 import org.jeecg.modules.business.vo.PlatformOrderPage;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
 import org.jeecgframework.poi.excel.entity.ExportParams;
@@ -63,17 +65,21 @@ public class ClientPlatformOrderController {
     @AutoLog(value = "当前客户的平台订单列表查询")
     @ApiOperation(value = "当前客户的平台订单列表查询", notes = "当前客户的平台订单列表查询")
     @GetMapping(value = "/list")
-    public Result<List<PlatformOrderPage>> queryAllPlatformOrder() {
+    public Result<IPage<PlatformOrderPage>> queryAllPlatformOrder() {
         log.info("Query for client platform orders");
-        return Result.OK(clientPlatformOrderService.getPlatformOrderList());
+        IPage<PlatformOrderPage> page = new Page<>();
+        List<PlatformOrderPage> platformOrderPages = clientPlatformOrderService.getPlatformOrderList();
+        page.setRecords(platformOrderPages);
+        page.setTotal(platformOrderPages.size());
+        return Result.OK(page);
     }
 
 
     @PostMapping(value = "/computeInfo", consumes = "application/json", produces = "application/json")
-    public Result<OrdersStatisticInfo> queryOrdersStatisticInfo(@RequestBody List<String> orderIds) {
-        log.info("Calculating statistic information for orders: {}",orderIds);
-        OrdersStatisticInfo ordersInfo = clientPlatformOrderService.getPlatformOrdersStatisticInfo(orderIds);
-        return Result.OK(ordersInfo);
+    public Result<OrdersStatisticData> queryOrdersStatisticInfo(@RequestBody List<String> orderIds) {
+        log.info("Calculating statistic information for orders: {}", orderIds);
+        OrdersStatisticData ordersData = clientPlatformOrderService.getPlatformOrdersStatisticData(orderIds);
+        return Result.OK(ordersData);
     }
 
 

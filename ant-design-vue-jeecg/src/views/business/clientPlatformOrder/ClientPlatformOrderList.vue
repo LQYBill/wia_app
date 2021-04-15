@@ -13,7 +13,8 @@
     <!-- 操作按钮区域 begin -->
     <div class="table-operator">
       <p>{{
-          `SKU number: ${orderData.skuNumber}, Total quantity: ${orderData.totalQuantity}, Estimated price: ${orderData.estimatedPrice}`
+          `SKU number: ${orderData.skuNumber}, Total quantity: ${orderData.totalQuantity}, Estimated price: ${orderData.estimatedTotalPrice}€,
+            reduced amount: ${orderData.reducedAmount}€`
         }}</p>
     </div>
     <!-- 操作按钮区域 end -->
@@ -36,7 +37,7 @@
         bordered
         rowKey="id"
         class="j-table-force-nowrap"
-        :scroll="{x:true}"
+        :scroll="{ x: 500, y: 500 }"
         :loading="loading"
         :columns="columns"
         :dataSource="dataSource"
@@ -142,37 +143,44 @@ export default {
         {
           title: '店铺ID',
           align: 'center',
-          dataIndex: 'shopId_dictText'
+          dataIndex: 'shopId_dictText',
+          width: 60,
         },
         {
           title: '物流渠道',
           align: 'center',
-          dataIndex: 'logisticChannelName_dictText'
+          dataIndex: 'logisticChannelName_dictText',
+          ellipsis: true
         },
         {
           title: '平台订单号码',
           align: 'center',
           dataIndex: 'platformOrderId',
+          width: 120,
         },
         {
           title: '平台订单交易号',
           align: 'center',
           dataIndex: 'platformOrderNumber',
+          width: 100,
         },
         {
           title: '物流跟踪号',
           align: 'center',
           dataIndex: 'trackingNumber',
+          width: 120,
         },
         {
           title: '订单交易时间',
           align: 'center',
           dataIndex: 'orderTime',
+          width: 120,
         },
         {
           title: '订单发货时间',
           align: 'center',
           dataIndex: 'shippingTime',
+          width: 120,
         },
         {
           title: '订单收件人',
@@ -183,26 +191,31 @@ export default {
           title: '订单收件人国家',
           align: 'center',
           dataIndex: 'country',
+          width: 120,
         },
         {
           title: '订单收件人邮编',
           align: 'center',
           dataIndex: 'postcode',
+          width: 80,
         },
         {
           title: '物流挂号费',
           align: 'center',
           dataIndex: 'fretFee',
+          width: 80,
         },
         {
           title: '物流发票号',
           align: 'center',
-          dataIndex: 'shippingInvoiceNumber_dictText'
+          dataIndex: 'shippingInvoiceNumber_dictText',
+          width: 147,
         },
         {
           title: '状态',
           align: 'center',
           dataIndex: 'status',
+          width: 147,
         },
         {
           title: '操作',
@@ -228,7 +241,8 @@ export default {
       orderData: {
         skuNumber: 0,
         totalQuantity: 0,
-        estimatedPrice: 0
+        estimatedPrice: 0,
+        reducedAmount: 0
       }
     }
   },
@@ -298,7 +312,8 @@ export default {
         this.orderData = {
           skuNumber: 0,
           totalQuantity: 0,
-          estimatedPrice: 0
+          estimatedTotalPrice: 0,
+          reducedAmount: 0
         }
       } else {
         let self = this

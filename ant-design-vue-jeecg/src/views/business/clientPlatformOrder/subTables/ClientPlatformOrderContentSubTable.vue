@@ -117,7 +117,7 @@
           id: record.id
         }).then((res) => {
           if (res.success) {
-            this.dataSource = res.result
+            this.dataSource = res.result.records
           }
         }).finally(() => {
           this.loading = false

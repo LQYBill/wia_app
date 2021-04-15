@@ -79,7 +79,7 @@ public class LogisticChannelController {
                                    @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
                                    HttpServletRequest req) {
         QueryWrapper<LogisticChannel> queryWrapper = QueryGenerator.initQueryWrapper(logisticChannel, req.getParameterMap());
-        Page<LogisticChannel> page = new Page<LogisticChannel>(pageNo, pageSize);
+        Page<LogisticChannel> page = new Page<>(pageNo, pageSize);
         IPage<LogisticChannel> pageList = logisticChannelService.page(page, queryWrapper);
         return Result.OK(pageList);
     }
