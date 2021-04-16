@@ -1,5 +1,37 @@
 <template>
   <a-card class="j-inner-table-wrapper" :bordered="false">
+    <template>
+      <a-row :gutter="16">
+        <a-col :span="6">
+          <a-statistic title="SKU Number" :value="orderData.skuNumber" style="margin-right: 50px">
+            <template #suffix>
+              <span>units</span>
+            </template>
+          </a-statistic>
+        </a-col>
+        <a-col :span="6">
+          <a-statistic title="Total Quantity" :value="orderData.totalQuantity" class="demo-class">
+            <template #suffix>
+              <span>units</span>
+            </template>
+          </a-statistic>
+        </a-col>
+        <a-col :span="6">
+          <a-statistic title="Estimated Price" :value="orderData.estimatedTotalPrice" class="demo-class">
+            <template #suffix>
+              <span>€</span>
+            </template>
+          </a-statistic>
+        </a-col>
+        <a-col :span="6">
+          <a-statistic title="Reduced Amount" :value="orderData.reducedAmount" class="demo-class">
+            <template #suffix>
+              <span>€</span>
+            </template>
+          </a-statistic>
+        </a-col>
+      </a-row>
+    </template>
 
     <!-- 查询区域 begin -->
     <div class="table-page-search-wrapper">
@@ -10,24 +42,15 @@
     </div>
     <!-- 查询区域 end -->
 
-    <!-- 操作按钮区域 begin -->
-    <div class="table-operator">
-      <p>{{
-          `SKU number: ${orderData.skuNumber}, Total quantity: ${orderData.totalQuantity}, Estimated price: ${orderData.estimatedTotalPrice}€,
-            reduced amount: ${orderData.reducedAmount}€`
-        }}</p>
-    </div>
-    <!-- 操作按钮区域 end -->
-
     <!-- table区域 begin -->
     <div>
 
       <a-alert type="info" showIcon style="margin-bottom: 16px;">
         <template slot="message">
-          <span>已选择</span>
+          <span>{{ $t("selected") }}</span>
           <a style="font-weight: 600;padding: 0 4px;">{{ selectedRowKeys.length }}</a>
-          <span>项</span>
-          <a style="margin-left: 24px" @click="onClearSelected">清空</a>
+          <span>{{ $t("orders") }}</span>
+          <a style="margin-left: 24px" @click="onClearSelected">{{$t("clearAll")}}</a>
         </template>
       </a-alert>
 
@@ -37,7 +60,7 @@
         bordered
         rowKey="id"
         class="j-table-force-nowrap"
-        :scroll="{ x: 500, y: 500 }"
+        :scroll="{ x: true }"
         :loading="loading"
         :columns="columns"
         :dataSource="dataSource"
@@ -50,7 +73,7 @@
         <!-- 内嵌table区域 begin -->
         <template slot="expandedRowRender" slot-scope="record">
           <a-tabs tabPosition="top">
-            <a-tab-pane tab="平台订单内容" key="platformOrderContent" forceRender>
+            <a-tab-pane :tab="$t('orderContent')" key="platformOrderContent" forceRender>
               <platform-order-content-sub-table :record="record"/>
             </a-tab-pane>
           </a-tabs>

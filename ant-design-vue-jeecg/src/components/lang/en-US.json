@@ -22,7 +22,9 @@
   "city": "City",
   "country": "Country",
   "Currency": "Currency",
-  "postCode": "Postal Code"
-
+  "postCode": "Postal Code",
+  "clearAll": "Clear All",
+  "orders": "orders",
+  "orderContent": "Order Contents"
 
 }
