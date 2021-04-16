@@ -8,16 +8,17 @@ import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.jeecgframework.poi.excel.annotation.Excel;
+
+import java.math.BigDecimal;
 import java.util.Date;
 import org.jeecg.common.aspect.annotation.Dict;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import java.io.UnsupportedEncodingException;
 
 /**
  * @Description: SKU价格表
  * @Author: jeecg-boot
- * @Date:   2021-04-03
+ * @Date:   2021-04-16
  * @Version: V1.0
  */
 @ApiModel(value="sku对象", description="SKU表")
@@ -53,7 +54,15 @@ public class SkuPrice implements Serializable {
 	/**价格*/
 	@Excel(name = "价格", width = 15)
     @ApiModelProperty(value = "价格")
-    private java.math.BigDecimal price;
+    private BigDecimal price;
+	/**优惠价起订量*/
+	@Excel(name = "优惠价起订量", width = 15)
+    @ApiModelProperty(value = "优惠价起订量")
+    private Integer threshold;
+	/**优惠价*/
+	@Excel(name = "优惠价", width = 15)
+    @ApiModelProperty(value = "优惠价")
+    private BigDecimal discountedPrice;
 	/**生效日期*/
 	@Excel(name = "生效日期", width = 15, format = "yyyy-MM-dd")
 	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd")

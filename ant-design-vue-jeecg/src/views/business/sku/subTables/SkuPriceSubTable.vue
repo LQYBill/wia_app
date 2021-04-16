@@ -68,6 +68,16 @@
             dataIndex: 'price',
           },
           {
+            title: '优惠价起订量',
+            align: 'center',
+            dataIndex: 'threshold',
+          },
+          {
+            title: '优惠价',
+            align: 'center',
+            dataIndex: 'discountedPrice',
+          },
+          {
             title: '生效日期',
             align: 'center',
             dataIndex: 'date',
