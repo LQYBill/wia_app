@@ -1,20 +1,21 @@
 package org.jeecg.modules.business.entity;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 import java.math.BigDecimal;
-import java.util.*;
 
 
 /**
- * A promotion of a sku to which it belongs
+ * A promotion of a sku to which it belongs, it's a immutable objet.
  */
+@EqualsAndHashCode
 public class Promotion {
 
     /**
      * Identifier of promotion
      */
-    @Getter
     private final String id;
 
     /**
@@ -27,7 +28,7 @@ public class Promotion {
      * Purchased quantity of sku involved by this promotion.
      */
     @Getter
-    private int quantityPurchased;
+    private final int quantityPurchased;
 
     /**
      * Discount amount of the promotion.
@@ -53,23 +54,22 @@ public class Promotion {
      * @param quantity the quantity of sku
      * @return amount of exemption, the result will be 0 if the sku does not belong to this promotion
      */
-    public BigDecimal simulateExemption(int quantity) {
+    public BigDecimal calculateDiscount(int quantity) {
         int count = (quantity + quantityPurchased) / promoMilestone;
         return discount.multiply(new BigDecimal(count));
     }
 
     /**
-     * Given the quantity of the sku, execute the calculation of amount of exemption and return it.
-     * This method changes the state of the promotion itself.
-     *
-     * @param quantity the quantity of sku
-     * @return amount of exemption, the result will be 0 if the sku does not belong to this promotion
+     * Add purchase quantity of promotion, and return the new promotion
+     * @param quantity the quantity to add
+     * @return the new promotion object
      */
-    public BigDecimal executeExemption(int quantity) {
-        // change state
-        quantityPurchased += quantity;
-        quantityPurchased = quantityPurchased % promoMilestone;
-        return simulateExemption(quantity);
+    public Promotion addPurchaseQuantity(int quantity) {
+        int new_quantity = quantityPurchased + quantity;
+        if (new_quantity > promoMilestone) {
+            new_quantity %= promoMilestone;
+        }
+        return new Promotion(id, promoMilestone, new_quantity, discount);
     }
 
 }

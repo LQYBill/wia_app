@@ -89,7 +89,7 @@ public class ClientPlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMap
                         c -> {
                             Promotion p = promotionMapper.findBySku(c.getSkuId());
                             if (null != p) {
-                                return p.simulateExemption(c.getQuantity());
+                                return p.calculateDiscount(c.getQuantity());
                             } else {
                                 return BigDecimal.ZERO;
                             }
