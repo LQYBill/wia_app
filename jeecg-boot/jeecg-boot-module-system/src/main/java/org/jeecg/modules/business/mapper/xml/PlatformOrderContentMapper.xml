@@ -14,15 +14,12 @@
 		WHERE
 			 platform_order_id = #{mainId} 	</select>
 
-	<select id="queryOrdersInfo" parameterType="java.lang.String" resultType="org.jeecg.modules.business.vo.OrdersStatisticData">
-		SELECT SUM(quantity) AS 'totalQuantity', COUNT(DISTINCT platform_order_content.sku_id) AS 'skuNumber', SUM(quantity * price) AS 'estimatedTotalPrice'
-		FROM platform_order_content
-		    LEFT JOIN
-		    (SELECT sku_id, price
-			 FROM sku_price
-			 GROUP BY sku_id
-			 HAVING MAX(date)
-		    ) p ON p.sku_id = platform_order_content.sku_id
-		WHERE platform_order_content.platform_order_id IN (${orderIds})
+	<select id="searchOrderContentDetail" parameterType="java.lang.String" resultType="org.jeecg.modules.business.entity.OrderContentDetail">
+		SELECT
+		FROM platform_order_content_sku_promotion_price p
+		WHERE p.platform_order_id IN
+		<foreach collection="list" index="i" item="item" open="(" separator="," close=")">#{item}</foreach>
+		GROUP BY sku_id
+
 	</select>
 </mapper>
