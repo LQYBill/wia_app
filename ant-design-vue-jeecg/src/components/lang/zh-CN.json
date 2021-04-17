@@ -1,7 +1,49 @@
 {
-  "lang": "English",
-  "add": "新增",
-  "export":"导出",
-  "import": "导入"
-
+  "namingConventionOfKey": "Camel-Case",
+  "operation": {
+    "add": "增加",
+    "export": "导出",
+    "import": "导入",
+    "adSearch": "高级搜索",
+    "delete": "删除",
+    "selected": "已选中",
+    "clear": "清除",
+    "download": "下载",
+    "edit": "编辑",
+    "more": "更多",
+    "clearAll": "清空"
+  },
+  "client": {
+    "familyName": "姓",
+    "firstName": "名",
+    "email": "邮箱",
+    "telephone": "电话",
+    "city": "城市",
+    "country": "国家",
+    "Currency": "货币",
+    "postCode": "邮编"
+  },
+  "order": {
+    "orders": "订单",
+    "Content": "订单内容",
+    "items": "项",
+    "Num": "订单编号",
+    "transNum": "订单交易号",
+    "trackingNum": "订单追踪号",
+    "deliveryTime": "交易时间"
+  },
+  "recipient": {
+    "recipient": "收件人",
+    "country": "目的国家",
+    "postalCode": "邮编"
+  },
+  "logistics": {
+    "registerFee": "挂号费",
+    "invoiceNum": "物流发票号"
+  },
+  "storeID": "商店ID",
+  "status": "状态",
+  "batchOperation": "更多操作",
+  "deleteConfirmation": "你确定要删除吗",
+  "abbreviation": "缩写"
 }

@@ -1,30 +1,51 @@
 {
-  "nameConvention": "key: Camel-Case",
   "lang": "English",
-  "add": "Add",
-  "export": "Export",
-  "import": "Import",
-  "adSearch": "Advanced Search",
-  "delete": "Delete",
-  "selected": "Selected",
-  "items": "items",
-  "clear": "Clear all",
-  "download": "Download",
-  "edit": "Edit",
-  "more": "More",
+  "namingConventionOfKey": "Camel-Case",
+  "operation": {
+    "add": "Add",
+    "export": "Export",
+    "import": "Import",
+    "adSearch": "Advanced Search",
+    "delete": "Delete",
+    "selected": "Selected",
+    "clear": "Clear all",
+    "download": "Download",
+    "edit": "Edit",
+    "more": "More",
+    "clearAll": "Clear All"
+  },
+  "client": {
+    "familyName": "Family Name",
+    "firstName": "First Name",
+    "email": "Email",
+    "telephone": "Telephone",
+    "city": "City",
+    "country": "Country",
+    "Currency": "Currency",
+    "postCode": "Postal Code"
+  },
+  "order": {
+    "orders": "orders",
+    "Content": "Order Contents",
+    "items": "items",
+    "Num": "Order Number",
+    "transNum": "Transaction Number",
+    "transTime":"transaction time",
+    "trackingNum": "Tracking Number",
+    "deliveryTime": "Delivery Time"
+  },
+  "recipient": {
+    "recipient": "Recipient",
+    "country": "Destination Country",
+    "postalCode": "zip code"
+  },
+  "logistics": {
+    "registerFee": "Registration Fee",
+    "invoiceNum": "Logistics Invoice Number"
+  },
+  "storeID": "Store ID",
+  "status": "Status",
   "batchOperation": "Operations",
   "deleteConfirmation": "Are you sure you want to delete ?",
-  "familyName": "Family Name",
-  "firstName": "First Name",
-  "abbreviation": "Abbreviation",
-  "email":"Email",
-  "telephone": "Telephone",
-  "city": "City",
-  "country": "Country",
-  "Currency": "Currency",
-  "postCode": "Postal Code",
-  "clearAll": "Clear All",
-  "orders": "orders",
-  "orderContent": "Order Contents"
-
+  "abbreviation": "Abbreviation"
 }

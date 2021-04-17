@@ -80,50 +80,6 @@
         </template>
         <!-- 内嵌table区域 end -->
 
-        <template slot="htmlSlot" slot-scope="text">
-          <div v-html="text"></div>
-        </template>
-
-        <template slot="imgSlot" slot-scope="text">
-          <div style="font-size: 12px;font-style: italic;">
-            <span v-if="!text">无图片</span>
-            <img v-else :src="getImgView(text)" alt="" style="max-width:80px;height:25px;"/>
-          </div>
-        </template>
-
-
-        <template slot="fileSlot" slot-scope="text">
-          <span v-if="!text" style="font-size: 12px;font-style: italic;">无文件</span>
-          <a-button
-            v-else
-            ghost
-            type="primary"
-            icon="download"
-            size="small"
-            @click="downloadFile(text)"
-          >
-            <span>下载</span>
-          </a-button>
-        </template>
-
-        <template slot="action" slot-scope="text, record">
-          <a @click="handleEdit(record)">编辑</a>
-          <a-divider type="vertical"/>
-          <a-dropdown>
-            <a class="ant-dropdown-link">
-              <span>更多 <a-icon type="down"/></span>
-            </a>
-            <a-menu slot="overlay">
-              <a-menu-item>
-                <a-popconfirm title="确定删除吗?" @confirm="handleDelete(record.id)">
-                  <a>删除</a>
-                </a-popconfirm>
-              </a-menu-item>
-            </a-menu>
-          </a-dropdown>
-
-        </template>
-
       </a-table>
     </div>
     <!-- table区域 end -->
@@ -153,7 +109,7 @@ export default {
   },
   data() {
     return {
-      description: '平台订单表列表管理页面',
+      description: 'Client platform order page',
       // 表头
       columns: [
         {
@@ -164,88 +120,75 @@ export default {
           customRender: (t, r, index) => parseInt(index) + 1
         },
         {
-          title: '店铺ID',
+          title: this.$t('storeID'),
           align: 'center',
           dataIndex: 'shopId_dictText',
           width: 60,
         },
         {
-          title: '物流渠道',
-          align: 'center',
-          dataIndex: 'logisticChannelName_dictText',
-          ellipsis: true
-        },
-        {
-          title: '平台订单号码',
+          title: this.$t('order.Num'),
           align: 'center',
           dataIndex: 'platformOrderId',
           width: 120,
         },
         {
-          title: '平台订单交易号',
+          title: this.$t("order.transNum"),
           align: 'center',
           dataIndex: 'platformOrderNumber',
           width: 100,
         },
         {
-          title: '物流跟踪号',
+          title: this.$t('order.trackingNum'),
           align: 'center',
           dataIndex: 'trackingNumber',
           width: 120,
         },
         {
-          title: '订单交易时间',
+          title: this.$t("order.transTime"),
           align: 'center',
           dataIndex: 'orderTime',
           width: 120,
         },
         {
-          title: '订单发货时间',
+          title: this.$t("order.deliveryTime"),
           align: 'center',
           dataIndex: 'shippingTime',
           width: 120,
         },
         {
-          title: '订单收件人',
+          title: this.$t("recipient.recipient"),
           align: 'center',
           dataIndex: 'recepient',
         },
         {
-          title: '订单收件人国家',
+          title: this.$t("recipient.country"),
           align: 'center',
           dataIndex: 'country',
           width: 120,
         },
         {
-          title: '订单收件人邮编',
+          title: this.$t("recipient.postalCode"),
           align: 'center',
           dataIndex: 'postcode',
           width: 80,
         },
         {
-          title: '物流挂号费',
+          title: this.$t("logistics.registerFee"),
           align: 'center',
           dataIndex: 'fretFee',
           width: 80,
         },
         {
-          title: '物流发票号',
+          title: this.$t("logistics.invoiceNum"),
           align: 'center',
           dataIndex: 'shippingInvoiceNumber_dictText',
           width: 147,
         },
         {
-          title: '状态',
+          title: this.$t("status"),
           align: 'center',
           dataIndex: 'status',
           width: 147,
-        },
-        {
-          title: '操作',
-          dataIndex: 'action',
-          align: 'center',
-          width: 147,
-          scopedSlots: {customRender: 'action'},
         },
       ],
       // 字典选项
