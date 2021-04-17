@@ -95,7 +95,6 @@
 import {JeecgListMixin} from '@/mixins/JeecgListMixin'
 import PlatformOrderModal from './modules/ClientPlatformOrderModal'
 import PlatformOrderContentSubTable from './subTables/ClientPlatformOrderContentSubTable'
-import {filterMultiDictText} from '@/components/dict/JDictSelectUtil'
 import '@/assets/less/TableExpand.less'
 
 const {postAction} = require("@api/manage");
@@ -187,7 +186,7 @@ export default {
         {
           title: this.$t("status"),
           align: 'center',
-          dataIndex: 'status',
+          dataIndex: 'status_dictText',
           width: 147,
         },
       ],
