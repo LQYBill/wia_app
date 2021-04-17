@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Param;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.springframework.stereotype.Repository;
 
 /**
  * @Description: 平台订单表
@@ -12,6 +13,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  * @Date:   2021-04-08
  * @Version: V1.0
  */
+@Repository
 public interface PlatformOrderMapper extends BaseMapper<PlatformOrder> {
 
     List<PlatformOrder> selectByClientId(@Param("clientId")String clientId);

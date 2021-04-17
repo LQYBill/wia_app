@@ -5,7 +5,7 @@ import java.util.List;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
-import org.jeecg.modules.business.vo.OrdersStatisticData;
+import org.springframework.stereotype.Repository;
 
 /**
  * @Description: 平台订单内容
@@ -13,6 +13,7 @@ import org.jeecg.modules.business.vo.OrdersStatisticData;
  * @Date: 2021-04-08
  * @Version: V1.0
  */
+@Repository
 public interface PlatformOrderContentMapper extends BaseMapper<PlatformOrderContent> {
 
     public boolean deleteByMainId(@Param("mainId") String mainId);
