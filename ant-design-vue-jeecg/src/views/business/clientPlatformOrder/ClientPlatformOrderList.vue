@@ -158,7 +158,7 @@ export default {
         {
           title: this.$t("recipient.recipient"),
           align: 'center',
-          dataIndex: 'recepient',
+          dataIndex: 'recipient',
         },
         {
           title: this.$t("recipient.country"),
