@@ -54,7 +54,7 @@ public class Promotion {
      * @param quantity the quantity of sku
      * @return amount of exemption, the result will be 0 if the sku does not belong to this promotion
      */
-    public BigDecimal calculateDiscount(int quantity) {
+    public BigDecimal calculateDiscountAmount(int quantity) {
         int count = (quantity + quantityPurchased) / promoMilestone;
         return discount.multiply(new BigDecimal(count));
     }

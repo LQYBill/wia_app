@@ -4,8 +4,8 @@
 
     <select id="findBySku" parameterType="java.lang.String" resultType="org.jeecg.modules.business.entity.Promotion">
         SELECT id, promo_milestone AS promoMilestone, quantity_purchased AS quantityPurchased, discount
-        FROM sku_promotion
-        where skus like #{skuId}
+        FROM sku_promotion JOIN promotion_content pc on sku_promotion.id = pc.promotion_id
+        where sku_id = #{skuId}
         </select>
     
     <update id="updatePurchasedQuantity" parameterType="org.jeecg.modules.business.entity.Promotion">

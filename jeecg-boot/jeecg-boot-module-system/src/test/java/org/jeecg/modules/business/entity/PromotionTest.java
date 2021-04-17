@@ -15,10 +15,10 @@ public class PromotionTest {
         BigDecimal expectedNumber = new BigDecimal(80);
 
         Promotion promotion = new Promotion("2123", 100, 1, new BigDecimal(80));
-        assertEquals(promotion.calculateDiscount(99), expectedNumber);
+        assertEquals(promotion.calculateDiscountAmount(99), expectedNumber);
 
         Promotion promotion2 = new Promotion("2123", 100, 50, new BigDecimal(80));
-        assertEquals(promotion2.calculateDiscount(99), expectedNumber);
+        assertEquals(promotion2.calculateDiscountAmount(99), expectedNumber);
     }
 
     @Test
@@ -26,10 +26,10 @@ public class PromotionTest {
         BigDecimal expectedNumber = new BigDecimal(160);
 
         Promotion promotion = new Promotion("2123", 100, 0, new BigDecimal(80));
-        assertEquals(promotion.calculateDiscount(200), expectedNumber);
+        assertEquals(promotion.calculateDiscountAmount(200), expectedNumber);
 
         Promotion promotion2 = new Promotion("2123", 100, 50, new BigDecimal(80));
-        assertEquals(promotion2.calculateDiscount(200), expectedNumber);
+        assertEquals(promotion2.calculateDiscountAmount(200), expectedNumber);
     }
 
     @Test
@@ -37,10 +37,10 @@ public class PromotionTest {
         BigDecimal expectedNumber = new BigDecimal(0);
 
         Promotion promotion = new Promotion("2123", 100, 0, new BigDecimal(80));
-        assertEquals(promotion.calculateDiscount(20), expectedNumber);
+        assertEquals(promotion.calculateDiscountAmount(20), expectedNumber);
 
         Promotion promotion2 = new Promotion("2123", 100, 50, new BigDecimal(80));
-        assertEquals(promotion2.calculateDiscount(49), expectedNumber);
+        assertEquals(promotion2.calculateDiscountAmount(49), expectedNumber);
     }
 
     @Test
