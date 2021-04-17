@@ -2,24 +2,67 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.jeecg.modules.business.mapper.PlatformOrderContentMapper">
 
-	<delete id="deleteByMainId" parameterType="java.lang.String">
-		DELETE 
-		FROM  platform_order_content 
-		WHERE
-			platform_order_id = #{mainId} 	</delete>
-	
-	<select id="selectByMainId" parameterType="java.lang.String" resultType="org.jeecg.modules.business.entity.PlatformOrderContent">
-		SELECT * 
-		FROM  platform_order_content
-		WHERE
-			 platform_order_id = #{mainId} 	</select>
+    <delete id="deleteByMainId" parameterType="java.lang.String">
+        DELETE
+        FROM platform_order_content
+        WHERE platform_order_id = #{mainId}    </delete>
 
-	<select id="searchOrderContentDetail" parameterType="java.lang.String" resultType="org.jeecg.modules.business.entity.OrderContentDetail">
-		SELECT
-		FROM platform_order_content_sku_promotion_price p
-		WHERE p.platform_order_id IN
-		<foreach collection="list" index="i" item="item" open="(" separator="," close=")">#{item}</foreach>
-		GROUP BY sku_id
+    <select id="selectByMainId" parameterType="java.lang.String"
+            resultType="org.jeecg.modules.business.entity.PlatformOrderContent">
+        SELECT *
+        FROM platform_order_content
+        WHERE platform_order_id = #{mainId}    </select>
 
-	</select>
+    <select id="searchOrderContentDetail" parameterType="java.lang.String"
+            resultType="org.jeecg.modules.business.entity.OrderContentDetail"
+            resultMap="orderContentDetailResultMap">
+        SELECT
+        sku_id,
+        SUM(sku_quantity) AS quantity,
+        price_id,
+        sku_id,
+        price,
+        threshold,
+        discounted_price,
+        price_date,
+        promotion_id,
+        promo_milestone,
+        quantity_purchased,
+        discount
+        FROM platform_order_content_sku_promotion_price p
+        WHERE p.platform_order_id IN
+        <foreach collection="list" index="i" item="item" open="(" separator="," close=")">#{item}</foreach>
+        GROUP BY p.sku_id
+    </select>
+
+    <resultMap id="orderContentDetailResultMap" type="org.jeecg.modules.business.entity.OrderContentDetail">
+        <constructor>
+            <idArg column="sku_id"
+                   javaType="String"/>
+            <arg column="quantity"
+                 javaType="int"/>
+            <arg javaType="org.jeecg.modules.business.entity.SkuPrice"
+                 resultMap="skuPriceResultMap"/>
+            <arg javaType="org.jeecg.modules.business.entity.Promotion"
+                 resultMap="promotionResultMap"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="skuPriceResultMap" type="org.jeecg.modules.business.entity.SkuPrice">
+        <id property="id" column="price_id" javaType="string"/>
+        <result property="skuId" column="sku_id" javaType="string"/>
+        <result property="price" column="price"/>
+        <result property="threshold" column="threshold"/>
+        <result property="discountedPrice" column="discounted_price"/>
+        <result property="date" column="price_date"/>
+    </resultMap>
+
+    <resultMap id="promotionResultMap" type="org.jeecg.modules.business.entity.Promotion">
+        <constructor>
+            <idArg column="promotion_id" javaType="String"/>
+            <arg column="promo_milestone" javaType="_int"/>
+            <arg column="quantity_purchased" javaType="_int"/>
+            <arg column="discount" javaType="decimal"/>
+        </constructor>
+    </resultMap>
 </mapper>

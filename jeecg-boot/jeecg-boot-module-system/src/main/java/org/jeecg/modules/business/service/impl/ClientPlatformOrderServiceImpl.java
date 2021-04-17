@@ -3,6 +3,7 @@ package org.jeecg.modules.business.service.impl;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.shiro.SecurityUtils;
 import org.jeecg.common.system.vo.LoginUser;
+import org.jeecg.modules.business.entity.OrderContentDetail;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.entity.Promotion;
 import org.jeecg.modules.business.mapper.ClientUserMapper;
@@ -34,17 +35,15 @@ public class ClientPlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMap
     private final PlatformOrderMapper platformOrderMapper;
     private final PlatformOrderContentMapper platformOrderContentMapper;
     private final ClientUserMapper clientUserMapper;
-    private final PromotionMapper promotionMapper;
 
     @Autowired
     public ClientPlatformOrderServiceImpl(PlatformOrderMapper platformOrderMapper,
                                           PlatformOrderContentMapper platformOrderContentMapper,
-                                          ClientUserMapper clientUserMapper,
-                                          PromotionMapper promotionMapper) {
+                                          ClientUserMapper clientUserMapper
+    ) {
         this.platformOrderMapper = platformOrderMapper;
         this.platformOrderContentMapper = platformOrderContentMapper;
         this.clientUserMapper = clientUserMapper;
-        this.promotionMapper = promotionMapper;
     }
 
     @Override
@@ -71,33 +70,7 @@ public class ClientPlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMap
 
     @Override
     public OrdersStatisticData getPlatformOrdersStatisticData(List<String> orderIds) {
-        String ids = orderIds.stream().collect(Collectors.joining("','", "'", "'"));
-        OrdersStatisticData data = platformOrderContentMapper.queryOrdersInfo(ids);
-
-        // calculate reduced amount for all orders
-        BigDecimal reducedAmount = orderIds.stream()
-                .map(platformOrderContentMapper::selectByMainId)
-                .reduce(
-                        new ArrayList<>(),
-                        (result, element) -> {
-                            result.addAll(element);
-                            return result;
-                        }
-                )
-                .stream()
-                .map(
-                        c -> {
-                            Promotion p = promotionMapper.findBySku(c.getSkuId());
-                            if (null != p) {
-                                return p.calculateDiscount(c.getQuantity());
-                            } else {
-                                return BigDecimal.ZERO;
-                            }
-                        }
-                )
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        data.setReducedAmount(reducedAmount);
-        return data;
+        List<OrderContentDetail> data = platformOrderContentMapper.searchOrderContentDetail(orderIds);
+        return OrdersStatisticData.makeData(data);
     }
 }

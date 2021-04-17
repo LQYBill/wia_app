@@ -13,6 +13,9 @@ import java.math.BigDecimal;
 @EqualsAndHashCode
 public class Promotion {
 
+    public static final Promotion ZERO_PROMOTION = new Promotion("-1", 1, 0, BigDecimal.ZERO);
+
+
     /**
      * Identifier of promotion
      */
@@ -61,6 +64,7 @@ public class Promotion {
 
     /**
      * Add purchase quantity of promotion, and return the new promotion
+     *
      * @param quantity the quantity to add
      * @return the new promotion object
      */

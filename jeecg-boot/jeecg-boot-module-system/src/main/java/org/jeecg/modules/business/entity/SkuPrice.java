@@ -5,7 +5,7 @@ import java.io.Serializable;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.Data;
+import lombok.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.jeecgframework.poi.excel.annotation.Excel;
@@ -24,7 +24,10 @@ import io.swagger.annotations.ApiModelProperty;
  * @Version: V1.0
  */
 @ApiModel(value = "sku对象", description = "SKU表")
-@Data
+@Setter
+@RequiredArgsConstructor
+@ToString
+@EqualsAndHashCode
 @TableName("sku_price")
 public class SkuPrice implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -34,6 +37,7 @@ public class SkuPrice implements Serializable {
      */
     @TableId(type = IdType.ASSIGN_ID)
     @ApiModelProperty(value = "主键")
+    @Getter
     private String id;
 
     /**
@@ -41,6 +45,7 @@ public class SkuPrice implements Serializable {
      */
     @Dict(dictTable = "sku", dicText = "erp_code", dicCode = "id")
     @ApiModelProperty(value = "SKU ID")
+    @Getter
     private String skuId;
 
     /**
@@ -58,7 +63,7 @@ public class SkuPrice implements Serializable {
     private Integer threshold;
 
     /**
-     * 优惠价
+     * 优惠价, maybe null from DB which stands for no discount price
      */
     @Excel(name = "优惠价", width = 15)
     @ApiModelProperty(value = "优惠价")
@@ -71,6 +76,7 @@ public class SkuPrice implements Serializable {
     @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     @ApiModelProperty(value = "生效日期")
+    @Getter
     private Date date;
 
     /**
@@ -80,8 +86,8 @@ public class SkuPrice implements Serializable {
      * @return the price correspondent to the quantity
      */
     public BigDecimal getPrice(int quantity) {
-        if (quantity > threshold) {
-            return discountedPrice;
+        if (quantity >= threshold) {
+            return discountedPrice == null ? price : discountedPrice;
         }
         return price;
     }

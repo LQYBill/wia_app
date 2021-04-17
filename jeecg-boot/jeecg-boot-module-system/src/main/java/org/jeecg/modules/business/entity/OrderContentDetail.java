@@ -1,8 +1,10 @@
 package org.jeecg.modules.business.entity;
 
 import lombok.Data;
+import org.springframework.lang.NonNull;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 
 /**
@@ -21,14 +23,14 @@ public class OrderContentDetail {
     private final Promotion promotion;
 
     public OrderContentDetail(String skuId, Integer quantity, SkuPrice price, Promotion promotion) {
-        this.skuId = skuId;
-        this.quantity = quantity;
-        this.price = price;
-        this.promotion = promotion;
+        this.skuId = Objects.requireNonNull(skuId);
+        this.quantity = Objects.requireNonNull(quantity);
+        this.price = Objects.requireNonNull(price);
+        this.promotion = promotion == null ? Promotion.ZERO_PROMOTION : promotion;
     }
 
     /**
-     * Calculate the reduced amount by apply the promotion to the sku.
+     * Calculate the reduced amount by applying the promotion to the sku.
      *
      * @return the reduced amount
      */
@@ -37,7 +39,7 @@ public class OrderContentDetail {
     }
 
     /**
-     * Calculate the total price by apply the price to the sku.
+     * Calculate the total price by applying the price to the sku.
      *
      * @return the total price.
      */

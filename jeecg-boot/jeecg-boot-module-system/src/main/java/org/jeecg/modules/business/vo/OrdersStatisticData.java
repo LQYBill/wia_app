@@ -2,8 +2,11 @@ package org.jeecg.modules.business.vo;
 
 
 import lombok.Data;
+import org.jeecg.modules.business.entity.OrderContentDetail;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * This class is used to display details of multiple orders
@@ -16,5 +19,27 @@ public class OrdersStatisticData {
 
     private final BigDecimal estimatedTotalPrice;
 
-    private BigDecimal reducedAmount;
+    private final BigDecimal reducedAmount;
+
+    private OrdersStatisticData(int totalQuantity, int skuNumber, BigDecimal estimatedTotalPrice, BigDecimal reducedAmount) {
+        this.totalQuantity = totalQuantity;
+        this.skuNumber = skuNumber;
+        this.estimatedTotalPrice = estimatedTotalPrice;
+        this.reducedAmount = reducedAmount;
+    }
+
+    public static OrdersStatisticData makeData(List<OrderContentDetail> source) {
+        int totalQuantity = source.stream().mapToInt(OrderContentDetail::getQuantity).sum();
+
+        int skuNumber = source.size();
+
+        BigDecimal estimatedTotalPrice = BigDecimal.ZERO;
+        BigDecimal reducedAmount = BigDecimal.ZERO;
+
+        for (OrderContentDetail d : source) {
+            estimatedTotalPrice = estimatedTotalPrice.add(d.totalPrice());
+            reducedAmount = reducedAmount.add(d.reducedAmount());
+        }
+        return new OrdersStatisticData(totalQuantity, skuNumber, estimatedTotalPrice, reducedAmount);
+    }
 }

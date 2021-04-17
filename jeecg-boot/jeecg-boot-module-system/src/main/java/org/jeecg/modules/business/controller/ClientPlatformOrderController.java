@@ -34,10 +34,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * @Description: 平台订单表
- * @Author: jeecg-boot
- * @Date: 2021-04-08
- * @Version: V1.0
+ * @Description: platform order table for a certain client
+ * @Author: Wenke
+ * @Date: 2021-04-17
+ * @Version: V1.000001
  */
 @Api(tags = "平台订单表")
 @RestController
@@ -79,20 +79,21 @@ public class ClientPlatformOrderController {
     public Result<OrdersStatisticData> queryOrdersStatisticInfo(@RequestBody List<String> orderIds) {
         log.info("Calculating statistic information for orders: {}", orderIds);
         OrdersStatisticData ordersData = clientPlatformOrderService.getPlatformOrdersStatisticData(orderIds);
+        log.info("Got statistic information: {}", ordersData);
         return Result.OK(ordersData);
     }
 
 
     /**
-     * 通过id查询
+     * Query a platform order by its identifier.
      *
-     * @param id
-     * @return
+     * @param id the identifier of the platform order
+     * @return {@code Result} of platform order, or {@code Result} with error message in case of failure.
      */
     @AutoLog(value = "平台订单表-通过id查询")
     @ApiOperation(value = "平台订单表-通过id查询", notes = "平台订单表-通过id查询")
     @GetMapping(value = "/queryById")
-    public Result<?> queryById(@RequestParam(name = "id", required = true) String id) {
+    public Result<?> queryById(@RequestParam(name = "id") String id) {
         PlatformOrder platformOrder = platformOrderService.getById(id);
         if (platformOrder == null) {
             return Result.error("未找到对应数据");
@@ -101,24 +102,27 @@ public class ClientPlatformOrderController {
     }
 
     /**
-     * 通过id查询
+     * Query a certain platform order's content by its identifier.
      *
-     * @param id
-     * @return
+     * @param id the identifier of the platform order
+     * @return its content
      */
     @AutoLog(value = "平台订单内容通过主表ID查询")
     @ApiOperation(value = "平台订单内容主表ID查询", notes = "平台订单内容-通主表ID查询")
     @GetMapping(value = "/queryPlatformOrderContentByMainId")
-    public Result<?> queryPlatformOrderContentListByMainId(@RequestParam(name = "id", required = true) String id) {
+    public Result<?> queryPlatformOrderContentListByMainId(@RequestParam(name = "id") String id) {
         List<PlatformOrderContent> platformOrderContentList = platformOrderContentService.selectByMainId(id);
-        return Result.OK(platformOrderContentList);
+        IPage<PlatformOrderContent> page = new Page<>();
+        page.setRecords(platformOrderContentList);
+        page.setTotal(platformOrderContentList.size());
+        return Result.OK(page);
     }
 
     /**
-     * 导出excel
+     * export data to excel file
      *
-     * @param request
-     * @param platformOrder
+     * @param request       request containing arguments
+     * @param platformOrder don't know yet
      */
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, PlatformOrder platformOrder) {
@@ -139,7 +143,7 @@ public class ClientPlatformOrderController {
         }
 
         // Step.3 组装pageList
-        List<PlatformOrderPage> pageList = new ArrayList<PlatformOrderPage>();
+        List<PlatformOrderPage> pageList = new ArrayList<>();
         for (PlatformOrder main : platformOrderList) {
             PlatformOrderPage vo = new PlatformOrderPage();
             BeanUtils.copyProperties(main, vo);
