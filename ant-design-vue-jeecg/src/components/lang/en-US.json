@@ -30,7 +30,7 @@
     "items": "items",
     "Num": "Order Number",
     "transNum": "Transaction Number",
-    "transTime":"transaction time",
+    "transTime":"Transaction time",
     "trackingNum": "Tracking Number",
     "deliveryTime": "Delivery Time"
   },

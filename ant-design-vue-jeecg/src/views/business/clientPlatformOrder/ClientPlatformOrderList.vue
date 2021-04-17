@@ -47,10 +47,10 @@
 
       <a-alert type="info" showIcon style="margin-bottom: 16px;">
         <template slot="message">
-          <span>{{ $t("selected") }}</span>
+          <span>{{ $t("operation.selected") }}</span>
           <a style="font-weight: 600;padding: 0 4px;">{{ selectedRowKeys.length }}</a>
-          <span>{{ $t("orders") }}</span>
-          <a style="margin-left: 24px" @click="onClearSelected">{{$t("clearAll")}}</a>
+          <span>{{ $t("order.orders") }}</span>
+          <a style="margin-left: 24px" @click="onClearSelected">{{$t("operation.clearAll")}}</a>
         </template>
       </a-alert>
 
@@ -134,7 +134,8 @@ export default {
           title: this.$t("order.transNum"),
           align: 'center',
           dataIndex: 'platformOrderNumber',
-          width: 100,
+          width: 60,
+          ellipsis:true,
         },
         {
           title: this.$t('order.trackingNum'),
@@ -158,6 +159,8 @@ export default {
           title: this.$t("recipient.recipient"),
           align: 'center',
           dataIndex: 'recipient',
+          ellipsis:true,
+          width: 50
         },
         {
           title: this.$t("recipient.country"),
