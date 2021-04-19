@@ -60,10 +60,11 @@
         bordered
         rowKey="id"
         class="j-table-force-nowrap"
-        :scroll="{ x: true }"
+        :scroll="{ x: true}"
         :loading="loading"
         :columns="columns"
         :dataSource="dataSource"
+        :pagination="ipagination"
         :expandedRowKeys="expandedRowKeys"
         :rowSelection="{selectedRowKeys, onChange: computeInfo}"
         @expand="handleExpand"
@@ -73,7 +74,7 @@
         <!-- 内嵌table区域 begin -->
         <template slot="expandedRowRender" slot-scope="record">
           <a-tabs tabPosition="top">
-            <a-tab-pane :tab="$t('orderContent')" key="platformOrderContent" forceRender>
+            <a-tab-pane tab="Order Contents" key="platformOrderContent" forceRender>
               <platform-order-content-sub-table :record="record"/>
             </a-tab-pane>
           </a-tabs>

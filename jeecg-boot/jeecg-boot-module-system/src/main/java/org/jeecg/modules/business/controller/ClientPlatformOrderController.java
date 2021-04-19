@@ -17,6 +17,7 @@ import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.service.IClientPlatformOrderService;
 import org.jeecg.modules.business.service.IPlatformOrderContentService;
 import org.jeecg.modules.business.service.IPlatformOrderService;
+import org.jeecg.modules.business.vo.ClientPlatformOrderPage;
 import org.jeecg.modules.business.vo.OrdersStatisticData;
 import org.jeecg.modules.business.vo.PlatformOrderPage;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
@@ -65,12 +66,11 @@ public class ClientPlatformOrderController {
     @AutoLog(value = "当前客户的平台订单列表查询")
     @ApiOperation(value = "当前客户的平台订单列表查询", notes = "当前客户的平台订单列表查询")
     @GetMapping(value = "/list")
-    public Result<IPage<PlatformOrderPage>> queryAllPlatformOrder() {
+    public Result<IPage<ClientPlatformOrderPage>> queryAllPlatformOrder(@RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
+                                                                  @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize) {
         log.info("Query for client platform orders");
-        IPage<PlatformOrderPage> page = new Page<>();
-        List<PlatformOrderPage> platformOrderPages = clientPlatformOrderService.getPlatformOrderList();
-        page.setRecords(platformOrderPages);
-        page.setTotal(platformOrderPages.size());
+        IPage<ClientPlatformOrderPage> page = new Page<>(pageNo, pageSize);
+        clientPlatformOrderService.initPlatformOrderPage(page);
         return Result.OK(page);
     }
 

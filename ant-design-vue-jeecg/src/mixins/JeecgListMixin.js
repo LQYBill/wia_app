@@ -3,10 +3,10 @@
  * 高级查询按钮调用 superQuery方法  高级查询组件ref定义为superQueryModal
  * data中url定义 list为查询列表  delete为删除单条记录  deleteBatch为批量删除
  */
-import { filterObj } from '@/utils/util';
-import { deleteAction, getAction,downFile,getFileAccessHttpUrl } from '@/api/manage'
+import {filterObj} from '@/utils/util';
+import {deleteAction, downFile, getAction, getFileAccessHttpUrl} from '@/api/manage'
 import Vue from 'vue'
-import { ACCESS_TOKEN, TENANT_ID } from "@/store/mutation-types"
+import {ACCESS_TOKEN, TENANT_ID} from "@/store/mutation-types"
 import store from '@/store'
 import {Modal} from 'ant-design-vue'
 
@@ -21,9 +21,9 @@ export const JeecgListMixin = {
       ipagination:{
         current: 1,
         pageSize: 10,
-        pageSizeOptions: ['10', '20', '30'],
+        pageSizeOptions: ['10', '50', '100'],
         showTotal: (total, range) => {
-          return range[0] + "-" + range[1] + " 共" + total + "条"
+          return range[0] + "-" + range[1] + " / " + total
         },
         showQuickJumper: true,
         showSizeChanger: true,
@@ -85,7 +85,7 @@ export const JeecgListMixin = {
       this.loading = true;
       getAction(this.url.list, params).then((res) => {
         if (res.success) {
-          //update-begin---author:zhangyafei    Date:20201118  for：适配不分页的数据列表------------
+          //适配不分页的数据列表
           this.dataSource = res.result.records||res.result;
           console.log(this.dataSource)
           if(res.result.total)
@@ -94,7 +94,6 @@ export const JeecgListMixin = {
           }else{
             this.ipagination.total = 0;
           }
-          //update-end---author:zhangyafei    Date:20201118  for：适配不分页的数据列表------------
         }
         if(res.code===510){
           this.$message.warning(res.message)
@@ -164,7 +163,7 @@ export const JeecgListMixin = {
       }
       if (this.selectedRowKeys.length <= 0) {
         this.$message.warning('请选择一条记录！');
-        return;
+
       } else {
         var ids = "";
         for (var a = 0; a < this.selectedRowKeys.length; a++) {
@@ -237,7 +236,7 @@ export const JeecgListMixin = {
       console.log(pagination)
       if (Object.keys(sorter).length > 0) {
         this.isorter.column = sorter.field;
-        this.isorter.order = "ascend" == sorter.order ? "asc" : "desc"
+        this.isorter.order = "ascend" === sorter.order ? "asc" : "desc"
       }
       this.ipagination = pagination;
       this.loadData();
@@ -263,8 +262,7 @@ export const JeecgListMixin = {
     /* 导出 */
     handleExportXls2(){
       let paramsStr = encodeURI(JSON.stringify(this.getQueryParams()));
-      let url = `${window._CONFIG['domainURL']}/${this.url.exportXlsUrl}?paramsStr=${paramsStr}`;
-      window.location.href = url;
+      window.location.href = `${window._CONFIG['domainURL']}/${this.url.exportXlsUrl}?paramsStr=${paramsStr}`;
     },
     handleExportXls(fileName){
       if(!fileName || typeof fileName != "string"){

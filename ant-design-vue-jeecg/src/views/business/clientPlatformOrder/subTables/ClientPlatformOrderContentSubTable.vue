@@ -58,39 +58,34 @@
         dataSource: [],
         columns: [
           {
-            title: '平台订单ID',
-            align: 'center',
-            dataIndex: 'platformOrderId'
-          },
-          {
             title: 'SKU ID',
             align: 'center',
-            dataIndex: 'skuId'
+            dataIndex: 'skuId_dictText'
           },
           {
-            title: 'SKU数量',
+            title: 'Quantity',
             align: 'center',
             dataIndex: 'quantity',
           },
           {
-            title: '商品采购总费用',
+            title: 'Total Purchase Cost',
             align: 'center',
             dataIndex: 'purchaseFee',
           },
           {
-            title: '物流总费用',
+            title: 'Total Shipping Cost',
             align: 'center',
             dataIndex: 'shippingFee',
           },
           {
-            title: '服务总费用',
+            title: 'Total service cost',
             align: 'center',
             dataIndex: 'serviceFee',
           },
           {
-            title: 'sku状态',
+            title: 'SKU Status',
             align: 'center',
-            dataIndex: 'status',
+            dataIndex: 'status_dictText',
           },
         ],
         url: {

@@ -1,58 +1,38 @@
 package org.jeecg.modules.business.vo;
 
-import java.util.List;
-import org.jeecg.modules.business.entity.PlatformOrder;
-import org.jeecg.modules.business.entity.PlatformOrderContent;
-import lombok.Data;
-import org.jeecgframework.poi.excel.annotation.Excel;
-import org.jeecgframework.poi.excel.annotation.ExcelEntity;
-import org.jeecgframework.poi.excel.annotation.ExcelCollection;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import org.springframework.format.annotation.DateTimeFormat;
-import java.util.Date;
-import org.jeecg.common.aspect.annotation.Dict;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+import org.jeecg.common.aspect.annotation.Dict;
+import org.jeecg.modules.business.entity.PlatformOrderContent;
+import org.jeecgframework.poi.excel.annotation.Excel;
+import org.jeecgframework.poi.excel.annotation.ExcelCollection;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.util.Date;
+import java.util.List;
 
 /**
- * @Description: 平台订单表
- * @Author: jeecg-boot
- * @Date:   2021-04-08
+ * @Description: Client platform order page list
+ * @Author: Wenke
+ * @Date:   2021-04-19
  * @Version: V1.0
  */
 @Data
-@ApiModel(value="platform_orderPage对象", description="平台订单表")
-public class PlatformOrderPage {
+@ApiModel(value="Client platform order page object", description="Each row in the page platform order of client")
+public class ClientPlatformOrderPage {
 
 	/**主键*/
 	@ApiModelProperty(value = "主键")
     private String id;
-	/**创建人*/
-	@ApiModelProperty(value = "创建人")
-    private String createBy;
-	/**创建日期*/
-	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
-    @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
-	@ApiModelProperty(value = "创建日期")
-    private Date createTime;
-	/**更新人*/
-	@ApiModelProperty(value = "更新人")
-    private String updateBy;
-	/**更新日期*/
-	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
-    @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
-	@ApiModelProperty(value = "更新日期")
-    private Date updateTime;
+
 	/**店铺ID*/
 	@Excel(name = "店铺ID", width = 15, dictTable = "shop", dicText = "erp_code", dicCode = "id")
     @Dict(dictTable = "shop", dicText = "erp_code", dicCode = "id")
 	@ApiModelProperty(value = "店铺ID")
     private String shopId;
-	/**物流渠道*/
-	@Excel(name = "物流渠道", width = 15, dictTable = "logistic_channel", dicText = "zh_name", dicCode = "zh_name")
-    @Dict(dictTable = "logistic_channel", dicText = "zh_name", dicCode = "zh_name")
-	@ApiModelProperty(value = "物流渠道")
-    private String logisticChannelName;
+
 	/**平台订单号码*/
 	@Excel(name = "平台订单号码", width = 15)
 	@ApiModelProperty(value = "平台订单号码")
@@ -103,9 +83,9 @@ public class PlatformOrderPage {
 	@Dict(dictTable = "sku_status", dicText = "status_text", dicCode = "status_code")
 	@ApiModelProperty(value = "状态")
     private Integer status;
-	
+
 	@ExcelCollection(name="平台订单内容")
 	@ApiModelProperty(value = "平台订单内容")
 	private List<PlatformOrderContent> platformOrderContentList;
-	
+
 }
