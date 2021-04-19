@@ -110,7 +110,6 @@ export default {
     this.loadData();
   },
   methods: {
-    // 加载数据方法 必须为 Promise 对象
     loadData: function () {
       const params = ["1382645710851309569", "1382645731290152962"]
       postAction(this.url.orderInfo, params)
@@ -123,16 +122,6 @@ export default {
           }
         )
     },
-  },
-  filters: {
-    statusFilter(status) {
-      const statusMap = {
-        'processing': '进行中',
-        'success': '完成',
-        'failed': '失败'
-      }
-      return statusMap[status]
-    }
   },
   computed: {
     title() {

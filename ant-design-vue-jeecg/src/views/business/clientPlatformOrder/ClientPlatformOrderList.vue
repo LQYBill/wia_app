@@ -93,8 +93,6 @@
 
     <!-- 表单区域 -->
     <platform-order-modal ref="modalForm" @ok="modalFormOk"/>
-    <PurchaseDetail ref="purchaseDetail" />
-
   </a-card>
 </template>
 
@@ -306,9 +304,7 @@ export default {
       }
     },
     handleOrder(){
-      this.$refs.purchaseDetail.edit(123);
-      this.$refs.purchaseDetail.title = "编辑";
-      this.$refs.purchaseDetail.disableSubmit = false;
+      this.$refs.modalForm.display()
     }
   }
 }

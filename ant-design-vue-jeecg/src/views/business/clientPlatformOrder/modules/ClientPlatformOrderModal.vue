@@ -33,11 +33,8 @@
           this.$refs.realForm.add();
         })
       },
-      edit (record) {
+      display () {
         this.visible=true
-        this.$nextTick(()=>{
-          this.$refs.realForm.edit(record);
-        })
       },
       close () {
         this.$emit('close');

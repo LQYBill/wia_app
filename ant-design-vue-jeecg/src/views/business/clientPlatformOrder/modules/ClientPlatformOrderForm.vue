@@ -72,21 +72,33 @@
         </a-row>
       </a-form-model>
      </j-form-container>
-      <!-- 子表单区域 -->
-      <a-tabs v-model="activeKey" @change="handleChangeTabs">
-        <a-tab-pane tab="平台订单内容" :key="refKeys[0]" :forceRender="true">
-          <j-editable-table
-            :ref="refKeys[0]"
-            :loading="platformOrderContentTable.loading"
-            :columns="platformOrderContentTable.columns"
-            :dataSource="platformOrderContentTable.dataSource"
-            :maxHeight="300"
-            :disabled="formDisabled"
-            :rowNumber="true"
-            :rowSelection="true"
-            :actionButton="true"/>
-        </a-tab-pane>
-      </a-tabs>
+     <a-card :bordered="false">
+       <detail-list title="Purchase">
+         <detail-list-item term="Sku Number">{{ detail.skuNumber }}</detail-list-item>
+         <detail-list-item term="Sku Quantity">{{ detail.totalQuantity }}</detail-list-item>
+         <detail-list-item term="Total Amount">{{ detail.estimatedTotalPrice }}</detail-list-item>
+         <detail-list-item term="Discount">{{ detail.reducedAmount }}</detail-list-item>
+       </detail-list>
+       <a-divider style="margin-bottom: 32px"/>
+       <detail-list title="Client Information">
+         <detail-list-item term="First Name">{{ client.firstName }}</detail-list-item>
+         <detail-list-item term="Family Name">{{ client.surname }}</detail-list-item>
+         <detail-list-item term="Invoice Name">{{ client.invoiceEntity }}</detail-list-item>
+         <detail-list-item term="Email">{{ client.email }}</detail-list-item>
+         <detail-list-item term="phone">{{ client.phone }}</detail-list-item>
+         <detail-list-item term="Address">{{ client.streetNumber + " " + client.streetName }}</detail-list-item>
+         <detail-list-item term="City">{{ client.city + ", " + client.country }}</detail-list-item>
+         <detail-list-item v-if="client.companyIdValue" term="Company">{{ client.companyIdValue }}({{ client.companyIdType }})</detail-list-item>
+       </detail-list>
+       <a-divider style="margin-bottom: 32px"/>
+
+       <div class="title">Order Details</div>
+       <a-table
+         style="margin-bottom: 24px"
+         :columns="columns"
+         :dataSource="orderData">
+       </a-table>
+     </a-card>
        <a-row v-if="showFlowSubmitButton" style="text-align: center;width: 100%;margin-top: 16px;"><a-button @click="handleOk">提 交</a-button></a-row>
     </a-spin>
 </template>
@@ -96,6 +108,10 @@
   import { FormTypes,getRefPromise,VALIDATE_NO_PASSED } from '@/utils/JEditableTableUtil'
   import { JEditableTableModelMixin } from '@/mixins/JEditableTableModelMixin'
   import { validateDuplicateValue } from '@/utils/util'
+  import PageLayout from '@/components/page/PageLayout'
+  import STable from '@/components/table/'
+  import DetailList from '@/components/tools/DetailList'
+  import ABadge from "ant-design-vue/es/badge/Badge"
 
   export default {
     name: 'PlatformOrderForm',
@@ -104,103 +120,59 @@
     },
     data() {
       return {
-        labelCol: {
-          xs: { span: 24 },
-          sm: { span: 6 },
-        },
-        wrapperCol: {
-          xs: { span: 24 },
-          sm: { span: 16 },
-        },
-        labelCol2: {
-          xs: { span: 24 },
-          sm: { span: 3 },
-        },
-        wrapperCol2: {
-          xs: { span: 24 },
-          sm: { span: 20 },
-        },
-        model:{
-        },
-        validatorRules: {
-        },
-        // 新增时子表默认添加几行空数据
-        addDefaultRowNum: 1,
-        refKeys: ['platformOrderContent', ],
-        tableKeys:['platformOrderContent', ],
-        activeKey: 'platformOrderContent',
-        // 平台订单内容
-        platformOrderContentTable: {
-          loading: false,
-          dataSource: [],
-          columns: [
-            {
-              title: '平台订单ID',
-              key: 'platformOrderId',
-              type: FormTypes.sel_search,
-              dictCode:"platform_order,platform_order_id,id",
-              width:"200px",
-              placeholder: '请输入${title}',
-              defaultValue:'',
-            },
-            {
-              title: 'SKU ID',
-              key: 'skuId',
-              type: FormTypes.sel_search,
-              dictCode:"sku,erp_code,id",
-              width:"200px",
-              placeholder: '请输入${title}',
-              defaultValue:'',
-            },
-            {
-              title: 'SKU数量',
-              key: 'quantity',
-              type: FormTypes.input,
-              width:"200px",
-              placeholder: '请输入${title}',
-              defaultValue:'',
-            },
-            {
-              title: '商品采购总费用',
-              key: 'purchaseFee',
-              type: FormTypes.input,
-              width:"200px",
-              placeholder: '请输入${title}',
-              defaultValue:'',
-            },
-            {
-              title: '物流总费用',
-              key: 'shippingFee',
-              type: FormTypes.input,
-              width:"200px",
-              placeholder: '请输入${title}',
-              defaultValue:'',
-            },
-            {
-              title: '服务总费用',
-              key: 'serviceFee',
-              type: FormTypes.input,
-              width:"200px",
-              placeholder: '请输入${title}',
-              defaultValue:'',
-            },
-            {
-              title: 'sku状态',
-              key: 'status',
-              type: FormTypes.input,
-              width:"200px",
-              placeholder: '请输入${title}',
-              defaultValue:'',
-            },
-          ]
-        },
-        url: {
-          add: "/business/platformOrder/add",
-          edit: "/business/platformOrder/edit",
-          platformOrderContent: {
-            list: '/business/platformOrder/queryPlatformOrderContentByMainId'
+        columns: [
+          {
+            title: 'SKU Code',
+            dataIndex: 'erpCode',
+            key: 'erpCode'
           },
-        }
+          {
+            title: 'Product Name',
+            dataIndex: 'product',
+            key: 'product'
+          },
+          {
+            title: 'Unit Price',
+            dataIndex: 'price',
+            key: 'price'
+          },
+          {
+            title: 'Quantity',
+            dataIndex: 'quantity',
+            key: 'quantity',
+            align: 'right'
+          },
+          {
+            title: 'Amount',
+            dataIndex: 'total',
+            key: 'total',
+            align: 'right'
+          }
+        ],
+        client: {
+          city: undefined,
+          companyIdType: undefined,
+          companyIdValue: undefined,
+          country: undefined,
+          email: undefined,
+          firstName: undefined,
+          invoiceEntity: undefined,
+          phone: undefined,
+          postcode: undefined,
+          streetName: undefined,
+          streetNumber: undefined,
+          surname: undefined
+        },
+        detail: {
+          estimatedTotalPrice: undefined,
+          reducedAmount: undefined,
+          skuNumber: undefined,
+          totalQuantity: undefined,
+        },
+        orderData: undefined,
+        url: {
+          orderInfo: '/business/clientPlatformOrder/purchase',
+        },
       }
     },
     props: {
