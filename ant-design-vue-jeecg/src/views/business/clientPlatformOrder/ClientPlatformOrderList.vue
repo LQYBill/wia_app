@@ -50,9 +50,15 @@
           <span>{{ $t("operation.selected") }}</span>
           <a style="font-weight: 600;padding: 0 4px;">{{ selectedRowKeys.length }}</a>
           <span>{{ $t("order.orders") }}</span>
-          <a style="margin-left: 24px" @click="onClearSelected">{{$t("operation.clearAll")}}</a>
+          <a style="margin-left: 24px" @click="onClearSelected">{{ $t("operation.clearAll") }}</a>
         </template>
       </a-alert>
+
+      <a-dropdown v-if="selectedRowKeys.length > 0">
+        <a-button style="margin-left: 8px">
+          <a @click="handleOrder">下单</a>
+        </a-button>
+      </a-dropdown>
 
       <a-table
         ref="table"
@@ -87,6 +93,7 @@
 
     <!-- 表单区域 -->
     <platform-order-modal ref="modalForm" @ok="modalFormOk"/>
+    <PurchaseDetail ref="purchaseDetail" />
 
   </a-card>
 </template>
@@ -96,6 +103,8 @@
 import {JeecgListMixin} from '@/mixins/JeecgListMixin'
 import PlatformOrderModal from './modules/ClientPlatformOrderModal'
 import PlatformOrderContentSubTable from './subTables/ClientPlatformOrderContentSubTable'
+import PurchaseDetail from './PurchaseDetail'
+
 import '@/assets/less/TableExpand.less'
 
 const {postAction} = require("@api/manage");
@@ -106,6 +115,7 @@ export default {
   components: {
     PlatformOrderModal,
     PlatformOrderContentSubTable,
+    PurchaseDetail
   },
   data() {
     return {
@@ -136,7 +146,7 @@ export default {
           align: 'center',
           dataIndex: 'platformOrderNumber',
           width: 60,
-          ellipsis:true,
+          ellipsis: true,
         },
         {
           title: this.$t('order.trackingNum'),
@@ -160,7 +170,7 @@ export default {
           title: this.$t("recipient.recipient"),
           align: 'center',
           dataIndex: 'recipient',
-          ellipsis:true,
+          ellipsis: true,
           width: 50
         },
         {
@@ -294,6 +304,11 @@ export default {
             }
           )
       }
+    },
+    handleOrder(){
+      this.$refs.purchaseDetail.edit(123);
+      this.$refs.purchaseDetail.title = "编辑";
+      this.$refs.purchaseDetail.disableSubmit = false;
     }
   }
 }
