@@ -18,6 +18,8 @@
             resultMap="orderContentDetailResultMap">
         SELECT
         sku_id,
+        s.erp_code AS erp_code,
+        p2.en_name AS product_name,
         SUM(sku_quantity) AS quantity,
         price_id,
         sku_id,
@@ -30,6 +32,8 @@
         quantity_purchased,
         discount
         FROM platform_order_content_sku_promotion_price p
+        JOIN sku s ON p.sku_id = s.id
+        JOIN product p2 on s.product_id = p2.id
         WHERE p.platform_order_id IN
         <foreach collection="list" index="i" item="item" open="(" separator="," close=")">#{item}</foreach>
         GROUP BY p.sku_id
@@ -39,6 +43,10 @@
         <constructor>
             <idArg column="sku_id"
                    javaType="String"/>
+            <arg column="erp_code"
+                 javaType="String"/>
+            <arg column="product_name"
+                 javaType="String"/>
             <arg column="quantity"
                  javaType="int"/>
             <arg javaType="org.jeecg.modules.business.entity.SkuPrice"

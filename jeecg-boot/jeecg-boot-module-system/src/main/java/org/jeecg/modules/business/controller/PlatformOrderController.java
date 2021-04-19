@@ -54,13 +54,10 @@ import org.jeecg.common.aspect.annotation.AutoLog;
 @Slf4j
 public class PlatformOrderController {
     private final IPlatformOrderService platformOrderService;
-    private final IPlatformOrderContentService platformOrderContentService;
 
     @Autowired
-    public PlatformOrderController(IPlatformOrderService platformOrderService,
-                                   IPlatformOrderContentService platformOrderContentService) {
+    public PlatformOrderController(IPlatformOrderService platformOrderService) {
         this.platformOrderService = platformOrderService;
-        this.platformOrderContentService = platformOrderContentService;
     }
 
 
@@ -169,16 +166,16 @@ public class PlatformOrderController {
     }
 
     /**
-     * 通过id查询
+     * Get the order content of the order specified by its identifier
      *
-     * @param id
-     * @return
+     * @param id the identifier of the pla order
+     * @return the order content in a result object
      */
-    @AutoLog(value = "平台订单内容通过主表ID查询")
-    @ApiOperation(value = "平台订单内容主表ID查询", notes = "平台订单内容-通主表ID查询")
+    @AutoLog(value = "Query order contents by order's identifier")
+    @ApiOperation(value = "Order content query", notes = "Query order contents by order's identifier")
     @GetMapping(value = "/queryPlatformOrderContentByMainId")
-    public Result<?> queryPlatformOrderContentListByMainId(@RequestParam(name = "id", required = true) String id) {
-        List<PlatformOrderContent> platformOrderContentList = platformOrderContentService.selectByMainId(id);
+    public Result<?> queryPlatformOrderContentListByMainId(@RequestParam(name = "id") String id) {
+        List<PlatformOrderContent> platformOrderContentList = platformOrderService.selectByMainId(id);
         IPage<PlatformOrderContent> page = new Page<>();
         page.setRecords(platformOrderContentList);
         page.setTotal(platformOrderContentList.size());
@@ -186,10 +183,10 @@ public class PlatformOrderController {
     }
 
     /**
-     * 导出excel
+     * Export data filtered by conditions to a excel file
      *
-     * @param request
-     * @param platformOrder
+     * @param request       a request that contains the condition
+     * @param platformOrder a model and view
      */
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, PlatformOrder platformOrder) {
@@ -210,11 +207,11 @@ public class PlatformOrderController {
         }
 
         // Step.3 组装pageList
-        List<PlatformOrderPage> pageList = new ArrayList<PlatformOrderPage>();
+        List<PlatformOrderPage> pageList = new ArrayList<>();
         for (PlatformOrder main : platformOrderList) {
             PlatformOrderPage vo = new PlatformOrderPage();
             BeanUtils.copyProperties(main, vo);
-            List<PlatformOrderContent> platformOrderContentList = platformOrderContentService.selectByMainId(main.getId());
+            List<PlatformOrderContent> platformOrderContentList = platformOrderService.selectByMainId(main.getId());
             vo.setPlatformOrderContentList(platformOrderContentList);
             pageList.add(vo);
         }
@@ -229,14 +226,13 @@ public class PlatformOrderController {
     }
 
     /**
-     * 通过excel导入数据
+     * Import data from excel file
      *
-     * @param request
-     * @param response
-     * @return
+     * @param request request containing excel file
+     * @return Result object that contains success/fail message.
      */
     @RequestMapping(value = "/importExcel", method = RequestMethod.POST)
-    public Result<?> importExcel(HttpServletRequest request, HttpServletResponse response) {
+    public Result<?> importExcel(HttpServletRequest request) {
         MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
         Map<String, MultipartFile> fileMap = multipartRequest.getFileMap();
         for (Map.Entry<String, MultipartFile> entity : fileMap.entrySet()) {
@@ -266,5 +262,4 @@ public class PlatformOrderController {
         }
         return Result.OK("文件导入失败！");
     }
-
 }

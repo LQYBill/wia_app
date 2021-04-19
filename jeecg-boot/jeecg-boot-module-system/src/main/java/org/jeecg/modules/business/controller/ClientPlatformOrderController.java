@@ -1,38 +1,22 @@
 package org.jeecg.modules.business.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.shiro.SecurityUtils;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.aspect.annotation.AutoLog;
-import org.jeecg.common.system.query.QueryGenerator;
-import org.jeecg.common.system.vo.LoginUser;
-import org.jeecg.common.util.oConvertUtils;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
-import org.jeecg.modules.business.service.IClientPlatformOrderService;
-import org.jeecg.modules.business.service.IPlatformOrderContentService;
 import org.jeecg.modules.business.service.IPlatformOrderService;
 import org.jeecg.modules.business.vo.ClientPlatformOrderPage;
 import org.jeecg.modules.business.vo.OrdersStatisticData;
-import org.jeecg.modules.business.vo.PlatformOrderPage;
-import org.jeecgframework.poi.excel.def.NormalExcelConstants;
-import org.jeecgframework.poi.excel.entity.ExportParams;
-import org.jeecgframework.poi.excel.view.JeecgEntityExcelView;
-import org.springframework.beans.BeanUtils;
+import org.jeecg.modules.business.vo.PurchaseOrderDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.ModelAndView;
 
-import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @Description: platform order table for a certain client
@@ -46,31 +30,25 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ClientPlatformOrderController {
     private final IPlatformOrderService platformOrderService;
-    private final IPlatformOrderContentService platformOrderContentService;
-    private final IClientPlatformOrderService clientPlatformOrderService;
 
     @Autowired
-    public ClientPlatformOrderController(IPlatformOrderService platformOrderService,
-                                         IPlatformOrderContentService platformOrderContentService,
-                                         IClientPlatformOrderService clientPlatformOrderService) {
+    public ClientPlatformOrderController(IPlatformOrderService platformOrderService) {
         this.platformOrderService = platformOrderService;
-        this.platformOrderContentService = platformOrderContentService;
-        this.clientPlatformOrderService = clientPlatformOrderService;
     }
 
     /**
      * Query all platform orders for current client.
      *
-     * @return all platform orders of current client
+     * @return all platform orders of current client in a Result object
      */
     @AutoLog(value = "当前客户的平台订单列表查询")
     @ApiOperation(value = "当前客户的平台订单列表查询", notes = "当前客户的平台订单列表查询")
     @GetMapping(value = "/list")
     public Result<IPage<ClientPlatformOrderPage>> queryAllPlatformOrder(@RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
-                                                                  @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize) {
+                                                                        @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize) {
         log.info("Query for client platform orders");
         IPage<ClientPlatformOrderPage> page = new Page<>(pageNo, pageSize);
-        clientPlatformOrderService.initPlatformOrderPage(page);
+        platformOrderService.initPlatformOrderPage(page);
         return Result.OK(page);
     }
 
@@ -78,7 +56,7 @@ public class ClientPlatformOrderController {
     @PostMapping(value = "/computeInfo", consumes = "application/json", produces = "application/json")
     public Result<OrdersStatisticData> queryOrdersStatisticInfo(@RequestBody List<String> orderIds) {
         log.info("Calculating statistic information for orders: {}", orderIds);
-        OrdersStatisticData ordersData = clientPlatformOrderService.getPlatformOrdersStatisticData(orderIds);
+        OrdersStatisticData ordersData = platformOrderService.getPlatformOrdersStatisticData(orderIds);
         log.info("Got statistic information: {}", ordersData);
         return Result.OK(ordersData);
     }
@@ -111,54 +89,20 @@ public class ClientPlatformOrderController {
     @ApiOperation(value = "平台订单内容主表ID查询", notes = "平台订单内容-通主表ID查询")
     @GetMapping(value = "/queryPlatformOrderContentByMainId")
     public Result<?> queryPlatformOrderContentListByMainId(@RequestParam(name = "id") String id) {
-        List<PlatformOrderContent> platformOrderContentList = platformOrderContentService.selectByMainId(id);
+        List<PlatformOrderContent> platformOrderContentList = platformOrderService.selectByMainId(id);
         IPage<PlatformOrderContent> page = new Page<>();
         page.setRecords(platformOrderContentList);
         page.setTotal(platformOrderContentList.size());
         return Result.OK(page);
     }
 
-    /**
-     * export data to excel file
-     *
-     * @param request       request containing arguments
-     * @param platformOrder don't know yet
-     */
-    @RequestMapping(value = "/exportXls")
-    public ModelAndView exportXls(HttpServletRequest request, PlatformOrder platformOrder) {
-        // Step.1 组装查询条件查询数据
-        QueryWrapper<PlatformOrder> queryWrapper = QueryGenerator.initQueryWrapper(platformOrder, request.getParameterMap());
-        LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
 
-        //Step.2 获取导出数据
-        List<PlatformOrder> queryList = platformOrderService.list(queryWrapper);
-        // 过滤选中数据
-        String selections = request.getParameter("selections");
-        List<PlatformOrder> platformOrderList;
-        if (oConvertUtils.isEmpty(selections)) {
-            platformOrderList = queryList;
-        } else {
-            List<String> selectionList = Arrays.asList(selections.split(","));
-            platformOrderList = queryList.stream().filter(item -> selectionList.contains(item.getId())).collect(Collectors.toList());
-        }
-
-        // Step.3 组装pageList
-        List<PlatformOrderPage> pageList = new ArrayList<>();
-        for (PlatformOrder main : platformOrderList) {
-            PlatformOrderPage vo = new PlatformOrderPage();
-            BeanUtils.copyProperties(main, vo);
-            List<PlatformOrderContent> platformOrderContentList = platformOrderContentService.selectByMainId(main.getId());
-            vo.setPlatformOrderContentList(platformOrderContentList);
-            pageList.add(vo);
-        }
-
-        // Step.4 AutoPoi 导出Excel
-        ModelAndView mv = new ModelAndView(new JeecgEntityExcelView());
-        mv.addObject(NormalExcelConstants.FILE_NAME, "平台订单表列表");
-        mv.addObject(NormalExcelConstants.CLASS, PlatformOrderPage.class);
-        mv.addObject(NormalExcelConstants.PARAMS, new ExportParams("平台订单表数据", "导出人:" + sysUser.getRealname(), "平台订单表"));
-        mv.addObject(NormalExcelConstants.DATA_LIST, pageList);
-        return mv;
+    @PostMapping(value = "/purchase", consumes = "application/json", produces = "application/json")
+    public Result<PurchaseOrderDetails> purchaseOrder(@RequestBody List<String> orderIds) {
+        log.info("One client purchase order");
+        PurchaseOrderDetails d = platformOrderService.purchaseOrder(orderIds);
+        return Result.OK(d);
     }
+
 
 }

@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.jeecg.modules.business.mapper.ClientUserMapper">
-    <select id="selectByUserId" parameterType="java.lang.String" resultType="java.lang.String">
-        SELECT client_id
+    <select id="selectClientByUserId" parameterType="java.lang.String"
+            resultType="org.jeecg.modules.business.entity.Client">
+        SELECT c.*
         FROM user_client
-        where user_id = #{userId} 	</select>
+            JOIN client c
+                ON c.id = user_client.client_id
+        WHERE user_id = #{userId}    </select>
 </mapper>

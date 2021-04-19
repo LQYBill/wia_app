@@ -12,5 +12,4 @@ import java.util.List;
  */
 public interface IPlatformOrderContentService extends IService<PlatformOrderContent> {
 
-	public List<PlatformOrderContent> selectByMainId(String mainId);
 }

@@ -1,12 +1,8 @@
 package org.jeecg.modules.business.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
 import org.jeecg.modules.business.entity.Client;
-import org.jeecg.modules.business.entity.ClientSku;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 /**
  * @Description: 客户 登录账户 关系
@@ -17,5 +13,5 @@ import java.util.List;
 @Repository
 public interface ClientUserMapper {
 
-	String selectByUserId(@Param("userId") String userId);
+	Client selectClientByUserId(@Param("userId") String userId);
 }

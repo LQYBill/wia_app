@@ -1,7 +1,6 @@
 package org.jeecg.modules.business.entity;
 
 import lombok.Data;
-import org.springframework.lang.NonNull;
 
 import java.math.BigDecimal;
 import java.util.Objects;
@@ -16,14 +15,20 @@ public class OrderContentDetail {
 
     private final String skuId;
 
+    private final String erpCode;
+
+    private final String product;
+
     private final Integer quantity;
 
     private final SkuPrice price;
 
     private final Promotion promotion;
 
-    public OrderContentDetail(String skuId, Integer quantity, SkuPrice price, Promotion promotion) {
+    public OrderContentDetail(String skuId, String erpCode, String product, Integer quantity, SkuPrice price, Promotion promotion) {
         this.skuId = Objects.requireNonNull(skuId);
+        this.erpCode = erpCode;
+        this.product = product;
         this.quantity = Objects.requireNonNull(quantity);
         this.price = Objects.requireNonNull(price);
         this.promotion = promotion == null ? Promotion.ZERO_PROMOTION : promotion;
