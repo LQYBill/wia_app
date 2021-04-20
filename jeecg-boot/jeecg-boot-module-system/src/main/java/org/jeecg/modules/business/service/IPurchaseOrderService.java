@@ -47,12 +47,12 @@ public interface IPurchaseOrderService extends IService<PurchaseOrder> {
     void setPageForCurrentClient(IPage<PurchaseOrder> page);
 
     /**
-     * Add a purchase by demands from client side.
+     * Add a new purchase by demands from client side.
      *
-     * @param demands a list of demands
-     * @return purchase order identifier
+     * @param orderIDs a list of demands
+     * @return the new purchase order identifier
      */
-    String addPurchase(List<PurchaseDemand> demands);
+    String addPurchase(List<String> orderIDs);
 
 
 }

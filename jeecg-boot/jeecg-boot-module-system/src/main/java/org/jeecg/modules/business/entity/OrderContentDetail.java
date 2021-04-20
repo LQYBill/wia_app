@@ -52,5 +52,9 @@ public class OrderContentDetail {
         return price.getPrice(quantity).multiply(new BigDecimal(quantity));
     }
 
+    public int promotionCount(){
+        return promotion.promotionCount(quantity);
+    }
+
 
 }

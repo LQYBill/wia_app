@@ -1,7 +1,7 @@
 package org.jeecg.modules.business.service.impl.purchase;
 
 import org.jeecg.modules.business.entity.PurchaseOrderSku;
-import org.jeecg.modules.business.mapper.PurchaseOrderSkuMapper;
+import org.jeecg.modules.business.mapper.PurchaseOrderContentMapper;
 import org.jeecg.modules.business.service.IPurchaseOrderSkuService;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -15,13 +15,13 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @Version: V1.0
  */
 @Service
-public class PurchaseOrderSkuServiceImpl extends ServiceImpl<PurchaseOrderSkuMapper, PurchaseOrderSku> implements IPurchaseOrderSkuService {
+public class PurchaseOrderSkuServiceImpl extends ServiceImpl<PurchaseOrderContentMapper, PurchaseOrderSku> implements IPurchaseOrderSkuService {
 	
 	@Autowired
-	private PurchaseOrderSkuMapper purchaseOrderSkuMapper;
+	private PurchaseOrderContentMapper purchaseOrderContentMapper;
 	
 	@Override
 	public List<PurchaseOrderSku> selectByMainId(String mainId) {
-		return purchaseOrderSkuMapper.selectByMainId(mainId);
+		return purchaseOrderContentMapper.selectByMainId(mainId);
 	}
 }

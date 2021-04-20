@@ -13,7 +13,7 @@ import org.apache.ibatis.annotations.Param;
  */
 public interface SkuPriceMapper extends BaseMapper<SkuPrice> {
 
-	public boolean deleteByMainId(@Param("mainId") String mainId);
+	boolean deleteByMainId(@Param("mainId") String mainId);
     
-	public List<SkuPrice> selectByMainId(@Param("mainId") String mainId);
+	List<SkuPrice> selectByMainId(@Param("mainId") String mainId);
 }

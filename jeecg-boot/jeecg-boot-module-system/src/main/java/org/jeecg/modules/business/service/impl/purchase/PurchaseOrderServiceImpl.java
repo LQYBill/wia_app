@@ -1,22 +1,25 @@
 package org.jeecg.modules.business.service.impl.purchase;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import org.jeecg.modules.business.entity.PurchaseOrder;
-import org.jeecg.modules.business.entity.PurchaseOrderSku;
-import org.jeecg.modules.business.entity.SkuPromotionHistory;
-import org.jeecg.modules.business.mapper.PurchaseOrderSkuMapper;
+import org.jeecg.modules.business.entity.*;
+import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
+import org.jeecg.modules.business.mapper.PurchaseOrderContentMapper;
 import org.jeecg.modules.business.mapper.SkuPromotionHistoryMapper;
 import org.jeecg.modules.business.mapper.PurchaseOrderMapper;
+import org.jeecg.modules.business.service.IClientService;
 import org.jeecg.modules.business.service.IPurchaseOrderService;
+import org.jeecg.modules.business.vo.PromotionDetail;
+import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
 import org.jeecg.modules.business.vo.clientPurchaseOrder.PurchaseDemand;
 import org.springframework.stereotype.Service;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.Serializable;
 import java.util.List;
 import java.util.Collection;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * @Description: 商品采购订单
@@ -29,16 +32,22 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
 
     private final PurchaseOrderMapper purchaseOrderMapper;
 
-    private final PurchaseOrderSkuMapper purchaseOrderSkuMapper;
+    private final PurchaseOrderContentMapper purchaseOrderContentMapper;
 
     private final SkuPromotionHistoryMapper skuPromotionHistoryMapper;
 
+    private final IClientService clientService;
+
+    private final PlatformOrderContentMapper platformOrderContentMapper;
+
     public PurchaseOrderServiceImpl(PurchaseOrderMapper purchaseOrderMapper,
-                                    PurchaseOrderSkuMapper purchaseOrderSkuMapper,
-                                    SkuPromotionHistoryMapper skuPromotionHistoryMapper) {
+                                    PurchaseOrderContentMapper purchaseOrderContentMapper,
+                                    SkuPromotionHistoryMapper skuPromotionHistoryMapper, IClientService clientService, PlatformOrderContentMapper platformOrderContentMapper) {
         this.purchaseOrderMapper = purchaseOrderMapper;
-        this.purchaseOrderSkuMapper = purchaseOrderSkuMapper;
+        this.purchaseOrderContentMapper = purchaseOrderContentMapper;
         this.skuPromotionHistoryMapper = skuPromotionHistoryMapper;
+        this.clientService = clientService;
+        this.platformOrderContentMapper = platformOrderContentMapper;
     }
 
     @Override
@@ -49,7 +58,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
             for (PurchaseOrderSku entity : purchaseOrderSkuList) {
                 //外键设置
                 entity.setSkuId(purchaseOrder.getId());
-                purchaseOrderSkuMapper.insert(entity);
+                purchaseOrderContentMapper.insert(entity);
             }
         }
         if (skuPromotionHistoryList != null && skuPromotionHistoryList.size() > 0) {
@@ -67,7 +76,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         purchaseOrderMapper.updateById(purchaseOrder);
 
         //1.先删除子表数据
-        purchaseOrderSkuMapper.deleteByMainId(purchaseOrder.getId());
+        purchaseOrderContentMapper.deleteByMainId(purchaseOrder.getId());
         skuPromotionHistoryMapper.deleteByMainId(purchaseOrder.getId());
 
         //2.子表数据重新插入
@@ -75,7 +84,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
             for (PurchaseOrderSku entity : purchaseOrderSkuList) {
                 //外键设置
                 entity.setSkuId(purchaseOrder.getId());
-                purchaseOrderSkuMapper.insert(entity);
+                purchaseOrderContentMapper.insert(entity);
             }
         }
         if (skuPromotionHistoryList != null && skuPromotionHistoryList.size() > 0) {
@@ -90,7 +99,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
     @Override
     @Transactional
     public void delMain(String id) {
-        purchaseOrderSkuMapper.deleteByMainId(id);
+        purchaseOrderContentMapper.deleteByMainId(id);
         skuPromotionHistoryMapper.deleteByMainId(id);
         purchaseOrderMapper.deleteById(id);
     }
@@ -99,7 +108,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
     @Transactional
     public void delBatchMain(Collection<? extends Serializable> idList) {
         for (Serializable id : idList) {
-            purchaseOrderSkuMapper.deleteByMainId(id.toString());
+            purchaseOrderContentMapper.deleteByMainId(id.toString());
             skuPromotionHistoryMapper.deleteByMainId(id.toString());
             purchaseOrderMapper.deleteById(id);
         }
@@ -110,10 +119,35 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
     }
 
     @Override
-    public String addPurchase(List<PurchaseDemand> demands) {
-        for (PurchaseDemand demand : demands) {
-            System.out.printf("sku id: %s --- %d units\n", demand.getSkuId(), demand.getQuantity());
-        }
-        return "1234567899999999";
+    public String addPurchase(List<String> orderIDs) {
+        Client client = clientService.getCurrentClient();
+        List<OrderContentDetail> details = platformOrderContentMapper.searchOrderContentDetail(orderIDs);
+        OrdersStatisticData data = OrdersStatisticData.makeData(details);
+        String purchaseID = UUID.randomUUID().toString();
+
+        // 1. save purchase itself
+        purchaseOrderMapper.addPurchase(
+                purchaseID,
+                client.getFirstName() + " " + client.getSurname(),
+                client.getId(),
+                data.getEstimatedTotalPrice(),
+                data.getReducedAmount(),
+                data.getEstimatedTotalPrice().add(data.getReducedAmount())
+        );
+
+        // 2. save purchase's content
+        purchaseOrderContentMapper.addAll(details, purchaseID);
+        List<PromotionDetail> promotionDetails = details.stream().map(orderContentDetail -> {
+            String promotion = orderContentDetail.getPromotion().getId();
+            String sku = orderContentDetail.getSkuId();
+            int count = orderContentDetail.promotionCount();
+            return new PromotionDetail(promotion, sku, count);
+        }).collect(Collectors.toList());
+
+        // 3. save the application of promotion information
+        skuPromotionHistoryMapper.addAll(promotionDetails);
+
+        // 4. return purchase id
+        return purchaseID;
     }
 }

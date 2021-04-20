@@ -1,6 +1,5 @@
 package org.jeecg.modules.business.entity;
 
-import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
@@ -19,6 +18,7 @@ public class Promotion {
     /**
      * Identifier of promotion
      */
+    @Getter
     private final String id;
 
     /**
@@ -58,8 +58,7 @@ public class Promotion {
      * @return amount of exemption, the result will be 0 if the sku does not belong to this promotion
      */
     public BigDecimal calculateDiscountAmount(int quantity) {
-        int count = (quantity + quantityPurchased) / promoMilestone;
-        return discount.multiply(new BigDecimal(count));
+        return discount.multiply(new BigDecimal(promotionCount(quantity)));
     }
 
     /**
@@ -74,6 +73,10 @@ public class Promotion {
             new_quantity %= promoMilestone;
         }
         return new Promotion(id, promoMilestone, new_quantity, discount);
+    }
+
+    public int promotionCount(int quantity) {
+        return (quantity + quantityPurchased) / promoMilestone;
     }
 
 }
