@@ -1,4 +1,4 @@
-package org.jeecg.modules.business.service.impl;
+package org.jeecg.modules.business.service.impl.purchase;
 
 import org.jeecg.modules.business.entity.SkuPromotionHistory;
 import org.jeecg.modules.business.mapper.SkuPromotionHistoryMapper;

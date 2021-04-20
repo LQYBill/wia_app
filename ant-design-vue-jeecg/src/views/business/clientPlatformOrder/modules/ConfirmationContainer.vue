@@ -5,15 +5,16 @@
     :visible="visible"
     :maskClosable="false"
     switchFullscreen
+    ok-text="confirm"
     @ok="handleOk"
-    :okButtonProps="{ class:{'jee-hidden': disableSubmit} }"
     @cancel="handleCancel">
+
     <Detail ref="content" :order-ids="dataForChild"/>
   </j-modal>
 </template>
 
 <script>
-import Detail from './Detail'
+import Detail from './Confirmation'
 
 export default {
   name: 'ClientPlatformOrderDetailContainer',
@@ -24,7 +25,6 @@ export default {
     return {
       title: '',
       visible: false,
-      disableSubmit: false
     }
   },
   props:{
@@ -44,6 +44,7 @@ export default {
       this.visible = false;
     },
     handleOk() {
+      this.$refs.content.confirmOrder();
       this.close()
     },
     handleCancel() {

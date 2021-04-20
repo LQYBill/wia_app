@@ -87,7 +87,7 @@
     <!-- table区域 end -->
 
     <!-- 表单区域 -->
-    <PopupOrderDetail ref="popup" @ok="modalFormOk" :data-for-child="selectedRowKeys"/>
+    <popup-confirmation ref="popup" @ok="modalFormOk" :data-for-child="selectedRowKeys"/>
     <a-space class="bottomButtons">
       <a-button type="danger" @click="onClearSelected">
         Reset
@@ -104,7 +104,7 @@
 <script>
 
 import {JeecgListMixin} from '@/mixins/JeecgListMixin'
-import PopupOrderDetail from './modules/DetailContainer'
+import PopupConfirmation from './modules/ConfirmationContainer'
 import OrderContent from './subTables/OrderContent'
 
 import '@/assets/less/TableExpand.less'
@@ -115,7 +115,7 @@ export default {
   name: 'PlatformOrderList',
   mixins: [JeecgListMixin],
   components: {
-    PopupOrderDetail,
+    PopupConfirmation,
     OrderContent,
   },
   data() {

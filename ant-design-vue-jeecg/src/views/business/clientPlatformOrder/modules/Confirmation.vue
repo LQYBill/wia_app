@@ -2,10 +2,10 @@
   <a-spin :spinning="confirmLoading">
     <a-card :bordered="false">
       <detail-list title="Purchase">
-        <detail-list-item term="Sku Number">{{ detail.skuNumber }}</detail-list-item>
-        <detail-list-item term="Sku Quantity">{{ detail.totalQuantity }}</detail-list-item>
-        <detail-list-item term="Total Amount">{{ detail.estimatedTotalPrice }}</detail-list-item>
-        <detail-list-item term="Discount">{{ detail.reducedAmount }}</detail-list-item>
+        <detail-list-item term="Sku Number">{{ orderData.skuNumber }}</detail-list-item>
+        <detail-list-item term="Sku Quantity">{{ orderData.totalQuantity }}</detail-list-item>
+        <detail-list-item term="Total Amount">{{ orderData.estimatedTotalPrice }}</detail-list-item>
+        <detail-list-item term="Discount">{{ orderData.reducedAmount }}</detail-list-item>
       </detail-list>
       <a-divider style="margin-bottom: 32px"/>
       <detail-list title="Client Information">
@@ -27,7 +27,7 @@
       <a-table
         style="margin-bottom: 24px"
         :columns="columns"
-        :dataSource="orderData">
+        :dataSource="orderDetails">
       </a-table>
     </a-card>
   </a-spin>
@@ -39,6 +39,7 @@ import DetailList from '@/components/tools/DetailList'
 const DetailListItem = DetailList.Item
 
 import {JEditableTableModelMixin} from '@/mixins/JEditableTableModelMixin'
+
 const {postAction} = require("@api/manage");
 
 
@@ -60,23 +61,19 @@ export default {
         {
           title: 'Product Name',
           dataIndex: 'product',
-          key: 'product'
         },
         {
           title: 'Unit Price',
           dataIndex: 'price',
-          key: 'price'
         },
         {
           title: 'Quantity',
           dataIndex: 'quantity',
-          key: 'quantity',
           align: 'right'
         },
         {
           title: 'Amount',
           dataIndex: 'total',
-          key: 'total',
           align: 'right'
         }
       ],
@@ -94,15 +91,16 @@ export default {
         streetNumber: undefined,
         surname: undefined
       },
-      detail: {
+      orderData: {
         estimatedTotalPrice: undefined,
         reducedAmount: undefined,
         skuNumber: undefined,
         totalQuantity: undefined,
       },
-      orderData: undefined,
+      orderDetails: [],
       url: {
         orderInfo: '/business/clientPlatformOrder/purchase',
+        confirmOrder: '/business/purchaseOrder/client/add'
       },
     }
   },
@@ -115,13 +113,26 @@ export default {
       postAction(this.url.orderInfo, params)
         .then(
           res => {
-            console.log(res.result)
             this.client = res.result.clientInfo
-            this.detail = res.result.data
-            this.orderData = res.result.voPurchaseDetails
+            this.orderData = res.result.data
+            this.orderDetails = res.result.voPurchaseDetails
           }
         )
     },
+    confirmOrder() {
+      const params = this.orderDetails.map(
+        (d) => ({
+          skuId: d.skuId,
+          quantity: d.quantity
+        })
+      )
+      postAction(this.url.confirmOrder, params).then((res) => {
+        console.log(res.result)
+      })
+
+    },
+    handleCancel() {
+    }
   },
   computed: {},
   created() {
@@ -132,7 +143,7 @@ export default {
 
 <style scoped>
 .title {
-  color: rgba(0,0,0,.85);
+  color: rgba(0, 0, 0, .85);
   font-size: 16px;
   font-weight: 500;
   margin-bottom: 16px;

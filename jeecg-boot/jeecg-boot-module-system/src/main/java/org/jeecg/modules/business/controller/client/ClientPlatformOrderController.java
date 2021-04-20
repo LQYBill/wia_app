@@ -19,12 +19,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * @Description: platform order table for a certain client
+ * @Description: API handler for any request related to platform order when request sender is a client.
  * @Author: Wenke
  * @Date: 2021-04-17
  * @Version: V1.000001
  */
-@Api(tags = "平台订单表")
+@Api(tags = " platform order (client)")
 @RestController
 @RequestMapping("/business/clientPlatformOrder")
 @Slf4j
@@ -100,7 +100,7 @@ public class ClientPlatformOrderController {
     @PostMapping(value = "/purchase", consumes = "application/json", produces = "application/json")
     public Result<PurchaseConfirmation> purchaseOrder(@RequestBody List<String> orderIds) {
         log.info("One client purchase order");
-        PurchaseConfirmation d = platformOrderService.purchaseOrder(orderIds);
+        PurchaseConfirmation d = platformOrderService.confirmOrder(orderIds);
         return Result.OK(d);
     }
 

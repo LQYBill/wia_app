@@ -46,5 +46,5 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
 
     List<PlatformOrderContent> selectByMainId(String mainId);
 
-    PurchaseConfirmation purchaseOrder(List<String> orderIds);
+    PurchaseConfirmation confirmOrder(List<String> orderIds);
 }
