@@ -10,9 +10,9 @@ import org.jeecg.common.aspect.annotation.AutoLog;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.service.IPlatformOrderService;
-import org.jeecg.modules.business.vo.ClientPlatformOrderPage;
-import org.jeecg.modules.business.vo.OrdersStatisticData;
-import org.jeecg.modules.business.vo.PurchaseOrderDetails;
+import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage;
+import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
+import org.jeecg.modules.business.vo.clientPlatformOrder.PurchaseConfirmation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -98,9 +98,9 @@ public class ClientPlatformOrderController {
 
 
     @PostMapping(value = "/purchase", consumes = "application/json", produces = "application/json")
-    public Result<PurchaseOrderDetails> purchaseOrder(@RequestBody List<String> orderIds) {
+    public Result<PurchaseConfirmation> purchaseOrder(@RequestBody List<String> orderIds) {
         log.info("One client purchase order");
-        PurchaseOrderDetails d = platformOrderService.purchaseOrder(orderIds);
+        PurchaseConfirmation d = platformOrderService.purchaseOrder(orderIds);
         return Result.OK(d);
     }
 

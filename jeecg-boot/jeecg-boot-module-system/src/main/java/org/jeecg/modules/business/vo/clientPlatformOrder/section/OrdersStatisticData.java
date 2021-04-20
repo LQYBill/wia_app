@@ -1,4 +1,4 @@
-package org.jeecg.modules.business.vo;
+package org.jeecg.modules.business.vo.clientPlatformOrder.section;
 
 
 import lombok.Data;
@@ -6,10 +6,10 @@ import org.jeecg.modules.business.entity.OrderContentDetail;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * This class is used to display details of multiple orders
+ * in the head section of client platform order page
  */
 @Data
 public class OrdersStatisticData {

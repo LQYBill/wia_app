@@ -1,11 +1,14 @@
-package org.jeecg.modules.business.vo;
+package org.jeecg.modules.business.vo.clientPlatformOrder.section;
 
 import lombok.Data;
 
 import java.math.BigDecimal;
 
+/**
+ * Each row of client platform order page in confirmation page
+ */
 @Data
-public class VoPurchaseDetail {
+public class PurchaseDetail {
     private final String erpCode;
 
     private final String product;
@@ -16,7 +19,7 @@ public class VoPurchaseDetail {
 
     private final BigDecimal total;
 
-    public VoPurchaseDetail(String erpCode, String product, int quantity, BigDecimal price) {
+    public PurchaseDetail(String erpCode, String product, int quantity, BigDecimal price) {
         this.erpCode = erpCode;
         this.product = product;
 

@@ -3,7 +3,7 @@ package org.jeecg.modules.business.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
 import org.jeecg.modules.business.entity.PlatformOrder;
-import org.jeecg.modules.business.vo.ClientPlatformOrderPage;
+import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

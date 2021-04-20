@@ -4,9 +4,9 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import com.baomidou.mybatisplus.extension.service.IService;
-import org.jeecg.modules.business.vo.ClientPlatformOrderPage;
-import org.jeecg.modules.business.vo.OrdersStatisticData;
-import org.jeecg.modules.business.vo.PurchaseOrderDetails;
+import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage;
+import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
+import org.jeecg.modules.business.vo.clientPlatformOrder.PurchaseConfirmation;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -46,5 +46,5 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
 
     List<PlatformOrderContent> selectByMainId(String mainId);
 
-    PurchaseOrderDetails purchaseOrder(List<String> orderIds);
+    PurchaseConfirmation purchaseOrder(List<String> orderIds);
 }

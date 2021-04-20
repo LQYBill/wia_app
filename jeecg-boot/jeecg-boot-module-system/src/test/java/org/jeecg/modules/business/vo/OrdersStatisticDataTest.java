@@ -1,10 +1,9 @@
 package org.jeecg.modules.business.vo;
 
-import jdk.nashorn.internal.codegen.types.NumericType;
 import org.assertj.core.util.Lists;
 import org.jeecg.modules.business.entity.OrderContentDetail;
-import org.jeecg.modules.business.entity.Promotion;
 import org.jeecg.modules.business.entity.SkuPrice;
+import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
 import org.junit.jupiter.params.ParameterizedTest;
 
 import static org.junit.jupiter.params.provider.Arguments.*;

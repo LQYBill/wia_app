@@ -1,4 +1,4 @@
-package org.jeecg.modules.business.vo;
+package org.jeecg.modules.business.vo.clientPlatformOrder;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModel;

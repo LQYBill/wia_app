@@ -11,10 +11,10 @@ import org.jeecg.modules.business.mapper.ClientUserMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
 import org.jeecg.modules.business.service.IPlatformOrderService;
-import org.jeecg.modules.business.vo.ClientInfo;
-import org.jeecg.modules.business.vo.ClientPlatformOrderPage;
-import org.jeecg.modules.business.vo.OrdersStatisticData;
-import org.jeecg.modules.business.vo.PurchaseOrderDetails;
+import org.jeecg.modules.business.vo.clientPlatformOrder.section.ClientInfo;
+import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage;
+import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
+import org.jeecg.modules.business.vo.clientPlatformOrder.PurchaseConfirmation;
 import org.springframework.stereotype.Service;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -122,15 +122,18 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
     }
 
     @Override
-    public PurchaseOrderDetails purchaseOrder(List<String> orderIds) {
+    public PurchaseConfirmation purchaseOrder(List<String> orderIds) {
         // get client info
         LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
         Client client = clientUserMap.selectClientByUserId(sysUser.getId());
         ClientInfo clientInfo = new ClientInfo(client);
-
-        List<OrderContentDetail> data = platformOrderContentMap.searchOrderContentDetail(orderIds);
-
-        return new PurchaseOrderDetails(clientInfo, data);
+        List<OrderContentDetail> data;
+        if (orderIds.isEmpty()) {
+            data = Collections.emptyList();
+        } else {
+            data = platformOrderContentMap.searchOrderContentDetail(orderIds);
+        }
+        return new PurchaseConfirmation(clientInfo, data);
 
     }
 

@@ -1,8 +1,11 @@
-package org.jeecg.modules.business.vo;
+package org.jeecg.modules.business.vo.clientPlatformOrder.section;
 
 import lombok.Data;
 import org.jeecg.modules.business.entity.Client;
 
+/**
+ * Client information section in the order detail page when confirming orders
+ */
 @Data
 public class ClientInfo {
     /**

@@ -24,9 +24,13 @@ public interface PlatformOrderContentMapper extends BaseMapper<PlatformOrderCont
     /**
      * Search quantity, price and its promotion of sku which are contained in the orders
      * indicated by the identifiers.
+     * <p>
+     * Attention, the implementation of this method uses WHERE IN clause with foreach of mybatis, in case of empty list as argument,
+     * this methods will crush.
      *
-     * @param orderIdList a list of order identifiers
+     * @param orderIdList a list of order identifiers that should not be empty.
      * @return the data
+     * @throws RuntimeException in case of empty list as argument
      */
     List<OrderContentDetail> searchOrderContentDetail(List<String> orderIdList);
 
