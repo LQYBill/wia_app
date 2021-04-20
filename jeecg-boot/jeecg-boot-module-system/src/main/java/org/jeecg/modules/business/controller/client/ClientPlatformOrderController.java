@@ -1,4 +1,4 @@
-package org.jeecg.modules.business.controller;
+package org.jeecg.modules.business.controller.client;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;

@@ -1,4 +1,4 @@
-package org.jeecg.modules.business.controller;
+package org.jeecg.modules.business.controller.admin;
 
 import java.io.UnsupportedEncodingException;
 import java.io.IOException;

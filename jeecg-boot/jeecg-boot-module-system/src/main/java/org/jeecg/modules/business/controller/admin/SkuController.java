@@ -1,4 +1,4 @@
-package org.jeecg.modules.business.controller;
+package org.jeecg.modules.business.controller.admin;
 
 import java.io.UnsupportedEncodingException;
 import java.io.IOException;
@@ -22,11 +22,13 @@ import org.apache.shiro.SecurityUtils;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.common.util.oConvertUtils;
-import org.jeecg.modules.business.entity.LogisticChannelPrice;
-import org.jeecg.modules.business.entity.LogisticChannel;
-import org.jeecg.modules.business.vo.LogisticChannelPage;
-import org.jeecg.modules.business.service.ILogisticChannelService;
-import org.jeecg.modules.business.service.ILogisticChannelPriceService;
+import org.jeecg.modules.business.entity.SkuPrice;
+import org.jeecg.modules.business.entity.ShippingDiscount;
+import org.jeecg.modules.business.entity.Sku;
+import org.jeecg.modules.business.vo.SkuPage;
+import org.jeecg.modules.business.service.ISkuService;
+import org.jeecg.modules.business.service.ISkuPriceService;
+import org.jeecg.modules.business.service.IShippingDiscountService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -43,80 +45,84 @@ import io.swagger.annotations.ApiOperation;
 import org.jeecg.common.aspect.annotation.AutoLog;
 
 /**
- * @Description: 物流渠道
+ * @Description: SKU表
  * @Author: jeecg-boot
  * @Date: 2021-04-03
  * @Version: V1.0
  */
-@Api(tags = "物流渠道")
+@Api(tags = "SKU表")
 @RestController
-@RequestMapping("/business/logisticChannel")
+@RequestMapping("/business/sku")
 @Slf4j
-public class LogisticChannelController {
-    private final ILogisticChannelService logisticChannelService;
-    private final ILogisticChannelPriceService logisticChannelPriceService;
+public class SkuController {
+    private final ISkuService skuService;
+    private final ISkuPriceService skuPriceService;
+    private final IShippingDiscountService shippingDiscountService;
 
     @Autowired
-    public LogisticChannelController(ILogisticChannelService logisticChannelService, ILogisticChannelPriceService logisticChannelPriceService) {
-        this.logisticChannelService = logisticChannelService;
-        this.logisticChannelPriceService = logisticChannelPriceService;
+    public SkuController(ISkuService skuService,
+                         ISkuPriceService skuPriceService,
+                         IShippingDiscountService shippingDiscountService) {
+        this.skuService = skuService;
+        this.skuPriceService = skuPriceService;
+        this.shippingDiscountService = shippingDiscountService;
     }
 
     /**
      * 分页列表查询
      *
-     * @param logisticChannel
+     * @param sku
      * @param pageNo
      * @param pageSize
      * @param req
      * @return
      */
-    @AutoLog(value = "物流渠道-分页列表查询")
-    @ApiOperation(value = "物流渠道-分页列表查询", notes = "物流渠道-分页列表查询")
+    @AutoLog(value = "SKU表-分页列表查询")
+    @ApiOperation(value = "SKU表-分页列表查询", notes = "SKU表-分页列表查询")
     @GetMapping(value = "/list")
-    public Result<?> queryPageList(LogisticChannel logisticChannel,
+    public Result<?> queryPageList(Sku sku,
                                    @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
                                    @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
                                    HttpServletRequest req) {
-        QueryWrapper<LogisticChannel> queryWrapper = QueryGenerator.initQueryWrapper(logisticChannel, req.getParameterMap());
-        Page<LogisticChannel> page = new Page<>(pageNo, pageSize);
-        IPage<LogisticChannel> pageList = logisticChannelService.page(page, queryWrapper);
+        QueryWrapper<Sku> queryWrapper = QueryGenerator.initQueryWrapper(sku, req.getParameterMap());
+        Page<Sku> page = new Page<Sku>(pageNo, pageSize);
+        IPage<Sku> pageList = skuService.page(page, queryWrapper);
         return Result.OK(pageList);
     }
 
     /**
      * 添加
      *
-     * @param logisticChannelPage
+     * @param skuPage
      * @return
      */
-    @AutoLog(value = "物流渠道-添加")
-    @ApiOperation(value = "物流渠道-添加", notes = "物流渠道-添加")
+    @AutoLog(value = "SKU表-添加")
+    @ApiOperation(value = "SKU表-添加", notes = "SKU表-添加")
     @PostMapping(value = "/add")
-    public Result<?> add(@RequestBody LogisticChannelPage logisticChannelPage) {
-        LogisticChannel logisticChannel = new LogisticChannel();
-        BeanUtils.copyProperties(logisticChannelPage, logisticChannel);
-        logisticChannelService.saveMain(logisticChannel, logisticChannelPage.getLogisticChannelPriceList());
+    public Result<?> add(@RequestBody SkuPage skuPage) {
+        Sku sku = new Sku();
+        BeanUtils.copyProperties(skuPage, sku);
+        skuService.saveMain(sku, skuPage.getSkuPriceList(), skuPage.getShippingDiscountList());
         return Result.OK("添加成功！");
     }
 
     /**
      * 编辑
      *
-     * @param logisticChannelPage
+     * @param skuPage
      * @return
      */
-    @AutoLog(value = "物流渠道-编辑")
-    @ApiOperation(value = "物流渠道-编辑", notes = "物流渠道-编辑")
+    @AutoLog(value = "SKU表-编辑")
+    @ApiOperation(value = "SKU表-编辑", notes = "SKU表-编辑")
     @PutMapping(value = "/edit")
-    public Result<?> edit(@RequestBody LogisticChannelPage logisticChannelPage) {
-        LogisticChannel logisticChannel = new LogisticChannel();
-        BeanUtils.copyProperties(logisticChannelPage, logisticChannel);
-        LogisticChannel logisticChannelEntity = logisticChannelService.getById(logisticChannel.getId());
-        if (logisticChannelEntity == null) {
+    public Result<?> edit(@RequestBody SkuPage skuPage) {
+        Sku sku = new Sku();
+        BeanUtils.copyProperties(skuPage, sku);
+        Sku skuEntity = skuService.getById(sku.getId());
+        if (skuEntity == null) {
             return Result.error("未找到对应数据");
         }
-        logisticChannelService.updateMain(logisticChannel, logisticChannelPage.getLogisticChannelPriceList());
+        skuService.updateMain(sku, skuPage.getSkuPriceList(), skuPage.getShippingDiscountList());
         return Result.OK("编辑成功!");
     }
 
@@ -126,11 +132,11 @@ public class LogisticChannelController {
      * @param id
      * @return
      */
-    @AutoLog(value = "物流渠道-通过id删除")
-    @ApiOperation(value = "物流渠道-通过id删除", notes = "物流渠道-通过id删除")
+    @AutoLog(value = "SKU表-通过id删除")
+    @ApiOperation(value = "SKU表-通过id删除", notes = "SKU表-通过id删除")
     @DeleteMapping(value = "/delete")
     public Result<?> delete(@RequestParam(name = "id", required = true) String id) {
-        logisticChannelService.delMain(id);
+        skuService.delMain(id);
         return Result.OK("删除成功!");
     }
 
@@ -140,11 +146,11 @@ public class LogisticChannelController {
      * @param ids
      * @return
      */
-    @AutoLog(value = "物流渠道-批量删除")
-    @ApiOperation(value = "物流渠道-批量删除", notes = "物流渠道-批量删除")
+    @AutoLog(value = "SKU表-批量删除")
+    @ApiOperation(value = "SKU表-批量删除", notes = "SKU表-批量删除")
     @DeleteMapping(value = "/deleteBatch")
     public Result<?> deleteBatch(@RequestParam(name = "ids", required = true) String ids) {
-        this.logisticChannelService.delBatchMain(Arrays.asList(ids.split(",")));
+        this.skuService.delBatchMain(Arrays.asList(ids.split(",")));
         return Result.OK("批量删除成功！");
     }
 
@@ -154,15 +160,15 @@ public class LogisticChannelController {
      * @param id
      * @return
      */
-    @AutoLog(value = "物流渠道-通过id查询")
-    @ApiOperation(value = "物流渠道-通过id查询", notes = "物流渠道-通过id查询")
+    @AutoLog(value = "SKU表-通过id查询")
+    @ApiOperation(value = "SKU表-通过id查询", notes = "SKU表-通过id查询")
     @GetMapping(value = "/queryById")
     public Result<?> queryById(@RequestParam(name = "id", required = true) String id) {
-        LogisticChannel logisticChannel = logisticChannelService.getById(id);
-        if (logisticChannel == null) {
+        Sku sku = skuService.getById(id);
+        if (sku == null) {
             return Result.error("未找到对应数据");
         }
-        return Result.OK(logisticChannel);
+        return Result.OK(sku);
 
     }
 
@@ -172,53 +178,75 @@ public class LogisticChannelController {
      * @param id
      * @return
      */
-    @AutoLog(value = "物流渠道价格通过主表ID查询")
-    @ApiOperation(value = "物流渠道价格主表ID查询", notes = "物流渠道价格-通主表ID查询")
-    @GetMapping(value = "/queryLogisticChannelPriceByMainId")
-    public Result<?> queryLogisticChannelPriceListByMainId(@RequestParam(name = "id", required = true) String id) {
-        List<LogisticChannelPrice> logisticChannelPriceList = logisticChannelPriceService.selectByMainId(id);
-        return Result.OK(logisticChannelPriceList);
+    @AutoLog(value = "SKU价格表-通过主表ID查询")
+    @ApiOperation(value = "SKU价格表-通过主表ID查询", notes = "SKU价格表-通过主表ID查询")
+    @GetMapping(value = "/querySkuPriceByMainId")
+    public Result<?> querySkuPriceListByMainId(@RequestParam(name = "id", required = true) String id) {
+        List<SkuPrice> skuPriceList = skuPriceService.selectByMainId(id);
+        IPage<SkuPrice> page = new Page<>();
+        page.setRecords(skuPriceList);
+        page.setTotal(skuPriceList.size());
+        return Result.OK(page);
+    }
+
+    /**
+     * 通过id查询
+     *
+     * @param id
+     * @return
+     */
+    @AutoLog(value = "SKU物流折扣-通过主表ID查询")
+    @ApiOperation(value = "SKU物流折扣-通过主表ID查询", notes = "SKU物流折扣-通过主表ID查询")
+    @GetMapping(value = "/queryShippingDiscountByMainId")
+    public Result<?> queryShippingDiscountListByMainId(@RequestParam(name = "id", required = true) String id) {
+        List<ShippingDiscount> shippingDiscountList = shippingDiscountService.selectByMainId(id);
+        IPage<ShippingDiscount> page = new Page<>();
+        page.setRecords(shippingDiscountList);
+        page.setTotal(shippingDiscountList.size());
+        return Result.OK(page);
     }
 
     /**
      * 导出excel
      *
      * @param request
-     * @param logisticChannel
+     * @param sku
      */
     @RequestMapping(value = "/exportXls")
-    public ModelAndView exportXls(HttpServletRequest request, LogisticChannel logisticChannel) {
+    public ModelAndView exportXls(HttpServletRequest request, Sku sku) {
         // Step.1 组装查询条件查询数据
-        QueryWrapper<LogisticChannel> queryWrapper = QueryGenerator.initQueryWrapper(logisticChannel, request.getParameterMap());
+        QueryWrapper<Sku> queryWrapper = QueryGenerator.initQueryWrapper(sku, request.getParameterMap());
         LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
 
         //Step.2 获取导出数据
-        List<LogisticChannel> queryList = logisticChannelService.list(queryWrapper);
+        List<Sku> queryList = skuService.list(queryWrapper);
         // 过滤选中数据
         String selections = request.getParameter("selections");
-        List<LogisticChannel> logisticChannelList = new ArrayList<LogisticChannel>();
+        List<Sku> skuList = new ArrayList<Sku>();
         if (oConvertUtils.isEmpty(selections)) {
-            logisticChannelList = queryList;
+            skuList = queryList;
         } else {
             List<String> selectionList = Arrays.asList(selections.split(","));
-            logisticChannelList = queryList.stream().filter(item -> selectionList.contains(item.getId())).collect(Collectors.toList());
+            skuList = queryList.stream().filter(item -> selectionList.contains(item.getId())).collect(Collectors.toList());
         }
 
         // Step.3 组装pageList
-        List<LogisticChannelPage> pageList = new ArrayList<LogisticChannelPage>();
-        for (LogisticChannel main : logisticChannelList) {
-            LogisticChannelPage vo = new LogisticChannelPage();
+        List<SkuPage> pageList = new ArrayList<SkuPage>();
+        for (Sku main : skuList) {
+            SkuPage vo = new SkuPage();
             BeanUtils.copyProperties(main, vo);
-            List<LogisticChannelPrice> logisticChannelPriceList = logisticChannelPriceService.selectByMainId(main.getId());
-            vo.setLogisticChannelPriceList(logisticChannelPriceList);
+            List<SkuPrice> skuPriceList = skuPriceService.selectByMainId(main.getId());
+            vo.setSkuPriceList(skuPriceList);
+            List<ShippingDiscount> shippingDiscountList = shippingDiscountService.selectByMainId(main.getId());
+            vo.setShippingDiscountList(shippingDiscountList);
             pageList.add(vo);
         }
 
         // Step.4 AutoPoi 导出Excel
         ModelAndView mv = new ModelAndView(new JeecgEntityExcelView());
-        mv.addObject(NormalExcelConstants.FILE_NAME, "物流渠道列表");
-        mv.addObject(NormalExcelConstants.CLASS, LogisticChannelPage.class);
-        mv.addObject(NormalExcelConstants.PARAMS, new ExportParams("物流渠道数据", "导出人:" + sysUser.getRealname(), "物流渠道"));
+        mv.addObject(NormalExcelConstants.FILE_NAME, "SKU表列表");
+        mv.addObject(NormalExcelConstants.CLASS, SkuPage.class);
+        mv.addObject(NormalExcelConstants.PARAMS, new ExportParams("SKU表数据", "导出人:" + sysUser.getRealname(), "SKU表"));
         mv.addObject(NormalExcelConstants.DATA_LIST, pageList);
         return mv;
     }
@@ -241,11 +269,11 @@ public class LogisticChannelController {
             params.setHeadRows(1);
             params.setNeedSave(true);
             try {
-                List<LogisticChannelPage> list = ExcelImportUtil.importExcel(file.getInputStream(), LogisticChannelPage.class, params);
-                for (LogisticChannelPage page : list) {
-                    LogisticChannel po = new LogisticChannel();
+                List<SkuPage> list = ExcelImportUtil.importExcel(file.getInputStream(), SkuPage.class, params);
+                for (SkuPage page : list) {
+                    Sku po = new Sku();
                     BeanUtils.copyProperties(page, po);
-                    logisticChannelService.saveMain(po, page.getLogisticChannelPriceList());
+                    skuService.saveMain(po, page.getSkuPriceList(), page.getShippingDiscountList());
                 }
                 return Result.OK("文件导入成功！数据行数:" + list.size());
             } catch (Exception e) {

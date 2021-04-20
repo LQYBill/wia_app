@@ -1,4 +1,4 @@
-package org.jeecg.modules.business.client.controller;
+package org.jeecg.modules.business.controller.admin;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
