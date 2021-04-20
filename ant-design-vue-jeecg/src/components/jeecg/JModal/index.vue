@@ -9,6 +9,7 @@
     @ok="handleOk"
     @cancel="handleCancel"
     destroyOnClose
+    :okText = "okText"
   >
 
     <slot></slot>
@@ -71,6 +72,11 @@
         type: Boolean,
         default: true
       },
+      okText:{
+        type:String,
+        default:"OK"
+      }
+
     },
     data() {
       return {
