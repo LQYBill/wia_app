@@ -12,7 +12,7 @@
     "download": "Download",
     "edit": "Edit",
     "more": "More",
-    "clearAll": "Clear All"
+    "reset": "Reset"
   },
   "client": {
     "familyName": "Family Name",
