@@ -9,6 +9,8 @@ import java.math.BigDecimal;
  */
 @Data
 public class PurchaseDetail {
+    private final String skuId;
+
     private final String erpCode;
 
     private final String product;
@@ -19,10 +21,10 @@ public class PurchaseDetail {
 
     private final BigDecimal total;
 
-    public PurchaseDetail(String erpCode, String product, int quantity, BigDecimal price) {
+    public PurchaseDetail(String skuId, String erpCode, String product, int quantity, BigDecimal price) {
+        this.skuId = skuId;
         this.erpCode = erpCode;
         this.product = product;
-
         this.quantity = quantity;
         this.price = price;
         this.total = new BigDecimal(quantity).multiply(price);

@@ -10,6 +10,7 @@ import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.mapper.ClientUserMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
+import org.jeecg.modules.business.service.IClientService;
 import org.jeecg.modules.business.service.IPlatformOrderService;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.ClientInfo;
 import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage;
@@ -36,13 +37,13 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
 
     private final PlatformOrderMapper platformOrderMap;
     private final PlatformOrderContentMapper platformOrderContentMap;
-    private final ClientUserMapper clientUserMap;
+    private final IClientService clientService;
 
     @Autowired
-    public PlatformOrderServiceImpl(PlatformOrderMapper platformOrderMap, PlatformOrderContentMapper platformOrderContentMap, ClientUserMapper clientUserMap) {
+    public PlatformOrderServiceImpl(PlatformOrderMapper platformOrderMap, PlatformOrderContentMapper platformOrderContentMap, IClientService clientService) {
         this.platformOrderMap = platformOrderMap;
         this.platformOrderContentMap = platformOrderContentMap;
-        this.clientUserMap = clientUserMap;
+        this.clientService = clientService;
     }
 
     @Override
@@ -96,8 +97,7 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
     @Override
     public void initPlatformOrderPage(IPage<ClientPlatformOrderPage> page) {
         // search client id for current user
-        LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
-        Client client = clientUserMap.selectClientByUserId(sysUser.getId());
+        Client client = clientService.getCurrentClient();
         // in case of other roles
         if (null == client) {
             page.setRecords(Collections.emptyList());
@@ -122,10 +122,8 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
     }
 
     @Override
-    public PurchaseConfirmation purchaseOrder(List<String> orderIds) {
-        // get client info
-        LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
-        Client client = clientUserMap.selectClientByUserId(sysUser.getId());
+    public PurchaseConfirmation confirmOrder(List<String> orderIds) {
+        Client client = clientService.getCurrentClient();
         ClientInfo clientInfo = new ClientInfo(client);
         List<OrderContentDetail> data;
         if (orderIds.isEmpty()) {

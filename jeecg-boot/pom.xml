@@ -350,7 +350,7 @@
             </activation>
             <properties>
                 <!--当前环境-->
-                <profile.name>dev</profile.name>
+                <profile.name>test</profile.name>
                 <!--配置文件前缀-->
                 <prefix.name>jeecg</prefix.name>
                 <!--Nacos配置中心地址-->
