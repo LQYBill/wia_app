@@ -50,15 +50,10 @@
           <span>{{ $t("operation.selected") }}</span>
           <a style="font-weight: 600;padding: 0 4px;">{{ selectedRowKeys.length }}</a>
           <span>{{ $t("order.orders") }}</span>
-          <a style="margin-left: 24px" @click="onClearSelected">{{ $t("operation.clearAll") }}</a>
+          <a style="margin-left: 24px" @click="onClearSelected">{{ $t("operation.reset") }}</a>
         </template>
       </a-alert>
 
-      <a-dropdown v-if="selectedRowKeys.length > 0">
-        <a-button style="margin-left: 8px">
-          <a @click="handleOrder">下单</a>
-        </a-button>
-      </a-dropdown>
 
       <a-table
         ref="table"
@@ -81,7 +76,7 @@
         <template slot="expandedRowRender" slot-scope="record">
           <a-tabs tabPosition="top">
             <a-tab-pane tab="Order Contents" key="platformOrderContent" forceRender>
-              <platform-order-content-sub-table :record="record"/>
+              <order-content :record="record"/>
             </a-tab-pane>
           </a-tabs>
         </template>
@@ -92,16 +87,25 @@
     <!-- table区域 end -->
 
     <!-- 表单区域 -->
-    <platform-order-modal ref="modalForm" @ok="modalFormOk"/>
+    <PopupOrderDetail ref="popup" @ok="modalFormOk" :data-for-child="selectedRowKeys"/>
+    <a-space class="bottomButtons">
+      <a-button type="danger" @click="onClearSelected">
+        Reset
+      </a-button>
+      <a-button type="primary" @click="handleOrder">
+        Place Order
+        <a-icon type="right"/>
+      </a-button>
+    </a-space>
+
   </a-card>
 </template>
 
 <script>
 
 import {JeecgListMixin} from '@/mixins/JeecgListMixin'
-import PlatformOrderModal from './modules/ClientPlatformOrderModal'
-import PlatformOrderContentSubTable from './subTables/ClientPlatformOrderContentSubTable'
-import PurchaseDetail from './PurchaseDetail'
+import PopupOrderDetail from './modules/DetailContainer'
+import OrderContent from './subTables/OrderContent'
 
 import '@/assets/less/TableExpand.less'
 
@@ -111,9 +115,8 @@ export default {
   name: 'PlatformOrderList',
   mixins: [JeecgListMixin],
   components: {
-    PlatformOrderModal,
-    PlatformOrderContentSubTable,
-    PurchaseDetail
+    PopupOrderDetail,
+    OrderContent,
   },
   data() {
     return {
@@ -226,15 +229,8 @@ export default {
   created() {
     this.getSuperFieldList();
   },
-  computed: {
-    importExcelUrl() {
-      return window._CONFIG['domainURL'] + this.url.importExcelUrl
-    }
-  },
+  computed: {},
   methods: {
-    initDictConfig() {
-    },
-
     handleExpand(expanded, record) {
       this.expandedRowKeys = []
       if (expanded === true) {
@@ -286,12 +282,7 @@ export default {
       const params = this.selectedRowKeys
       console.log(params)
       if (params.length === 0) {
-        this.orderData = {
-          skuNumber: 0,
-          totalQuantity: 0,
-          estimatedTotalPrice: 0,
-          reducedAmount: 0
-        }
+        this.resetOrderData()
       } else {
         let self = this
         postAction(this.url.computeInfo, params)
@@ -303,12 +294,32 @@ export default {
           )
       }
     },
-    handleOrder(){
-      this.$refs.modalForm.display()
+    handleOrder() {
+      if (this.selectedRowKeys.length === 0){
+        this.$message.warning("You should select at least 1 order to continue !", 5)
+        return
+      }
+      this.$refs.popup.display()
+    },
+    onClearSelected() {
+      this.selectedRowKeys = [];
+      this.selectionRows = [];
+      this.resetOrderData()
+    },
+    resetOrderData() {
+      this.orderData = {
+        skuNumber: 0,
+        totalQuantity: 0,
+        estimatedTotalPrice: 0,
+        reducedAmount: 0
+      }
     }
   }
 }
 </script>
 <style lang="less" scoped>
 @import '~@assets/less/common.less';
+.bottomButtons {
+  margin-left: 88%;
+}
 </style>

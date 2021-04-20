@@ -1,5 +1,5 @@
 <template>
-  <page-layout :title="title">
+  <a-spin :spinning="confirmLoading">
     <a-card :bordered="false">
       <detail-list title="Purchase">
         <detail-list-item term="Sku Number">{{ detail.skuNumber }}</detail-list-item>
@@ -16,7 +16,10 @@
         <detail-list-item term="phone">{{ client.phone }}</detail-list-item>
         <detail-list-item term="Address">{{ client.streetNumber + " " + client.streetName }}</detail-list-item>
         <detail-list-item term="City">{{ client.city + ", " + client.country }}</detail-list-item>
-        <detail-list-item v-if="client.companyIdValue" term="Company">{{ client.companyIdValue }}({{ client.companyIdType }})</detail-list-item>
+        <detail-list-item v-if="client.companyIdValue" term="Company">{{
+            client.companyIdValue
+          }}({{ client.companyIdType }})
+        </detail-list-item>
       </detail-list>
       <a-divider style="margin-bottom: 32px"/>
 
@@ -27,27 +30,24 @@
         :dataSource="orderData">
       </a-table>
     </a-card>
-  </page-layout>
+  </a-spin>
 </template>
 
 <script>
-import PageLayout from '@/components/page/PageLayout'
-import STable from '@/components/table/'
 import DetailList from '@/components/tools/DetailList'
-import ABadge from "ant-design-vue/es/badge/Badge"
 
 const DetailListItem = DetailList.Item
 
+import {JEditableTableModelMixin} from '@/mixins/JEditableTableModelMixin'
 const {postAction} = require("@api/manage");
 
 
 export default {
+  name: 'ClientPlatformOrderDetail',
+  mixins: [JEditableTableModelMixin],
   components: {
-    PageLayout,
-    ABadge,
     DetailList,
     DetailListItem,
-    STable
   },
   data() {
     return {
@@ -106,12 +106,12 @@ export default {
       },
     }
   },
-  created() {
-    this.loadData();
+  props: {
+    orderIds: Array
   },
   methods: {
-    loadData: function () {
-      const params = ["1382645710851309569", "1382645731290152962"]
+    loadData() {
+      const params = this.orderIds
       postAction(this.url.orderInfo, params)
         .then(
           res => {
@@ -123,18 +123,16 @@ export default {
         )
     },
   },
-  computed: {
-    title() {
-      return this.$route.meta.title
-    }
-  },
+  computed: {},
+  created() {
+  }
 
 }
 </script>
 
-<style lang="less" scoped>
+<style scoped>
 .title {
-  color: rgba(0, 0, 0, .85);
+  color: rgba(0,0,0,.85);
   font-size: 16px;
   font-weight: 500;
   margin-bottom: 16px;
