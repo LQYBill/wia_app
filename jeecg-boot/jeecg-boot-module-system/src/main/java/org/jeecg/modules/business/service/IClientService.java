@@ -37,5 +37,11 @@ public interface IClientService extends IService<Client> {
 	 * 批量删除一对多
 	 */
 	public void delBatchMain (Collection<? extends Serializable> idList);
+
+	/**
+	 * Get current user's client information
+	 * @return client or null if current user's role is not a client
+	 */
+	Client getCurrentClient();
 	
 }
