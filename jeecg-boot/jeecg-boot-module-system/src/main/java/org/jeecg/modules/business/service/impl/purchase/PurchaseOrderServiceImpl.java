@@ -12,6 +12,9 @@ import org.jeecg.modules.business.service.IPurchaseOrderService;
 import org.jeecg.modules.business.vo.OrderContentEntry;
 import org.jeecg.modules.business.vo.PromotionHistoryEntry;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
+import org.jeecg.modules.message.handle.enums.SendMsgTypeEnum;
+import org.jeecg.modules.message.util.PushMsgUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -19,9 +22,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.Serializable;
-import java.util.List;
-import java.util.Collection;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -42,6 +43,9 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
     private final IClientService clientService;
 
     private final PlatformOrderContentMapper platformOrderContentMapper;
+
+    @Autowired
+    private PushMsgUtil pushMsgUtil;
 
     public PurchaseOrderServiceImpl(PurchaseOrderMapper purchaseOrderMapper,
                                     PurchaseOrderContentMapper purchaseOrderContentMapper,
@@ -165,13 +169,13 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         }
 
         // send email to client
-        JavaMailSender mailSender = (JavaMailSender) SpringContextUtils.getBean("mailSender");
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("Matthieu.DU@outlook.com");
-        message.setTo("Matthieu.DU@outlook.com");
-        message.setSubject("Test mail sending");
-        message.setText("Test sending mail from system");
-        mailSender.send(message);
+        Map<String, String> map = new HashMap();
+        map.put("user", client.getFirstName());
+        // TODO: 4/21/2021 change order ID to invoice number
+        map.put("order_number", purchaseID);
+
+        // TODO: 4/21/2021 change sentTo to real client email
+        pushMsgUtil.sendMessage(SendMsgTypeEnum.EMAIL.getType(), "purchase_order_confirmation", map, "service@wia-sourcing.com");
 
         // 4. return purchase id
         return purchaseID;
