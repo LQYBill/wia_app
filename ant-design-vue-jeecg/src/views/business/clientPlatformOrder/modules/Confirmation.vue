@@ -105,11 +105,12 @@ export default {
     }
   },
   props: {
-    orderIds: Array
+    orderIDs: Array
   },
   methods: {
     loadData() {
-      const params = this.orderIds
+      const params = this.orderIDs
+      console.log("get confirmation data: " + params)
       postAction(this.url.orderInfo, params)
         .then(
           res => {
@@ -120,12 +121,7 @@ export default {
         )
     },
     confirmOrder() {
-      const params = this.orderDetails.map(
-        (d) => ({
-          skuId: d.skuId,
-          quantity: d.quantity
-        })
-      )
+      const params = this.orderIDs
       postAction(this.url.confirmOrder, params).then((res) => {
         console.log(res.result)
       })

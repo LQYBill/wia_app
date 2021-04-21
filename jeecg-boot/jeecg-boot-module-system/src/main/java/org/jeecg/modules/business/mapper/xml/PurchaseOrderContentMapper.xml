@@ -2,20 +2,24 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.jeecg.modules.business.mapper.PurchaseOrderContentMapper">
 
-	<delete id="deleteByMainId" parameterType="java.lang.String">
-		DELETE 
-		FROM  purchase_order_sku 
-		WHERE
-			 sku_id = #{mainId} 	</delete>
-	
-	<select id="selectByMainId" parameterType="java.lang.String" resultType="org.jeecg.modules.business.entity.PurchaseOrderSku">
-		SELECT * 
-		FROM  purchase_order_sku
-		WHERE
-			 sku_id = #{mainId} 	</select>
+    <delete id="deleteByMainId" parameterType="java.lang.String">
+        DELETE
+        FROM purchase_order_sku
+        WHERE sku_id = #{mainId}    </delete>
 
-	<insert id="addAll">
-		INSERT INTO purchase_order_sku(id, create_by, create_time, update_by, update_time, purchase_order_id, quantity, total_amount, sku_id)
-		VALUES (UUID(), )
-	</insert>
+    <select id="selectByMainId" parameterType="java.lang.String"
+            resultType="org.jeecg.modules.business.entity.PurchaseOrderSku">
+        SELECT *
+        FROM purchase_order_sku
+        WHERE sku_id = #{mainId}    </select>
+
+    <insert id="addAll">
+        INSERT INTO purchase_order_sku(id, create_by, create_time, update_by, update_time, purchase_order_id, quantity,
+        total_amount, sku_id)
+        VALUES
+        <foreach collection="data" item="item" index="i" open="" close="" separator=",">
+            (UUID_SHORT(), #{creator}, NOW(), #{creator}, NOW(), #{purchaseID}, #{item.quantity}, #{item.totalAmount},
+            #{item.skuID})
+        </foreach>
+    </insert>
 </mapper>

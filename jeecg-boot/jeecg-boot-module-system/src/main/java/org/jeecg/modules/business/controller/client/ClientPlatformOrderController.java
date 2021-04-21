@@ -101,6 +101,7 @@ public class ClientPlatformOrderController {
     public Result<PurchaseConfirmation> purchaseOrder(@RequestBody List<String> orderIds) {
         log.info("One client purchase order");
         PurchaseConfirmation d = platformOrderService.confirmOrder(orderIds);
+        log.info(d.toString());
         return Result.OK(d);
     }
 

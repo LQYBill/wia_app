@@ -5,7 +5,7 @@ import java.util.List;
 import org.jeecg.modules.business.entity.SkuPromotionHistory;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
-import org.jeecg.modules.business.vo.PromotionDetail;
+import org.jeecg.modules.business.vo.PromotionHistoryEntry;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -25,7 +25,9 @@ public interface SkuPromotionHistoryMapper extends BaseMapper<SkuPromotionHistor
      * Add a promotion detail to DB
      *
      */
-    void add(PromotionDetail detail);
+    void add(PromotionHistoryEntry detail);
 
-    void addAll(List<PromotionDetail> details);
+    void addAll(@Param("creator") String creator,
+                @Param("entries") List<PromotionHistoryEntry> entries,
+                @Param("purchaseID") String purchaseID);
 }

@@ -27,4 +27,9 @@ public class PurchaseConfirmation {
                 d -> (new PurchaseDetail(d.getSkuId(), d.getErpCode(), d.getProduct(), d.getQuantity(), d.totalPrice()))
         ).collect(Collectors.toList());
     }
+
+    @Override
+    public String toString() {
+        return String.format("Client information: %s, data: %s, purchase detail: %s", clientInfo.toString(), data.toString(), voPurchaseDetails.toString());
+    }
 }

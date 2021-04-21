@@ -8,9 +8,9 @@ import org.jeecg.modules.business.mapper.SkuPromotionHistoryMapper;
 import org.jeecg.modules.business.mapper.PurchaseOrderMapper;
 import org.jeecg.modules.business.service.IClientService;
 import org.jeecg.modules.business.service.IPurchaseOrderService;
-import org.jeecg.modules.business.vo.PromotionDetail;
+import org.jeecg.modules.business.vo.OrderContentEntry;
+import org.jeecg.modules.business.vo.PromotionHistoryEntry;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
-import org.jeecg.modules.business.vo.clientPurchaseOrder.PurchaseDemand;
 import org.springframework.stereotype.Service;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.transaction.annotation.Transactional;
@@ -132,20 +132,22 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
                 client.getId(),
                 data.getEstimatedTotalPrice(),
                 data.getReducedAmount(),
-                data.getEstimatedTotalPrice().add(data.getReducedAmount())
+                data.getEstimatedTotalPrice().subtract(data.getReducedAmount())
         );
 
         // 2. save purchase's content
-        purchaseOrderContentMapper.addAll(details, purchaseID);
-        List<PromotionDetail> promotionDetails = details.stream().map(orderContentDetail -> {
-            String promotion = orderContentDetail.getPromotion().getId();
-            String sku = orderContentDetail.getSkuId();
-            int count = orderContentDetail.promotionCount();
-            return new PromotionDetail(promotion, sku, count);
-        }).collect(Collectors.toList());
+        List<OrderContentEntry> entries = details.stream()
+                .map(d -> (new OrderContentEntry(d.getQuantity(), d.totalPrice(), d.getSkuId())))
+                .collect(Collectors.toList());
+        purchaseOrderContentMapper.addAll(client.getFullName(), purchaseID, entries);
 
         // 3. save the application of promotion information
-        skuPromotionHistoryMapper.addAll(promotionDetails);
+        List<PromotionHistoryEntry> promotionHistoryEntries = details.stream().map(orderContentDetail -> {
+            String promotion = orderContentDetail.getPromotion().getId();
+            int count = orderContentDetail.promotionCount();
+            return new PromotionHistoryEntry(promotion, count);
+        }).collect(Collectors.toList());
+        skuPromotionHistoryMapper.addAll(client.getFullName(), promotionHistoryEntries, purchaseID);
 
         // 4. return purchase id
         return purchaseID;

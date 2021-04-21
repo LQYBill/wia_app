@@ -9,17 +9,17 @@
     @ok="handleOk"
     @cancel="handleCancel">
 
-    <Detail ref="content" :order-ids="dataForChild"/>
+    <Confirmation ref="content" :order-i-ds="dataForChild"/>
   </j-modal>
 </template>
 
 <script>
-import Detail from './Confirmation'
+import Confirmation from './Confirmation'
 
 export default {
   name: 'ClientPlatformOrderDetailContainer',
   components: {
-    Detail
+    Confirmation
   },
   data() {
     return {
@@ -27,12 +27,13 @@ export default {
       visible: false,
     }
   },
-  props:{
-    dataForChild:Array
+  props: {
+    dataForChild: Array
   },
   methods: {
     display() {
       this.visible = true
+      console.log("container prop: " + this.dataForChild)
       /* child component does not finish rendering, one should call its methods at next tick */
       this.$nextTick(() => {
           this.$refs.content.loadData();

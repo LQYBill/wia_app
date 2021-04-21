@@ -56,14 +56,14 @@ public class ClientPurchaseController {
     /**
      * 添加
      *
-     * @param purchaseDemands
-     * @return
+     * @param platformOrderIDList a list of platform order ID
+     * @return the generated purchase ID
      */
     @AutoLog(value = "商品采购订单-添加")
     @ApiOperation(value = "商品采购订单-添加", notes = "商品采购订单-添加")
     @PostMapping(value = "/add")
-    public Result<String> addPurchaseOrder(@RequestBody List<PurchaseDemand> purchaseDemands) {
-        String id = purchaseOrderService.addPurchase(purchaseDemands);
+    public Result<String> addPurchaseOrder(@RequestBody List<String> platformOrderIDList) {
+        String id = purchaseOrderService.addPurchase(platformOrderIDList);
         return Result.OK(id);
     }
 
