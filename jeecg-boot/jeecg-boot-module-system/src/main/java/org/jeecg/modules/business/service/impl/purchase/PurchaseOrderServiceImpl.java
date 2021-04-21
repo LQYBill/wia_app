@@ -1,22 +1,17 @@
 package org.jeecg.modules.business.service.impl.purchase;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import org.jeecg.common.util.SpringContextUtils;
 import org.jeecg.modules.business.entity.*;
-import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
-import org.jeecg.modules.business.mapper.PurchaseOrderContentMapper;
-import org.jeecg.modules.business.mapper.SkuPromotionHistoryMapper;
-import org.jeecg.modules.business.mapper.PurchaseOrderMapper;
+import org.jeecg.modules.business.mapper.*;
 import org.jeecg.modules.business.service.IClientService;
 import org.jeecg.modules.business.service.IPurchaseOrderService;
+import org.jeecg.modules.business.service.domain.codeGenerationRule.PurchaseInvoiceCodeRule;
 import org.jeecg.modules.business.vo.OrderContentEntry;
 import org.jeecg.modules.business.vo.PromotionHistoryEntry;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
 import org.jeecg.modules.message.handle.enums.SendMsgTypeEnum;
 import org.jeecg.modules.message.util.PushMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,18 +38,20 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
     private final IClientService clientService;
 
     private final PlatformOrderContentMapper platformOrderContentMapper;
+    private final PlatformOrderMapper platformOrderMapper;
 
     @Autowired
     private PushMsgUtil pushMsgUtil;
 
     public PurchaseOrderServiceImpl(PurchaseOrderMapper purchaseOrderMapper,
                                     PurchaseOrderContentMapper purchaseOrderContentMapper,
-                                    SkuPromotionHistoryMapper skuPromotionHistoryMapper, IClientService clientService, PlatformOrderContentMapper platformOrderContentMapper) {
+                                    SkuPromotionHistoryMapper skuPromotionHistoryMapper, IClientService clientService, PlatformOrderContentMapper platformOrderContentMapper, PlatformOrderMapper platformOrderMapper) {
         this.purchaseOrderMapper = purchaseOrderMapper;
         this.purchaseOrderContentMapper = purchaseOrderContentMapper;
         this.skuPromotionHistoryMapper = skuPromotionHistoryMapper;
         this.clientService = clientService;
         this.platformOrderContentMapper = platformOrderContentMapper;
+        this.platformOrderMapper = platformOrderMapper;
     }
 
     @Override
@@ -133,12 +130,14 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
     }
 
     @Override
+    @Transactional
     public String addPurchase(List<String> orderIDs) {
         Client client = clientService.getCurrentClient();
         List<OrderContentDetail> details = platformOrderContentMapper.searchOrderContentDetail(orderIDs);
         OrdersStatisticData data = OrdersStatisticData.makeData(details);
         String purchaseID = UUID.randomUUID().toString();
 
+        String invoiceNumber = new PurchaseInvoiceCodeRule().next(purchaseOrderMapper.lastInvoiceNumber());
         // 1. save purchase itself
         purchaseOrderMapper.addPurchase(
                 purchaseID,
@@ -146,7 +145,8 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
                 client.getId(),
                 data.getEstimatedTotalPrice(),
                 data.getReducedAmount(),
-                data.getEstimatedTotalPrice().subtract(data.getReducedAmount())
+                data.getEstimatedTotalPrice().subtract(data.getReducedAmount()),
+                invoiceNumber
         );
 
         // 2. save purchase's content
@@ -169,13 +169,19 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         }
 
         // send email to client
-        Map<String, String> map = new HashMap();
+        Map<String, String> map = new HashMap<>();
         map.put("user", client.getFirstName());
-        // TODO: 4/21/2021 change order ID to invoice number
-        map.put("order_number", purchaseID);
-
+        map.put("order_number", invoiceNumber);
         // TODO: 4/21/2021 change sentTo to real client email
-        pushMsgUtil.sendMessage(SendMsgTypeEnum.EMAIL.getType(), "purchase_order_confirmation", map, "service@wia-sourcing.com");
+        pushMsgUtil.sendMessage(
+                SendMsgTypeEnum.EMAIL.getType(),
+                "purchase_order_confirmation",
+                map,
+                "service@wia-sourcing.com"
+        );
+
+        // 5. update platform order status to "purchasing"
+        platformOrderMapper.batchUpdateStatus(orderIDs, PlatformOrder.PURCHASING_STATUS);
 
         // 4. return purchase id
         return purchaseID;

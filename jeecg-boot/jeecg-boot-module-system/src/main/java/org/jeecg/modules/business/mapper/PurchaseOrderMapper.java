@@ -18,8 +18,6 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrder> {
-    List<PurchaseOrderPage> pageForClient(@Param("clientId") String clientId, int offset, int size);
-
     /**
      * Add a purchase recording of a client.
      *
@@ -29,9 +27,14 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrder> {
      * @param discount    discount amount of the purchase
      * @param finalAmount final amount of the purchase
      */
-    void addPurchase(@Param("ID") String ID, @Param("creator") String creator, @Param("clientID") String clientID,
-                     @Param("totalAmount") BigDecimal totalAmount, @Param("discount") BigDecimal discount,
-                     @Param("finalAmount") BigDecimal finalAmount);
+    void addPurchase(
+            @Param("ID") String ID, @Param("creator") String creator,
+            @Param("clientID") String clientID,
+            @Param("totalAmount") BigDecimal totalAmount,
+            @Param("discount") BigDecimal discount,
+            @Param("finalAmount") BigDecimal finalAmount,
+            @Param("invoiceNumber") String invoiceNumber
+    );
 
     /**
      * Search purchase order by client's ID.
@@ -46,4 +49,12 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrder> {
     );
 
     long countTotal(@Param("clientID") String clientID);
+
+    /**
+     * Get the last invoice number of the purchase order in this month.
+     *
+     * @return the last invoice number or null in case of no purchase this month.
+     */
+    String lastInvoiceNumber();
+
 }

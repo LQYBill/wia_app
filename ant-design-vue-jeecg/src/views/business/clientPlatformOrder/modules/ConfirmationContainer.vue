@@ -9,7 +9,7 @@
     @ok="handleOk"
     @cancel="handleCancel">
 
-    <Confirmation ref="content" :order-i-ds="dataForChild"/>
+    <Confirmation ref="content" :order-i-ds="dataForChild" :ok-callback="okCallback"/>
   </j-modal>
 </template>
 
@@ -28,7 +28,8 @@ export default {
     }
   },
   props: {
-    dataForChild: Array
+    dataForChild: Array,
+    okCallback: Function
   },
   methods: {
     display() {

@@ -87,7 +87,7 @@
     <!-- table区域 end -->
 
     <!-- 表单区域 -->
-    <popup-confirmation ref="popup" @ok="modalFormOk" :data-for-child="selectedRowKeys"/>
+    <popup-confirmation ref="popup" :ok-callback="modalFormOk" :data-for-child="selectedRowKeys"/>
     <a-space class="bottomButtons">
       <a-button type="danger" @click="onClearSelected">
         Reset

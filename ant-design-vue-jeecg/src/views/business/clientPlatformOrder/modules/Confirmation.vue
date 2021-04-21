@@ -105,7 +105,8 @@ export default {
     }
   },
   props: {
-    orderIDs: Array
+    orderIDs: Array,
+    okCallback:Function
   },
   methods: {
     loadData() {
@@ -123,7 +124,8 @@ export default {
     confirmOrder() {
       const params = this.orderIDs
       postAction(this.url.confirmOrder, params).then((res) => {
-        console.log(res.result)
+        console.log("new purchase id: " + res.result)
+        this.okCallback()
       })
 
     },

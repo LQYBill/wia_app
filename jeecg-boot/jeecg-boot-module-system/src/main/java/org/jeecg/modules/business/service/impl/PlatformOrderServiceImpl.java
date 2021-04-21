@@ -1,13 +1,10 @@
 package org.jeecg.modules.business.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import org.apache.shiro.SecurityUtils;
-import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.modules.business.entity.Client;
 import org.jeecg.modules.business.entity.OrderContentDetail;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
-import org.jeecg.modules.business.mapper.ClientUserMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
 import org.jeecg.modules.business.service.IClientService;
@@ -104,7 +101,7 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
             page.setTotal(0);
         } else {
             String clientId = client.getId();
-            List<ClientPlatformOrderPage> orders = platformOrderMap.pageByClientId(clientId, page.offset(), page.getSize());
+            List<ClientPlatformOrderPage> orders = platformOrderMap.pagePendingOrderByClientId(clientId, page.offset(), page.getSize());
             page.setRecords(orders);
             page.setTotal(platformOrderMap.countTotal(clientId));
         }
