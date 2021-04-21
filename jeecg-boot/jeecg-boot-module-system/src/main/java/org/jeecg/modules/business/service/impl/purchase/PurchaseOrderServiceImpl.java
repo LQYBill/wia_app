@@ -1,6 +1,7 @@
 package org.jeecg.modules.business.service.impl.purchase;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import org.jeecg.common.util.SpringContextUtils;
 import org.jeecg.modules.business.entity.*;
 import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.mapper.PurchaseOrderContentMapper;
@@ -11,6 +12,8 @@ import org.jeecg.modules.business.service.IPurchaseOrderService;
 import org.jeecg.modules.business.vo.OrderContentEntry;
 import org.jeecg.modules.business.vo.PromotionHistoryEntry;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.transaction.annotation.Transactional;
@@ -157,7 +160,18 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
                     int count = orderContentDetail.promotionCount();
                     return new PromotionHistoryEntry(promotion, count);
                 }).collect(Collectors.toList());
-        skuPromotionHistoryMapper.addAll(client.getFullName(), promotionHistoryEntries, purchaseID);
+        if (!promotionHistoryEntries.isEmpty()) {
+            skuPromotionHistoryMapper.addAll(client.getFullName(), promotionHistoryEntries, purchaseID);
+        }
+
+        // send email to client
+        JavaMailSender mailSender = (JavaMailSender) SpringContextUtils.getBean("mailSender");
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom("Matthieu.DU@outlook.com");
+        message.setTo("Matthieu.DU@outlook.com");
+        message.setSubject("Test mail sending");
+        message.setText("Test sending mail from system");
+        mailSender.send(message);
 
         // 4. return purchase id
         return purchaseID;
