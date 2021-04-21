@@ -52,28 +52,23 @@
     },
     data() {
       return {
-        description: '商品采购订单SKU内嵌列表',
+        description: 'Detail of purchase content',
         disableMixinCreated: true,
         loading: false,
         dataSource: [],
         columns: [
           {
-            title: '商品采购订单ID',
-            align: 'center',
-            dataIndex: 'purchaseOrderId_dictText'
-          },
-          {
-            title: '采购SKU ID',
+            title: 'SKU',
             align: 'center',
             dataIndex: 'skuId_dictText'
           },
           {
-            title: '采购产品件数',
+            title: 'Quantity',
             align: 'center',
             dataIndex: 'quantity',
           },
           {
-            title: '采购总价',
+            title: 'Total Amount',
             align: 'center',
             dataIndex: 'totalAmount',
           },
@@ -103,6 +98,7 @@
         }).then((res) => {
           if (res.success) {
             this.dataSource = res.result.records
+            console.log(this.dataSource)
           }
         }).finally(() => {
           this.loading = false

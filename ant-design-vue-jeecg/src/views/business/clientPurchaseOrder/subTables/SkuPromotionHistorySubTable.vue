@@ -52,25 +52,20 @@
     },
     data() {
       return {
-        description: 'SKU采购折扣历史内嵌列表',
+        description: 'History of promotion activation in purchase order',
         disableMixinCreated: true,
         loading: false,
         dataSource: [],
         columns: [
           {
-            title: '商品采购订单ID',
+            title: 'Promotion Unit Amount',
             align: 'center',
-            dataIndex: 'purchaseOrderId_dictText'
+            dataIndex: 'unitAmount'
           },
           {
-            title: 'SKU采购折扣ID',
+            title: 'Promotion Activation Number',
             align: 'center',
-            dataIndex: 'promotionId_dictText'
-          },
-          {
-            title: '折扣应用次数',
-            align: 'center',
-            dataIndex: 'promoCount',
+            dataIndex: 'count',
           },
         ],
         url: {
@@ -98,6 +93,7 @@
         }).then((res) => {
           if (res.success) {
             this.dataSource = res.result.records
+            console.log(this.dataSource)
           }
         }).finally(() => {
           this.loading = false

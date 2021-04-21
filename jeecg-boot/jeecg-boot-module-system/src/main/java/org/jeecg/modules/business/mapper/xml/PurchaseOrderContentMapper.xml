@@ -5,13 +5,13 @@
     <delete id="deleteByMainId" parameterType="java.lang.String">
         DELETE
         FROM purchase_order_sku
-        WHERE sku_id = #{mainId}    </delete>
+        WHERE purchase_order_id = #{mainId}    </delete>
 
     <select id="selectByMainId" parameterType="java.lang.String"
             resultType="org.jeecg.modules.business.entity.PurchaseOrderSku">
         SELECT *
         FROM purchase_order_sku
-        WHERE sku_id = #{mainId}    </select>
+        WHERE purchase_order_id = #{mainId}    </select>
 
     <insert id="addAll">
         INSERT INTO purchase_order_sku(id, create_by, create_time, update_by, update_time, purchase_order_id, quantity,

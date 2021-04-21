@@ -9,31 +9,6 @@
       </a-form>
     </div>
     <!-- 查询区域 end -->
-
-    <!-- 操作按钮区域 begin -->
-    <div class="table-operator">
-      <a-button type="primary" icon="plus" @click="handleAdd">新增</a-button>
-      <a-button type="primary" icon="download" @click="handleExportXls('商品采购订单')">导出</a-button>
-      <a-upload name="file" :showUploadList="false" :multiple="false" :headers="tokenHeader" :action="importExcelUrl"
-                @change="handleImportExcel">
-        <a-button type="primary" icon="import">导入</a-button>
-      </a-upload>
-      <!-- 高级查询区域 -->
-      <j-super-query :fieldList="superFieldList" ref="superQueryModal"
-                     @handleSuperQuery="handleSuperQuery"></j-super-query>
-      <a-dropdown v-if="selectedRowKeys.length > 0">
-        <a-menu slot="overlay">
-          <a-menu-item key="1" @click="batchDel">
-            <a-icon type="delete"/>
-            <span>删除</span>
-          </a-menu-item>
-        </a-menu>
-        <a-button>
-          <span>批量操作</span>
-          <a-icon type="down"/>
-        </a-button>
-      </a-dropdown>
-    </div>
     <!-- 操作按钮区域 end -->
 
     <!-- table区域 begin -->
@@ -41,10 +16,10 @@
 
       <a-alert type="info" showIcon style="margin-bottom: 16px;">
         <template slot="message">
-          <span>已选择</span>
+          <span>Selected</span>
           <a style="font-weight: 600;padding: 0 4px;">{{ selectedRowKeys.length }}</a>
-          <span>项</span>
-          <a style="margin-left: 24px" @click="onClearSelected">清空</a>
+          <span>items</span>
+          <a style="margin-left: 24px" @click="onClearSelected">Reset</a>
         </template>
       </a-alert>
 
@@ -68,10 +43,10 @@
         <!-- 内嵌table区域 begin -->
         <template slot="expandedRowRender" slot-scope="record">
           <a-tabs tabPosition="top">
-            <a-tab-pane tab="商品采购订单SKU" key="purchaseOrderSku" forceRender>
+            <a-tab-pane tab="Purchase detail" key="purchaseOrderSku" forceRender>
               <purchase-order-sku-sub-table :record="record"/>
             </a-tab-pane>
-            <a-tab-pane tab="SKU采购折扣历史" key="skuPromotionHistory" forceRender>
+            <a-tab-pane tab="Promotion detail" key="skuPromotionHistory" forceRender>
               <sku-promotion-history-sub-table :record="record"/>
             </a-tab-pane>
           </a-tabs>
@@ -163,42 +138,30 @@ export default {
           customRender: (t, r, index) => parseInt(index) + 1
         },
         {
-          title: '创建日期',
+          title: 'Order Time',
           align: 'center',
           sorter: true,
           dataIndex: 'createTime',
         },
         {
-          title: '订单发票号',
+          title: 'Invoice Number',
           align: 'center',
           dataIndex: 'invoiceNumber',
         },
         {
-          title: '客户ID',
-          align: 'center',
-          dataIndex: 'clientId_dictText'
-        },
-        {
-          title: '应付金额',
+          title: 'Original price(€)',
           align: 'center',
           dataIndex: 'totalAmount',
         },
         {
-          title: '减免总金额',
+          title: 'Discount(€)',
           align: 'center',
           dataIndex: 'discountAmount',
         },
         {
-          title: '最终金额',
+          title: 'Final price(€)',
           align: 'center',
           dataIndex: 'finalAmount',
-        },
-        {
-          title: '操作',
-          dataIndex: 'action',
-          align: 'center',
-          width: 147,
-          scopedSlots: {customRender: 'action'},
         },
       ],
       // 字典选项

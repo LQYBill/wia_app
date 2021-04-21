@@ -115,7 +115,14 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
     }
 
     public void setPageForCurrentClient(IPage<PurchaseOrder> page) {
-        ;
+        Client client = clientService.getCurrentClient();
+        if (client == null) {
+            return;
+        }
+        List<PurchaseOrder> purchaseOrderList = purchaseOrderMapper.pageByClientID(client.getId(), page.offset(), page.getSize());
+        page.setRecords(purchaseOrderList);
+        long total = purchaseOrderMapper.countTotal(client.getId());
+        page.setTotal(total);
     }
 
     @Override
@@ -142,11 +149,14 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         purchaseOrderContentMapper.addAll(client.getFullName(), purchaseID, entries);
 
         // 3. save the application of promotion information
-        List<PromotionHistoryEntry> promotionHistoryEntries = details.stream().map(orderContentDetail -> {
-            String promotion = orderContentDetail.getPromotion().getId();
-            int count = orderContentDetail.promotionCount();
-            return new PromotionHistoryEntry(promotion, count);
-        }).collect(Collectors.toList());
+        List<PromotionHistoryEntry> promotionHistoryEntries = details.stream()
+                .filter(orderContentDetail -> orderContentDetail.getPromotion() != Promotion.ZERO_PROMOTION)
+                .map(orderContentDetail -> {
+                    String promotion = orderContentDetail.getPromotion().getId();
+                    System.out.println(promotion);
+                    int count = orderContentDetail.promotionCount();
+                    return new PromotionHistoryEntry(promotion, count);
+                }).collect(Collectors.toList());
         skuPromotionHistoryMapper.addAll(client.getFullName(), promotionHistoryEntries, purchaseID);
 
         // 4. return purchase id

@@ -5,13 +5,14 @@
     <delete id="deleteByMainId" parameterType="java.lang.String">
         DELETE
         FROM sku_promotion_history
-        WHERE promotion_id = #{mainId}    </delete>
+        WHERE purchase_order_id = #{mainId}    </delete>
 
     <select id="selectByMainId" parameterType="java.lang.String"
-            resultType="org.jeecg.modules.business.entity.SkuPromotionHistory">
-        SELECT *
-        FROM sku_promotion_history
-        WHERE promotion_id = #{mainId}    </select>
+            resultType="org.jeecg.modules.business.vo.PromotionDetail">
+        SELECT sph.promo_count AS count, sp.discount AS unitAmount
+        FROM sku_promotion_history sph
+        JOIN sku_promotion sp ON sp.id = sph.promotion_id
+        WHERE purchase_order_id = #{mainId}    </select>
 
     <insert id="addAll">
         INSERT INTO sku_promotion_history(id, create_by, create_time, update_by, update_time, promotion_id,

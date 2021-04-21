@@ -7,4 +7,19 @@
         VALUES (#{ID}, #{creator}, NOW(), #{creator}, NOW(), #{clientID}, #{totalAmount}, #{discount}, #{finalAmount},
                 null);
     </insert>
+
+    <select id="pageByClientID" resultType="org.jeecg.modules.business.entity.PurchaseOrder">
+        SELECT p.*
+        FROM purchase_order p
+        WHERE p.client_id = #{clientID}
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countTotal" resultType="_long">
+        SELECT COUNT(*)
+        FROM purchase_order p
+        WHERE p.client_id = #{clientID}
+    </select>
+
+
 </mapper>

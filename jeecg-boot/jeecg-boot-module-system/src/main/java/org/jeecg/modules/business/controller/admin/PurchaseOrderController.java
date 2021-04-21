@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.jeecg.modules.business.vo.PromotionDetail;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
 import org.jeecgframework.poi.excel.entity.ExportParams;
@@ -183,6 +184,7 @@ public class PurchaseOrderController {
     @ApiOperation(value = "商品采购订单SKU-通过主表ID查询", notes = "商品采购订单SKU-通过主表ID查询")
     @GetMapping(value = "/queryPurchaseOrderSkuByMainId")
     public Result<?> queryPurchaseOrderSkuListByMainId(@RequestParam(name = "id", required = true) String id) {
+        log.info("query content by id: {}", id);
         List<PurchaseOrderSku> purchaseOrderSkuList = purchaseOrderSkuService.selectByMainId(id);
         IPage<PurchaseOrderSku> page = new Page<>();
         page.setRecords(purchaseOrderSkuList);
@@ -200,8 +202,8 @@ public class PurchaseOrderController {
     @ApiOperation(value = "SKU采购折扣历史-通过主表ID查询", notes = "SKU采购折扣历史-通过主表ID查询")
     @GetMapping(value = "/querySkuPromotionHistoryByMainId")
     public Result<?> querySkuPromotionHistoryListByMainId(@RequestParam(name = "id", required = true) String id) {
-        List<SkuPromotionHistory> skuPromotionHistoryList = skuPromotionHistoryService.selectByMainId(id);
-        IPage<SkuPromotionHistory> page = new Page<>();
+        List<PromotionDetail> skuPromotionHistoryList = skuPromotionHistoryService.selectByMainId(id);
+        IPage<PromotionDetail> page = new Page<>();
         page.setRecords(skuPromotionHistoryList);
         page.setTotal(skuPromotionHistoryList.size());
         return Result.OK(page);
@@ -215,41 +217,42 @@ public class PurchaseOrderController {
      */
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, PurchaseOrder purchaseOrder) {
-        // Step.1 组装查询条件查询数据
-        QueryWrapper<PurchaseOrder> queryWrapper = QueryGenerator.initQueryWrapper(purchaseOrder, request.getParameterMap());
-        LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
-
-        //Step.2 获取导出数据
-        List<PurchaseOrder> queryList = purchaseOrderService.list(queryWrapper);
-        // 过滤选中数据
-        String selections = request.getParameter("selections");
-        List<PurchaseOrder> purchaseOrderList = new ArrayList<PurchaseOrder>();
-        if (oConvertUtils.isEmpty(selections)) {
-            purchaseOrderList = queryList;
-        } else {
-            List<String> selectionList = Arrays.asList(selections.split(","));
-            purchaseOrderList = queryList.stream().filter(item -> selectionList.contains(item.getId())).collect(Collectors.toList());
-        }
-
-        // Step.3 组装pageList
-        List<PurchaseOrderPage> pageList = new ArrayList<PurchaseOrderPage>();
-        for (PurchaseOrder main : purchaseOrderList) {
-            PurchaseOrderPage vo = new PurchaseOrderPage();
-            BeanUtils.copyProperties(main, vo);
-            List<PurchaseOrderSku> purchaseOrderSkuList = purchaseOrderSkuService.selectByMainId(main.getId());
-            vo.setPurchaseOrderSkuList(purchaseOrderSkuList);
-            List<SkuPromotionHistory> skuPromotionHistoryList = skuPromotionHistoryService.selectByMainId(main.getId());
-            vo.setSkuPromotionHistoryList(skuPromotionHistoryList);
-            pageList.add(vo);
-        }
-
-        // Step.4 AutoPoi 导出Excel
-        ModelAndView mv = new ModelAndView(new JeecgEntityExcelView());
-        mv.addObject(NormalExcelConstants.FILE_NAME, "商品采购订单列表");
-        mv.addObject(NormalExcelConstants.CLASS, PurchaseOrderPage.class);
-        mv.addObject(NormalExcelConstants.PARAMS, new ExportParams("商品采购订单数据", "导出人:" + sysUser.getRealname(), "商品采购订单"));
-        mv.addObject(NormalExcelConstants.DATA_LIST, pageList);
-        return mv;
+//        // Step.1 组装查询条件查询数据
+//        QueryWrapper<PurchaseOrder> queryWrapper = QueryGenerator.initQueryWrapper(purchaseOrder, request.getParameterMap());
+//        LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+//
+//        //Step.2 获取导出数据
+//        List<PurchaseOrder> queryList = purchaseOrderService.list(queryWrapper);
+//        // 过滤选中数据
+//        String selections = request.getParameter("selections");
+//        List<PurchaseOrder> purchaseOrderList = new ArrayList<PurchaseOrder>();
+//        if (oConvertUtils.isEmpty(selections)) {
+//            purchaseOrderList = queryList;
+//        } else {
+//            List<String> selectionList = Arrays.asList(selections.split(","));
+//            purchaseOrderList = queryList.stream().filter(item -> selectionList.contains(item.getId())).collect(Collectors.toList());
+//        }
+//
+//        // Step.3 组装pageList
+//        List<PurchaseOrderPage> pageList = new ArrayList<PurchaseOrderPage>();
+//        for (PurchaseOrder main : purchaseOrderList) {
+//            PurchaseOrderPage vo = new PurchaseOrderPage();
+//            BeanUtils.copyProperties(main, vo);
+//            List<PurchaseOrderSku> purchaseOrderSkuList = purchaseOrderSkuService.selectByMainId(main.getId());
+//            vo.setPurchaseOrderSkuList(purchaseOrderSkuList);
+//            List<PromotionDetail> skuPromotionHistoryList = skuPromotionHistoryService.selectByMainId(main.getId());
+//            vo.setSkuPromotionHistoryList(skuPromotionHistoryList);
+//            pageList.add(vo);
+//        }
+//
+//        // Step.4 AutoPoi 导出Excel
+//        ModelAndView mv = new ModelAndView(new JeecgEntityExcelView());
+//        mv.addObject(NormalExcelConstants.FILE_NAME, "商品采购订单列表");
+//        mv.addObject(NormalExcelConstants.CLASS, PurchaseOrderPage.class);
+//        mv.addObject(NormalExcelConstants.PARAMS, new ExportParams("商品采购订单数据", "导出人:" + sysUser.getRealname(), "商品采购订单"));
+//        mv.addObject(NormalExcelConstants.DATA_LIST, pageList);
+//        return mv;
+        return null;
     }
 
     /**

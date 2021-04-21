@@ -2,6 +2,8 @@ package org.jeecg.modules.business.service;
 
 import org.jeecg.modules.business.entity.SkuPromotionHistory;
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.jeecg.modules.business.vo.PromotionDetail;
+
 import java.util.List;
 
 /**
@@ -12,5 +14,5 @@ import java.util.List;
  */
 public interface ISkuPromotionHistoryService extends IService<SkuPromotionHistory> {
 
-	public List<SkuPromotionHistory> selectByMainId(String mainId);
+	List<PromotionDetail> selectByMainId(String mainId);
 }

@@ -32,4 +32,18 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrder> {
     void addPurchase(@Param("ID") String ID, @Param("creator") String creator, @Param("clientID") String clientID,
                      @Param("totalAmount") BigDecimal totalAmount, @Param("discount") BigDecimal discount,
                      @Param("finalAmount") BigDecimal finalAmount);
+
+    /**
+     * Search purchase order by client's ID.
+     *
+     * @param clientID identifier of client
+     * @return list of purchase order
+     */
+    List<PurchaseOrder> pageByClientID(
+            @Param("clientID") String clientID,
+            @Param("offset") long offset,
+            @Param("size") long size
+    );
+
+    long countTotal(@Param("clientID") String clientID);
 }
