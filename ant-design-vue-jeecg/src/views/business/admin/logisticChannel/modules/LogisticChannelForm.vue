@@ -58,7 +58,7 @@
 
 <script>
 
-  import { getAction } from '@/api/manage'
+  import { getAction } from '@api/manage'
   import { FormTypes,getRefPromise,VALIDATE_NO_PASSED } from '@/utils/JEditableTableUtil'
   import { JEditableTableModelMixin } from '@/mixins/JEditableTableModelMixin'
   import { validateDuplicateValue } from '@/utils/util'

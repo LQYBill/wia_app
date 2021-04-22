@@ -107,7 +107,7 @@ import {JeecgListMixin} from '@/mixins/JeecgListMixin'
 import PopupConfirmation from './modules/ConfirmationContainer'
 import OrderContent from './subTables/OrderContent'
 
-import '@/assets/less/TableExpand.less'
+import '@assets/less/TableExpand.less'
 
 const {postAction} = require("@api/manage");
 

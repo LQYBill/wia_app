@@ -8,7 +8,7 @@
       </a-form>
     </div>
     <!-- 查询区域-END -->
-    
+
     <!-- 操作按钮区域 -->
     <div class="table-operator">
       <a-button @click="handleAdd" type="primary" icon="plus">新增</a-button>
@@ -97,7 +97,7 @@
 
   import { JeecgListMixin } from '@/mixins/JeecgListMixin'
   import LogisticChannelModal from './modules/LogisticChannelModal'
-  import '@/assets/less/TableExpand.less'
+  import '@assets/less/TableExpand.less'
 
   export default {
     name: "LogisticChannelList",
@@ -165,7 +165,7 @@
           deleteBatch: "/business/logisticChannel/deleteBatch",
           exportXlsUrl: "/business/logisticChannel/exportXls",
           importExcelUrl: "business/logisticChannel/importExcel",
-          
+
         },
         dictOptions:{},
         superFieldList:[],

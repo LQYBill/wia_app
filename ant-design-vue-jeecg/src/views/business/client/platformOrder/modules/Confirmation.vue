@@ -34,7 +34,7 @@
 </template>
 
 <script>
-import DetailList from '@/components/tools/DetailList'
+import DetailList from '@comp/tools/DetailList'
 
 const DetailListItem = DetailList.Item
 

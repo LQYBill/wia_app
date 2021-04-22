@@ -64,37 +64,16 @@
           </div>
         </template>
 
-
-        <template slot="fileSlot" slot-scope="text">
-          <span v-if="!text" style="font-size: 12px;font-style: italic;">无文件</span>
-          <a-button
-            v-else
-            ghost
-            type="primary"
-            icon="download"
-            size="small"
-            @click="downloadFile(text)"
+        <template slot="uploadSlot" slot-scope="text">
+          <a-upload
+            name="file"
+            :multiple="true"
+            :action = "url.upload"
+            :headers="tokenHeader"
+            @change="handleChange"
           >
-            <span>下载</span>
-          </a-button>
-        </template>
-
-        <template slot="action" slot-scope="text, record">
-          <a @click="handleEdit(record)">编辑</a>
-          <a-divider type="vertical"/>
-          <a-dropdown>
-            <a class="ant-dropdown-link">
-              <span>更多 <a-icon type="down"/></span>
-            </a>
-            <a-menu slot="overlay">
-              <a-menu-item>
-                <a-popconfirm title="确定删除吗?" @confirm="handleDelete(record.id)">
-                  <a>删除</a>
-                </a-popconfirm>
-              </a-menu-item>
-            </a-menu>
-          </a-dropdown>
-
+            <a-button> <a-icon type="upload" /> Click to Upload </a-button>
+          </a-upload>
         </template>
 
       </a-table>
@@ -113,7 +92,6 @@ import {JeecgListMixin} from '@/mixins/JeecgListMixin'
 import PurchaseOrderModal from './modules/PurchaseOrderModal'
 import PurchaseOrderSkuSubTable from './subTables/PurchaseOrderSkuSubTable'
 import SkuPromotionHistorySubTable from './subTables/SkuPromotionHistorySubTable'
-import {filterMultiDictText} from '@/components/dict/JDictSelectUtil'
 import '@/assets/less/TableExpand.less'
 
 const URL_PREFIX = "/business/purchaseOrder/client/"
@@ -159,28 +137,36 @@ export default {
           dataIndex: 'discountAmount',
         },
         {
-          title: 'Final price(€)',
+          title: 'Amount to be paid(€)',
           align: 'center',
           dataIndex: 'finalAmount',
         },
+        {
+          title: 'Action',
+          align:'center',
+          dataIndex: 'action',
+          scopedSlots: { customRender: 'uploadSlot' },
+        }
       ],
       // 字典选项
       dictOptions: {},
       // 展开的行test
       expandedRowKeys: [],
       url: {
-        list: URL_PREFIX + 'list'
+        list: URL_PREFIX + 'list',
+        upload: window._CONFIG['domainURL'] + URL_PREFIX + 'uploadPaymentFile'
       },
       superFieldList: [],
+      // upload button
+      headers: {
+        authorization: 'authorization-text',
+      },
     }
   },
   created() {
     this.getSuperFieldList();
   },
   computed: {
-    importExcelUrl() {
-      return window._CONFIG['domainURL'] + this.url.importExcelUrl
-    }
   },
   methods: {
     initDictConfig() {
@@ -208,7 +194,17 @@ export default {
       fieldList.push({type: 'BigDecimal', value: 'discountAmount', text: '减免总金额', dictCode: ''})
       fieldList.push({type: 'BigDecimal', value: 'finalAmount', text: '最终金额', dictCode: ''})
       this.superFieldList = fieldList
-    }
+    },
+    handleChange(info) {
+      if (info.file.status !== 'uploading') {
+        console.log(info.file, info.fileList);
+      }
+      if (info.file.status === 'done') {
+        this.$message.success(`${info.file.name} file uploaded successfully`);
+      } else if (info.file.status === 'error') {
+        this.$message.error(`${info.file.name} file upload failed.`);
+      }
+    },
   }
 }
 </script>
