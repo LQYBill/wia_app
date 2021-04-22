@@ -30,7 +30,7 @@ public class ClientPurchaseController {
     private final IPurchaseOrderService purchaseOrderService;
     private final IPurchaseOrderSkuService purchaseOrderSkuService;
     private final ISkuPromotionHistoryService skuPromotionHistoryService;
-    private final static String PAYMENT_DOC_PATH = "C:\\Users\\matth\\Desktop\\upFiles\\txt.txt";
+    private final static String PAYMENT_DOC_PATH = "C:\\Users\\matth\\Desktop\\upFiles\\test.txt";
 
     @Autowired
     public ClientPurchaseController(IPurchaseOrderService purchaseService,

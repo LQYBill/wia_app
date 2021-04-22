@@ -1,7 +1,6 @@
 package org.jeecg.modules.business.controller.admin;
 
-import java.io.UnsupportedEncodingException;
-import java.io.IOException;
+import java.io.*;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,6 +11,7 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.google.common.io.Files;
 import org.jeecg.modules.business.vo.PromotionDetail;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
@@ -59,6 +59,7 @@ public class PurchaseOrderController {
     private final IPurchaseOrderService purchaseOrderService;
     private final IPurchaseOrderSkuService purchaseOrderSkuService;
     private final ISkuPromotionHistoryService skuPromotionHistoryService;
+    private final static String PAYMENT_DOC_PATH = "C:\\Users\\matth\\Desktop\\upFiles\\test.txt";
 
     @Autowired
     public PurchaseOrderController(IPurchaseOrderService purchaseOrderService,
@@ -292,6 +293,19 @@ public class PurchaseOrderController {
             }
         }
         return Result.OK("文件导入失败！");
+    }
+
+    /**
+     * Download payment document of the purchase indicated by its identifier as argument.
+     *
+     * @param purchaseID the identifier of purchase
+     * @return file byte flow
+     */
+    @RequestMapping(value = "/downloadFile", method = RequestMethod.GET)
+    public byte[] downloadFile(@RequestParam String purchaseID) throws IOException {
+        File in = new File(PAYMENT_DOC_PATH) ;
+        byte[] data = Files.asByteSource(in).read();
+        return data;
     }
 
 }
