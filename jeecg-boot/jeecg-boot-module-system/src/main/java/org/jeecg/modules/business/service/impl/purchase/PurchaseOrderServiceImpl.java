@@ -153,7 +153,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         List<OrderContentEntry> entries = details.stream()
                 .map(d -> (new OrderContentEntry(d.getQuantity(), d.totalPrice(), d.getSkuId())))
                 .collect(Collectors.toList());
-        purchaseOrderContentMapper.addAll(client.getFullName(), purchaseID, entries);
+        purchaseOrderContentMapper.addAll(client.fullName(), purchaseID, entries);
 
         // 3. save the application of promotion information
         List<PromotionHistoryEntry> promotionHistoryEntries = details.stream()
@@ -165,7 +165,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
                     return new PromotionHistoryEntry(promotion, count);
                 }).collect(Collectors.toList());
         if (!promotionHistoryEntries.isEmpty()) {
-            skuPromotionHistoryMapper.addAll(client.getFullName(), promotionHistoryEntries, purchaseID);
+            skuPromotionHistoryMapper.addAll(client.fullName(), promotionHistoryEntries, purchaseID);
         }
 
         // send email to client

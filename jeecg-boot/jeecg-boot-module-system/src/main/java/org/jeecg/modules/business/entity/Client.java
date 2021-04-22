@@ -132,7 +132,7 @@ public class Client implements Serializable {
     @ApiModelProperty(value = "账户余额")
     private BigDecimal balance;
 
-    public String getFullName() {
+    public String fullName() {
         return firstName + " " + surname;
     }
 }

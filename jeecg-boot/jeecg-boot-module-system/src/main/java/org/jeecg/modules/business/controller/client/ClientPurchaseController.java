@@ -15,7 +15,11 @@ import org.jeecg.modules.business.vo.clientPurchaseOrder.PurchaseDemand;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
+import javax.servlet.http.HttpServletRequest;
+import java.io.*;
 import java.util.List;
 
 @Api(tags = "商品采购订单")
@@ -26,6 +30,7 @@ public class ClientPurchaseController {
     private final IPurchaseOrderService purchaseOrderService;
     private final IPurchaseOrderSkuService purchaseOrderSkuService;
     private final ISkuPromotionHistoryService skuPromotionHistoryService;
+    private final static String PAYMENT_DOC_PATH = "C:\\Users\\matth\\Desktop\\upFiles\\txt.txt";
 
     @Autowired
     public ClientPurchaseController(IPurchaseOrderService purchaseService,
@@ -65,6 +70,22 @@ public class ClientPurchaseController {
     public Result<String> addPurchaseOrder(@RequestBody List<String> platformOrderIDList) {
         String id = purchaseOrderService.addPurchase(platformOrderIDList);
         return Result.OK(id);
+    }
+
+    @AutoLog(value = "Upload payment document")
+    @ApiOperation(value = "Upload payment document", notes = "Upload payment document")
+    @PostMapping(value = "/uploadPaymentFile", consumes = {"multipart/form-data"})
+    public Result<String> uploadPaymentFile(HttpServletRequest request) throws IOException {
+
+        String savePath = "";
+        String bizPath = request.getParameter("biz");
+        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+        MultipartFile file = multipartRequest.getFile("file");// 获取上传文件对象
+        OutputStream out = new FileOutputStream(PAYMENT_DOC_PATH);
+        out.write(file.getBytes());
+        log.info("Received the file {}", file.getSize());
+        out.close();
+        return Result.OK("Payment file upload success");
     }
 
 }
