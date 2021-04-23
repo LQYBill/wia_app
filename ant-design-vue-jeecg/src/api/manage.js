@@ -72,6 +72,15 @@ export function getRoleList(parameter) {
   })
 }
 
+export function getFile(url, params){
+  return axios({
+    url: url,
+    method: 'get',
+    responseType: 'blob',
+    params: params
+  })
+}
+
 export function getServiceList(parameter) {
   return axios({
     url: api.service,

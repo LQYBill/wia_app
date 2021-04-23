@@ -10,9 +10,6 @@ import org.jeecg.modules.business.entity.PurchaseOrder;
 import org.jeecg.modules.business.service.IPurchaseOrderService;
 import org.jeecg.modules.business.service.IPurchaseOrderSkuService;
 import org.jeecg.modules.business.service.ISkuPromotionHistoryService;
-import org.jeecg.modules.business.vo.PurchaseOrderPage;
-import org.jeecg.modules.business.vo.clientPurchaseOrder.PurchaseDemand;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,7 +27,6 @@ public class ClientPurchaseController {
     private final IPurchaseOrderService purchaseOrderService;
     private final IPurchaseOrderSkuService purchaseOrderSkuService;
     private final ISkuPromotionHistoryService skuPromotionHistoryService;
-    private final static String PAYMENT_DOC_PATH = "C:\\Users\\matth\\Desktop\\upFiles\\test.txt";
 
     @Autowired
     public ClientPurchaseController(IPurchaseOrderService purchaseService,
@@ -75,16 +71,18 @@ public class ClientPurchaseController {
     @AutoLog(value = "Upload payment document")
     @ApiOperation(value = "Upload payment document", notes = "Upload payment document")
     @PostMapping(value = "/uploadPaymentFile", consumes = {"multipart/form-data"})
-    public Result<String> uploadPaymentFile(HttpServletRequest request) throws IOException {
+    public Result<?> uploadPaymentFile(HttpServletRequest request) throws IOException {
 
-        String savePath = "";
-        String bizPath = request.getParameter("biz");
+        String purchaseID = request.getParameter("purchaseID");
+        if(purchaseID == null){
+            return Result.error("Missing value: purchaseID");
+        }
         MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
         MultipartFile file = multipartRequest.getFile("file");// 获取上传文件对象
-        OutputStream out = new FileOutputStream(PAYMENT_DOC_PATH);
-        out.write(file.getBytes());
-        log.info("Received the file {}", file.getSize());
-        out.close();
+        if ( file == null){
+            return Result.error("Missing file.");
+        }
+        purchaseOrderService.updatePaymentDocumentForPurchase(purchaseID, file);
         return Result.OK("Payment file upload success");
     }
 

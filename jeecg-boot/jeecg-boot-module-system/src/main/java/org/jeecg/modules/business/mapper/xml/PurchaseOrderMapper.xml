@@ -4,12 +4,18 @@
     <insert id="addPurchase">
         INSERT INTO purchase_order(id, create_by, create_time, update_by,
                                    update_time, client_id, total_amount,
-                                   discount_amount, final_amount, invoice_number
-                                   )
+                                   discount_amount, final_amount, invoice_number)
         VALUES (#{ID}, #{creator}, NOW(), #{creator}, NOW(), #{clientID},
                 #{totalAmount}, #{discount}, #{finalAmount},
                 #{invoiceNumber});
     </insert>
+
+    <update id="updatePaymentDocument">
+        UPDATE purchase_order
+        SET payment_document = #{fileName}
+        WHERE id = #{purchaseID}
+    </update>
+
 
     <select id="pageByClientID" resultType="org.jeecg.modules.business.entity.PurchaseOrder">
         SELECT p.*
@@ -28,5 +34,12 @@
         FROM purchase_order
         WHERE MONTH(create_time) = MONTH(CURRENT_DATE())
           AND YEAR(create_time) = YEAR(CURRENT_DATE())
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+    <select id="selectPaymentDocument" resultType="java.lang.String">
+        SELECT payment_document
+        FROM purchase_order
+        WHERE id = #{purchaseID}
     </select>
 </mapper>

@@ -38,4 +38,5 @@ public interface PlatformOrderMapper extends BaseMapper<PlatformOrder> {
      * @param status      the status to set
      */
     void batchUpdateStatus(@Param("orderIDList") List<String> orderIDList, @Param("status") int status);
+
 }

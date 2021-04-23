@@ -2,22 +2,24 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.jeecg.modules.business.mapper.PlatformOrderMapper">
 
-    <select id="pagePendingOrderByClientId" resultType="org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage">
+    <sql id="pagePendingOrderByClientId">
         SELECT p.*
         FROM platform_order p
                  JOIN shop s ON p.shop_id = s.id
                  JOIN client c ON s.owner_id = c.id
         WHERE c.id = #{clientId}
           AND p.status = 2
+    </sql>
+
+    <select id="pagePendingOrderByClientId"
+            resultType="org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage">
+        <include refid="pagePendingOrderByClientId"/>
         LIMIT #{offset}, #{size}
     </select>
 
     <select id="countTotal" resultType="java.lang.Integer">
         SELECT COUNT(*)
-        FROM platform_order p
-                 JOIN shop s ON p.shop_id = s.id
-                 JOIN client c ON s.owner_id = c.id
-        WHERE c.id = #{clientId}
+        FROM (<include refid="pagePendingOrderByClientId"/>) AS t
     </select>
 
     <update id="updateStatus">

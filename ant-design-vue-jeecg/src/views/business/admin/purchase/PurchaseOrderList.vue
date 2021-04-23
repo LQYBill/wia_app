@@ -14,7 +14,10 @@
     <div class="table-operator">
       <a-button type="primary" icon="plus" @click="handleAdd">新增</a-button>
       <a-button type="primary" icon="download" @click="handleExportXls('商品采购订单')">导出</a-button>
-      <a-upload name="file" :showUploadList="false" :multiple="false" :headers="tokenHeader" :action="importExcelUrl"
+      <a-upload name="file"
+                :showUploadList="false"
+                :multiple="false"
+                :headers="tokenHeader" :action="importExcelUrl"
                 @change="handleImportExcel">
         <a-button type="primary" icon="import">导入</a-button>
       </a-upload>
@@ -91,16 +94,16 @@
 
 
         <template slot="fileSlot" slot-scope="fileName, record">
-          <span v-if="!fileName" style="font-size: 12px;font-style: italic;">无文件</span>
+          <span v-if="!fileName" style="font-size: 12px;font-style: italic;">No file</span>
           <a-button
             v-else
             ghost
             type="primary"
             icon="download"
             size="small"
-            @click="downloadFile(record['id'])"
+            @click="downloadFile(fileName)"
           >
-            <span>{{ fileName }}</span>
+            <span>Preview</span>
           </a-button>
         </template>
 
@@ -122,7 +125,8 @@ import PurchaseOrderSkuSubTable from './subTables/PurchaseOrderSkuSubTable'
 import SkuPromotionHistorySubTable from './subTables/SkuPromotionHistorySubTable'
 import {filterMultiDictText} from '@/components/dict/JDictSelectUtil'
 import '@/assets/less/TableExpand.less'
-import {getAction} from "@api/manage";
+import {saveAs} from 'file-saver';
+import {makeFile, getFile, getAction} from '@/api/manage';
 
 export default {
   name: 'PurchaseOrderList',
@@ -193,7 +197,8 @@ export default {
         deleteBatch: '/business/purchaseOrder/deleteBatch',
         exportXlsUrl: '/business/purchaseOrder/exportXls',
         importExcelUrl: '/business/purchaseOrder/importExcel',
-        downloadFile: '/business/purchaseOrder/downloadFile'
+        downloadFile: '/business/purchaseOrder/downloadFile',
+        fileType: '/business/purchaseOrder/fileType'
       },
       superFieldList: [],
     }
@@ -233,15 +238,15 @@ export default {
       fieldList.push({type: 'BigDecimal', value: 'finalAmount', text: '最终金额', dictCode: ''})
       this.superFieldList = fieldList
     },
-    downloadFile(ID) {
-      const param = {purchaseID: ID}
-      getAction(this.url.downloadFile, param)
+    downloadFile(filename) {
+      // download file by name
+      const param = {filename: filename}
+      getFile(this.url.downloadFile, param)
         .then(res => {
           console.log(res)
-          let fileType = "text/plain"
-          let file = new Blob([res], {type: fileType})
-          let fileURL = URL.createObjectURL(file);
-          window.open(fileURL);
+          //let rawData = window.atob(res.result.data)
+          //console.log("decode: \n" + rawData)
+          saveAs(res, filename)
         })
     }
   }

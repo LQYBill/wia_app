@@ -57,4 +57,8 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrder> {
      */
     String lastInvoiceNumber();
 
+    void updatePaymentDocument(@Param("purchaseID") String purchaseID,
+                               @Param("fileName") String filename);
+
+    String selectPaymentDocument(@Param("purchaseID") String purchaseID);
 }

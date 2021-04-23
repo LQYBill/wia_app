@@ -11,12 +11,18 @@ import org.jeecg.modules.business.vo.PromotionHistoryEntry;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
 import org.jeecg.modules.message.handle.enums.SendMsgTypeEnum;
 import org.jeecg.modules.message.util.PushMsgUtil;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.Serializable;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -39,6 +45,9 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
 
     private final PlatformOrderContentMapper platformOrderContentMapper;
     private final PlatformOrderMapper platformOrderMapper;
+
+    @Value("${jeecg.path.save}")
+    private String PAYMENT_DOC_DIR;
 
     @Autowired
     private PushMsgUtil pushMsgUtil;
@@ -185,5 +194,27 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
 
         // 4. return purchase id
         return purchaseID;
+    }
+
+    @Transactional
+    @Override
+    public void updatePaymentDocumentForPurchase(String purchaseID, @NotNull MultipartFile in) throws IOException {
+        String filename = purchaseID + "_" + in.getOriginalFilename();
+        Path target = Paths.get(PAYMENT_DOC_DIR, filename);
+        Files.deleteIfExists(target);
+        Files.copy(in.getInputStream(), target);
+        purchaseOrderMapper.updatePaymentDocument(purchaseID, filename);
+    }
+
+    /**
+     * Download the file of the purchase order indicated by its identifier.
+     *
+     * @param filename the identifier of the purchase order.
+     * @return FIleDownloaded object
+     * @throws IOException IO error while reading the file.
+     */
+    public byte[] downloadPaymentDocumentOfPurchase(String filename) throws IOException {
+        Path target = Paths.get(PAYMENT_DOC_DIR, filename);
+        return Files.readAllBytes(target);
     }
 }

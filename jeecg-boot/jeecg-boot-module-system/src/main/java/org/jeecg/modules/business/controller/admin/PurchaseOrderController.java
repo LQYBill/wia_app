@@ -1,30 +1,19 @@
 package org.jeecg.modules.business.controller.admin;
 
 import java.io.*;
-import java.net.URLDecoder;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.google.common.io.Files;
 import org.jeecg.modules.business.vo.PromotionDetail;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
-import org.jeecgframework.poi.excel.def.NormalExcelConstants;
-import org.jeecgframework.poi.excel.entity.ExportParams;
 import org.jeecgframework.poi.excel.entity.ImportParams;
-import org.jeecgframework.poi.excel.view.JeecgEntityExcelView;
-import org.jeecg.common.system.vo.LoginUser;
-import org.apache.shiro.SecurityUtils;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.system.query.QueryGenerator;
-import org.jeecg.common.util.oConvertUtils;
 import org.jeecg.modules.business.entity.PurchaseOrderSku;
-import org.jeecg.modules.business.entity.SkuPromotionHistory;
 import org.jeecg.modules.business.entity.PurchaseOrder;
 import org.jeecg.modules.business.vo.PurchaseOrderPage;
 import org.jeecg.modules.business.service.IPurchaseOrderService;
@@ -40,7 +29,6 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
-import com.alibaba.fastjson.JSON;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.jeecg.common.aspect.annotation.AutoLog;
@@ -302,10 +290,30 @@ public class PurchaseOrderController {
      * @return file byte flow
      */
     @RequestMapping(value = "/downloadFile", method = RequestMethod.GET)
-    public byte[] downloadFile(@RequestParam String purchaseID) throws IOException {
-        File in = new File(PAYMENT_DOC_PATH) ;
-        byte[] data = Files.asByteSource(in).read();
-        return data;
+    public void downloadFile(@RequestParam String filename, HttpServletResponse response) throws IOException {
+        byte[] out = purchaseOrderService.downloadPaymentDocumentOfPurchase(filename);
+        response.setContentType("application/octet-stream;charset=utf-8");
+        response.setHeader("Content-Disposition", "attachment;");
+        response.setHeader("Content-Transfer-Encoding", "binary");
+        response.getOutputStream().write(out);
     }
+
+    @AutoLog(value = "Upload payment document")
+    @ApiOperation(value = "Upload payment document", notes = "Upload payment document")
+    @PostMapping(value = "/uploadPaymentFile", consumes = {"multipart/form-data"})
+    public Result<?> uploadPaymentFile(HttpServletRequest request) throws IOException {
+        String purchaseID = request.getParameter("purchaseID");
+        if (purchaseID == null) {
+            return Result.error("Missing value: purchaseID");
+        }
+        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+        MultipartFile file = multipartRequest.getFile("file");// 获取上传文件对象
+        if (file == null) {
+            return Result.error("Missing file.");
+        }
+        purchaseOrderService.updatePaymentDocumentForPurchase(purchaseID, file);
+        return Result.OK("Payment file upload success");
+    }
+
 
 }

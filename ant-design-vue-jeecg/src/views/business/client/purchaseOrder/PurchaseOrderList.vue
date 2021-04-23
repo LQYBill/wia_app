@@ -53,26 +53,26 @@
         </template>
         <!-- 内嵌table区域 end -->
 
-        <template slot="htmlSlot" slot-scope="text">
-          <div v-html="text"></div>
-        </template>
-
-        <template slot="imgSlot" slot-scope="text">
-          <div style="font-size: 12px;font-style: italic;">
-            <span v-if="!text">无图片</span>
-            <img v-else :src="getImgView(text)" alt="" style="max-width:80px;height:25px;"/>
-          </div>
-        </template>
-
-        <template slot="uploadSlot" slot-scope="text">
+        <template slot="uploadSlot" slot-scope="text, record">
           <a-upload
-            name="file"
-            :multiple="true"
-            :action = "url.upload"
+            :action="url.upload"
+            :multiple="false"
             :headers="tokenHeader"
             @change="handleChange"
+            :showUploadList="false"
+            :data="{purchaseID: record['id']}"
+            :beforeUpload="checkFile"
           >
-            <a-button> <a-icon type="upload" /> Click to Upload </a-button>
+            <a-button size="small">
+              <div v-if="text">
+                <a-icon type="delete"/>
+                Delete & re-Upload
+              </div>
+              <div v-else>
+                <a-icon type="plus"/>
+                Upload
+              </div>
+            </a-button>
           </a-upload>
         </template>
 
@@ -142,10 +142,10 @@ export default {
           dataIndex: 'finalAmount',
         },
         {
-          title: 'Action',
-          align:'center',
-          dataIndex: 'action',
-          scopedSlots: { customRender: 'uploadSlot' },
+          title: 'Payment Document',
+          align: 'center',
+          dataIndex: 'paymentDocument',
+          scopedSlots: {customRender: 'uploadSlot'},
         }
       ],
       // 字典选项
@@ -166,8 +166,7 @@ export default {
   created() {
     this.getSuperFieldList();
   },
-  computed: {
-  },
+  computed: {},
   methods: {
     initDictConfig() {
     },
@@ -204,7 +203,15 @@ export default {
       } else if (info.file.status === 'error') {
         this.$message.error(`${info.file.name} file upload failed.`);
       }
+      this.loadData()
     },
+    checkFile(file, fileList) {
+      if (file.name.length >= 50) {
+        this.$message.warn("Filename is too long, can not exceed 50 characters!")
+        return false
+      }
+      return true
+    }
   }
 }
 </script>

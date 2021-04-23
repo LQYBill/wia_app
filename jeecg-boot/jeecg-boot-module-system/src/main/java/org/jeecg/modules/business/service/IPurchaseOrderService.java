@@ -5,8 +5,9 @@ import org.jeecg.modules.business.entity.PurchaseOrderSku;
 import org.jeecg.modules.business.entity.SkuPromotionHistory;
 import org.jeecg.modules.business.entity.PurchaseOrder;
 import com.baomidou.mybatisplus.extension.service.IService;
-import org.jeecg.modules.business.vo.clientPurchaseOrder.PurchaseDemand;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
@@ -54,5 +55,15 @@ public interface IPurchaseOrderService extends IService<PurchaseOrder> {
      */
     String addPurchase(List<String> orderIDs);
 
+    void updatePaymentDocumentForPurchase(String purchaseID, MultipartFile in) throws IOException;
+
+    /**
+     * Download the file of the purchase order indicated by its identifier.
+     *
+     * @param purchaseID the identifier of the purchase order.
+     * @return the file in binary
+     * @throws IOException IO error while reading the file.
+     */
+    byte[] downloadPaymentDocumentOfPurchase(String purchaseID) throws IOException;
 
 }
