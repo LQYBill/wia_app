@@ -207,10 +207,10 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
     }
 
     /**
-     * Download the file of the purchase order indicated by its identifier.
+     * Download the payment file of the purchase order by its name
      *
-     * @param filename the identifier of the purchase order.
-     * @return FIleDownloaded object
+     * @param filename the name of the file
+     * @return byte array of the file
      * @throws IOException IO error while reading the file.
      */
     public byte[] downloadPaymentDocumentOfPurchase(String filename) throws IOException {

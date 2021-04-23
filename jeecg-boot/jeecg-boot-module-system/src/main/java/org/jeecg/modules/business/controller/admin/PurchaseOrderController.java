@@ -284,10 +284,10 @@ public class PurchaseOrderController {
     }
 
     /**
-     * Download payment document of the purchase indicated by its identifier as argument.
+     * Download payment document of the purchase indicated by document's name,
+     * The file will be write back in binary format.
      *
-     * @param purchaseID the identifier of purchase
-     * @return file byte flow
+     * @param filename document's name
      */
     @RequestMapping(value = "/downloadFile", method = RequestMethod.GET)
     public void downloadFile(@RequestParam String filename, HttpServletResponse response) throws IOException {
@@ -298,6 +298,15 @@ public class PurchaseOrderController {
         response.getOutputStream().write(out);
     }
 
+
+    /**
+     * Upload a payment file for a certain purchase order.
+     * The parameter of the POST request should contain <b>purchase ID and file</b> entry.
+     *
+     * @param request the post request
+     * @return error or success message
+     * @throws IOException IO error when saving the file.
+     */
     @AutoLog(value = "Upload payment document")
     @ApiOperation(value = "Upload payment document", notes = "Upload payment document")
     @PostMapping(value = "/uploadPaymentFile", consumes = {"multipart/form-data"})
