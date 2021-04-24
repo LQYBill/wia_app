@@ -53,24 +53,29 @@
         </template>
         <!-- 内嵌table区域 end -->
 
-        <template slot="uploadSlot" slot-scope="text, record">
+        <template slot="uploadSlot" slot-scope="cellValue, line">
           <a-upload
+            :disabled="disableUploadButton(cellValue)"
             :action="url.upload"
             :multiple="false"
             :headers="tokenHeader"
             @change="handleChange"
             :showUploadList="false"
-            :data="{purchaseID: record['id']}"
+            :data="{purchaseID: line['id']}"
             :beforeUpload="checkFile"
           >
-            <a-button size="small">
-              <div v-if="text">
+            <a-button size="small" :disabled="cellValue === 'confirmed'">
+              <div v-if="cellValue === 'waitingPayment'">
+                <a-icon type="plus"/>
+                Upload
+              </div>
+              <div v-else-if="cellValue === 'paid'">
                 <a-icon type="delete"/>
                 Delete & re-Upload
               </div>
               <div v-else>
-                <a-icon type="plus"/>
-                Upload
+                <a-icon type="check"/>
+                Already Confirmed
               </div>
             </a-button>
           </a-upload>
@@ -142,9 +147,28 @@ export default {
           dataIndex: 'finalAmount',
         },
         {
+          title: 'Status',
+          align: 'center',
+          dataIndex: 'status',
+          key: 'status',
+          width: 147,
+          customRender: (
+            t => {
+              switch (t) {
+                case "waitingPayment":
+                  return 'Waiting Payment'
+                case "paid":
+                  return 'Paid'
+                case "confirmed":
+                  return "Confirmed"
+              }
+            })
+        },
+        {
           title: 'Payment Document',
           align: 'center',
-          dataIndex: 'paymentDocument',
+          dataIndex: 'status',
+          key: 'doc_status',
           scopedSlots: {customRender: 'uploadSlot'},
         }
       ],
@@ -166,9 +190,14 @@ export default {
   created() {
     this.getSuperFieldList();
   },
-  computed: {},
+  computed: {
+  },
   methods: {
     initDictConfig() {
+    },
+
+    disableUploadButton(status) {
+      return status !== 'waitingPayment'
     },
 
     handleExpand(expanded, record) {

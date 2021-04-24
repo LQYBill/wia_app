@@ -58,7 +58,8 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrder> {
     String lastInvoiceNumber();
 
     /**
-     * Update in DB for a purchase order its payment file name.
+     * Update in DB for a purchase order its payment filename and change the status of
+     * the purchase order to 'paid'.
      * The previous value of filename will be overwrite.
      *
      * @param purchaseID the purchase order's identifier
@@ -74,4 +75,11 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrder> {
      * @return the filename
      */
     String selectPaymentDocument(@Param("purchaseID") String purchaseID);
+
+    /**
+     * Change a purchase's status to confirmed in DB.
+     *
+     * @param purchaseID the identifier of the purchase to change.
+     */
+    void confirm(@Param("purchaseID") String purchaseID);
 }

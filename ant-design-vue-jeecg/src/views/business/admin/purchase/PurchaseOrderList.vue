@@ -107,6 +107,21 @@
           </a-button>
         </template>
 
+        <template slot="action" slot-scope="ID, record">
+          <a-popconfirm
+            title="Are you sure confirm this payment?"
+            ok-text="Yes"
+            cancel-text="No"
+            @confirm="confirmOrder(ID)"
+            :disabled="record['status'] !== 'paid'"
+          >
+            <a-button :disabled="record['status'] !== 'paid'">
+              <a-icon type="check"/>
+              Confirm
+            </a-button>
+          </a-popconfirm>
+        </template>
+
       </a-table>
     </div>
     <!-- table区域 end -->
@@ -126,7 +141,7 @@ import SkuPromotionHistorySubTable from './subTables/SkuPromotionHistorySubTable
 import {filterMultiDictText} from '@/components/dict/JDictSelectUtil'
 import '@/assets/less/TableExpand.less'
 import {saveAs} from 'file-saver';
-import {makeFile, getFile, getAction} from '@/api/manage';
+import {makeFile, getFile, getAction, postAction} from '@/api/manage';
 
 export default {
   name: 'PurchaseOrderList',
@@ -180,12 +195,35 @@ export default {
           dataIndex: 'finalAmount',
         },
         {
+          title: '订单状态',
+          dataIndex: 'status',
+          align: 'center',
+          width: 147,
+          customRender: (
+            t => {
+              switch (t) {
+                case "waitingPayment":
+                  return 'Waiting Payment'
+                case "paid":
+                  return 'Paid'
+                case "confirmed":
+                  return "Confirmed"
+              }
+            })
+        },
+        {
           title: '支付凭证',
           dataIndex: 'paymentDocument',
           align: 'center',
           width: 147,
           scopedSlots: {customRender: 'fileSlot'},
         },
+        {
+          title: '操作',
+          dataIndex: 'id',
+          align: 'center',
+          scopedSlots: {customRender: 'action'},
+        }
       ],
       // 字典选项
       dictOptions: {},
@@ -198,7 +236,7 @@ export default {
         exportXlsUrl: '/business/purchaseOrder/exportXls',
         importExcelUrl: '/business/purchaseOrder/importExcel',
         downloadFile: '/business/purchaseOrder/downloadFile',
-        fileType: '/business/purchaseOrder/fileType'
+        confirm: '/business/purchaseOrder/confirm',
       },
       superFieldList: [],
     }
@@ -247,6 +285,15 @@ export default {
           //let rawData = window.atob(res.result.data)
           //console.log("decode: \n" + rawData)
           saveAs(res, filename)
+        })
+    },
+    confirmOrder(purchaseID) {
+      const params = {purchaseID: purchaseID}
+      postAction(this.url.confirm, params)
+        .then(res => {
+          if (res.success) {
+            this.loadData()
+          }
         })
     }
   }

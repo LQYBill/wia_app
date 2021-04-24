@@ -27,9 +27,17 @@ import io.swagger.annotations.ApiModelProperty;
 public class PlatformOrder implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    public static final int PURCHASING_STATUS = 3;
-    public static final int PENDING_STATUS = 2;
-    public static final int SHIPPED_STATUS = 1;
+    public enum Status {
+        Purchasing(3),
+        Pending(2),
+        Shipped(1);
+
+        public final int code;
+
+        Status(int code) {
+            this.code = code;
+        }
+    }
 
     /**
      * 主键

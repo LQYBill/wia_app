@@ -12,7 +12,12 @@
 
     <update id="updatePaymentDocument">
         UPDATE purchase_order
-        SET payment_document = #{fileName}
+        SET payment_document = #{fileName}, status='paid'
+        WHERE id = #{purchaseID}
+    </update>
+    <update id="confirm">
+        UPDATE purchase_order
+        SET status = 'confirmed'
         WHERE id = #{purchaseID}
     </update>
 

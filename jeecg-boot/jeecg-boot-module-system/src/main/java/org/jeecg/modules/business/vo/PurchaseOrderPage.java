@@ -65,12 +65,12 @@ public class PurchaseOrderPage {
 	@Excel(name = "最终金额", width = 15)
 	@ApiModelProperty(value = "最终金额")
     private java.math.BigDecimal finalAmount;
-	
+
 	@ExcelCollection(name="商品采购订单SKU")
 	@ApiModelProperty(value = "商品采购订单SKU")
 	private List<PurchaseOrderSku> purchaseOrderSkuList;
-	@ExcelCollection(name="SKU采购折扣历史")
-	@ApiModelProperty(value = "SKU采购折扣历史")
-	private List<SkuPromotionHistory> skuPromotionHistoryList;
-	
+//	@ExcelCollection(name="SKU采购折扣历史")
+//	@ApiModelProperty(value = "SKU采购折扣历史")
+//	private List<SkuPromotionHistory> skuPromotionHistoryList;
+
 }

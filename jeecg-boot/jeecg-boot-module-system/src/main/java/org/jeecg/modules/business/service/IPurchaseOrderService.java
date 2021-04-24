@@ -66,4 +66,9 @@ public interface IPurchaseOrderService extends IService<PurchaseOrder> {
      */
     byte[] downloadPaymentDocumentOfPurchase(String filename) throws IOException;
 
+    /**
+     * Change the status of a purchase to confirmed
+     * @param purchaseID the identifier of the purchase order to confirm
+     */
+    void confirmOrder(String purchaseID);
 }

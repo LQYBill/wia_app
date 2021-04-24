@@ -141,6 +141,11 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         page.setTotal(total);
     }
 
+    @Override
+    public void confirmOrder(String purchaseID) {
+        purchaseOrderMapper.confirm(purchaseID);
+    }
+
     /**
      * Generated a purchase order by series of platform orders indicated by their identifier.
      *
@@ -202,7 +207,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         );
 
         // 5. update platform order status to "purchasing"
-        platformOrderMapper.batchUpdateStatus(orderIDs, PlatformOrder.PURCHASING_STATUS);
+        platformOrderMapper.batchUpdateStatus(orderIDs, PlatformOrder.Status.Purchasing.code);
 
         // 4. return purchase id
         return purchaseID;

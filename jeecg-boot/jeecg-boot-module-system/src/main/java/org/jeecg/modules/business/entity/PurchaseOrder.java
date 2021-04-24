@@ -57,12 +57,7 @@ public class PurchaseOrder implements Serializable {
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @ApiModelProperty(value = "更新日期")
     private Date updateTime;
-    /**
-     * 订单发票号
-     */
-    @Excel(name = "订单发票号", width = 15)
-    @ApiModelProperty(value = "订单发票号")
-    private String invoiceNumber;
+
     /**
      * 客户ID
      */
@@ -88,6 +83,18 @@ public class PurchaseOrder implements Serializable {
     @Excel(name = "最终金额", width = 15)
     @ApiModelProperty(value = "最终金额")
     private java.math.BigDecimal finalAmount;
+
+    /**
+     * 订单发票号
+     */
+    @Excel(name = "订单发票号", width = 15)
+    @ApiModelProperty(value = "订单发票号")
+    private String invoiceNumber;
+
+    /**
+     * Purchase status
+     */
+    private String status;
 
     /**
      * Payment document
