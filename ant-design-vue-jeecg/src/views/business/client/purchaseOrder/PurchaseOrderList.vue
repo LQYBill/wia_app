@@ -197,7 +197,7 @@ export default {
     },
 
     disableUploadButton(status) {
-      return status !== 'waitingPayment'
+      return status === 'confirmed'
     },
 
     handleExpand(expanded, record) {
