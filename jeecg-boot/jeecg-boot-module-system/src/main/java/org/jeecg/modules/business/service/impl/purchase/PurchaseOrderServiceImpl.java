@@ -228,11 +228,27 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
     @Transactional
     @Override
     public void savePaymentDocumentForPurchase(String purchaseID, @NotNull MultipartFile in) throws IOException {
+        // save file
         String filename = purchaseID + "_" + in.getOriginalFilename();
         Path target = Paths.get(PAYMENT_DOC_DIR, filename);
         Files.deleteIfExists(target);
         Files.copy(in.getInputStream(), target);
         purchaseOrderMapper.updatePaymentDocument(purchaseID, filename);
+
+        // send email
+        // send email to account
+        Client client = clientService.getCurrentClient();
+        Map<String, String> map = new HashMap<>();
+        map.put("client_name", client.fullName());
+        String invoiceNumber = purchaseOrderMapper.getInvoiceNumber(purchaseID);
+        map.put("order_number", invoiceNumber);
+        // TODO: 4/21/2021 change sentTo to real client email
+        pushMsgUtil.sendMessage(
+                SendMsgTypeEnum.EMAIL.getType(),
+                "payment_proof_upload",
+                map,
+                "service@wia-sourcing.com"
+        );
     }
 
     /**

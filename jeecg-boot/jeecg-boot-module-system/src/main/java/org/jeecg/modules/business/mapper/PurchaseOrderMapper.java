@@ -82,4 +82,6 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrder> {
      * @param purchaseID the identifier of the purchase to change.
      */
     void confirm(@Param("purchaseID") String purchaseID);
+
+    String getInvoiceNumber(@Param("purchaseID") String purchaseID);
 }

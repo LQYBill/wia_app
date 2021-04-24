@@ -47,4 +47,9 @@
         FROM purchase_order
         WHERE id = #{purchaseID}
     </select>
+    <select id="getInvoiceNumber" resultType="java.lang.String">
+        SELECT invoice_number
+        FROM purchase_order
+        WHERE id = #{purchaseID}
+    </select>
 </mapper>
