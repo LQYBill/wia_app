@@ -63,7 +63,6 @@ public class PurchaseOrderSku implements Serializable {
     /**
      * 商品采购订单ID
      */
-    @Excel(name = "商品采购订单ID", width = 15, dictTable = "purchase_order", dicText = "invoice_number", dicCode = "id")
     @Dict(dictTable = "purchase_order", dicText = "invoice_number", dicCode = "id")
     @ApiModelProperty(value = "商品采购订单ID")
     private String purchaseOrderId;
@@ -83,7 +82,6 @@ public class PurchaseOrderSku implements Serializable {
     /**
      * 采购总价
      */
-    @Excel(name = "采购总价", width = 15)
     @ApiModelProperty(value = "采购总价")
     private java.math.BigDecimal totalAmount;
 }

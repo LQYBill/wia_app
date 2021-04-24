@@ -54,15 +54,12 @@ public class PurchaseOrderPage {
 	@ApiModelProperty(value = "客户ID")
     private String clientId;
 	/**应付金额*/
-	@Excel(name = "应付金额", width = 15)
 	@ApiModelProperty(value = "应付金额")
     private java.math.BigDecimal totalAmount;
 	/**减免总金额*/
-	@Excel(name = "减免总金额", width = 15)
 	@ApiModelProperty(value = "减免总金额")
     private java.math.BigDecimal discountAmount;
 	/**最终金额*/
-	@Excel(name = "最终金额", width = 15)
 	@ApiModelProperty(value = "最终金额")
     private java.math.BigDecimal finalAmount;
 
