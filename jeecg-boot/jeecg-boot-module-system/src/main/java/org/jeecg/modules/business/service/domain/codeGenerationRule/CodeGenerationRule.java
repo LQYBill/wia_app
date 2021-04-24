@@ -15,4 +15,11 @@ public interface CodeGenerationRule<T> {
      * @return the next code
      */
     T next(T previous);
+
+    /**
+     * Generated next code without input.
+     *
+     * @return the new code
+     */
+    T next();
 }

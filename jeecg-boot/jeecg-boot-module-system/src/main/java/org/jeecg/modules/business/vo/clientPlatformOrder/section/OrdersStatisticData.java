@@ -28,6 +28,12 @@ public class OrdersStatisticData {
         this.reducedAmount = reducedAmount;
     }
 
+    /**
+     * Generated a statisticData object of a list of orderContentDetail.
+     *
+     * @param source a list of orderContentDetail
+     * @return a orderStatisticData object
+     */
     public static OrdersStatisticData makeData(List<OrderContentDetail> source) {
         int totalQuantity = source.stream().mapToInt(OrderContentDetail::getQuantity).sum();
 
@@ -41,5 +47,9 @@ public class OrdersStatisticData {
             reducedAmount = reducedAmount.add(d.reducedAmount());
         }
         return new OrdersStatisticData(totalQuantity, skuNumber, estimatedTotalPrice, reducedAmount);
+    }
+
+    public BigDecimal finalAmount() {
+        return getEstimatedTotalPrice().subtract(getReducedAmount());
     }
 }

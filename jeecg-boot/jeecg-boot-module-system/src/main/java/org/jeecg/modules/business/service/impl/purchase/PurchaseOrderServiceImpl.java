@@ -46,6 +46,9 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
     private final PlatformOrderContentMapper platformOrderContentMapper;
     private final PlatformOrderMapper platformOrderMapper;
 
+    /**
+     * Directory where payment documents are put
+     */
     @Value("${jeecg.path.save}")
     private String PAYMENT_DOC_DIR;
 
@@ -138,23 +141,32 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         page.setTotal(total);
     }
 
+    /**
+     * Generated a purchase order by series of platform orders indicated by their identifier.
+     *
+     * @param orderIDs a list of platform orders
+     * @return the purchase order's identifier (UUID)
+     */
     @Override
     @Transactional
     public String addPurchase(List<String> orderIDs) {
         Client client = clientService.getCurrentClient();
+
         List<OrderContentDetail> details = platformOrderContentMapper.searchOrderContentDetail(orderIDs);
         OrdersStatisticData data = OrdersStatisticData.makeData(details);
+
         String purchaseID = UUID.randomUUID().toString();
 
-        String invoiceNumber = new PurchaseInvoiceCodeRule().next(purchaseOrderMapper.lastInvoiceNumber());
+        String lastInvoiceNumber = purchaseOrderMapper.lastInvoiceNumber();
+        String invoiceNumber = new PurchaseInvoiceCodeRule().next(lastInvoiceNumber);
         // 1. save purchase itself
         purchaseOrderMapper.addPurchase(
                 purchaseID,
-                client.getFirstName() + " " + client.getSurname(),
+                client.fullName(),
                 client.getId(),
                 data.getEstimatedTotalPrice(),
                 data.getReducedAmount(),
-                data.getEstimatedTotalPrice().subtract(data.getReducedAmount()),
+                data.finalAmount(),
                 invoiceNumber
         );
 
@@ -196,9 +208,21 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         return purchaseID;
     }
 
+    /**
+     * Save a payment file for a purchase order in the folder indicated by constant
+     * {@code PAYMENT_DOC_DIR},
+     * in case that the target purchase order already has a payment file, the previous file
+     * will be replaced.
+     * Only the basename of the file will be saved to DB, not full path name.
+     *
+     * @param purchaseID the purchase's identifier
+     * @param in         the payment file
+     * @throws IOException if an I/O error occurs when deleting previous
+     *                     file, saving current file
+     */
     @Transactional
     @Override
-    public void updatePaymentDocumentForPurchase(String purchaseID, @NotNull MultipartFile in) throws IOException {
+    public void savePaymentDocumentForPurchase(String purchaseID, @NotNull MultipartFile in) throws IOException {
         String filename = purchaseID + "_" + in.getOriginalFilename();
         Path target = Paths.get(PAYMENT_DOC_DIR, filename);
         Files.deleteIfExists(target);
@@ -207,12 +231,13 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
     }
 
     /**
-     * Download the payment file of the purchase order by its name
+     * Download the payment file of the purchase order by its basename
      *
-     * @param filename the name of the file
+     * @param filename the basename of the file
      * @return byte array of the file
      * @throws IOException IO error while reading the file.
      */
+    @Override
     public byte[] downloadPaymentDocumentOfPurchase(String filename) throws IOException {
         Path target = Paths.get(PAYMENT_DOC_DIR, filename);
         return Files.readAllBytes(target);

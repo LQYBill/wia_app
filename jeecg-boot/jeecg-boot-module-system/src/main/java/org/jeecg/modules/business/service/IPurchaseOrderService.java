@@ -55,15 +55,15 @@ public interface IPurchaseOrderService extends IService<PurchaseOrder> {
      */
     String addPurchase(List<String> orderIDs);
 
-    void updatePaymentDocumentForPurchase(String purchaseID, MultipartFile in) throws IOException;
+    void savePaymentDocumentForPurchase(String purchaseID, MultipartFile in) throws IOException;
 
     /**
-     * Download the file of the purchase order indicated by its identifier.
+     * Download the file of the purchase order indicated by its name.
      *
-     * @param purchaseID the identifier of the purchase order.
+     * @param filename the file's name
      * @return the file in binary
      * @throws IOException IO error while reading the file.
      */
-    byte[] downloadPaymentDocumentOfPurchase(String purchaseID) throws IOException;
+    byte[] downloadPaymentDocumentOfPurchase(String filename) throws IOException;
 
 }

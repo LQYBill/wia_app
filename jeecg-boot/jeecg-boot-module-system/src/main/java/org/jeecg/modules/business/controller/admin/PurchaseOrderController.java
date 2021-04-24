@@ -34,12 +34,12 @@ import io.swagger.annotations.ApiOperation;
 import org.jeecg.common.aspect.annotation.AutoLog;
 
 /**
- * @Description: 商品采购订单
- * @Author: jeecg-boot
- * @Date: 2021-04-03
+ * @Description: API Handler related admin purchase order
+ * @Author: Wenke
+ * @Date: 2021-04-24
  * @Version: V1.0
  */
-@Api(tags = "商品采购订单")
+@Api(tags = "Administrator side purchase order API")
 @RestController
 @RequestMapping("/business/purchaseOrder")
 @Slf4j
@@ -47,7 +47,6 @@ public class PurchaseOrderController {
     private final IPurchaseOrderService purchaseOrderService;
     private final IPurchaseOrderSkuService purchaseOrderSkuService;
     private final ISkuPromotionHistoryService skuPromotionHistoryService;
-    private final static String PAYMENT_DOC_PATH = "C:\\Users\\matth\\Desktop\\upFiles\\test.txt";
 
     @Autowired
     public PurchaseOrderController(IPurchaseOrderService purchaseOrderService,
@@ -58,9 +57,8 @@ public class PurchaseOrderController {
         this.skuPromotionHistoryService = skuPromotionHistoryService;
     }
 
-
     /**
-     * 分页列表查询
+     * Page query for purchase order
      *
      * @param purchaseOrder
      * @param pageNo
@@ -76,7 +74,7 @@ public class PurchaseOrderController {
                                    @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
                                    HttpServletRequest req) {
         QueryWrapper<PurchaseOrder> queryWrapper = QueryGenerator.initQueryWrapper(purchaseOrder, req.getParameterMap());
-        Page<PurchaseOrder> page = new Page<PurchaseOrder>(pageNo, pageSize);
+        Page<PurchaseOrder> page = new Page<>(pageNo, pageSize);
         IPage<PurchaseOrder> pageList = purchaseOrderService.page(page, queryWrapper);
         return Result.OK(pageList);
     }
@@ -284,7 +282,7 @@ public class PurchaseOrderController {
     }
 
     /**
-     * Download payment document of the purchase indicated by document's name,
+     * Download payment document of the purchase by document's name,
      * The file will be write back in binary format.
      *
      * @param filename document's name
@@ -320,7 +318,7 @@ public class PurchaseOrderController {
         if (file == null) {
             return Result.error("Missing file.");
         }
-        purchaseOrderService.updatePaymentDocumentForPurchase(purchaseID, file);
+        purchaseOrderService.savePaymentDocumentForPurchase(purchaseID, file);
         return Result.OK("Payment file upload success");
     }
 

@@ -57,8 +57,21 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrder> {
      */
     String lastInvoiceNumber();
 
+    /**
+     * Update in DB for a purchase order its payment file name.
+     * The previous value of filename will be overwrite.
+     *
+     * @param purchaseID the purchase order's identifier
+     * @param filename   the filename.
+     */
     void updatePaymentDocument(@Param("purchaseID") String purchaseID,
                                @Param("fileName") String filename);
 
+    /**
+     * Query payment filename of a certain purchase order.
+     *
+     * @param purchaseID identifier of the purchase order.
+     * @return the filename
+     */
     String selectPaymentDocument(@Param("purchaseID") String purchaseID);
 }

@@ -82,7 +82,7 @@ public class ClientPurchaseController {
         if ( file == null){
             return Result.error("Missing file.");
         }
-        purchaseOrderService.updatePaymentDocumentForPurchase(purchaseID, file);
+        purchaseOrderService.savePaymentDocumentForPurchase(purchaseID, file);
         return Result.OK("Payment file upload success");
     }
 
