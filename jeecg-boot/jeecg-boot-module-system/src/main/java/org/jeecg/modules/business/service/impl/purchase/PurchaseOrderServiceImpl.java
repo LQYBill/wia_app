@@ -141,9 +141,26 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         page.setTotal(total);
     }
 
+    @Transactional
     @Override
     public void confirmOrder(String purchaseID) {
+        // update data in DB
         purchaseOrderMapper.confirm(purchaseID);
+        // send email to buyer
+        Map<String, String> map = new HashMap<>();
+        PurchaseOrder purchaseOrder = getById(purchaseID);
+        Client client = clientService.getById(purchaseOrder.getClientId());
+        map.put("client_name", client.fullName());
+        String invoiceNumber = purchaseOrderMapper.getInvoiceNumber(purchaseID);
+        map.put("order_number", invoiceNumber);
+        map.put("buyer", "Li Qiuyi");
+        // TODO: 4/21/2021 change sentTo to real buyer
+        pushMsgUtil.sendMessage(
+                SendMsgTypeEnum.EMAIL.getType(),
+                "purchase_to_process",
+                map,
+                "service@wia-sourcing.com"
+        );
     }
 
     /**
@@ -242,6 +259,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         map.put("client_name", client.fullName());
         String invoiceNumber = purchaseOrderMapper.getInvoiceNumber(purchaseID);
         map.put("order_number", invoiceNumber);
+        map.put("accountant", "the real account name");
         // TODO: 4/21/2021 change sentTo to real client email
         pushMsgUtil.sendMessage(
                 SendMsgTypeEnum.EMAIL.getType(),
