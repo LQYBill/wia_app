@@ -94,7 +94,7 @@
 
 
         <template slot="fileSlot" slot-scope="fileName, record">
-          <span v-if="!fileName" style="font-size: 12px;font-style: italic;">No file</span>
+          <span v-if="!fileName" style="font-size: 12px;font-style: italic;">无文件</span>
           <a-button
             v-else
             ghost
@@ -103,21 +103,34 @@
             size="small"
             @click="downloadFile(fileName)"
           >
-            <span>Preview</span>
+            <span>预览</span>
           </a-button>
         </template>
 
         <template slot="action" slot-scope="ID, record">
           <a-popconfirm
-            title="Are you sure confirm this payment?"
-            ok-text="Yes"
-            cancel-text="No"
-            @confirm="confirmOrder(ID)"
-            :disabled="record['status'] !== 'paid'"
+            title="确认将订单状态改为“已付款”？"
+            ok-text="确认"
+            cancel-text="取消"
+            @confirm="confirmPayment(ID)"
+            :disabled="record['status'] === 'confirmed' || record['status'] === 'purchasing'"
           >
-            <a-button :disabled="record['status'] !== 'paid'">
-              <a-icon type="check"/>
-              Confirm
+            <a-button :disabled="record['status'] === 'confirmed' || record['status'] === 'purchasing'">
+              <a-icon type="pay-circle" />
+              确认支付
+            </a-button>
+          </a-popconfirm>
+          <a-divider type="vertical" />
+          <a-popconfirm
+            title="确认将订单状态改为“采购中”？"
+            ok-text="确认"
+            cancel-text="取消"
+            @confirm="confirmPurchase(ID)"
+            :disabled="record['status'] === 'purchasing'"
+          >
+            <a-button :disabled="record['status'] === 'purchasing'">
+              <a-icon type="shopping-cart" />
+              采购开始
             </a-button>
           </a-popconfirm>
         </template>
@@ -203,11 +216,13 @@ export default {
             t => {
               switch (t) {
                 case "waitingPayment":
-                  return 'Waiting Payment'
-                case "paid":
-                  return 'Paid'
+                  return '等待支付'
+                case "proofUploaded":
+                  return '已上传支付凭证'
                 case "confirmed":
-                  return "Confirmed"
+                  return "已支付"
+                case "purchasing":
+                  return "采购中"
               }
             })
         },
@@ -236,7 +251,8 @@ export default {
         exportXlsUrl: '/business/purchaseOrder/exportXls',
         importExcelUrl: '/business/purchaseOrder/importExcel',
         downloadFile: '/business/purchaseOrder/downloadFile',
-        confirm: '/business/purchaseOrder/confirm',
+        confirmPayment: '/business/purchaseOrder/confirmPayment',
+        confirmPurchase: '/business/purchaseOrder/confirmPurchase',
       },
       superFieldList: [],
     }
@@ -287,9 +303,18 @@ export default {
           saveAs(res, filename)
         })
     },
-    confirmOrder(purchaseID) {
+    confirmPayment(purchaseID) {
       const params = {purchaseID: purchaseID}
-      postAction(this.url.confirm, params)
+      postAction(this.url.confirmPayment, params)
+        .then(res => {
+          if (res.success) {
+            this.loadData()
+          }
+        })
+    },
+    confirmPurchase(purchaseID) {
+      const params = {purchaseID: purchaseID}
+      postAction(this.url.confirmPurchase, params)
         .then(res => {
           if (res.success) {
             this.loadData()

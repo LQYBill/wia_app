@@ -29,7 +29,6 @@ import org.jeecg.modules.business.service.ISkuPromotionHistoryService;
 import org.jeecgframework.poi.excel.view.JeecgEntityExcelView;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.multipart.MultipartFile;
@@ -329,11 +328,19 @@ public class PurchaseOrderController {
         return Result.OK("Payment file upload success");
     }
 
-    @PostMapping(value = "/confirm")
-    public Result<?> confirmOrder(@RequestBody Map<String, String> request) {
+    @PostMapping(value = "/confirmPayment")
+    public Result<?> confirmPayment(@RequestBody Map<String, String> request) {
         String purchaseID = request.get("purchaseID");
-        log.info("Request to confirm purchase: {}", purchaseID);
-        purchaseOrderService.confirmOrder(purchaseID);
+        log.info("Request to confirm payment for purchase : {}", purchaseID);
+        purchaseOrderService.confirmPayment(purchaseID);
+        return Result.OK();
+    }
+
+    @PostMapping(value = "/confirmPurchase")
+    public Result<?> confirmPurchase(@RequestBody Map<String, String> request) {
+        String purchaseID = request.get("purchaseID");
+        log.info("Request to confirm purchase : {}", purchaseID);
+        purchaseOrderService.confirmPurchase(purchaseID);
         return Result.OK();
     }
 

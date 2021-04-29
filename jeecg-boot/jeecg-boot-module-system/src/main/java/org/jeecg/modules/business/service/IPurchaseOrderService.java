@@ -70,5 +70,11 @@ public interface IPurchaseOrderService extends IService<PurchaseOrder> {
      * Change the status of a purchase to confirmed
      * @param purchaseID the identifier of the purchase order to confirm
      */
-    void confirmOrder(String purchaseID);
+    void confirmPayment(String purchaseID);
+
+    /**
+     * Change the status of a confirmed to purchasing
+     * @param purchaseID the identifier of the purchase order to confirm
+     */
+    void confirmPurchase(String purchaseID);
 }

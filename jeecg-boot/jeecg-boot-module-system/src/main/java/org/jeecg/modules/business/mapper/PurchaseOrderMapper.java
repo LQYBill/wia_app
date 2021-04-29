@@ -81,7 +81,14 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrder> {
      *
      * @param purchaseID the identifier of the purchase to change.
      */
-    void confirm(@Param("purchaseID") String purchaseID);
+    void confirmPayment(@Param("purchaseID") String purchaseID);
+
+    /**
+     * Change a purchase's status to purchasing in DB.
+     *
+     * @param purchaseID the identifier of the purchase to change.
+     */
+    void confirmPurchase(@Param("purchaseID") String purchaseID);
 
     String getInvoiceNumber(@Param("purchaseID") String purchaseID);
 }

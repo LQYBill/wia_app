@@ -143,9 +143,9 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
 
     @Transactional
     @Override
-    public void confirmOrder(String purchaseID) {
+    public void confirmPayment(String purchaseID) {
         // update data in DB
-        purchaseOrderMapper.confirm(purchaseID);
+        purchaseOrderMapper.confirmPayment(purchaseID);
         // send email to buyer
         Map<String, String> map = new HashMap<>();
         PurchaseOrder purchaseOrder = getById(purchaseID);
@@ -153,11 +153,31 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         map.put("client_name", client.fullName());
         String invoiceNumber = purchaseOrderMapper.getInvoiceNumber(purchaseID);
         map.put("order_number", invoiceNumber);
-        map.put("buyer", "Li Qiuyi");
         // TODO: 4/21/2021 change sentTo to real buyer
         pushMsgUtil.sendMessage(
                 SendMsgTypeEnum.EMAIL.getType(),
                 "purchase_to_process",
+                map,
+                "service@wia-sourcing.com"
+        );
+    }
+
+    @Transactional
+    @Override
+    public void confirmPurchase(String purchaseID) {
+        // update data in DB
+        purchaseOrderMapper.confirmPurchase(purchaseID);
+        // send email to client
+        PurchaseOrder purchaseOrder = getById(purchaseID);
+        Client client = clientService.getById(purchaseOrder.getClientId());
+        String invoiceNumber = purchaseOrderMapper.getInvoiceNumber(purchaseID);
+        Map<String, String> map = new HashMap<>();
+        map.put("client", client.getFirstName());
+        map.put("order_number", invoiceNumber);
+        // TODO: 4/21/2021 change sentTo to real client email
+        pushMsgUtil.sendMessage(
+                SendMsgTypeEnum.EMAIL.getType(),
+                "purchase_order_processed",
                 map,
                 "service@wia-sourcing.com"
         );
