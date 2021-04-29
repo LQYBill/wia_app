@@ -53,6 +53,7 @@ public class SkuPrice implements Serializable {
      */
     @Excel(name = "价格", width = 15)
     @ApiModelProperty(value = "价格")
+    @Getter
     private BigDecimal price;
 
     /**
@@ -60,6 +61,7 @@ public class SkuPrice implements Serializable {
      */
     @Excel(name = "优惠价起订量", width = 15)
     @ApiModelProperty(value = "优惠价起订量")
+    @Getter
     private Integer threshold;
 
     /**
@@ -67,6 +69,7 @@ public class SkuPrice implements Serializable {
      */
     @Excel(name = "优惠价", width = 15)
     @ApiModelProperty(value = "优惠价")
+    @Getter
     private BigDecimal discountedPrice;
 
     /**
