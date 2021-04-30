@@ -153,7 +153,6 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         map.put("client_name", client.fullName());
         String invoiceNumber = purchaseOrderMapper.getInvoiceNumber(purchaseID);
         map.put("order_number", invoiceNumber);
-        // TODO: 4/21/2021 change sentTo to real buyer
         pushMsgUtil.sendMessage(
                 SendMsgTypeEnum.EMAIL.getType(),
                 "purchase_to_process",
@@ -174,12 +173,11 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         Map<String, String> map = new HashMap<>();
         map.put("client", client.getFirstName());
         map.put("order_number", invoiceNumber);
-        // TODO: 4/21/2021 change sentTo to real client email
         pushMsgUtil.sendMessage(
                 SendMsgTypeEnum.EMAIL.getType(),
                 "purchase_order_processed",
                 map,
-                "service@wia-sourcing.com"
+                client.getEmail()
         );
     }
 
@@ -233,14 +231,13 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
 
         // send email to client
         Map<String, String> map = new HashMap<>();
-        map.put("user", client.getFirstName());
+        map.put("client", client.getFirstName());
         map.put("order_number", invoiceNumber);
-        // TODO: 4/21/2021 change sentTo to real client email
         pushMsgUtil.sendMessage(
                 SendMsgTypeEnum.EMAIL.getType(),
                 "purchase_order_confirmation",
                 map,
-                "service@wia-sourcing.com"
+                client.getEmail()
         );
 
         // 5. update platform order status to "purchasing"
@@ -272,15 +269,13 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         Files.copy(in.getInputStream(), target);
         purchaseOrderMapper.updatePaymentDocument(purchaseID, filename);
 
-        // send email
-        // send email to account
+        // send email to accountant
         Client client = clientService.getCurrentClient();
         Map<String, String> map = new HashMap<>();
         map.put("client_name", client.fullName());
         String invoiceNumber = purchaseOrderMapper.getInvoiceNumber(purchaseID);
         map.put("order_number", invoiceNumber);
         map.put("accountant", "the real account name");
-        // TODO: 4/21/2021 change sentTo to real client email
         pushMsgUtil.sendMessage(
                 SendMsgTypeEnum.EMAIL.getType(),
                 "payment_proof_upload",
