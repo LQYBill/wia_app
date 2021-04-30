@@ -5,7 +5,7 @@
     :visible="visible"
     :maskClosable="false"
     switchFullscreen
-    ok-text="confirm"
+    ok-text="Confirm"
     @ok="handleOk"
     @cancel="handleCancel">
 
