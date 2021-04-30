@@ -7,7 +7,7 @@ server:
     include-stacktrace: ALWAYS
     include-message: ALWAYS
   servlet:
-    context-path: /jeecg-boot
+    context-path: /app
   compression:
     enabled: true
     min-response-size: 1024
@@ -25,9 +25,9 @@ spring:
         max-file-size: 10MB
         max-request-size: 10MB
   mail:
-    host: smtp.163.com
-    username: jeecgos@163.com
-    password: ??
+    host: smtp.gmail.com
+    username: service@wia-sourcing.com
+    password: WIAsourcing2019*
     properties:
       mail:
         smtp:
