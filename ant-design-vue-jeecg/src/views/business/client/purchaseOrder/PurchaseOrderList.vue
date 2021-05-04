@@ -64,18 +64,22 @@
             :data="{purchaseID: line['id']}"
             :beforeUpload="checkFile"
           >
-            <a-button size="small" :disabled="cellValue === 'confirmed'">
+            <a-button size="small" :disabled="cellValue === 'confirmed' || cellValue === 'purchasing'">
               <div v-if="cellValue === 'waitingPayment'">
                 <a-icon type="plus"/>
                 Upload
               </div>
-              <div v-else-if="cellValue === 'paid'">
+              <div v-else-if="cellValue === 'proofUploaded'">
                 <a-icon type="delete"/>
                 Delete & re-Upload
               </div>
+              <div v-else-if="cellValue === 'confirmed'">
+                <a-icon type="check"/>
+                Payment Confirmed
+              </div>
               <div v-else>
                 <a-icon type="check"/>
-                Already Confirmed
+                Purchasing
               </div>
             </a-button>
           </a-upload>
@@ -157,10 +161,12 @@ export default {
               switch (t) {
                 case "waitingPayment":
                   return 'Waiting Payment'
-                case "paid":
-                  return 'Paid'
+                case "proofUploaded":
+                  return 'Proof uploaded'
                 case "confirmed":
                   return "Confirmed"
+                case "purchasing":
+                  return "Purchasing"
               }
             })
         },
