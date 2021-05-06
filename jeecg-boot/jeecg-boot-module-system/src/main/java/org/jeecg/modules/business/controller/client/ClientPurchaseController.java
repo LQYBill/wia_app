@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.aspect.annotation.AutoLog;
+import org.jeecg.modules.business.controller.client.requestParams.PurchaseRequest;
 import org.jeecg.modules.business.entity.PurchaseOrder;
 import org.jeecg.modules.business.service.IPurchaseOrderService;
 import org.jeecg.modules.business.service.IPurchaseOrderSkuService;
@@ -16,8 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.*;
-import java.util.List;
+import java.io.IOException;
 
 @Api(tags = "商品采购订单")
 @RestController
@@ -55,16 +55,19 @@ public class ClientPurchaseController {
     }
 
     /**
-     * 添加
+     * Add new purchase order.
      *
-     * @param platformOrderIDList a list of platform order ID
+     * @param purchaseRequest request that contains necessary information
      * @return the generated purchase ID
      */
     @AutoLog(value = "商品采购订单-添加")
     @ApiOperation(value = "商品采购订单-添加", notes = "商品采购订单-添加")
     @PostMapping(value = "/add")
-    public Result<String> addPurchaseOrder(@RequestBody List<String> platformOrderIDList) {
-        String id = purchaseOrderService.addPurchase(platformOrderIDList);
+    public Result<String> addPurchaseOrder(@RequestBody PurchaseRequest purchaseRequest) {
+        String id = purchaseOrderService.addPurchase(
+                purchaseRequest.getSkuQuantity(),
+                purchaseRequest.getPlatformOrderIDList()
+        );
         return Result.OK(id);
     }
 
@@ -74,12 +77,12 @@ public class ClientPurchaseController {
     public Result<?> uploadPaymentFile(HttpServletRequest request) throws IOException {
 
         String purchaseID = request.getParameter("purchaseID");
-        if(purchaseID == null){
+        if (purchaseID == null) {
             return Result.error("Missing value: purchaseID");
         }
         MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
         MultipartFile file = multipartRequest.getFile("file");// 获取上传文件对象
-        if ( file == null){
+        if (file == null) {
             return Result.error("Missing file.");
         }
         purchaseOrderService.savePaymentDocumentForPurchase(purchaseID, file);

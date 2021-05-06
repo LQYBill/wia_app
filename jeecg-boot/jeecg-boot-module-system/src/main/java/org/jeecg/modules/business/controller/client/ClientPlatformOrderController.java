@@ -100,7 +100,7 @@ public class ClientPlatformOrderController {
     @PostMapping(value = "/purchase", consumes = "application/json", produces = "application/json")
     public Result<PurchaseConfirmation> purchaseOrder(@RequestBody List<String> orderIds) {
         log.info("One client purchase order");
-        PurchaseConfirmation d = platformOrderService.confirmOrder(orderIds);
+        PurchaseConfirmation d = platformOrderService.confirmPurchaseByPlatformOrder(orderIds);
         log.info(d.toString());
         return Result.OK(d);
     }

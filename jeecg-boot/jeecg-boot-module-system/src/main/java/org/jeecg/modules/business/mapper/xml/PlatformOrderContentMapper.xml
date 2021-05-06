@@ -39,6 +39,15 @@
         GROUP BY p.sku_id
     </select>
 
+    <select id="searchOrderContent" resultType="org.jeecg.modules.business.vo.SkuQuantity">
+        SELECT sku_id as 'key', sum(quantity) AS 'value'
+        FROM platform_order_content
+        WHERE platform_order_id
+        IN
+        <foreach collection="list" index="i" item="item" open="(" separator="," close=")">#{item}</foreach>
+        GROUP BY sku_id
+    </select>
+
     <resultMap id="orderContentDetailResultMap" type="org.jeecg.modules.business.entity.OrderContentDetail">
         <constructor>
             <idArg column="sku_id"

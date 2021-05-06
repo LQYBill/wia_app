@@ -1,11 +1,13 @@
 package org.jeecg.modules.business.mapper;
 
 import java.util.List;
+import java.util.Map;
 
 import org.jeecg.modules.business.entity.OrderContentDetail;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
+import org.jeecg.modules.business.vo.SkuQuantity;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -21,17 +23,23 @@ public interface PlatformOrderContentMapper extends BaseMapper<PlatformOrderCont
 
     List<PlatformOrderContent> selectByMainId(@Param("mainId") String mainId);
 
+
     /**
-     * Search quantity, price and its promotion of sku which are contained in the orders
-     * indicated by the identifiers.
-     * <p>
-     * Attention, the implementation of this method uses WHERE IN clause with foreach of mybatis, in case of empty list as argument,
-     * this methods will crush.
-     *
-     * @param orderIdList a list of order identifiers that should not be empty.
-     * @return the data
-     * @throws RuntimeException in case of empty list as argument
+     * Search order contents of a list of order
+     * @param orderIDList list of identifiers of orders
+     * @return map of sku ID and its quantity
      */
-    List<OrderContentDetail> searchOrderContentDetail(List<String> orderIdList);
+    List<SkuQuantity> searchOrderContent(List<String> orderIDList);
+
+
+    /**
+     * Search orderContent detail from sku id and its quantity.
+     *
+     * @param SkuQuantity
+     * @return
+     */
+    List<OrderContentDetail> searchOrderContentDetail(List<SkuQuantity> SkuQuantity);
+
+
 
 }

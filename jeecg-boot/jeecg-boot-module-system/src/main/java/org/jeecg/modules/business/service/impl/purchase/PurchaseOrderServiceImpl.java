@@ -8,6 +8,7 @@ import org.jeecg.modules.business.service.IPurchaseOrderService;
 import org.jeecg.modules.business.service.domain.codeGenerationRule.PurchaseInvoiceCodeRule;
 import org.jeecg.modules.business.vo.OrderContentEntry;
 import org.jeecg.modules.business.vo.PromotionHistoryEntry;
+import org.jeecg.modules.business.vo.SkuQuantity;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
 import org.jeecg.modules.message.handle.enums.SendMsgTypeEnum;
 import org.jeecg.modules.message.util.PushMsgUtil;
@@ -184,15 +185,15 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
     /**
      * Generated a purchase order by series of platform orders indicated by their identifier.
      *
-     * @param orderIDs a list of platform orders
+     * @param SkuQuantity a list of platform orders
      * @return the purchase order's identifier (UUID)
      */
     @Override
     @Transactional
-    public String addPurchase(List<String> orderIDs) {
+    public String addPurchase(List<SkuQuantity> SkuQuantity, List<String> orderIDs) {
         Client client = clientService.getCurrentClient();
 
-        List<OrderContentDetail> details = platformOrderContentMapper.searchOrderContentDetail(orderIDs);
+        List<OrderContentDetail> details = platformOrderContentMapper.searchOrderContentDetail(SkuQuantity);
         OrdersStatisticData data = OrdersStatisticData.makeData(details);
 
         String purchaseID = UUID.randomUUID().toString();
@@ -240,8 +241,10 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
                 client.getEmail()
         );
 
-        // 5. update platform order status to "purchasing"
-        platformOrderMapper.batchUpdateStatus(orderIDs, PlatformOrder.Status.Purchasing.code);
+        // 5. update platform order status to "purchasing" (optionnal)
+        if (orderIDs != null){
+            platformOrderMapper.batchUpdateStatus(orderIDs, PlatformOrder.Status.Purchasing.code);
+        }
 
         // 4. return purchase id
         return purchaseID;

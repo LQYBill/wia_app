@@ -1,16 +1,19 @@
 package org.jeecg.modules.business.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.service.IService;
+import org.jeecg.modules.business.entity.PurchaseOrder;
 import org.jeecg.modules.business.entity.PurchaseOrderSku;
 import org.jeecg.modules.business.entity.SkuPromotionHistory;
-import org.jeecg.modules.business.entity.PurchaseOrder;
-import com.baomidou.mybatisplus.extension.service.IService;
+import org.jeecg.modules.business.vo.SkuQuantity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Description: 商品采购订单
@@ -48,12 +51,21 @@ public interface IPurchaseOrderService extends IService<PurchaseOrder> {
     void setPageForCurrentClient(IPage<PurchaseOrder> page);
 
     /**
-     * Add a new purchase by demands from client side.
+     * Add a new purchase. The purchase contains sku and its quantity indicated by
+     * first argument.
+     * This purchase may built from some orders, in this case, indicate these
+     * orders' ids in the second argument, their status will be updated. Attention,
+     * The skus in first argument can not be less than ones in the second. This function doesn't check it.
+     * <p>
+     * If not, put null.
      *
-     * @param orderIDs a list of demands
+     * @param SkuQuantity map of sku ID and quantity.
+     * @param orderIDs         orders on which the purchase is based
      * @return the new purchase order identifier
      */
-    String addPurchase(List<String> orderIDs);
+    @Transactional
+    String addPurchase(List<SkuQuantity> SkuQuantity, List<String> orderIDs);
+
 
     void savePaymentDocumentForPurchase(String purchaseID, MultipartFile in) throws IOException;
 
@@ -68,12 +80,14 @@ public interface IPurchaseOrderService extends IService<PurchaseOrder> {
 
     /**
      * Change the status of a purchase to confirmed
+     *
      * @param purchaseID the identifier of the purchase order to confirm
      */
     void confirmPayment(String purchaseID);
 
     /**
      * Change the status of a confirmed to purchasing
+     *
      * @param purchaseID the identifier of the purchase order to confirm
      */
     void confirmPurchase(String purchaseID);

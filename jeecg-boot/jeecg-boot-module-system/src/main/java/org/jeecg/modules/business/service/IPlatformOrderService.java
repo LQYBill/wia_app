@@ -1,9 +1,11 @@
 package org.jeecg.modules.business.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import org.jeecg.modules.business.entity.OrderContentDetail;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.jeecg.modules.business.vo.SkuQuantity;
 import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
 import org.jeecg.modules.business.vo.clientPlatformOrder.PurchaseConfirmation;
@@ -11,6 +13,7 @@ import org.jeecg.modules.business.vo.clientPlatformOrder.PurchaseConfirmation;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Description: 平台订单表
@@ -46,5 +49,7 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
 
     List<PlatformOrderContent> selectByMainId(String mainId);
 
-    PurchaseConfirmation confirmOrder(List<String> orderIds);
+    PurchaseConfirmation confirmPurchaseByPlatformOrder(List<String> platformOrderIdList);
+    PurchaseConfirmation confirmPurchaseBySkuQuantity(List<SkuQuantity> skuIDQuantityMap);
+
 }

@@ -1,6 +1,7 @@
 package org.jeecg.modules.business.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.jeecg.modules.business.entity.Client;
 import org.jeecg.modules.business.entity.OrderContentDetail;
 import org.jeecg.modules.business.entity.PlatformOrder;
@@ -9,19 +10,20 @@ import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
 import org.jeecg.modules.business.service.IClientService;
 import org.jeecg.modules.business.service.IPlatformOrderService;
-import org.jeecg.modules.business.vo.clientPlatformOrder.section.ClientInfo;
+import org.jeecg.modules.business.vo.SkuQuantity;
 import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage;
-import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
 import org.jeecg.modules.business.vo.clientPlatformOrder.PurchaseConfirmation;
-import org.springframework.stereotype.Service;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.jeecg.modules.business.vo.clientPlatformOrder.section.ClientInfo;
+import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Collection;
+import java.util.Map;
 
 /**
  * @Description: 平台订单表
@@ -109,9 +111,11 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
 
     @Override
     public OrdersStatisticData getPlatformOrdersStatisticData(List<String> orderIds) {
-        List<OrderContentDetail> data = platformOrderContentMap.searchOrderContentDetail(orderIds);
+        List<SkuQuantity> skuIDQuantityMap = platformOrderContentMap.searchOrderContent(orderIds);
+        List<OrderContentDetail> data = platformOrderContentMap.searchOrderContentDetail(skuIDQuantityMap);
         return OrdersStatisticData.makeData(data);
     }
+
 
     @Override
     public List<PlatformOrderContent> selectByMainId(String mainId) {
@@ -119,17 +123,18 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
     }
 
     @Override
-    public PurchaseConfirmation confirmOrder(List<String> orderIds) {
+    public PurchaseConfirmation confirmPurchaseByPlatformOrder(List<String> platformOrderIdList) {
+        return null;
+    }
+
+
+    @Override
+    public PurchaseConfirmation confirmPurchaseBySkuQuantity(List<SkuQuantity> skuIDQuantityMap) {
         Client client = clientService.getCurrentClient();
         ClientInfo clientInfo = new ClientInfo(client);
-        List<OrderContentDetail> data;
-        if (orderIds.isEmpty()) {
-            data = Collections.emptyList();
-        } else {
-            data = platformOrderContentMap.searchOrderContentDetail(orderIds);
-        }
+        List<OrderContentDetail> data = platformOrderContentMap.searchOrderContentDetail(skuIDQuantityMap);
         return new PurchaseConfirmation(clientInfo, data);
-
     }
+
 
 }
