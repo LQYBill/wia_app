@@ -99,7 +99,7 @@ export default {
       },
       orderDetails: [],
       url: {
-        orderInfo: '/business/clientPlatformOrder/purchase',
+        orderInfo: '/business/clientPlatformOrder/placeOrder',
         confirmOrder: '/business/purchaseOrder/client/add'
       },
     }
@@ -122,7 +122,20 @@ export default {
         )
     },
     confirmOrder() {
-      const params = this.orderIDs
+      const params = {
+        skuQuantity:[
+          {
+            ID:"1386681311858663426",
+            quantity: 2
+          },
+          {
+            ID: "1386681312626221057",
+            quantity: 3
+          }
+        ],
+        platformOrderIDList: this.orderIDs
+      }
+
       postAction(this.url.confirmOrder, params).then((res) => {
         console.log("new purchase id: " + res.result)
         this.okCallback()

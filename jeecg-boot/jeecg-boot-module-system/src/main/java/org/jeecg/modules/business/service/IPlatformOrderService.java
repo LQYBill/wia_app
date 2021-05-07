@@ -52,4 +52,5 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
     PurchaseConfirmation confirmPurchaseByPlatformOrder(List<String> platformOrderIdList);
     PurchaseConfirmation confirmPurchaseBySkuQuantity(List<SkuQuantity> skuIDQuantityMap);
 
+    List<OrderContentDetail> searchPurchaseOrderDetail(List<SkuQuantity> skuQuantities);
 }

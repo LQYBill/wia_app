@@ -7,6 +7,7 @@ import org.jeecg.modules.business.entity.OrderContentDetail;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
+import org.jeecg.modules.business.vo.SkuDetail;
 import org.jeecg.modules.business.vo.SkuQuantity;
 import org.springframework.stereotype.Repository;
 
@@ -32,13 +33,7 @@ public interface PlatformOrderContentMapper extends BaseMapper<PlatformOrderCont
     List<SkuQuantity> searchOrderContent(List<String> orderIDList);
 
 
-    /**
-     * Search orderContent detail from sku id and its quantity.
-     *
-     * @param SkuQuantity
-     * @return
-     */
-    List<OrderContentDetail> searchOrderContentDetail(List<SkuQuantity> SkuQuantity);
+    List<SkuDetail> searchSkuDetail(List<String> skuIDs);
 
 
 

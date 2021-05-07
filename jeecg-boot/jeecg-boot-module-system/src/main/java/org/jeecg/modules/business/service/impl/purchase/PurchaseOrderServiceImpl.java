@@ -1,9 +1,14 @@
 package org.jeecg.modules.business.service.impl.purchase;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.jeecg.modules.business.entity.*;
-import org.jeecg.modules.business.mapper.*;
+import org.jeecg.modules.business.mapper.PlatformOrderMapper;
+import org.jeecg.modules.business.mapper.PurchaseOrderContentMapper;
+import org.jeecg.modules.business.mapper.PurchaseOrderMapper;
+import org.jeecg.modules.business.mapper.SkuPromotionHistoryMapper;
 import org.jeecg.modules.business.service.IClientService;
+import org.jeecg.modules.business.service.IPlatformOrderService;
 import org.jeecg.modules.business.service.IPurchaseOrderService;
 import org.jeecg.modules.business.service.domain.codeGenerationRule.PurchaseInvoiceCodeRule;
 import org.jeecg.modules.business.vo.OrderContentEntry;
@@ -16,11 +21,11 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -43,8 +48,8 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
     private final SkuPromotionHistoryMapper skuPromotionHistoryMapper;
 
     private final IClientService clientService;
+    private final IPlatformOrderService platformOrderService;
 
-    private final PlatformOrderContentMapper platformOrderContentMapper;
     private final PlatformOrderMapper platformOrderMapper;
 
     /**
@@ -58,12 +63,12 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
 
     public PurchaseOrderServiceImpl(PurchaseOrderMapper purchaseOrderMapper,
                                     PurchaseOrderContentMapper purchaseOrderContentMapper,
-                                    SkuPromotionHistoryMapper skuPromotionHistoryMapper, IClientService clientService, PlatformOrderContentMapper platformOrderContentMapper, PlatformOrderMapper platformOrderMapper) {
+                                    SkuPromotionHistoryMapper skuPromotionHistoryMapper, IClientService clientService, IPlatformOrderService platformOrderService, PlatformOrderMapper platformOrderMapper) {
         this.purchaseOrderMapper = purchaseOrderMapper;
         this.purchaseOrderContentMapper = purchaseOrderContentMapper;
         this.skuPromotionHistoryMapper = skuPromotionHistoryMapper;
         this.clientService = clientService;
-        this.platformOrderContentMapper = platformOrderContentMapper;
+        this.platformOrderService = platformOrderService;
         this.platformOrderMapper = platformOrderMapper;
     }
 
@@ -193,7 +198,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
     public String addPurchase(List<SkuQuantity> SkuQuantity, List<String> orderIDs) {
         Client client = clientService.getCurrentClient();
 
-        List<OrderContentDetail> details = platformOrderContentMapper.searchOrderContentDetail(SkuQuantity);
+        List<OrderContentDetail> details = platformOrderService.searchPurchaseOrderDetail(SkuQuantity);
         OrdersStatisticData data = OrdersStatisticData.makeData(details);
 
         String purchaseID = UUID.randomUUID().toString();
@@ -213,15 +218,15 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
 
         // 2. save purchase's content
         List<OrderContentEntry> entries = details.stream()
-                .map(d -> (new OrderContentEntry(d.getQuantity(), d.totalPrice(), d.getSkuId())))
+                .map(d -> (new OrderContentEntry(d.getQuantity(), d.totalPrice(), d.getSkuDetail().getSkuId())))
                 .collect(Collectors.toList());
         purchaseOrderContentMapper.addAll(client.fullName(), purchaseID, entries);
 
         // 3. save the application of promotion information
         List<PromotionHistoryEntry> promotionHistoryEntries = details.stream()
-                .filter(orderContentDetail -> orderContentDetail.getPromotion() != Promotion.ZERO_PROMOTION)
+                .filter(orderContentDetail -> orderContentDetail.getSkuDetail().getPromotion() != Promotion.ZERO_PROMOTION)
                 .map(orderContentDetail -> {
-                    String promotion = orderContentDetail.getPromotion().getId();
+                    String promotion = orderContentDetail.getSkuDetail().getPromotion().getId();
                     System.out.println(promotion);
                     int count = orderContentDetail.promotionCount();
                     return new PromotionHistoryEntry(promotion, count);
@@ -242,7 +247,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         );
 
         // 5. update platform order status to "purchasing" (optionnal)
-        if (orderIDs != null){
+        if (orderIDs != null) {
             platformOrderMapper.batchUpdateStatus(orderIDs, PlatformOrder.Status.Purchasing.code);
         }
 

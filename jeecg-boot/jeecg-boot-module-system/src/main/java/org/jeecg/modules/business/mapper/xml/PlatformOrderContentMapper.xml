@@ -13,32 +13,6 @@
         FROM platform_order_content
         WHERE platform_order_id = #{mainId}    </select>
 
-    <select id="searchOrderContentDetail" parameterType="java.lang.String"
-            resultType="org.jeecg.modules.business.entity.OrderContentDetail"
-            resultMap="orderContentDetailResultMap">
-        SELECT
-        sku_id,
-        s.erp_code AS erp_code,
-        p2.en_name AS product_name,
-        SUM(sku_quantity) AS quantity,
-        price_id,
-        sku_id,
-        price,
-        threshold,
-        discounted_price,
-        price_date,
-        promotion_id,
-        promo_milestone,
-        quantity_purchased,
-        discount
-        FROM platform_order_content_sku_promotion_price p
-        JOIN sku s ON p.sku_id = s.id
-        JOIN product p2 on s.product_id = p2.id
-        WHERE p.platform_order_id IN
-        <foreach collection="list" index="i" item="item" open="(" separator="," close=")">#{item}</foreach>
-        GROUP BY p.sku_id
-    </select>
-
     <select id="searchOrderContent" resultType="org.jeecg.modules.business.vo.SkuQuantity">
         SELECT sku_id as 'key', sum(quantity) AS 'value'
         FROM platform_order_content
@@ -48,7 +22,16 @@
         GROUP BY sku_id
     </select>
 
-    <resultMap id="orderContentDetailResultMap" type="org.jeecg.modules.business.entity.OrderContentDetail">
+    <select id="searchSkuDetail"
+            resultType="org.jeecg.modules.business.vo.SkuDetail"
+            resultMap="skuDetailResultMap">
+        SELECT *
+        FROM sku_price_promotion
+        WHERE sku_id IN
+        <foreach collection="list" index="i" item="item" open="(" separator="," close=")">#{item}</foreach>
+    </select>
+
+    <resultMap id="skuDetailResultMap" type="org.jeecg.modules.business.vo.SkuDetail">
         <constructor>
             <idArg column="sku_id"
                    javaType="String"/>
@@ -56,8 +39,6 @@
                  javaType="String"/>
             <arg column="product_name"
                  javaType="String"/>
-            <arg column="quantity"
-                 javaType="int"/>
             <arg javaType="org.jeecg.modules.business.entity.SkuPrice"
                  resultMap="skuPriceResultMap"/>
             <arg javaType="org.jeecg.modules.business.entity.Promotion"

@@ -10,6 +10,7 @@ import org.jeecg.common.aspect.annotation.AutoLog;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.service.IPlatformOrderService;
+import org.jeecg.modules.business.vo.SkuQuantity;
 import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage;
 import org.jeecg.modules.business.vo.clientPlatformOrder.PurchaseConfirmation;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
@@ -124,6 +125,19 @@ public class ClientPlatformOrderController {
         log.info("One client place a purchase order");
         PurchaseConfirmation d = platformOrderService.confirmPurchaseByPlatformOrder(orderIds);
         log.info(d.toString());
+        return Result.OK(d);
+    }
+
+    /**
+     * Adjust confirmation information based on sku quantity.
+     *
+     * @param skuQuantities sku and its quantity
+     * @return confirmation.
+     */
+    @PostMapping(value = "/adjustOrder", consumes = "application/json", produces = "application/json")
+    public Result<PurchaseConfirmation> adjustOrder(@RequestBody List<SkuQuantity> skuQuantities) {
+        log.info("One client adjust its purchase order");
+        PurchaseConfirmation d = platformOrderService.confirmPurchaseBySkuQuantity(skuQuantities);
         return Result.OK(d);
     }
 

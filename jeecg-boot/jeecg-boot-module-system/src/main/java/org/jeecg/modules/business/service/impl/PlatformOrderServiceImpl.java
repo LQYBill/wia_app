@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @Description: 平台订单表
@@ -112,7 +113,7 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
     @Override
     public OrdersStatisticData getPlatformOrdersStatisticData(List<String> orderIds) {
         List<SkuQuantity> skuIDQuantityMap = platformOrderContentMap.searchOrderContent(orderIds);
-        List<OrderContentDetail> data = platformOrderContentMap.searchOrderContentDetail(skuIDQuantityMap);
+        List<OrderContentDetail> data = searchPurchaseOrderDetail(skuIDQuantityMap);
         return OrdersStatisticData.makeData(data);
     }
 
@@ -124,7 +125,8 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
 
     @Override
     public PurchaseConfirmation confirmPurchaseByPlatformOrder(List<String> platformOrderIdList) {
-        return null;
+        List<SkuQuantity> skuIDQuantityMap = platformOrderContentMap.searchOrderContent(platformOrderIdList);
+        return confirmPurchaseBySkuQuantity(skuIDQuantityMap);
     }
 
 
@@ -132,8 +134,37 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
     public PurchaseConfirmation confirmPurchaseBySkuQuantity(List<SkuQuantity> skuIDQuantityMap) {
         Client client = clientService.getCurrentClient();
         ClientInfo clientInfo = new ClientInfo(client);
-        List<OrderContentDetail> data = platformOrderContentMap.searchOrderContentDetail(skuIDQuantityMap);
-        return new PurchaseConfirmation(clientInfo, data);
+
+
+        return new PurchaseConfirmation(clientInfo, searchPurchaseOrderDetail(skuIDQuantityMap));
+    }
+
+    @Override
+    public List<OrderContentDetail> searchPurchaseOrderDetail(List<SkuQuantity> skuQuantities) {
+        // convert list of (ID, quantity) to map between ID and quantity
+        Map<String, Integer> skuQuantity =
+                skuQuantities.stream()
+                        .collect(
+                                Collectors.toMap(
+                                        SkuQuantity::getID,
+                                        SkuQuantity::getQuantity
+                                )
+                        );
+
+        // Get list of sku ID
+        List<String> skuList = skuQuantities.stream()
+                .map(SkuQuantity::getID)
+                .collect(Collectors.toList());
+
+        // SKU ID -> SKU detail -- (quantity) --> Order Content Detail
+        return platformOrderContentMap.searchSkuDetail(skuList).stream()
+                .map(
+                        skuDetail -> new OrderContentDetail(
+                                skuDetail,
+                                skuQuantity.get(skuDetail.getSkuId())
+                        )
+                )
+                .collect(Collectors.toList());
     }
 
 

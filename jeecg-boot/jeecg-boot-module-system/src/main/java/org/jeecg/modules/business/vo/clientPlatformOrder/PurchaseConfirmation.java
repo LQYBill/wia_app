@@ -24,7 +24,7 @@ public class PurchaseConfirmation {
         this.clientInfo = clientInfo;
         this.data = OrdersStatisticData.makeData(details);
         this.voPurchaseDetails = details.stream().map(
-                d -> (new PurchaseDetail(d.getSkuId(), d.getErpCode(), d.getProduct(), d.getQuantity(), d.totalPrice()))
+                d -> (new PurchaseDetail(d.getSkuDetail().getSkuId(), d.getSkuDetail().getErpCode(), d.getSkuDetail().getProduct(), d.getQuantity(), d.totalPrice()))
         ).collect(Collectors.toList());
     }
 
