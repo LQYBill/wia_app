@@ -11,8 +11,8 @@ import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.service.IPlatformOrderService;
 import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage;
-import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
 import org.jeecg.modules.business.vo.clientPlatformOrder.PurchaseConfirmation;
+import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,7 +22,7 @@ import java.util.List;
  * @Description: API handler for any request related to platform order when request sender is a client.
  * @Author: Wenke
  * @Date: 2021-04-17
- * @Version: V1.000001
+ * @Version: V1.000002
  */
 @Api(tags = " platform order (client)")
 @RestController
@@ -50,15 +50,6 @@ public class ClientPlatformOrderController {
         IPage<ClientPlatformOrderPage> page = new Page<>(pageNo, pageSize);
         platformOrderService.initPlatformOrderPage(page);
         return Result.OK(page);
-    }
-
-
-    @PostMapping(value = "/computeInfo", consumes = "application/json", produces = "application/json")
-    public Result<OrdersStatisticData> queryOrdersStatisticInfo(@RequestBody List<String> orderIds) {
-        log.info("Calculating statistic information for orders: {}", orderIds);
-        OrdersStatisticData ordersData = platformOrderService.getPlatformOrdersStatisticData(orderIds);
-        log.info("Got statistic information: {}", ordersData);
-        return Result.OK(ordersData);
     }
 
 
@@ -97,9 +88,40 @@ public class ClientPlatformOrderController {
     }
 
 
-    @PostMapping(value = "/purchase", consumes = "application/json", produces = "application/json")
-    public Result<PurchaseConfirmation> purchaseOrder(@RequestBody List<String> orderIds) {
-        log.info("One client purchase order");
+    /**
+     * Compute order statistic data based on identifiers of orders.
+     *
+     * @param orderIds Identifiers of orders
+     * @return Order statistic data in result
+     */
+    @AutoLog(value = "Compute order statistic data")
+    @ApiOperation(
+            value = "Compute Order Statistic Data",
+            notes = "Compute order statistic data of platform orders indicated by its identifier."
+    )
+    @PostMapping(value = "/computeInfo", consumes = "application/json", produces = "application/json")
+    public Result<OrdersStatisticData> queryOrdersStatisticInfo(@RequestBody List<String> orderIds) {
+        log.info("Calculating statistic information for orders: {}", orderIds);
+        OrdersStatisticData ordersData = platformOrderService.getPlatformOrdersStatisticData(orderIds);
+        log.info("Got statistic information: {}", ordersData);
+        return Result.OK(ordersData);
+    }
+
+    /**
+     * Create a purchase confirmation based on some platform orders
+     *
+     * @param orderIds Identifiers of platform orders
+     * @return Purchase confirmation data in Result
+     */
+    @AutoLog(value = "Place a purchase order by platform orders")
+    @ApiOperation(
+            value = "Place a purchase order by platform orders",
+            notes = "Place a purchase order by platform orders, return purchase details to let" +
+                    "client confirme information."
+    )
+    @PostMapping(value = "/placeOrder", consumes = "application/json", produces = "application/json")
+    public Result<PurchaseConfirmation> placeOrder(@RequestBody List<String> orderIds) {
+        log.info("One client place a purchase order");
         PurchaseConfirmation d = platformOrderService.confirmPurchaseByPlatformOrder(orderIds);
         log.info(d.toString());
         return Result.OK(d);
