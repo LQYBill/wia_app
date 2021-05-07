@@ -27,18 +27,29 @@
       <a-table
         style="margin-bottom: 24px"
         :columns="columns"
-        :dataSource="orderDetails">
+        :dataSource="orderDetails"
+
+      >
+        <template slot="adjustNumber" slot-scope="record, line">
+          <div>
+            <a-input-number
+              v-model="currentQuantity.get(line['skuId'])"
+              :min="minQuantity.get(line['skuId'])"
+              @change="numberOnChange(line['skuId'])"/>
+          </div>
+        </template>
       </a-table>
+
+
     </a-card>
   </a-spin>
 </template>
 
 <script>
 import DetailList from '@comp/tools/DetailList'
+import {JEditableTableModelMixin} from '@/mixins/JEditableTableModelMixin'
 
 const DetailListItem = DetailList.Item
-
-import {JEditableTableModelMixin} from '@/mixins/JEditableTableModelMixin'
 
 const {postAction} = require("@api/manage");
 
@@ -69,7 +80,8 @@ export default {
         {
           title: 'Quantity',
           dataIndex: 'quantity',
-          align: 'right'
+          align: 'right',
+          scopedSlots: {customRender: 'adjustNumber'},
         },
         {
           title: 'Amount',
@@ -98,15 +110,18 @@ export default {
         totalQuantity: undefined,
       },
       orderDetails: [],
+      minQuantity: new Map(),
+      currentQuantity:new Map(),
       url: {
         orderInfo: '/business/clientPlatformOrder/placeOrder',
         confirmOrder: '/business/purchaseOrder/client/add'
       },
+      x:1
     }
   },
   props: {
     orderIDs: Array,
-    okCallback:Function
+    okCallback: Function
   },
   methods: {
     loadData() {
@@ -118,21 +133,26 @@ export default {
             this.client = res.result.clientInfo
             this.orderData = res.result.data
             this.orderDetails = res.result.voPurchaseDetails
+             this.orderDetails.forEach(
+              line => {
+                this.minQuantity.set(line['skuId'], line['quantity'])
+                this.currentQuantity.set(line['skuId'], line['quantity'])
+              }
+            )
+            console.log(this.orderDetails)
+            console.log(this.minQuantity)
+            console.log(this.currentQuantity)
           }
         )
     },
     confirmOrder() {
       const params = {
-        skuQuantity:[
-          {
-            ID:"1386681311858663426",
-            quantity: 2
-          },
-          {
-            ID: "1386681312626221057",
-            quantity: 3
-          }
-        ],
+        skuQuantity: this.orderDetails.map(
+          line => ({
+            ID: line['skuId'],
+            quantity: line['quantity']
+          })
+        ),
         platformOrderIDList: this.orderIDs
       }
 
@@ -143,6 +163,10 @@ export default {
 
     },
     handleCancel() {
+    },
+    numberOnChange(value, id){
+      console.log(value, id)
+      this.currentQuantity.put(id, value)
     }
   },
   computed: {},
