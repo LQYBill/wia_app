@@ -235,6 +235,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
             skuPromotionHistoryMapper.addAll(client.fullName(), promotionHistoryEntries, purchaseID);
         }
 
+        // TODO use real client adresse
         // send email to client
         Map<String, String> map = new HashMap<>();
         map.put("client", client.getFirstName());
@@ -243,7 +244,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
                 SendMsgTypeEnum.EMAIL.getType(),
                 "purchase_order_confirmation",
                 map,
-                client.getEmail()
+                "Matthieu.Du@outlook.com"
         );
 
         // 5. update platform order status to "purchasing" (optionnal)
