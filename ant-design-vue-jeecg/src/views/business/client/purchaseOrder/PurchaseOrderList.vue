@@ -102,6 +102,8 @@ import PurchaseOrderModal from './modules/PurchaseOrderModal'
 import PurchaseOrderSkuSubTable from './subTables/PurchaseOrderSkuSubTable'
 import SkuPromotionHistorySubTable from './subTables/SkuPromotionHistorySubTable'
 import '@/assets/less/TableExpand.less'
+import moment from "moment";
+
 
 const URL_PREFIX = "/business/purchaseOrder/client/"
 export default {
@@ -127,8 +129,7 @@ export default {
         {
           title: 'Order Time',
           align: 'center',
-          sorter: true,
-          dataIndex: 'createTime',
+          dataIndex: 'createTime'
         },
         {
           title: 'Invoice Number',

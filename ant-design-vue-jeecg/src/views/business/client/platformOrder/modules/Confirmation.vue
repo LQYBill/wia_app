@@ -24,20 +24,27 @@
       <a-divider style="margin-bottom: 32px"/>
 
       <div class="title">Order Details</div>
+      <a-button type="primary" @click="onChangeQuantity">
+        {{ changeQuantityButtonText }}
+      </a-button>
       <a-table
         style="margin-bottom: 24px"
         :columns="columns"
         :dataSource="orderDetails"
 
       >
-        <template slot="adjustNumber" slot-scope="record, line">
+
+        <template slot="adjustNumber" slot-scope="text, record, index">
           <div>
             <a-input-number
-              v-model="currentQuantity.get(line['skuId'])"
-              :min="minQuantity.get(line['skuId'])"
-              @change="numberOnChange(line['skuId'])"/>
+              v-model="currentQuantity[index]"
+              :min="minQuantity[index]"
+              @change="numberOnChange"
+              :disabled="!changing"
+            />
           </div>
         </template>
+
       </a-table>
 
 
@@ -110,13 +117,15 @@ export default {
         totalQuantity: undefined,
       },
       orderDetails: [],
-      minQuantity: new Map(),
-      currentQuantity:new Map(),
+      minQuantity: [],
+      currentQuantity: [],
       url: {
         orderInfo: '/business/clientPlatformOrder/placeOrder',
+        adjustOrder: '/business/clientPlatformOrder/adjustOrder',
         confirmOrder: '/business/purchaseOrder/client/add'
       },
-      x:1
+      changeQuantityButtonText: 'Change Quantity',
+      changing: false
     }
   },
   props: {
@@ -133,12 +142,8 @@ export default {
             this.client = res.result.clientInfo
             this.orderData = res.result.data
             this.orderDetails = res.result.voPurchaseDetails
-             this.orderDetails.forEach(
-              line => {
-                this.minQuantity.set(line['skuId'], line['quantity'])
-                this.currentQuantity.set(line['skuId'], line['quantity'])
-              }
-            )
+            this.minQuantity = this.orderDetails.map(line => (line['quantity']))
+            this.currentQuantity = this.orderDetails.map(line => (line['quantity']))
             console.log(this.orderDetails)
             console.log(this.minQuantity)
             console.log(this.currentQuantity)
@@ -156,17 +161,47 @@ export default {
         platformOrderIDList: this.orderIDs
       }
 
-      postAction(this.url.confirmOrder, params).then((res) => {
-        console.log("new purchase id: " + res.result)
-        this.okCallback()
-      })
+      postAction(this.url.confirmOrder, params)
+        .then((res) => {
+          console.log("new purchase id: " + res.result)
+          this.okCallback()
+        })
 
     },
     handleCancel() {
     },
-    numberOnChange(value, id){
-      console.log(value, id)
-      this.currentQuantity.put(id, value)
+    numberOnChange(value) {
+      console.log(value)
+    },
+    onChangeQuantity() {
+      // begin changing
+      if (this.changing === false) {
+        this.changeQuantityButtonText = "Submit"
+        this.changing = true
+      }
+      // submit result
+      else {
+        let params = []
+        for (let i = 0; i < this.orderDetails.length; i++) {
+          params.push({
+            ID: this.orderDetails[i]['skuId'],
+            quantity: this.currentQuantity[i]
+          })
+        }
+
+        postAction(this.url.adjustOrder, params)
+          .then(res => {
+            this.client = res.result.clientInfo
+            this.orderData = res.result.data
+            this.orderDetails = res.result.voPurchaseDetails
+            this.currentQuantity = this.orderDetails.map(line => (line['quantity']))
+            console.log(this.orderDetails)
+            console.log(this.minQuantity)
+            console.log(this.currentQuantity)
+          })
+        this.changeQuantityButtonText = "Change Quantity"
+        this.changing = false
+      }
     }
   },
   computed: {},
