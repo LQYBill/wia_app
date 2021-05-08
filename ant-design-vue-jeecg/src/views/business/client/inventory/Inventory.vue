@@ -10,39 +10,15 @@
     </div>
     <!-- 查询区域 end -->
 
-    <!-- 操作按钮区域 begin -->
-    <div class="table-operator">
-      <a-button type="primary" icon="plus" @click="handleAdd">新增</a-button>
-      <a-button type="primary" icon="download" @click="handleExportXls('SKU表')">导出</a-button>
-      <a-upload name="file" :showUploadList="false" :multiple="false" :headers="tokenHeader" :action="importExcelUrl" @change="handleImportExcel">
-        <a-button type="primary" icon="import">导入</a-button>
-      </a-upload>
-      <!-- 高级查询区域 -->
-      <j-super-query :fieldList="superFieldList" ref="superQueryModal" @handleSuperQuery="handleSuperQuery"></j-super-query>
-      <a-dropdown v-if="selectedRowKeys.length > 0">
-        <a-menu slot="overlay">
-          <a-menu-item key="1" @click="batchDel">
-            <a-icon type="delete"/>
-            <span>删除</span>
-          </a-menu-item>
-        </a-menu>
-        <a-button>
-          <span>批量操作</span>
-          <a-icon type="down"/>
-        </a-button>
-      </a-dropdown>
-    </div>
-    <!-- 操作按钮区域 end -->
-
     <!-- table区域 begin -->
     <div>
 
       <a-alert type="info" showIcon style="margin-bottom: 16px;">
         <template slot="message">
-          <span>已选择</span>
+          <span>Selected</span>
           <a style="font-weight: 600;padding: 0 4px;">{{ selectedRowKeys.length }}</a>
-          <span>项</span>
-          <a style="margin-left: 24px" @click="onClearSelected">清空</a>
+          <span>Items</span>
+          <a style="margin-left: 24px" @click="onClearSelected">Clear</a>
         </template>
       </a-alert>
 
@@ -103,29 +79,15 @@
         </template>
 
         <template slot="action" slot-scope="text, record">
-          <a @click="handleEdit(record)">编辑</a>
-          <a-divider type="vertical"/>
-          <a-dropdown>
-            <a class="ant-dropdown-link">
-              <span>更多 <a-icon type="down"/></span>
-            </a>
-            <a-menu slot="overlay">
-              <a-menu-item>
-                <a-popconfirm title="确定删除吗?" @confirm="handleDelete(record.id)">
-                  <a>删除</a>
-                </a-popconfirm>
-              </a-menu-item>
-            </a-menu>
-          </a-dropdown>
-
+          <a @click="handleBuy(record)">Buy</a>
         </template>
-
       </a-table>
     </div>
     <!-- table区域 end -->
 
     <!-- 表单区域 -->
-    <sku-modal ref="modalForm" @ok="modalFormOk"/>
+    <popup-confirmation ref="popup" :ok-callback="modalFormOk" :data-for-child="skuToBuy"/>
+
 
   </a-card>
 </template>
@@ -133,19 +95,21 @@
 <script>
 
   import { JeecgListMixin } from '@/mixins/JeecgListMixin'
-  import SkuModal from '../../../../../../../../Desktop/src/main/java/org/jeecg/modules/business/vue/modules/SkuModal'
-  import SkuPriceSubTable from '../../../../../../../../Desktop/src/main/java/org/jeecg/modules/business/vue/subTables/SkuPriceSubTable'
-  import ShippingDiscountSubTable from '../../../../../../../../Desktop/src/main/java/org/jeecg/modules/business/vue/subTables/ShippingDiscountSubTable'
-  import {filterMultiDictText} from '@comp/dict/JDictSelectUtil'
+  import SkuPriceSubTable from './subTables/SkuPriceSubTable'
+  import ShippingDiscountSubTable from './subTables/ShippingDiscountSubTable'
   import '@assets/less/TableExpand.less'
+  import PopupConfirmation from './modules/ConfirmationContainer'
+
+
+  const rootURL = '/business/inventory/client/'
 
   export default {
     name: 'SkuList',
     mixins: [JeecgListMixin],
     components: {
-      SkuModal,
       SkuPriceSubTable,
       ShippingDiscountSubTable,
+      PopupConfirmation
     },
     data() {
       return {
@@ -160,14 +124,14 @@
             customRender: (t, r, index) => parseInt(index) + 1
           },
           {
-            title: '商品ID',
-            align: 'center',
-            dataIndex: 'productId_dictText'
-          },
-          {
-            title: 'ERP中商品代码',
+            title: 'ERP Code',
             align: 'center',
             dataIndex: 'erpCode',
+          },
+          {
+            title: 'Name',
+            align: 'center',
+            dataIndex: 'productId_dictText',
           },
           {
             title: '库存数量',
@@ -198,13 +162,11 @@
         // 展开的行test
         expandedRowKeys: [],
         url: {
-          list: '/business/sku/list',
-          delete: '/business/sku/delete',
-          deleteBatch: '/business/sku/deleteBatch',
-          exportXlsUrl: '/business/sku/exportXls',
-          importExcelUrl: '/business/sku/importExcel',
+          list: rootURL+'list',
+          exportXlsUrl: rootURL+'exportXls',
         },
         superFieldList:[],
+        skuToBuy:"123"
       }
     },
     created() {
@@ -233,6 +195,11 @@
         fieldList.push({type:'int',value:'purchasingAmount',text:'在途数量',dictCode:''})
         fieldList.push({type:'string',value:'imageSource',text:'图片链接',dictCode:''})
         this.superFieldList = fieldList
+      },
+      handleBuy(record) {
+        this.skuToBuy = record['id']
+        console.log('skuid: '+this.skuToBuy)
+        this.$refs.popup.display()
       }
     }
   }

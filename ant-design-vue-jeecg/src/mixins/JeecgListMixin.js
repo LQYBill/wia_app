@@ -306,10 +306,11 @@ export const JeecgListMixin = {
             let href = window._CONFIG['domainURL'] + fileUrl
             this.$warning({
               title: message,
-              content: (<div>
-                  <span>{msg}</span><br/>
-                  <span>具体详情请 <a href={href} target="_blank" download={fileName}>点击下载</a> </span>
-                </div>
+              content: (
+                  '<div>'
+                  +'<span>{msg}</span><br/>'
+                  +'<span>具体详情请 <a href={href} target="_blank" download={fileName}>点击下载</a> </span>'
+                  +'</div>'
               )
             })
           } else {

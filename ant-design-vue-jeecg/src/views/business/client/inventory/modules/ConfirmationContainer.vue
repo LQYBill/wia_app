@@ -8,7 +8,7 @@
     ok-text="Confirm"
     @ok="handleOk"
     @cancel="handleCancel">
-    <Confirmation ref="content" :order-i-ds="dataForChild" :ok-callback="okCallback"/>
+    <Confirmation ref="content" :sku-identifier="dataForChild" :ok-callback="okCallback"/>
   </j-modal>
 </template>
 
@@ -27,7 +27,7 @@ export default {
     }
   },
   props: {
-    dataForChild: Array,
+    dataForChild: String,
     okCallback: Function
   },
   methods: {
