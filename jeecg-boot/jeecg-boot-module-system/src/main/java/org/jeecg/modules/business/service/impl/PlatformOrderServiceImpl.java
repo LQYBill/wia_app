@@ -2,6 +2,7 @@ package org.jeecg.modules.business.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import lombok.extern.slf4j.Slf4j;
 import org.jeecg.modules.business.entity.Client;
 import org.jeecg.modules.business.entity.OrderContentDetail;
 import org.jeecg.modules.business.entity.PlatformOrder;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
  * @Version: V1.0
  */
 @Service
+@Slf4j
 public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, PlatformOrder> implements IPlatformOrderService {
 
     private final PlatformOrderMapper platformOrderMap;
@@ -134,8 +136,6 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
     public PurchaseConfirmation confirmPurchaseBySkuQuantity(List<SkuQuantity> skuIDQuantityMap) {
         Client client = clientService.getCurrentClient();
         ClientInfo clientInfo = new ClientInfo(client);
-
-
         return new PurchaseConfirmation(clientInfo, searchPurchaseOrderDetail(skuIDQuantityMap));
     }
 
@@ -156,8 +156,7 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
                 .map(SkuQuantity::getID)
                 .collect(Collectors.toList());
 
-        // SKU ID -> SKU detail -- (quantity) --> Order Content Detail
-        return platformOrderContentMap.searchSkuDetail(skuList).stream()
+        List<OrderContentDetail> details = platformOrderContentMap.searchSkuDetail(skuList).stream()
                 .map(
                         skuDetail -> new OrderContentDetail(
                                 skuDetail,
@@ -165,6 +164,9 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
                         )
                 )
                 .collect(Collectors.toList());
+        log.info(details.toString());
+        // SKU ID -> SKU detail -- (quantity) --> Order Content Detail
+        return  details;
     }
 
 

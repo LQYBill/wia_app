@@ -1,21 +1,19 @@
 package org.jeecg.modules.business.entity;
 
-import java.io.Serializable;
-
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.jeecgframework.poi.excel.annotation.Excel;
-
-import java.math.BigDecimal;
-import java.util.Date;
-
-import org.jeecg.common.aspect.annotation.Dict;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.*;
+import org.jeecg.common.aspect.annotation.Dict;
+import org.jeecgframework.poi.excel.annotation.Excel;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * @Description: The price of a sku
@@ -93,5 +91,9 @@ public class SkuPrice implements Serializable {
             return discountedPrice == null ? price : discountedPrice;
         }
         return price;
+    }
+
+    public String toString() {
+        return String.format("%s, %s[%d]", price, discountedPrice, threshold);
     }
 }

@@ -26,4 +26,14 @@ public class SkuDetail {
         this.price = Objects.requireNonNull(price);
         this.promotion = promotion == null ? Promotion.ZERO_PROMOTION : promotion;
     }
+
+    @Override
+    public String toString(){
+        return String.format(
+                "ID: %s, ERP: %s, product: %s, price: %s, promotion: %s",
+                skuId, erpCode, product,
+                price,
+                promotion
+        );
+    }
 }

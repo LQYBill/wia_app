@@ -1,10 +1,10 @@
 package org.jeecg.modules.business.entity;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.jeecg.modules.business.vo.SkuDetail;
 
 import java.math.BigDecimal;
-import java.util.Objects;
 
 
 /**
@@ -12,6 +12,7 @@ import java.util.Objects;
  * and its correspondent price and promotion.
  */
 @Data
+@Slf4j
 public class OrderContentDetail {
 
     private final SkuDetail skuDetail;
@@ -33,12 +34,23 @@ public class OrderContentDetail {
      * @return the total price.
      */
     public BigDecimal totalPrice() {
-        return skuDetail.getPrice().getPrice(quantity).multiply(new BigDecimal(quantity));
+        BigDecimal unit = skuDetail.getPrice().getPrice(quantity);
+        BigDecimal total = unit.multiply(new BigDecimal(quantity));
+        log.info("unit: {}", unit);
+        log.info("total: {}", total);
+        return total;
     }
 
-    public int promotionCount(){
+    public BigDecimal unitPrice(){
+        return skuDetail.getPrice().getPrice(quantity);
+    }
+
+    public int promotionCount() {
         return skuDetail.getPromotion().promotionCount(quantity);
     }
 
-
+    @Override
+    public String toString() {
+        return String.format("%d X %s", quantity, skuDetail);
+    }
 }

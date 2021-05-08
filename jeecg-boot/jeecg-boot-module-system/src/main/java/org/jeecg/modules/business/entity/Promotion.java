@@ -79,4 +79,9 @@ public class Promotion {
         return (quantity + quantityPurchased) / promoMilestone;
     }
 
+    @Override
+    public String toString() {
+        return String.format("%s[%d/%d]", discount, quantityPurchased, promoMilestone);
+    }
+
 }

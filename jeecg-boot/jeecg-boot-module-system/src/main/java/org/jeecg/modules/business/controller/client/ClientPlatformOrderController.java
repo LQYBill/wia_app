@@ -137,6 +137,7 @@ public class ClientPlatformOrderController {
     @PostMapping(value = "/adjustOrder", consumes = "application/json", produces = "application/json")
     public Result<PurchaseConfirmation> adjustOrder(@RequestBody List<SkuQuantity> skuQuantities) {
         log.info("One client adjust its purchase order");
+        log.info("Content: {}", skuQuantities);
         PurchaseConfirmation d = platformOrderService.confirmPurchaseBySkuQuantity(skuQuantities);
         return Result.OK(d);
     }
