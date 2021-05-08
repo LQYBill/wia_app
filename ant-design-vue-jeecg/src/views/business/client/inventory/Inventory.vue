@@ -86,8 +86,16 @@
     <!-- table区域 end -->
 
     <!-- 表单区域 -->
-    <popup-confirmation ref="popup" :ok-callback="modalFormOk" :data-for-child="skuToBuy"/>
-
+    <popup-confirmation ref="popup" :ok-callback="modalFormOk" :data-for-child="skusToBuy"/>
+    <a-space class="bottomButtons">
+      <a-button type="danger" @click="onClearSelected">
+        Reset
+      </a-button>
+      <a-button type="primary" @click="handleOrder">
+        Place Order
+        <a-icon type="right"/>
+      </a-button>
+    </a-space>
 
   </a-card>
 </template>
@@ -166,7 +174,7 @@
           exportXlsUrl: rootURL+'exportXls',
         },
         superFieldList:[],
-        skuToBuy:"123"
+        skusToBuy:[]
       }
     },
     created() {
@@ -197,10 +205,14 @@
         this.superFieldList = fieldList
       },
       handleBuy(record) {
-        this.skuToBuy = record['id']
-        console.log('skuid: '+this.skuToBuy)
+        this.skusToBuy = [record['id']]
+        console.log('skus id: '+this.skusToBuy)
         this.$refs.popup.display()
-      }
+      },
+      handleOrder() {
+        this.skusToBuy = this.selectionRows.map(r=>(r['id']))
+        this.$refs.popup.display()
+      },
     }
   }
 </script>

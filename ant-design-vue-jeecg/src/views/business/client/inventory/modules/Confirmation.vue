@@ -120,15 +120,17 @@ export default {
     }
   },
   props: {
-    skuIdentifier: String,
+    skuIdentifiers: Array,
     okCallback: Function
   },
   methods: {
     loadData() {
-      const params = [{
-        ID: this.skuIdentifier,
-        quantity: 1
-      }]
+      const params = this.skuIdentifiers.map(
+        id => ({
+          ID: id,
+          quantity: 1
+        })
+      )
       console.log("SKU to buy: " + this.skuIdentifier)
       postAction(this.url.adjustOrder, params)
         .then(
