@@ -1,5 +1,6 @@
 package org.jeecg.modules.business.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.jeecg.modules.business.entity.ShippingDiscount;
 import org.jeecg.modules.business.entity.Sku;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -40,4 +41,6 @@ public interface ISkuService extends IService<Sku> {
 	 * 批量删除一对多
 	 */
 	public void delBatchMain (Collection<? extends Serializable> idList);
+
+    void fillPageBySkuForCurrentClient(Page<Sku> page);
 }

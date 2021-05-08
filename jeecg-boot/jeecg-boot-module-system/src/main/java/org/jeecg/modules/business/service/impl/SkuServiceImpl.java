@@ -1,16 +1,21 @@
 package org.jeecg.modules.business.service.impl;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.jeecg.modules.business.entity.Client;
 import org.jeecg.modules.business.entity.ShippingDiscount;
 import org.jeecg.modules.business.entity.Sku;
 import org.jeecg.modules.business.entity.SkuPrice;
 import org.jeecg.modules.business.mapper.ShippingDiscountMapper;
 import org.jeecg.modules.business.mapper.SkuMapper;
 import org.jeecg.modules.business.mapper.SkuPriceMapper;
+import org.jeecg.modules.business.service.IClientService;
 import org.jeecg.modules.business.service.ISkuService;
+import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage;
 import org.springframework.stereotype.Service;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +37,9 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
 	private SkuPriceMapper skuPriceMapper;
 	@Autowired
 	private ShippingDiscountMapper shippingDiscountMapper;
+
+	@Autowired
+	private IClientService clientService;
 
 	@Override
 	@Transactional
@@ -99,5 +107,21 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
 	@Override
 	public List<Sku> selectByMainId(String mainId) {
 		return skuMapper.selectByMainId(mainId);
+	}
+
+	@Override
+	public void fillPageBySkuForCurrentClient(Page<Sku> page){
+		// search client id for current user
+		Client client = clientService.getCurrentClient();
+		// in case of other roles
+		if (null == client) {
+			page.setRecords(Collections.emptyList());
+			page.setTotal(0);
+		} else {
+			String clientId = client.getId();
+			List<Sku> orders = skuMapper.pageSkuByClientId(clientId, page.offset(), page.getSize());
+			page.setRecords(orders);
+			page.setTotal(skuMapper.countTotal(clientId));
+		}
 	}
 }

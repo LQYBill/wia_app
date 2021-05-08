@@ -52,9 +52,9 @@ import org.jeecg.common.aspect.annotation.AutoLog;
  */
 @Api(tags="SKU表")
 @RestController
-@RequestMapping("/business/sku")
+@RequestMapping("/business/inventory/client")
 @Slf4j
-public class SkuController {
+public class InventoryController {
 	@Autowired
 	private ISkuService skuService;
 	@Autowired
@@ -78,76 +78,11 @@ public class SkuController {
 								   @RequestParam(name="pageNo", defaultValue="1") Integer pageNo,
 								   @RequestParam(name="pageSize", defaultValue="10") Integer pageSize,
 								   HttpServletRequest req) {
-		QueryWrapper<Sku> queryWrapper = QueryGenerator.initQueryWrapper(sku, req.getParameterMap());
-		Page<Sku> page = new Page<Sku>(pageNo, pageSize);
-		IPage<Sku> pageList = skuService.page(page, queryWrapper);
-		return Result.OK(pageList);
+		Page<Sku> page = new Page<>(pageNo, pageSize);
+		skuService.fillPageBySkuForCurrentClient(page);
+		return Result.OK(page);
 	}
-	
-	/**
-	 *   添加
-	 *
-	 * @param skuPage
-	 * @return
-	 */
-	@AutoLog(value = "SKU表-添加")
-	@ApiOperation(value="SKU表-添加", notes="SKU表-添加")
-	@PostMapping(value = "/add")
-	public Result<?> add(@RequestBody SkuPage skuPage) {
-		Sku sku = new Sku();
-		BeanUtils.copyProperties(skuPage, sku);
-		skuService.saveMain(sku, skuPage.getSkuPriceList(),skuPage.getShippingDiscountList());
-		return Result.OK("添加成功！");
-	}
-	
-	/**
-	 *  编辑
-	 *
-	 * @param skuPage
-	 * @return
-	 */
-	@AutoLog(value = "SKU表-编辑")
-	@ApiOperation(value="SKU表-编辑", notes="SKU表-编辑")
-	@PutMapping(value = "/edit")
-	public Result<?> edit(@RequestBody SkuPage skuPage) {
-		Sku sku = new Sku();
-		BeanUtils.copyProperties(skuPage, sku);
-		Sku skuEntity = skuService.getById(sku.getId());
-		if(skuEntity==null) {
-			return Result.error("未找到对应数据");
-		}
-		skuService.updateMain(sku, skuPage.getSkuPriceList(),skuPage.getShippingDiscountList());
-		return Result.OK("编辑成功!");
-	}
-	
-	/**
-	 *   通过id删除
-	 *
-	 * @param id
-	 * @return
-	 */
-	@AutoLog(value = "SKU表-通过id删除")
-	@ApiOperation(value="SKU表-通过id删除", notes="SKU表-通过id删除")
-	@DeleteMapping(value = "/delete")
-	public Result<?> delete(@RequestParam(name="id",required=true) String id) {
-		skuService.delMain(id);
-		return Result.OK("删除成功!");
-	}
-	
-	/**
-	 *  批量删除
-	 *
-	 * @param ids
-	 * @return
-	 */
-	@AutoLog(value = "SKU表-批量删除")
-	@ApiOperation(value="SKU表-批量删除", notes="SKU表-批量删除")
-	@DeleteMapping(value = "/deleteBatch")
-	public Result<?> deleteBatch(@RequestParam(name="ids",required=true) String ids) {
-		this.skuService.delBatchMain(Arrays.asList(ids.split(",")));
-		return Result.OK("批量删除成功！");
-	}
-	
+
 	/**
 	 * 通过id查询
 	 *
@@ -163,9 +98,8 @@ public class SkuController {
 			return Result.error("未找到对应数据");
 		}
 		return Result.OK(sku);
-
 	}
-	
+
 	/**
 	 * 通过id查询
 	 *
@@ -182,6 +116,7 @@ public class SkuController {
 		page.setTotal(skuPriceList.size());
 		return Result.OK(page);
 	}
+
 	/**
 	 * 通过id查询
 	 *
@@ -243,44 +178,4 @@ public class SkuController {
       mv.addObject(NormalExcelConstants.DATA_LIST, pageList);
       return mv;
     }
-
-    /**
-    * 通过excel导入数据
-    *
-    * @param request
-    * @param response
-    * @return
-    */
-    @RequestMapping(value = "/importExcel", method = RequestMethod.POST)
-    public Result<?> importExcel(HttpServletRequest request, HttpServletResponse response) {
-      MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
-      Map<String, MultipartFile> fileMap = multipartRequest.getFileMap();
-      for (Map.Entry<String, MultipartFile> entity : fileMap.entrySet()) {
-          MultipartFile file = entity.getValue();// 获取上传文件对象
-          ImportParams params = new ImportParams();
-          params.setTitleRows(2);
-          params.setHeadRows(1);
-          params.setNeedSave(true);
-          try {
-              List<SkuPage> list = ExcelImportUtil.importExcel(file.getInputStream(), SkuPage.class, params);
-              for (SkuPage page : list) {
-                  Sku po = new Sku();
-                  BeanUtils.copyProperties(page, po);
-                  skuService.saveMain(po, page.getSkuPriceList(),page.getShippingDiscountList());
-              }
-              return Result.OK("文件导入成功！数据行数:" + list.size());
-          } catch (Exception e) {
-              log.error(e.getMessage(),e);
-              return Result.error("文件导入失败:"+e.getMessage());
-          } finally {
-              try {
-                  file.getInputStream().close();
-              } catch (IOException e) {
-                  e.printStackTrace();
-              }
-          }
-      }
-      return Result.OK("文件导入失败！");
-    }
-
 }

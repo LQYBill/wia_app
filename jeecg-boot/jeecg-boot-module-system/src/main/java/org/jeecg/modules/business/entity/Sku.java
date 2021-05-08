@@ -1,18 +1,17 @@
 package org.jeecg.modules.business.entity;
 
-import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
-import java.util.Date;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.jeecgframework.poi.excel.annotation.Excel;
-import org.jeecg.common.aspect.annotation.Dict;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+import org.jeecg.common.aspect.annotation.Dict;
+import org.jeecgframework.poi.excel.annotation.Excel;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.io.Serializable;
 
 /**
  * @Description: SKU表
@@ -48,7 +47,7 @@ public class Sku implements Serializable {
     private java.util.Date updateTime;
     /**商品ID*/
     @Excel(name = "商品ID", width = 15, dictTable = "product", dicText = "code", dicCode = "id")
-    @Dict(dictTable = "product", dicText = "code", dicCode = "id")
+    @Dict(dictTable = "product", dicText = "en_name", dicCode = "id")
     @ApiModelProperty(value = "商品ID")
     private java.lang.String productId;
     /**ERP中商品代码*/

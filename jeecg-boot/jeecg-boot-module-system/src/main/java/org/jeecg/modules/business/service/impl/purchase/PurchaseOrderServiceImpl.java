@@ -247,8 +247,8 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
                 "Matthieu.Du@outlook.com"
         );
 
-        // 5. update platform order status to "purchasing" (optionnal)
-        if (orderIDs != null) {
+        // 5. update platform order status to "purchasing" (optionnel)
+        if (orderIDs != null && !orderIDs.isEmpty()) {
             platformOrderMapper.batchUpdateStatus(orderIDs, PlatformOrder.Status.Purchasing.code);
         }
 

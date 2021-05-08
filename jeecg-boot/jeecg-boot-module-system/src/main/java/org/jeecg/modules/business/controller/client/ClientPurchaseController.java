@@ -55,9 +55,6 @@ public class ClientPurchaseController {
     }
 
 
-
-
-
     /**
      * Add new purchase order.
      *
@@ -72,6 +69,7 @@ public class ClientPurchaseController {
                 purchaseRequest.getSkuQuantity(),
                 purchaseRequest.getPlatformOrderIDList()
         );
+        log.info("Order list: {}", purchaseRequest.getPlatformOrderIDList());
         return Result.OK(id);
     }
 
