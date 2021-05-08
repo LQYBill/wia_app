@@ -24,9 +24,6 @@
       <a-divider style="margin-bottom: 32px"/>
 
       <div class="title">Order Details</div>
-      <a-button type="primary" @click="onChangeQuantity">
-        {{ changeQuantityButtonText }}
-      </a-button>
       <a-table
         style="margin-bottom: 24px"
         :columns="columns"
@@ -40,11 +37,9 @@
               v-model="currentQuantity[index]"
               :min="minQuantity[index]"
               @change="numberOnChange"
-              :disabled="!changing"
             />
           </div>
         </template>
-
       </a-table>
 
 
@@ -59,7 +54,6 @@ import {JEditableTableModelMixin} from '@/mixins/JEditableTableModelMixin'
 const DetailListItem = DetailList.Item
 
 const {postAction} = require("@api/manage");
-
 
 export default {
   name: 'ClientPlatformOrderDetail',
@@ -123,9 +117,7 @@ export default {
         orderInfo: '/business/clientPlatformOrder/placeOrder',
         adjustOrder: '/business/clientPlatformOrder/adjustOrder',
         confirmOrder: '/business/purchaseOrder/client/add'
-      },
-      changeQuantityButtonText: 'Change Quantity',
-      changing: false
+      }
     }
   },
   props: {
@@ -170,17 +162,7 @@ export default {
     },
     handleCancel() {
     },
-    numberOnChange(value) {
-      console.log(value)
-    },
-    onChangeQuantity() {
-      // begin changing
-      if (this.changing === false) {
-        this.changeQuantityButtonText = "Submit"
-        this.changing = true
-      }
-      // submit result
-      else {
+    numberOnChange() {
         let params = []
         for (let i = 0; i < this.orderDetails.length; i++) {
           params.push({
@@ -202,7 +184,7 @@ export default {
         this.changeQuantityButtonText = "Change Quantity"
         this.changing = false
       }
-    }
+
   },
   computed: {},
   created() {
