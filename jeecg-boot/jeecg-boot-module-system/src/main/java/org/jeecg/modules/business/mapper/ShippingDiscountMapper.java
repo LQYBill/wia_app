@@ -13,7 +13,7 @@ import org.apache.ibatis.annotations.Param;
  */
 public interface ShippingDiscountMapper extends BaseMapper<ShippingDiscount> {
 
-	public boolean deleteByMainId(@Param("mainId") String mainId);
+	boolean deleteByMainId(@Param("mainId") String mainId);
     
-	public List<ShippingDiscount> selectByMainId(@Param("mainId") String mainId);
+	List<ShippingDiscount> selectByMainId(@Param("mainId") String mainId);
 }

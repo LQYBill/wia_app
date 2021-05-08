@@ -17,6 +17,4 @@ public interface SkuMapper extends BaseMapper<Sku> {
     boolean deleteByMainId(@Param("mainId") String mainId);
 
     List<Sku> selectByMainId(@Param("mainId") String mainId);
-
-    String getErpCodeById(@Param("mainId") String mainId);
 }

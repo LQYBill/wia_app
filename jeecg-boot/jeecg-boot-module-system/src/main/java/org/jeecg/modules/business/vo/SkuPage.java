@@ -24,49 +24,53 @@ import io.swagger.annotations.ApiModelProperty;
 @Data
 @ApiModel(value="skuPage对象", description="SKU表")
 public class SkuPage {
-
 	/**主键*/
 	@ApiModelProperty(value = "主键")
-    private String id;
+	private java.lang.String id;
 	/**创建人*/
 	@ApiModelProperty(value = "创建人")
-    private String createBy;
+	private java.lang.String createBy;
 	/**创建日期*/
 	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
-    @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
+	@DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
 	@ApiModelProperty(value = "创建日期")
-    private Date createTime;
+	private java.util.Date createTime;
 	/**更新人*/
 	@ApiModelProperty(value = "更新人")
-    private String updateBy;
+	private java.lang.String updateBy;
 	/**更新日期*/
 	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
-    @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
+	@DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
 	@ApiModelProperty(value = "更新日期")
-    private Date updateTime;
+	private java.util.Date updateTime;
 	/**商品ID*/
 	@Excel(name = "商品ID", width = 15, dictTable = "product", dicText = "code", dicCode = "id")
-    @Dict(dictTable = "product", dicText = "code", dicCode = "id")
+	@Dict(dictTable = "product", dicText = "code", dicCode = "id")
 	@ApiModelProperty(value = "商品ID")
-    private String productId;
+	private java.lang.String productId;
 	/**ERP中商品代码*/
 	@Excel(name = "ERP中商品代码", width = 15)
 	@ApiModelProperty(value = "ERP中商品代码")
-    private String erpCode;
+	private java.lang.String erpCode;
 	/**库存数量*/
 	@Excel(name = "库存数量", width = 15)
 	@ApiModelProperty(value = "库存数量")
-    private Integer availableAmount;
+	private java.lang.Integer availableAmount;
 	/**在途数量*/
 	@Excel(name = "在途数量", width = 15)
 	@ApiModelProperty(value = "在途数量")
-    private Integer purchasingAmount;
-	
+	private java.lang.Integer purchasingAmount;
+	/**图片链接*/
+	@Excel(name = "图片链接", width = 15)
+	@ApiModelProperty(value = "图片链接")
+	private java.lang.String imageSource;
+
 	@ExcelCollection(name="SKU价格表")
 	@ApiModelProperty(value = "SKU价格表")
 	private List<SkuPrice> skuPriceList;
 	@ExcelCollection(name="SKU物流折扣")
 	@ApiModelProperty(value = "SKU物流折扣")
 	private List<ShippingDiscount> shippingDiscountList;
-	
+
+
 }

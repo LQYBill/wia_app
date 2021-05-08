@@ -12,5 +12,5 @@ import java.util.List;
  */
 public interface IShippingDiscountService extends IService<ShippingDiscount> {
 
-	public List<ShippingDiscount> selectByMainId(String mainId);
+	List<ShippingDiscount> selectByMainId(String mainId);
 }

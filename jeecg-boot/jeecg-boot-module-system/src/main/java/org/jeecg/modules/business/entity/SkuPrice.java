@@ -24,7 +24,6 @@ import java.util.Date;
 @ApiModel(value = "sku对象", description = "SKU表")
 @Setter
 @RequiredArgsConstructor
-@ToString
 @EqualsAndHashCode
 @TableName("sku_price")
 public class SkuPrice implements Serializable {
