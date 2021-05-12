@@ -83,7 +83,7 @@
         <template slot="imgSlot" slot-scope="text">
           <div style="font-size: 12px;font-style: italic;">
             <span v-if="!text">无图片</span>
-            <img v-else :src="getImgView(text)" alt="" style="max-width:80px;height:25px;"/>
+            <img v-else :src="getImgView(text)" :preview="getImgView(text)" alt="" style="min-width:50px;max-width:80px;height:50px;"/>
           </div>
         </template>
 
@@ -136,6 +136,7 @@
   import SkuModal from './modules/SkuModal'
   import SkuPriceSubTable from './subTables/SkuPriceSubTable'
   import ShippingDiscountSubTable from './subTables/ShippingDiscountSubTable'
+  import ARow from 'ant-design-vue/es/grid/Row'
   import {filterMultiDictText} from '@/components/dict/JDictSelectUtil'
   import '@/assets/less/TableExpand.less'
 
@@ -146,6 +147,7 @@
       SkuModal,
       SkuPriceSubTable,
       ShippingDiscountSubTable,
+      ARow
     },
     data() {
       return {
@@ -168,6 +170,12 @@
             title: 'ERP中商品代码',
             align: 'center',
             dataIndex: 'erpCode',
+          },
+          {
+            title: '图片链接',
+            align: 'center',
+            dataIndex: 'imageSource',
+            scopedSlots: {customRender: 'imgSlot'}
           },
           {
             title: '库存数量',
