@@ -1,4 +1,4 @@
-package org.jeecg.modules.business.entity;
+package org.jeecg.modules.business.vo.inventory;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -19,10 +19,10 @@ import java.io.Serializable;
  * @Date: 2021-05-08
  * @Version: V1.0
  */
-@ApiModel(value = "sku对象", description = "SKU表")
+@ApiModel(value = "Inventory Record", description = "Entry in client inventory page")
 @Data
-@TableName("sku")
-public class Sku implements Serializable {
+@TableName("inventory_record")
+public class InventoryRecord implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
@@ -30,60 +30,40 @@ public class Sku implements Serializable {
      */
     @TableId(type = IdType.ASSIGN_ID)
     @ApiModelProperty(value = "主键")
-    private java.lang.String id;
-    /**
-     * 创建人
-     */
-    @ApiModelProperty(value = "创建人")
-    private java.lang.String createBy;
-    /**
-     * 创建日期
-     */
-    @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @ApiModelProperty(value = "创建日期")
-    private java.util.Date createTime;
-    /**
-     * 更新人
-     */
-    @ApiModelProperty(value = "更新人")
-    private java.lang.String updateBy;
-    /**
-     * 更新日期
-     */
-    @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @ApiModelProperty(value = "更新日期")
-    private java.util.Date updateTime;
+    private String id;
+
     /**
      * 商品ID
      */
     @Excel(name = "商品ID", width = 15, dictTable = "product", dicText = "code", dicCode = "id")
     @Dict(dictTable = "product", dicText = "en_name", dicCode = "id")
     @ApiModelProperty(value = "商品ID")
-    private java.lang.String productId;
+    private String productId;
     /**
      * ERP中商品代码
      */
     @Excel(name = "ERP中商品代码", width = 15)
     @ApiModelProperty(value = "ERP中商品代码")
-    private java.lang.String erpCode;
+    private String erpCode;
     /**
      * 库存数量
      */
     @Excel(name = "库存数量", width = 15)
     @ApiModelProperty(value = "库存数量")
-    private java.lang.Integer availableAmount;
-    /**
-     * 在途数量
-     */
-    @Excel(name = "在途数量", width = 15)
-    @ApiModelProperty(value = "在途数量")
-    private java.lang.Integer purchasingAmount;
+    private Integer availableAmount;
+
+    @Excel(name = "green quantity", width = 15)
+    @ApiModelProperty(value = "greenQuantity")
+    private Integer greenQuantity;
+
+    @Excel(name = "redQuantity", width = 15)
+    @ApiModelProperty(value = "redQuantity")
+    private Integer redQuantity;
+
     /**
      * 图片链接
      */
     @Excel(name = "图片链接", width = 15)
     @ApiModelProperty(value = "图片链接")
-    private java.lang.String imageSource;
+    private String imageSource;
 }

@@ -13,6 +13,7 @@ import org.jeecg.modules.business.mapper.SkuPriceMapper;
 import org.jeecg.modules.business.service.IClientService;
 import org.jeecg.modules.business.service.ISkuService;
 import org.jeecg.modules.business.vo.SkuQuantity;
+import org.jeecg.modules.business.vo.inventory.InventoryRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -114,7 +115,7 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
     }
 
     @Override
-    public void fillPageBySkuForCurrentClient(Page<Sku> page) {
+    public void fillPageForCurrentClient(Page<InventoryRecord> page) {
         // search client id for current user
         Client client = clientService.getCurrentClient();
         // in case of other roles
@@ -123,7 +124,7 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
             page.setTotal(0);
         } else {
             String clientId = client.getId();
-            List<Sku> orders = skuMapper.pageSkuByClientId(clientId, page.offset(), page.getSize());
+            List<InventoryRecord> orders = skuMapper.pageSkuByClientId(clientId, page.offset(), page.getSize());
             page.setRecords(orders);
             page.setTotal(skuMapper.countTotal(clientId));
         }

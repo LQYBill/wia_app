@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
 import org.jeecg.modules.business.entity.Sku;
 import org.jeecg.modules.business.vo.SkuQuantity;
+import org.jeecg.modules.business.vo.inventory.InventoryRecord;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -23,7 +24,7 @@ public interface SkuMapper extends BaseMapper<Sku> {
     List<Sku> selectByMainId(@Param("mainId") String mainId);
 
 
-    List<Sku> pageSkuByClientId(String clientId, long offset, long size);
+    List<InventoryRecord> pageSkuByClientId(String clientId, long offset, long size);
 
     long countTotal(String clientId);
 

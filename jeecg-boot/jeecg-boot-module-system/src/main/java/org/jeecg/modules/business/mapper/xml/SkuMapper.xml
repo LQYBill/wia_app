@@ -16,13 +16,12 @@
 
 
 	<sql id="selectSkuByClientId">
-		SELECT s.*
-		FROM sku s
-				JOIN client_sku cs ON s.id = cs.sku_id
-		WHERE cs.client_id = #{clientId}
+		SELECT *
+		FROM inventory_record i
+		WHERE i.client_id = #{clientId}
 	</sql>
 
-    <select id="pageSkuByClientId" resultType="org.jeecg.modules.business.entity.Sku">
+    <select id="pageSkuByClientId" resultType="org.jeecg.modules.business.vo.inventory.InventoryRecord">
 		<include refid="selectSkuByClientId"/>
 		LIMIT #{offset}, #{size}
 	</select>

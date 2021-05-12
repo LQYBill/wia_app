@@ -102,120 +102,130 @@
 
 <script>
 
-  import { JeecgListMixin } from '@/mixins/JeecgListMixin'
-  import SkuPriceSubTable from './subTables/SkuPriceSubTable'
-  import ShippingDiscountSubTable from './subTables/ShippingDiscountSubTable'
-  import '@assets/less/TableExpand.less'
-  import PopupConfirmation from './modules/ConfirmationContainer'
+import {JeecgListMixin} from '@/mixins/JeecgListMixin'
+import SkuPriceSubTable from './subTables/SkuPriceSubTable'
+import ShippingDiscountSubTable from './subTables/ShippingDiscountSubTable'
+import '@assets/less/TableExpand.less'
+import PopupConfirmation from './modules/ConfirmationContainer'
 
 
-  const rootURL = '/business/inventory/client/'
+const rootURL = '/business/inventory/client/'
 
-  export default {
-    name: 'SkuList',
-    mixins: [JeecgListMixin],
-    components: {
-      SkuPriceSubTable,
-      ShippingDiscountSubTable,
-      PopupConfirmation
-    },
-    data() {
-      return {
-        description: 'SKU表列表管理页面',
-        // 表头
-        columns: [
-          {
-            title: '#',
-            key: 'rowIndex',
-            width: 60,
-            align: 'center',
-            customRender: (t, r, index) => parseInt(index) + 1
-          },
-          {
-            title: 'ERP Code',
-            align: 'center',
-            dataIndex: 'erpCode',
-          },
-          {
-            title: 'Name',
-            align: 'center',
-            dataIndex: 'productId_dictText',
-          },
-          {
-            title: '库存数量',
-            align: 'center',
-            dataIndex: 'availableAmount',
-          },
-          {
-            title: '在途数量',
-            align: 'center',
-            dataIndex: 'purchasingAmount',
-          },
-          {
-            title: '图片链接',
-            align: 'center',
-            dataIndex: 'imageSource',
-            scopedSlots: {customRender: 'imgSlot'}
-          },
-          {
-            title: '操作',
-            dataIndex: 'action',
-            align: 'center',
-            width:147,
-            scopedSlots: { customRender: 'action' },
-          },
-        ],
-        // 字典选项
-        dictOptions: {},
-        // 展开的行test
-        expandedRowKeys: [],
-        url: {
-          list: rootURL+'list',
-          exportXlsUrl: rootURL+'exportXls',
+export default {
+  name: 'SkuList',
+  mixins: [JeecgListMixin],
+  components: {
+    SkuPriceSubTable,
+    ShippingDiscountSubTable,
+    PopupConfirmation
+  },
+  data() {
+    return {
+      description: 'SKU表列表管理页面',
+      // 表头
+      columns: [
+        {
+          title: '#',
+          key: 'rowIndex',
+          width: 60,
+          align: 'center',
+          customRender: (t, r, index) => parseInt(index) + 1
         },
-        superFieldList:[],
-        skusToBuy:[]
-      }
-    },
-    created() {
-      this.getSuperFieldList();
-    },
-    computed: {
-      importExcelUrl() {
-        return window._CONFIG['domainURL'] + this.url.importExcelUrl
-      }
-    },
-    methods: {
-      initDictConfig() {
-      },
-
-      handleExpand(expanded, record) {
-        this.expandedRowKeys = []
-        if (expanded === true) {
-          this.expandedRowKeys.push(record.id)
+        {
+          title: 'Picture',
+          align: 'center',
+          dataIndex: 'imageSource',
+          scopedSlots: {customRender: 'imgSlot'}
+        },
+        {
+          title: 'ERP Code',
+          align: 'center',
+          dataIndex: 'erpCode',
+        },
+        {
+          title: 'Name',
+          align: 'center',
+          dataIndex: 'productId_dictText',
+        },
+        {
+          title: '库存数量',
+          align: 'center',
+          dataIndex: 'availableAmount',
+        },
+        {
+          title: '在途数量',
+          children:[
+            {
+              title: 'Red',
+              align: 'center',
+              dataIndex: 'redQuantity',
+            },
+            {
+              title: 'Green',
+              align: 'center',
+              dataIndex: 'greenQuantity',
+            }
+          ]
         }
+      ],
+      // 字典选项
+      dictOptions: {},
+      // 展开的行test
+      expandedRowKeys: [],
+      url: {
+        list: rootURL + 'list',
+        exportXlsUrl: rootURL + 'exportXls',
       },
-      getSuperFieldList(){
-        let fieldList=[];
-        fieldList.push({type:'sel_search',value:'productId',text:'商品ID',dictTable:'product', dictText:'code', dictCode:'id'})
-        fieldList.push({type:'string',value:'erpCode',text:'ERP中商品代码',dictCode:''})
-        fieldList.push({type:'int',value:'availableAmount',text:'库存数量',dictCode:''})
-        fieldList.push({type:'int',value:'purchasingAmount',text:'在途数量',dictCode:''})
-        fieldList.push({type:'string',value:'imageSource',text:'图片链接',dictCode:''})
-        this.superFieldList = fieldList
-      },
-      handleBuy(record) {
-        this.skusToBuy = [record['id']]
-        console.log('skus id: '+this.skusToBuy)
-        this.$refs.popup.display()
-      },
-      handleOrder() {
-        this.skusToBuy = this.selectionRows.map(r=>(r['id']))
-        this.$refs.popup.display()
-      },
+      superFieldList: [],
+      skusToBuy: []
     }
+  },
+  created() {
+    this.getSuperFieldList();
+  },
+  computed: {
+    importExcelUrl() {
+      return window._CONFIG['domainURL'] + this.url.importExcelUrl
+    }
+  },
+  methods: {
+    initDictConfig() {
+    },
+
+    handleExpand(expanded, record) {
+      this.expandedRowKeys = []
+      if (expanded === true) {
+        this.expandedRowKeys.push(record.id)
+      }
+    },
+    getSuperFieldList() {
+      let fieldList = [];
+      fieldList.push({
+        type: 'sel_search',
+        value: 'productId',
+        text: '商品ID',
+        dictTable: 'product',
+        dictText: 'code',
+        dictCode: 'id'
+      })
+      fieldList.push({type: 'string', value: 'erpCode', text: 'ERP中商品代码', dictCode: ''})
+      fieldList.push({type: 'int', value: 'availableAmount', text: '库存数量', dictCode: ''})
+      fieldList.push({type: 'int', value: 'purchasingAmount', text: '在途数量', dictCode: ''})
+      fieldList.push({type: 'string', value: 'imageSource', text: '图片链接', dictCode: ''})
+      this.superFieldList = fieldList
+    },
+    handleBuy(record) {
+      this.skusToBuy = [record['id']]
+      console.log('skus id: ' + this.skusToBuy)
+      this.$refs.popup.display()
+    },
+    handleOrder() {
+      this.skusToBuy = this.selectionRows.map(r => (r['id']))
+      this.$refs.popup.display()
+    },
   }
+}
 </script>
 <style lang="less" scoped>
-  @import '~@assets/less/common.less';
+@import '~@assets/less/common.less';
 </style>

@@ -6,6 +6,7 @@ import org.jeecg.modules.business.entity.ShippingDiscount;
 import org.jeecg.modules.business.entity.Sku;
 import org.jeecg.modules.business.entity.SkuPrice;
 import org.jeecg.modules.business.vo.SkuQuantity;
+import org.jeecg.modules.business.vo.inventory.InventoryRecord;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -41,7 +42,8 @@ public interface ISkuService extends IService<Sku> {
      */
     void delBatchMain(Collection<? extends Serializable> idList);
 
-    void fillPageBySkuForCurrentClient(Page<Sku> page);
+
+    void fillPageForCurrentClient(Page<InventoryRecord> page);
 
     /**
      * Add sku quantity.
