@@ -24,6 +24,11 @@
               <a-input-number v-model="model.purchasingAmount" placeholder="请输入在途数量" style="width: 100%" />
             </a-form-model-item>
           </a-col>
+          <a-col :xs="24" :sm="12">
+            <a-form-model-item label="图片链接" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="imageSource">
+              <a-input v-model="model.imageSource" placeholder="请输入图片链接地址" ></a-input>
+            </a-form-model-item>
+          </a-col>
         </a-row>
       </a-form-model>
      </j-form-container>
