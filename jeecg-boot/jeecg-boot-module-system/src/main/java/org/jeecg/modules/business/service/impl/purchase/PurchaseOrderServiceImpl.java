@@ -10,6 +10,7 @@ import org.jeecg.modules.business.mapper.SkuPromotionHistoryMapper;
 import org.jeecg.modules.business.service.IClientService;
 import org.jeecg.modules.business.service.IPlatformOrderService;
 import org.jeecg.modules.business.service.IPurchaseOrderService;
+import org.jeecg.modules.business.service.ISkuService;
 import org.jeecg.modules.business.service.domain.codeGenerationRule.PurchaseInvoiceCodeRule;
 import org.jeecg.modules.business.vo.OrderContentEntry;
 import org.jeecg.modules.business.vo.PromotionHistoryEntry;
@@ -52,6 +53,8 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
 
     private final PlatformOrderMapper platformOrderMapper;
 
+    private final ISkuService skuService;
+
     /**
      * Directory where payment documents are put
      */
@@ -63,13 +66,14 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
 
     public PurchaseOrderServiceImpl(PurchaseOrderMapper purchaseOrderMapper,
                                     PurchaseOrderContentMapper purchaseOrderContentMapper,
-                                    SkuPromotionHistoryMapper skuPromotionHistoryMapper, IClientService clientService, IPlatformOrderService platformOrderService, PlatformOrderMapper platformOrderMapper) {
+                                    SkuPromotionHistoryMapper skuPromotionHistoryMapper, IClientService clientService, IPlatformOrderService platformOrderService, PlatformOrderMapper platformOrderMapper, ISkuService skuService) {
         this.purchaseOrderMapper = purchaseOrderMapper;
         this.purchaseOrderContentMapper = purchaseOrderContentMapper;
         this.skuPromotionHistoryMapper = skuPromotionHistoryMapper;
         this.clientService = clientService;
         this.platformOrderService = platformOrderService;
         this.platformOrderMapper = platformOrderMapper;
+        this.skuService = skuService;
     }
 
     @Override
@@ -188,17 +192,35 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
     }
 
     /**
-     * Generated a purchase order by series of platform orders indicated by their identifier.
+     * Generated a purchase order based on sku quantity, and
+     * these quantity are recorded to client's inventory.
      *
-     * @param SkuQuantity a list of platform orders
+     * @param skuQuantities a list of platform orders
+     * @return the purchase order's identifier (UUID)
+     */
+    @Override
+    public String addPurchase(List<SkuQuantity> skuQuantities) {
+        return addPurchase(skuQuantities, Collections.emptyList());
+    }
+
+
+    /**
+     * Generated a purchase order based on sku quantity, these sku are bought
+     * for some platform orders, their quantity may higher than those in platform
+     * orders. In case of higher, extra quantity are recorded to client's inventory.
+     *
+     * @param skuQuantities    a list of platform orders
+     * @param platformOrderIDs identifiers of the platform orders for which the sku are bought.
      * @return the purchase order's identifier (UUID)
      */
     @Override
     @Transactional
-    public String addPurchase(List<SkuQuantity> SkuQuantity, List<String> orderIDs) {
+    public String addPurchase(List<SkuQuantity> skuQuantities, List<String> platformOrderIDs) {
+        Objects.requireNonNull(platformOrderIDs);
+
         Client client = clientService.getCurrentClient();
 
-        List<OrderContentDetail> details = platformOrderService.searchPurchaseOrderDetail(SkuQuantity);
+        List<OrderContentDetail> details = platformOrderService.searchPurchaseOrderDetail(skuQuantities);
         OrdersStatisticData data = OrdersStatisticData.makeData(details);
 
         String purchaseID = UUID.randomUUID().toString();
@@ -221,6 +243,9 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
                 .map(d -> (new OrderContentEntry(d.getQuantity(), d.totalPrice(), d.getSkuDetail().getSkuId())))
                 .collect(Collectors.toList());
         purchaseOrderContentMapper.addAll(client.fullName(), purchaseID, entries);
+
+        // 2.1 save extra sku
+        skuService.addInventory(skuQuantities, platformOrderIDs);
 
         // 3. save the application of promotion information
         List<PromotionHistoryEntry> promotionHistoryEntries = details.stream()
@@ -248,8 +273,8 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         );
 
         // 5. update platform order status to "purchasing" (optionnel)
-        if (orderIDs != null && !orderIDs.isEmpty()) {
-            platformOrderMapper.batchUpdateStatus(orderIDs, PlatformOrder.Status.Purchasing.code);
+        if (!platformOrderIDs.isEmpty()) {
+            platformOrderMapper.batchUpdateStatus(platformOrderIDs, PlatformOrder.Status.Purchasing.code);
         }
 
         // 4. return purchase id

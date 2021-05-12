@@ -164,8 +164,6 @@ export default {
           console.log(this.minQuantity)
           console.log(this.currentQuantity)
         })
-      this.changeQuantityButtonText = "Change Quantity"
-      this.changing = false
     },
 
     confirmOrder() {
@@ -176,7 +174,7 @@ export default {
             quantity: line['quantity']
           })
         ),
-        platformOrderIDList: this.orderIDs
+        platformOrderIDList: []
       }
 
       postAction(this.url.confirmOrder, params)

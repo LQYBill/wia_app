@@ -1,11 +1,13 @@
 package org.jeecg.modules.business.mapper;
 
-import java.util.List;
-
-import org.jeecg.modules.business.entity.Sku;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
+import org.jeecg.modules.business.entity.Sku;
+import org.jeecg.modules.business.vo.SkuQuantity;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * @Description: SKU表
@@ -24,4 +26,11 @@ public interface SkuMapper extends BaseMapper<Sku> {
     List<Sku> pageSkuByClientId(String clientId, long offset, long size);
 
     long countTotal(String clientId);
+
+    /**
+     * Increase sku quantity.
+     *
+     * @param skuQuantities map between sku and its quantity to increase.
+     */
+    void addSkuQuantity(@Param("quantities") Map<String, Integer> skuQuantities);
 }

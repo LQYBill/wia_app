@@ -50,6 +50,8 @@ public interface IPurchaseOrderService extends IService<PurchaseOrder> {
      */
     void setPageForCurrentClient(IPage<PurchaseOrder> page);
 
+    String addPurchase(List<SkuQuantity> skuQuantities);
+
     /**
      * Add a new purchase. The purchase contains sku and its quantity indicated by
      * first argument.
