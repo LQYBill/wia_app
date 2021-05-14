@@ -12,7 +12,8 @@
 
     <update id="updatePaymentDocument">
         UPDATE purchase_order
-        SET payment_document = #{fileName}, status='proofUploaded'
+        SET payment_document = #{fileName},
+            status='proofUploaded'
         WHERE id = #{purchaseID}
     </update>
     <update id="confirmPayment">
@@ -26,19 +27,24 @@
         WHERE id = #{purchaseID}
     </update>
 
-
-    <select id="pageByClientID" resultType="org.jeecg.modules.business.entity.PurchaseOrder">
+    <sql id="pageByClientID">
         SELECT p.*
         FROM purchase_order p
-        WHERE p.client_id = #{clientID}
+        <if test="clientID != null">
+            WHERE p.client_id = #{clientID}
+        </if>
+    </sql>
+
+    <select id="pageByClientID" resultType="org.jeecg.modules.business.entity.PurchaseOrder">
+        <include refid="pageByClientID"/>
         LIMIT #{offset}, #{size}
     </select>
 
     <select id="countTotal" resultType="long">
         SELECT COUNT(*)
-        FROM purchase_order p
-        WHERE p.client_id = #{clientID}
+        FROM (<include refid="pageByClientID"/>) t
     </select>
+
     <select id="lastInvoiceNumber" resultType="java.lang.String">
         SELECT invoice_number
         FROM purchase_order

@@ -141,13 +141,14 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
     }
 
     public void setPageForCurrentClient(IPage<PurchaseOrder> page) {
+        String clientID = null;
         Client client = clientService.getCurrentClient();
-        if (client == null) {
-            return;
+        if (client != null) {
+            clientID = client.getId();
         }
-        List<PurchaseOrder> purchaseOrderList = purchaseOrderMapper.pageByClientID(client.getId(), page.offset(), page.getSize());
+        List<PurchaseOrder> purchaseOrderList = purchaseOrderMapper.pageByClientID(clientID, page.offset(), page.getSize());
         page.setRecords(purchaseOrderList);
-        long total = purchaseOrderMapper.countTotal(client.getId());
+        long total = purchaseOrderMapper.countTotal(clientID);
         page.setTotal(total);
     }
 
@@ -187,7 +188,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
                 SendMsgTypeEnum.EMAIL.getType(),
                 "purchase_order_processed",
                 map,
-                client.getEmail()
+                "Matthieu.Du@outlook.com"
         );
     }
 

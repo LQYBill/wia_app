@@ -1,98 +1,96 @@
 <template>
-  <a-card class="j-inner-table-wrapper" :bordered="false">
+  <dynamic-user-table
+    :data-source-url="url.list"
+    :user-config="roleConfig"
+    ref="table">
 
-    <!-- 查询区域 begin -->
-    <div class="table-page-search-wrapper">
-      <a-form layout="inline">
-        <a-row :gutter="24">
-        </a-row>
-      </a-form>
-    </div>
-    <!-- 查询区域 end -->
-    <!-- 操作按钮区域 end -->
+    <template slot="sub-table" slot-scope="record">
+      <a-tab-pane tab="Purchase detail" key="purchaseOrderSku" forceRender>
+        <purchase-order-sku-sub-table :record="record.record"/>
+      </a-tab-pane>
+      <a-tab-pane tab="Promotion detail" key="skuPromotionHistory" forceRender>
+        <sku-promotion-history-sub-table :record="record.record"/>
+      </a-tab-pane>
+    </template>
 
-    <!-- table区域 begin -->
-    <div>
-
-      <a-alert type="info" showIcon style="margin-bottom: 16px;">
-        <template slot="message">
-          <span>Selected</span>
-          <a style="font-weight: 600;padding: 0 4px;">{{ selectedRowKeys.length }}</a>
-          <span>items</span>
-          <a style="margin-left: 24px" @click="onClearSelected">Reset</a>
-        </template>
-      </a-alert>
-
-      <a-table
-        ref="table"
-        size="middle"
-        bordered
-        rowKey="id"
-        class="j-table-force-nowrap"
-        :scroll="{x:true}"
-        :loading="loading"
-        :columns="columns"
-        :dataSource="dataSource"
-        :pagination="ipagination"
-        :expandedRowKeys="expandedRowKeys"
-        :rowSelection="{selectedRowKeys, onChange: onSelectChange}"
-        @expand="handleExpand"
-        @change="handleTableChange"
+    <template slot="uploadSlot" slot-scope="tuple">
+      <a-upload
+        :disabled="disableUploadButton(tuple.text)"
+        :action="url.upload"
+        :multiple="false"
+        :headers="tokenHeader"
+        @change="handleChange"
+        :showUploadList="false"
+        :data="{purchaseID: tuple.record['id']}"
+        :beforeUpload="checkFile"
       >
+        <a-button size="small" :disabled="tuple.text === 'confirmed' || tuple.text === 'purchasing'">
+          <div v-if="tuple.text === 'waitingPayment'">
+            <a-icon type="plus"/>
+            Upload
+          </div>
+          <div v-else-if="tuple.text === 'proofUploaded'">
+            <a-icon type="delete"/>
+            Delete & re-Upload
+          </div>
+          <div v-else-if="tuple.text === 'confirmed'">
+            <a-icon type="check"/>
+            Payment Confirmed
+          </div>
+          <div v-else>
+            <a-icon type="check"/>
+            Purchasing
+          </div>
+        </a-button>
+      </a-upload>
+    </template>
 
-        <!-- 内嵌table区域 begin -->
-        <template slot="expandedRowRender" slot-scope="record">
-          <a-tabs tabPosition="top">
-            <a-tab-pane tab="Purchase detail" key="purchaseOrderSku" forceRender>
-              <purchase-order-sku-sub-table :record="record"/>
-            </a-tab-pane>
-            <a-tab-pane tab="Promotion detail" key="skuPromotionHistory" forceRender>
-              <sku-promotion-history-sub-table :record="record"/>
-            </a-tab-pane>
-          </a-tabs>
-        </template>
-        <!-- 内嵌table区域 end -->
+    <template slot="fileSlot" slot-scope="{text, record, index}">
+      <span v-if="!fileName" style="font-size: 12px;font-style: italic;">无文件</span>
+      <a-button
+        v-else
+        ghost
+        type="primary"
+        icon="download"
+        size="small"
+        @click="downloadFile(fileName)"
+      >
+        <span>预览</span>
+      </a-button>
+    </template>
 
-        <template slot="uploadSlot" slot-scope="cellValue, line">
-          <a-upload
-            :disabled="disableUploadButton(cellValue)"
-            :action="url.upload"
-            :multiple="false"
-            :headers="tokenHeader"
-            @change="handleChange"
-            :showUploadList="false"
-            :data="{purchaseID: line['id']}"
-            :beforeUpload="checkFile"
-          >
-            <a-button size="small" :disabled="cellValue === 'confirmed' || cellValue === 'purchasing'">
-              <div v-if="cellValue === 'waitingPayment'">
-                <a-icon type="plus"/>
-                Upload
-              </div>
-              <div v-else-if="cellValue === 'proofUploaded'">
-                <a-icon type="delete"/>
-                Delete & re-Upload
-              </div>
-              <div v-else-if="cellValue === 'confirmed'">
-                <a-icon type="check"/>
-                Payment Confirmed
-              </div>
-              <div v-else>
-                <a-icon type="check"/>
-                Purchasing
-              </div>
-            </a-button>
-          </a-upload>
-        </template>
+    <template slot="accountAction" slot-scope="{text, record, index}">
+      <a-popconfirm
+        title="确认将订单状态改为“已付款”？"
+        ok-text="确认"
+        cancel-text="取消"
+        @confirm="confirmPayment(text)"
+        :disabled="record['status'] === 'confirmed' || record['status'] === 'purchasing'"
+      >
+        <a-button :disabled="record['status'] === 'confirmed' || record['status'] === 'purchasing'">
+          <a-icon type="pay-circle"/>
+          确认支付
+        </a-button>
+      </a-popconfirm>
+    </template>
 
-      </a-table>
-    </div>
-    <!-- table区域 end -->
+    <template slot="buyerAction" slot-scope="{text, record, index}">
+      <a-popconfirm
+        title="确认将订单状态改为“采购中”？"
+        ok-text="确认"
+        cancel-text="取消"
+        @confirm="confirmPurchase(text)"
+        :disabled="record['status'] === 'purchasing'"
+      >
+        <a-button :disabled="record['status'] === 'purchasing'">
+          <a-icon type="shopping-cart"/>
+          采购开始
+        </a-button>
+      </a-popconfirm>
+    </template>
 
-    <!-- 表单区域 -->
-    <purchase-order-modal ref="modalForm" @ok="modalFormOk"/>
+  </dynamic-user-table>
 
-  </a-card>
 </template>
 
 <script>
@@ -102,92 +100,40 @@ import PurchaseOrderModal from './modules/PurchaseOrderModal'
 import PurchaseOrderSkuSubTable from './subTables/PurchaseOrderSkuSubTable'
 import SkuPromotionHistorySubTable from './subTables/SkuPromotionHistorySubTable'
 import '@/assets/less/TableExpand.less'
-import moment from "moment";
-
+import DynamicUserTable from "@comp/dynamicTablePage/DynamicUserTable";
+import roleConfig from "./RoleConfig"
+import {ACCESS_TOKEN, TENANT_ID} from "@/store/mutation-types"
+import Vue from 'vue'
+import {getFile, postAction} from "@api/manage";
+import Template1 from "@views/jeecg/JVxeDemo/layout-demo/Template1";
 
 const URL_PREFIX = "/business/purchaseOrder/client/"
 export default {
   name: 'PurchaseOrderList',
   mixins: [JeecgListMixin],
   components: {
+    Template1,
     PurchaseOrderModal,
     PurchaseOrderSkuSubTable,
     SkuPromotionHistorySubTable,
+    DynamicUserTable
   },
   data() {
     return {
-      description: '商品采购订单列表管理页面',
-      // 表头
-      columns: [
-        {
-          title: '#',
-          key: 'rowIndex',
-          width: 60,
-          align: 'center',
-          customRender: (t, r, index) => parseInt(index) + 1
-        },
-        {
-          title: 'Order Time',
-          align: 'center',
-          dataIndex: 'createTime'
-        },
-        {
-          title: 'Invoice Number',
-          align: 'center',
-          dataIndex: 'invoiceNumber',
-        },
-        {
-          title: 'Original price(€)',
-          align: 'center',
-          dataIndex: 'totalAmount',
-        },
-        {
-          title: 'Discount(€)',
-          align: 'center',
-          dataIndex: 'discountAmount',
-        },
-        {
-          title: 'Amount to be paid(€)',
-          align: 'center',
-          dataIndex: 'finalAmount',
-        },
-        {
-          title: 'Status',
-          align: 'center',
-          dataIndex: 'status',
-          key: 'status',
-          width: 147,
-          customRender: (
-            t => {
-              switch (t) {
-                case "waitingPayment":
-                  return 'Waiting Payment'
-                case "proofUploaded":
-                  return 'Proof uploaded'
-                case "confirmed":
-                  return "Confirmed"
-                case "purchasing":
-                  return "Purchasing"
-              }
-            })
-        },
-        {
-          title: 'Payment Document',
-          align: 'center',
-          dataIndex: 'status',
-          key: 'doc_status',
-          scopedSlots: {customRender: 'uploadSlot'},
-        }
-      ],
+      description: 'Purchase management',
       // 字典选项
       dictOptions: {},
       // 展开的行test
       expandedRowKeys: [],
       url: {
         list: URL_PREFIX + 'list',
-        upload: window._CONFIG['domainURL'] + URL_PREFIX + 'uploadPaymentFile'
+        upload: window._CONFIG['domainURL'] + URL_PREFIX + 'uploadPaymentFile',
+        downloadFile: '/business/purchaseOrder/downloadFile',
+        confirmPayment: '/business/purchaseOrder/confirmPayment',
+        confirmPurchase: '/business/purchaseOrder/confirmPurchase',
       },
       superFieldList: [],
+      roleConfig: roleConfig,
       // upload button
       headers: {
         authorization: 'authorization-text',
@@ -195,9 +141,16 @@ export default {
     }
   },
   created() {
-    this.getSuperFieldList();
   },
   computed: {
+    tokenHeader() {
+      let head = {'X-Access-Token': Vue.ls.get(ACCESS_TOKEN)}
+      let tenantid = Vue.ls.get(TENANT_ID)
+      if (tenantid) {
+        head['tenant-id'] = tenantid
+      }
+      return head;
+    }
   },
   methods: {
     initDictConfig() {
@@ -207,29 +160,6 @@ export default {
       return status === 'confirmed'
     },
 
-    handleExpand(expanded, record) {
-      this.expandedRowKeys = []
-      if (expanded === true) {
-        this.expandedRowKeys.push(record.id)
-      }
-    },
-    getSuperFieldList() {
-      let fieldList = [];
-      fieldList.push({type: 'datetime', value: 'createTime', text: '创建日期'})
-      fieldList.push({type: 'string', value: 'invoiceNumber', text: '订单发票号', dictCode: ''})
-      fieldList.push({
-        type: 'sel_search',
-        value: 'clientId',
-        text: '客户ID',
-        dictTable: 'client',
-        dictText: 'internal_code',
-        dictCode: 'id'
-      })
-      fieldList.push({type: 'BigDecimal', value: 'totalAmount', text: '应付金额', dictCode: ''})
-      fieldList.push({type: 'BigDecimal', value: 'discountAmount', text: '减免总金额', dictCode: ''})
-      fieldList.push({type: 'BigDecimal', value: 'finalAmount', text: '最终金额', dictCode: ''})
-      this.superFieldList = fieldList
-    },
     handleChange(info) {
       if (info.file.status !== 'uploading') {
         console.log(info.file, info.fileList);
@@ -241,12 +171,43 @@ export default {
       }
       this.loadData()
     },
+
     checkFile(file, fileList) {
       if (file.name.length >= 50) {
         this.$message.warn("Filename is too long, can not exceed 50 characters!")
         return false
       }
       return true
+    },
+
+    downloadFile(filename) {
+      // download file by name
+      const param = {filename: filename}
+      getFile(this.url.downloadFile, param)
+        .then(res => {
+          console.log(res)
+          //let rawData = window.atob(res.result.data)
+          //console.log("decode: \n" + rawData)
+          saveAs(res, filename)
+        })
+    },
+    confirmPayment(purchaseID) {
+      const params = {purchaseID: purchaseID}
+      postAction(this.url.confirmPayment, params)
+        .then(res => {
+          if (res.success) {
+            this.$refs.table.loadData()
+          }
+        })
+    },
+    confirmPurchase(purchaseID) {
+      const params = {purchaseID: purchaseID}
+      postAction(this.url.confirmPurchase, params)
+        .then(res => {
+          if (res.success) {
+            this.$refs.table.loadData()
+          }
+        })
     }
   }
 }
