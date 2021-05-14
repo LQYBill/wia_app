@@ -1,6 +1,6 @@
 <template>
   <div>
-    <DataTableAndAction
+    <dynamic-user-table
       :data-source-url="url.list"
       :user-config="userConfig"
       ref="table"
@@ -34,7 +34,7 @@
         />
       </template>
 
-    </DataTableAndAction>
+    </dynamic-user-table>
     <popup-confirmation ref="popup" :ok-callback="modalFormOk" :sku-identifiers="skuToBuy"/>
   </div>
 
@@ -42,19 +42,19 @@
 
 <script>
 
-import DataTableAndAction from "@comp/dynamicTablePage/DynamicUserTable";
+import DynamicUserTable from "@comp/dynamicTablePage/DynamicUserTable";
 import SkuPriceSubTable from './subTables/SkuPriceSubTable'
 import ShippingDiscountSubTable from './subTables/ShippingDiscountSubTable'
 import PopupConfirmation from './modules/ConfirmationContainer'
 import {getFileAccessHttpUrl} from "@api/manage";
-import userAction from "./RoleConfig"
+import role_config from "./RoleConfig"
 
 const rootURL = '/business/inventory/client/'
 
 export default {
   name: 'Inventory2',
   components: {
-    DataTableAndAction,
+    DynamicUserTable,
     SkuPriceSubTable,
     ShippingDiscountSubTable,
     PopupConfirmation
@@ -69,13 +69,12 @@ export default {
       },
       skuToBuy: [],
       currentUser: Object,
-      userConfig:userAction
+      userConfig:role_config
     }
   },
   computed: {}
   ,
   created() {
-    this.loadRoleConfig()
   },
   methods: {
     clear() {

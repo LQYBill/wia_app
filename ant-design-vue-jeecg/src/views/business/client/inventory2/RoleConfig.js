@@ -164,5 +164,9 @@ export default {
       console.log(skusToBuy)
       comp.$refs.popup.display(skusToBuy)
     },
+    cancelText:"Cancel",
+    cancelHandler(keys, records, comp){
+      comp.clearSelected()
+    }
   },
 }
