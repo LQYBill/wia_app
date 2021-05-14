@@ -1,7 +1,8 @@
 <template>
   <a-card class="j-inner-table-wrapper" :bordered="false">
-    <!-- table区域 begin -->
+    <!-- table section begin -->
     <div>
+      <!-- multiple selection hint -->
       <a-alert type="info" showIcon style="margin-bottom: 16px;">
         <template slot="message">
           <span>Selected</span>
@@ -11,6 +12,7 @@
         </template>
       </a-alert>
 
+      <!-- table body -->
       <a-table
         ref="table"
         size="middle"
@@ -27,19 +29,36 @@
         @expand="handleExpand"
         @change="handleTableChange"
       >
-        <!-- 内嵌table区域 begin -->
+        <!-- nested sub table section begin -->
         <template slot="expandedRowRender" slot-scope="record">
           <a-tabs tabPosition="top">
+            <!-- slot declaration for external component,
+             slot scope param:
+              {
+                record: current line
+              },
+              html tag should be: a-tab-pane
+            -->
             <slot name="sub-table" :record="record"></slot>
           </a-tabs>
         </template>
-        <!-- 内嵌table区域 end -->
+        <!-- nested table section end -->
 
+        <!-- slot for customer cell render -->
         <template
           v-for="slotItem in rowSlotColumns"
           :slot="slotItem.customRender"
           slot-scope="text, record, index"
         >
+          <!--
+          Declaration of slot for external component.
+           slot scope param:
+            object{
+              text: current value,
+              record: current line,
+              index: current line index
+            }
+           -->
           <slot
             :name="slotItem.customRender"
             :text="text"
@@ -47,13 +66,11 @@
             :index="index"
           ></slot>
         </template>
-
       </a-table>
     </div>
-    <!-- table区域 end -->
+    <!-- table section end -->
 
-    <slot name="popup" :selectedRowKeys="selectedRowKeys" :selectionRows="selectionRows"></slot>
-    <!-- 表单区域 -->
+    <!-- bottom buttons-->
     <a-space class="bottomButtons">
       <a-button type="danger" @click="cancelHandler(selectedRowKeys, selectionRows)">
         {{ cancelText }}
@@ -68,52 +85,42 @@
 
 <script>
 import {JeecgListMixin} from "@/mixins/JeecgListMixin";
-import SkuPriceSubTable from "@views/business/client/inventory/subTables/SkuPriceSubTable";
-import ShippingDiscountSubTable from "@views/business/client/inventory/subTables/ShippingDiscountSubTable";
-import PopupConfirmation from "@views/business/client/inventory/modules/ConfirmationContainer";
 import Tabs from 'ant-design-vue'
-import {getFileAccessHttpUrl} from "@api/manage";
+import {getAction} from "@api/manage";
 
 export default {
   name: "DataTableAndAction",
   mixins: [JeecgListMixin],
   components: {
-    SkuPriceSubTable,
-    ShippingDiscountSubTable,
-    PopupConfirmation,
     Tabs
   },
   props: {
-    /* column definition, see a-table / columns */
-    columns: Array,
-    /* server urls, begin after domaine */
-    url: {
-      list: String,
-      exportXlsUrl: String
+    /* url for data source, after the domaine, return type: Page */
+    dataSourceUrl: {
+      type: String,
+      required: true
     },
-    okText: String,
-    okHandler: Function,
-    cancelText: String,
-    cancelHandler: Function,
+    userConfig: {
+      type: Object,
+      required: true
+    },
   },
   data() {
     return {
       description: 'Abstract data table',
+      /* table column definition, same as (ant-vue-design/a-table/columns) */
+      columns: [],
       dictOptions: {},
       // key of expanded row
       expandedRowKeys: [],
-
+      url: {
+        list: this.dataSourceUrl
+      },
       superFieldList: [],
     }
   },
   created() {
     this.getSuperFieldList();
-    for (const item of this.columns) {
-      console.log("col:")
-      console.log(item)
-      console.log("col slot:")
-      console.log(item.scopedSlots)
-    }
   },
   computed: {
     importExcelUrl() {
@@ -126,7 +133,12 @@ export default {
         })
         .map(item => item.scopedSlots);
     },
-
+    okText() {
+      return (this.currentUser.okText || "OK")
+    },
+    cancelText() {
+      return (this.currentUser.cancelText || "Cancel")
+    }
   },
   methods: {
     initDictConfig() {
@@ -154,9 +166,32 @@ export default {
       fieldList.push({type: 'string', value: 'imageSource', text: '图片链接', dictCode: ''})
       this.superFieldList = fieldList
     },
-    clearSelected(){
+    clearSelected() {
       this.selectedRowKeys = []
       this.selectionRows = []
+    },
+    loadRoleConfig() {
+      getAction("/sys/api/queryLoginUserRole", undefined)
+        .then(res => {
+          let code = String(res)
+          this.currentUser = this.userConfig[code]
+          if (!this.currentUser) {
+            this.$message.error("You don't have permission to this page!")
+            this.columns = []
+            return
+          }
+          this.columns = this.currentUser.columns
+        })
+    },
+    okHandler(keys, records) {
+      if (this.currentUser.okHandler) {
+        this.currentUser.okHandler(keys, records, this)
+      }
+    },
+    cancelHandler(keys, records) {
+      if (this.currentUser.cancelHandler) {
+        this.currentUser.cancelHandler(keys, records, this)
+      }
     }
   },
 
