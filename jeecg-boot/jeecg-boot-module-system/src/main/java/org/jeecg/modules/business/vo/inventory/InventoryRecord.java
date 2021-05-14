@@ -14,10 +14,10 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.io.Serializable;
 
 /**
- * @Description: SKU表
- * @Author: jeecg-boot
+ * @Description: Record in client Inventory page
+ * @Author: Wenke
  * @Date: 2021-05-08
- * @Version: V1.0
+ * @Version: V1.1
  */
 @ApiModel(value = "Inventory Record", description = "Entry in client inventory page")
 @Data
@@ -39,12 +39,14 @@ public class InventoryRecord implements Serializable {
     @Dict(dictTable = "product", dicText = "en_name", dicCode = "id")
     @ApiModelProperty(value = "商品ID")
     private String productId;
+
     /**
      * ERP中商品代码
      */
     @Excel(name = "ERP中商品代码", width = 15)
     @ApiModelProperty(value = "ERP中商品代码")
     private String erpCode;
+
     /**
      * 库存数量
      */
@@ -59,6 +61,10 @@ public class InventoryRecord implements Serializable {
     @Excel(name = "redQuantity", width = 15)
     @ApiModelProperty(value = "redQuantity")
     private Integer redQuantity;
+
+    @Excel(name = "platform Order Quantity", width = 15)
+    @ApiModelProperty(value = "platformOrderQuantity")
+    private Integer platformOrderQuantity;
 
     /**
      * 图片链接

@@ -52,35 +52,28 @@
         </template>
         <!-- 内嵌table区域 end -->
 
-        <template slot="htmlSlot" slot-scope="text">
-          <div v-html="text"></div>
-        </template>
-
         <template slot="imgSlot" slot-scope="text">
           <div style="font-size: 12px;font-style: italic;">
-            <span v-if="!text">无图片</span>
-            <img v-else :src="getImgView(text)" alt="" style="max-width:80px;height:25px;"/>
+            <span v-if="!text">No picture available</span>
+            <img v-else
+                 :src="getImgView(text)"
+                 :preview="getImgView(text)"
+                 alt="Sku picture"
+                 style="min-width:50px;max-width:80px;height:50px;"
+            />
           </div>
         </template>
 
-
-        <template slot="fileSlot" slot-scope="text">
-          <span v-if="!text" style="font-size: 12px;font-style: italic;">无文件</span>
-          <a-button
-            v-else
-            ghost
-            type="primary"
-            icon="download"
-            size="small"
-            @click="downloadFile(text)"
-          >
-            <span>下载</span>
-          </a-button>
+        <template slot="shippingQuantitySlot" slot-scope="text, record, index">
+          <a-tooltip title="Purchasing" style="color: #00DB00">
+            {{ dealNull(record['greenQuantity']) }}
+          </a-tooltip>
+          |
+          <a-tooltip title="Pending" style="color: #cc0000">
+            {{ dealNull(record['redQuantity']) }}
+          </a-tooltip>
         </template>
 
-        <template slot="action" slot-scope="text, record">
-          <a @click="handleBuy(record)">Buy</a>
-        </template>
       </a-table>
     </div>
     <!-- table区域 end -->
@@ -154,18 +147,15 @@ export default {
         },
         {
           title: '在途数量',
-          children:[
-            {
-              title: 'Red',
-              align: 'center',
-              dataIndex: 'redQuantity',
-            },
-            {
-              title: 'Green',
-              align: 'center',
-              dataIndex: 'greenQuantity',
-            }
-          ]
+          dataIndex: 'redQuantity',
+          align: 'center',
+          scopedSlots: {customRender: 'shippingQuantitySlot'}
+        },
+        {
+          title: '平台单数量',
+          align: 'center',
+          dataIndex: 'platformOrderQuantity',
+          customRender:(t,r,ibdex) => {if (t === null) return 0; else return t}
         }
       ],
       // 字典选项
@@ -187,6 +177,7 @@ export default {
     importExcelUrl() {
       return window._CONFIG['domainURL'] + this.url.importExcelUrl
     }
+
   },
   methods: {
     initDictConfig() {
@@ -214,15 +205,16 @@ export default {
       fieldList.push({type: 'string', value: 'imageSource', text: '图片链接', dictCode: ''})
       this.superFieldList = fieldList
     },
-    handleBuy(record) {
-      this.skusToBuy = [record['id']]
-      console.log('skus id: ' + this.skusToBuy)
-      this.$refs.popup.display()
-    },
     handleOrder() {
       this.skusToBuy = this.selectionRows.map(r => (r['id']))
       this.$refs.popup.display()
     },
+    dealNull(value) {
+      if (value === null) {
+        return 0
+      }
+      return value
+    }
   }
 }
 </script>
