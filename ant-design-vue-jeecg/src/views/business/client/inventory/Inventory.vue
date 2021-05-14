@@ -177,7 +177,6 @@ export default {
     importExcelUrl() {
       return window._CONFIG['domainURL'] + this.url.importExcelUrl
     }
-
   },
   methods: {
     initDictConfig() {
