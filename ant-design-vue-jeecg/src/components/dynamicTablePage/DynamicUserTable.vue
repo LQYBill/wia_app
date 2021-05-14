@@ -72,11 +72,17 @@
 
     <!-- bottom buttons-->
     <a-space class="bottomButtons">
-      <a-button type="danger" @click="cancelHandler(selectedRowKeys, selectionRows)">
-        {{ cancelText }}
+      <a-button
+        v-if="currentUser.cancelText"
+        type="danger"
+        @click="cancelHandler(selectedRowKeys, selectionRows)">
+        {{ currentUser.cancelText }}
       </a-button>
-      <a-button type="primary" @click="okHandler(selectedRowKeys, selectionRows)">
-        {{ okText }}
+      <a-button
+        v-if="currentUser.okText"
+        type="primary"
+        @click="okHandler(selectedRowKeys, selectionRows)">
+        {{ currentUser.okText }}
         <a-icon type="right"/>
       </a-button>
     </a-space>
@@ -117,6 +123,8 @@ export default {
         list: this.dataSourceUrl
       },
       superFieldList: [],
+      buttonDisplay: true,
+      currentUser:{}
     }
   },
   created() {
@@ -133,14 +141,6 @@ export default {
           return item.scopedSlots;
         })
         .map(item => item.scopedSlots);
-    },
-    okText() {
-      if (this.currentUser)
-        return (this.currentUser.okText || "OK")
-    },
-    cancelText() {
-      if (this.currentUser)
-        return (this.currentUser.cancelText || "Cancel")
     }
   },
   methods: {
@@ -181,6 +181,7 @@ export default {
             return
           }
           this.columns = this.currentUser.columns
+          this.buttonDisplay = this.currentUser.buttonDisplay
         })
     },
     okHandler(keys, records) {
