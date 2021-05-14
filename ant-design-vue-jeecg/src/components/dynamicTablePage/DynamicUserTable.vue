@@ -121,6 +121,7 @@ export default {
   },
   created() {
     this.getSuperFieldList();
+    this.loadRoleConfig();
   },
   computed: {
     importExcelUrl() {
@@ -134,10 +135,12 @@ export default {
         .map(item => item.scopedSlots);
     },
     okText() {
-      return (this.currentUser.okText || "OK")
+      if (this.currentUser)
+        return (this.currentUser.okText || "OK")
     },
     cancelText() {
-      return (this.currentUser.cancelText || "Cancel")
+      if (this.currentUser)
+        return (this.currentUser.cancelText || "Cancel")
     }
   },
   methods: {
@@ -166,18 +169,15 @@ export default {
       fieldList.push({type: 'string', value: 'imageSource', text: '图片链接', dictCode: ''})
       this.superFieldList = fieldList
     },
-    clearSelected() {
-      this.selectedRowKeys = []
-      this.selectionRows = []
-    },
     loadRoleConfig() {
       getAction("/sys/api/queryLoginUserRole", undefined)
         .then(res => {
           let code = String(res)
           this.currentUser = this.userConfig[code]
           if (!this.currentUser) {
-            this.$message.error("You don't have permission to this page!")
+            this.$message.error("An accident occurred, you shouldn't see this page.")
             this.columns = []
+            this.dataSource = []
             return
           }
           this.columns = this.currentUser.columns
@@ -192,7 +192,11 @@ export default {
       if (this.currentUser.cancelHandler) {
         this.currentUser.cancelHandler(keys, records, this)
       }
-    }
+    },
+    clearSelected() {
+      this.selectedRowKeys = []
+      this.selectionRows = []
+    },
   },
 
 }
