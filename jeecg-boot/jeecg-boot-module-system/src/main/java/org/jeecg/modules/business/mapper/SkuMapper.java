@@ -23,7 +23,6 @@ public interface SkuMapper extends BaseMapper<Sku> {
 
     List<Sku> selectByMainId(@Param("mainId") String mainId);
 
-
     List<InventoryRecord> pageSkuByClientId(String clientId, long offset, long size);
 
     long countTotal(String clientId);

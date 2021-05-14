@@ -147,7 +147,10 @@ public interface ISysUserService extends IService<SysUser> {
 	 */
 	Set<String> getUserRolesSet(String username);
 
-	/**
+
+    String getLoginUserRole();
+
+    /**
 	 * 通过用户名获取用户权限集合
 	 *
 	 * @param username 用户名

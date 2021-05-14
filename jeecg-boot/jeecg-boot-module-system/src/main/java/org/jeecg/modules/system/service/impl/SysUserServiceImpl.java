@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.shiro.SecurityUtils;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.constant.CacheConstant;
 import org.jeecg.common.constant.CommonConstant;
@@ -164,6 +165,12 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		List<String> roles = sysUserRoleMapper.getRoleByUserName(username);
 		log.info("-------通过数据库读取用户拥有的角色Rules------username： " + username + ",Roles size: " + (roles == null ? 0 : roles.size()));
 		return new HashSet<>(roles);
+	}
+
+	@Override
+	public String getLoginUserRole(){
+		LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+		return sysUserRoleMapper.getRoleCodeByUserID(sysUser.getId());
 	}
 
 	/**

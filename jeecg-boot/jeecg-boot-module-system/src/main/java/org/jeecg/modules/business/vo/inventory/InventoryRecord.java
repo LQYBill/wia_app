@@ -32,6 +32,10 @@ public class InventoryRecord implements Serializable {
     @ApiModelProperty(value = "主键")
     private String id;
 
+    @ApiModelProperty(value = "client id")
+    @Dict(dictTable = "client", dicText = "internal_code", dicCode = "id")
+    private String clientId;
+
     /**
      * 商品ID
      */

@@ -119,20 +119,19 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
         // search client id for current user
         Client client = clientService.getCurrentClient();
         // in case of other roles
-        if (null == client) {
-            page.setRecords(Collections.emptyList());
-            page.setTotal(0);
-        } else {
-            String clientId = client.getId();
-            List<InventoryRecord> orders = skuMapper.pageSkuByClientId(clientId, page.offset(), page.getSize());
-            page.setRecords(orders);
-            page.setTotal(skuMapper.countTotal(clientId));
+        String clientId = null;
+        if (null != client) {
+            clientId = client.getId();
         }
+        List<InventoryRecord> orders = skuMapper.pageSkuByClientId(clientId, page.offset(), page.getSize());
+        page.setRecords(orders);
+        page.setTotal(skuMapper.countTotal(clientId));
+
     }
 
     @Override
     public void addInventory(List<SkuQuantity> skuQuantities) {
-        addInventory(skuQuantities,Collections.emptyList());
+        addInventory(skuQuantities, Collections.emptyList());
     }
 
 
@@ -149,11 +148,11 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
                         )
                 );
 
-        if(!platformOrderIDs.isEmpty()){
+        if (!platformOrderIDs.isEmpty()) {
             List<SkuQuantity> used = platformOrderContentMapper.searchOrderContent(platformOrderIDs);
-            for(SkuQuantity sq : used){
+            for (SkuQuantity sq : used) {
                 int quantity = quantityPurchased.get(sq.getID());
-                quantityPurchased.put(sq.getID(), quantity-sq.getQuantity());
+                quantityPurchased.put(sq.getID(), quantity - sq.getQuantity());
             }
         }
 

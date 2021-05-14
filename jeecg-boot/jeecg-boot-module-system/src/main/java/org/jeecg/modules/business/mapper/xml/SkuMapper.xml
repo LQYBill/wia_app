@@ -3,45 +3,45 @@
 <mapper namespace="org.jeecg.modules.business.mapper.SkuMapper">
 
     <delete id="deleteByMainId" parameterType="java.lang.String">
-		DELETE 
-		FROM  sku 
-		WHERE
-			 product_id = #{mainId} 	</delete>
-	
-	<select id="selectByMainId" parameterType="java.lang.String" resultType="org.jeecg.modules.business.entity.Sku">
-		SELECT * 
-		FROM  sku
-		WHERE
-			 product_id = #{mainId} 	</select>
+        DELETE
+        FROM sku
+        WHERE product_id = #{mainId}    </delete>
+
+    <select id="selectByMainId" parameterType="java.lang.String" resultType="org.jeecg.modules.business.entity.Sku">
+        SELECT *
+        FROM sku
+        WHERE product_id = #{mainId}    </select>
 
 
-	<sql id="selectSkuByClientId">
-		SELECT *
-		FROM inventory_record i
-		WHERE i.client_id = #{clientId}
-	</sql>
+    <sql id="selectSkuByClientId">
+        SELECT *
+        FROM inventory_record i
+        <if test="clientId != null">
+            WHERE i.client_id = #{clientId}
+        </if>
+    </sql>
 
     <select id="pageSkuByClientId" resultType="org.jeecg.modules.business.vo.inventory.InventoryRecord">
-		<include refid="selectSkuByClientId"/>
-		LIMIT #{offset}, #{size}
-	</select>
+        <include refid="selectSkuByClientId"/>
+        LIMIT #{offset}, #{size}
+    </select>
 
-	<select id="countTotal" resultType="java.lang.Long">
-		SELECT COUNT(*)
-		FROM (<include refid="selectSkuByClientId"/>) AS t
-	</select>
+    <select id="countTotal" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM (<include refid="selectSkuByClientId"/>) AS t
+    </select>
 
-	<update id="addSkuQuantity" parameterType="map">
-		UPDATE sku
-		SET purchasing_amount = CASE id
-		<foreach collection="quantities" close="" open="" index="ID" item="quantity" separator="">
-			WHEN #{ID} THEN purchasing_amount + #{quantity}
-		</foreach>
-		END
-		WHERE id IN
-		<foreach collection="quantities" index="ID" item="quantity" open="(" close=")" separator=",">
-			#{ID}
-		</foreach>
-	</update>
+    <update id="addSkuQuantity" parameterType="map">
+        UPDATE sku
+        SET purchasing_amount = CASE id
+        <foreach collection="quantities" close="" open="" index="ID" item="quantity" separator="">
+            WHEN #{ID} THEN purchasing_amount + #{quantity}
+        </foreach>
+        END
+        WHERE id IN
+        <foreach collection="quantities" index="ID" item="quantity" open="(" close=")" separator=",">
+            #{ID}
+        </foreach>
+    </update>
 
 </mapper>
