@@ -47,7 +47,7 @@ import SkuPriceSubTable from './subTables/SkuPriceSubTable'
 import ShippingDiscountSubTable from './subTables/ShippingDiscountSubTable'
 import PopupConfirmation from './modules/ConfirmationContainer'
 import {getFileAccessHttpUrl} from "@api/manage";
-import userAction from "./user"
+import userAction from "./RoleConfig"
 
 const rootURL = '/business/inventory/client/'
 
