@@ -13,6 +13,7 @@ import org.jeecg.modules.business.service.IPlatformOrderService;
 import org.jeecg.modules.business.vo.SkuQuantity;
 import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage;
 import org.jeecg.modules.business.vo.clientPlatformOrder.PurchaseConfirmation;
+import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrderQuantity;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -142,5 +143,18 @@ public class ClientPlatformOrderController {
         return Result.OK(d);
     }
 
+    /**
+     * Query all platform orders for current client.
+     *
+     * @return all platform orders of current client in a Result object
+     */
+    @AutoLog(value = "当前客户的平台订单数据查询")
+    @ApiOperation(value = "当前客户的平台订单数据查询", notes = "当前客户的平台订单数据查询")
+    @GetMapping(value = "/queryQuantities")
+    public Result<OrderQuantity> queryQuantities() {
+        log.info("Query order quantities of each status");
+        OrderQuantity orderQuantity = platformOrderService.queryOrderQuantities();
+        return Result.OK(orderQuantity);
+    }
 
 }
