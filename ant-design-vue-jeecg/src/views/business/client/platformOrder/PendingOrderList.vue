@@ -313,9 +313,6 @@ export default {
         estimatedTotalPrice: 0,
         reducedAmount: 0
       }
-    },
-    callback(key) {
-      console.log(key);
     }
   }
 }
