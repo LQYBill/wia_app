@@ -6,17 +6,17 @@
       </span>
       <pending-order-list/>
     </a-tab-pane>
-    <a-tab-pane key="2" force-render>
+    <a-tab-pane key="2">
       <span slot="tab">
         Purchasing orders <a-badge show-zero :count="orderQuantity.purchasing" :number-style="{ backgroundColor: '#faad14' }" :overflow-count="999" style='margin-bottom: 5px'/>
       </span>
-      Content of Tab Pane 2
+      <purchasing-order-list/>
     </a-tab-pane>
     <a-tab-pane key="3">
       <span slot="tab">
         Processed orders <a-badge show-zero :count="orderQuantity.processed" :number-style="{ backgroundColor: '#a0d911' }" :overflow-count="999" style='margin-bottom: 5px'/>
       </span>
-      Content of Tab Pane 3
+      <processed-order-list/>
     </a-tab-pane>
   </a-tabs>
 </template>
@@ -24,13 +24,17 @@
 <script>
 
 import PendingOrderList from './PendingOrderList'
+import PurchasingOrderList from './PurchasingOrderList'
+import ProcessedOrderList from './ProcessedOrderList'
 import { getAction } from '@api/manage'
 import '@assets/less/TableExpand.less'
 
 export default {
   name: 'PlatformOrderList',
   components: {
-    PendingOrderList
+    PendingOrderList,
+    PurchasingOrderList,
+    ProcessedOrderList
   },
   data() {
     return {
@@ -64,6 +68,7 @@ export default {
     },
     callback(key) {
       console.log(key);
+      this.ipagination = {};
     }
   }
 }
