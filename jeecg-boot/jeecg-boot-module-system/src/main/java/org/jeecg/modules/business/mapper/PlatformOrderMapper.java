@@ -22,7 +22,9 @@ public interface PlatformOrderMapper extends BaseMapper<PlatformOrder> {
 
     List<ClientPlatformOrderPage> pagePendingOrderByClientId(@Param("clientId") String clientId, @Param("offset") long offset, @Param("size") long size);
 
-    int countTotal(@Param("clientId") String clientId);
+    List<ClientPlatformOrderPage> pagePurchasingOrderByClientId(@Param("clientId") String clientId, @Param("offset") long offset, @Param("size") long size);
+
+    List<ClientPlatformOrderPage> pageProcessedOrderByClientId(@Param("clientId") String clientId, @Param("offset") long offset, @Param("size") long size);
 
     /**
      * Update a platform's status.

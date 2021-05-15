@@ -98,7 +98,7 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
     }
 
     @Override
-    public void initPlatformOrderPage(IPage<ClientPlatformOrderPage> page) {
+    public void pendingPlatformOrderPage(IPage<ClientPlatformOrderPage> page) {
         // search client id for current user
         Client client = clientService.getCurrentClient();
         // in case of other roles
@@ -109,7 +109,39 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
             String clientId = client.getId();
             List<ClientPlatformOrderPage> orders = platformOrderMap.pagePendingOrderByClientId(clientId, page.offset(), page.getSize());
             page.setRecords(orders);
-            page.setTotal(platformOrderMap.countTotal(clientId));
+            page.setTotal(platformOrderMap.queryQuantities(clientId).getPending());
+        }
+    }
+
+    @Override
+    public void purchasingPlatformOrderPage(IPage<ClientPlatformOrderPage> page) {
+        // search client id for current user
+        Client client = clientService.getCurrentClient();
+        // in case of other roles
+        if (null == client) {
+            page.setRecords(Collections.emptyList());
+            page.setTotal(0);
+        } else {
+            String clientId = client.getId();
+            List<ClientPlatformOrderPage> orders = platformOrderMap.pagePurchasingOrderByClientId(clientId, page.offset(), page.getSize());
+            page.setRecords(orders);
+            page.setTotal(platformOrderMap.queryQuantities(clientId).getPurchasing());
+        }
+    }
+
+    @Override
+    public void processedPlatformOrderPage(IPage<ClientPlatformOrderPage> page) {
+        // search client id for current user
+        Client client = clientService.getCurrentClient();
+        // in case of other roles
+        if (null == client) {
+            page.setRecords(Collections.emptyList());
+            page.setTotal(0);
+        } else {
+            String clientId = client.getId();
+            List<ClientPlatformOrderPage> orders = platformOrderMap.pageProcessedOrderByClientId(clientId, page.offset(), page.getSize());
+            page.setRecords(orders);
+            page.setTotal(platformOrderMap.queryQuantities(clientId).getProcessed());
         }
     }
 

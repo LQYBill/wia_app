@@ -44,7 +44,9 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
      */
     void delBatchMain(Collection<? extends Serializable> idList);
 
-    void initPlatformOrderPage(IPage<ClientPlatformOrderPage> page);
+    void pendingPlatformOrderPage(IPage<ClientPlatformOrderPage> page);
+    void purchasingPlatformOrderPage(IPage<ClientPlatformOrderPage> page);
+    void processedPlatformOrderPage(IPage<ClientPlatformOrderPage> page);
 
     OrdersStatisticData getPlatformOrdersStatisticData(List<String> orderIds);
 
