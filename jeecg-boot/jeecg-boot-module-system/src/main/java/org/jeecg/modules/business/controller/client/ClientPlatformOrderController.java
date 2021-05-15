@@ -39,18 +39,50 @@ public class ClientPlatformOrderController {
     }
 
     /**
-     * Query all platform orders for current client.
+     * Query all pending platform orders for current client.
      *
-     * @return all platform orders of current client in a Result object
+     * @return all pending platform orders of current client in a Result object
      */
-    @AutoLog(value = "当前客户的平台订单列表查询")
-    @ApiOperation(value = "当前客户的平台订单列表查询", notes = "当前客户的平台订单列表查询")
+    @AutoLog(value = "当前客户的待处理平台订单列表查询")
+    @ApiOperation(value = "当前客户的待处理平台订单列表查询", notes = "当前客户的待处理平台订单列表查询")
     @GetMapping(value = "/list")
-    public Result<IPage<ClientPlatformOrderPage>> queryAllPlatformOrder(@RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
-                                                                        @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize) {
-        log.info("Query for client platform orders");
+    public Result<IPage<ClientPlatformOrderPage>> queryPendingPlatformOrder(@RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
+                                                                            @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize) {
+        log.info("Query for pending client platform orders");
         IPage<ClientPlatformOrderPage> page = new Page<>(pageNo, pageSize);
-        platformOrderService.initPlatformOrderPage(page);
+        platformOrderService.pendingPlatformOrderPage(page);
+        return Result.OK(page);
+    }
+
+    /**
+     * Query all purchasing platform orders for current client.
+     *
+     * @return all purchasing platform orders of current client in a Result object
+     */
+    @AutoLog(value = "当前客户的采购中平台订单列表查询")
+    @ApiOperation(value = "当前客户的采购中平台订单列表查询", notes = "当前客户的采购中平台订单列表查询")
+    @GetMapping(value = "/listPurchasing")
+    public Result<IPage<ClientPlatformOrderPage>> queryPurchasingPlatformOrder(@RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
+                                                                               @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize) {
+        log.info("Query for purchasing client platform orders");
+        IPage<ClientPlatformOrderPage> page = new Page<>(pageNo, pageSize);
+        platformOrderService.purchasingPlatformOrderPage(page);
+        return Result.OK(page);
+    }
+
+    /**
+     * Query all processed platform orders for current client.
+     *
+     * @return all processed platform orders of current client in a Result object
+     */
+    @AutoLog(value = "当前客户的已发货平台订单列表查询")
+    @ApiOperation(value = "当前客户的已发货平台订单列表查询", notes = "当前客户的已发货平台订单列表查询")
+    @GetMapping(value = "/listProcessed")
+    public Result<IPage<ClientPlatformOrderPage>> queryProcessedPlatformOrder(@RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
+                                                                              @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize) {
+        log.info("Query for processed client platform orders");
+        IPage<ClientPlatformOrderPage> page = new Page<>(pageNo, pageSize);
+        platformOrderService.processedPlatformOrderPage(page);
         return Result.OK(page);
     }
 
