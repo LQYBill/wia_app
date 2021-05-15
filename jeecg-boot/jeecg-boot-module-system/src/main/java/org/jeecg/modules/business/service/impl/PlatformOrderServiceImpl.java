@@ -15,6 +15,7 @@ import org.jeecg.modules.business.vo.SkuQuantity;
 import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage;
 import org.jeecg.modules.business.vo.clientPlatformOrder.PurchaseConfirmation;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.ClientInfo;
+import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrderQuantity;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -167,6 +168,18 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
         log.info(details.toString());
         // SKU ID -> SKU detail -- (quantity) --> Order Content Detail
         return  details;
+    }
+
+    @Override
+    public OrderQuantity queryOrderQuantities() {
+        // search client id for current user
+        Client client = clientService.getCurrentClient();
+        // in case of other roles
+        if (null == client) {
+            return new OrderQuantity();
+        } else {
+            return platformOrderMap.queryQuantities(client.getId());
+        }
     }
 
 

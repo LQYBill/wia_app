@@ -7,6 +7,7 @@ import org.jeecg.modules.business.entity.PlatformOrder;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.jeecg.modules.business.vo.SkuQuantity;
 import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage;
+import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrderQuantity;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
 import org.jeecg.modules.business.vo.clientPlatformOrder.PurchaseConfirmation;
 
@@ -53,4 +54,6 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
     PurchaseConfirmation confirmPurchaseBySkuQuantity(List<SkuQuantity> skuIDQuantityMap);
 
     List<OrderContentDetail> searchPurchaseOrderDetail(List<SkuQuantity> skuQuantities);
+
+    OrderQuantity queryOrderQuantities();
 }
