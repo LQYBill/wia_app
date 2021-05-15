@@ -11,6 +11,14 @@
           AND p.status = 2
     </sql>
 
+    <sql id="allOrderByClientId">
+        SELECT p.*
+        FROM platform_order p
+                 JOIN shop s ON p.shop_id = s.id
+                 JOIN client c ON s.owner_id = c.id
+        WHERE c.id = #{clientId}
+    </sql>
+
     <select id="pagePendingOrderByClientId"
             resultType="org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage">
         <include refid="pagePendingOrderByClientId"/>
@@ -37,5 +45,13 @@
             #{item}
         </foreach>
     </update>
+
+    <select id="queryQuantities" resultType="org.jeecg.modules.business.vo.clientPlatformOrder.section.OrderQuantity">
+        SELECT
+        sum(IF(status = '1', 1, 0)) as processed,
+        sum(IF(status = '2', 1, 0)) as pending,
+        sum(IF(status = '3', 1, 0)) as purchasing
+        FROM (<include refid="allOrderByClientId"/>) AS t
+    </select>
 
 </mapper>
