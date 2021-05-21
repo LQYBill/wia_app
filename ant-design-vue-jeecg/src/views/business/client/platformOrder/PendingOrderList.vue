@@ -1,5 +1,14 @@
 <template>
   <a-card class="j-inner-table-wrapper" :bordered="false">
+    <!-- 操作按钮区域 begin -->
+    <div class="table-operator">
+      <a-button type="primary" icon="download" @click="handleExportXls('PendingOrders')">{{ $t("Export") }}</a-button>
+      <!-- 高级查询区域 -->
+      <j-super-query :fieldList="superFieldList" ref="superQueryModal"
+                     @handleSuperQuery="handleSuperQuery"></j-super-query>
+    </div>
+    <!-- 操作按钮区域 end -->
+
     <template>
       <a-row :gutter="16">
         <a-col :span="6">
@@ -242,37 +251,29 @@ export default {
       fieldList.push({
         type: 'sel_search',
         value: 'shopId',
-        text: '店铺ID',
+        text: 'Shop ID',
         dictTable: 'shop',
         dictText: 'erp_code',
         dictCode: 'id'
       })
-      fieldList.push({
-        type: 'sel_search',
-        value: 'logisticChannelName',
-        text: '物流渠道',
-        dictTable: 'logistic_channel',
-        dictText: 'zh_name',
-        dictCode: 'zh_name'
-      })
-      fieldList.push({type: 'string', value: 'platformOrderId', text: '平台订单号码', dictCode: ''})
-      fieldList.push({type: 'string', value: 'platformOrderNumber', text: '平台订单交易号', dictCode: ''})
-      fieldList.push({type: 'string', value: 'trackingNumber', text: '物流跟踪号', dictCode: ''})
-      fieldList.push({type: 'date', value: 'orderTime', text: '订单交易时间'})
-      fieldList.push({type: 'date', value: 'shippingTime', text: '订单发货时间'})
-      fieldList.push({type: 'string', value: 'recepient', text: '订单收件人', dictCode: ''})
-      fieldList.push({type: 'string', value: 'country', text: '订单收件人国家', dictCode: ''})
-      fieldList.push({type: 'string', value: 'postcode', text: '订单收件人邮编', dictCode: ''})
-      fieldList.push({type: 'BigDecimal', value: 'fretFee', text: '物流挂号费', dictCode: ''})
+      fieldList.push({type: 'string', value: 'platformOrderId', text: 'Serial Number', dictCode: ''})
+      fieldList.push({type: 'string', value: 'platformOrderNumber', text: 'Order Number', dictCode: ''})
+      fieldList.push({type: 'string', value: 'trackingNumber', text: 'Tracking Number', dictCode: ''})
+      fieldList.push({type: 'date', value: 'orderTime', text: 'Order time'})
+      fieldList.push({type: 'date', value: 'shippingTime', text: 'Shipping time'})
+      fieldList.push({type: 'string', value: 'recepient', text: 'Recipient', dictCode: ''})
+      fieldList.push({type: 'string', value: 'country', text: 'Country', dictCode: ''})
+      fieldList.push({type: 'string', value: 'postcode', text: 'Postcode', dictCode: ''})
+      fieldList.push({type: 'BigDecimal', value: 'fretFee', text: 'FRET fees', dictCode: ''})
       fieldList.push({
         type: 'sel_search',
         value: 'shippingInvoiceNumber',
-        text: '物流发票号',
+        text: 'Shipping fees invoice number',
         dictTable: 'shipping_invoice',
         dictText: 'invoice_number',
         dictCode: 'id'
       })
-      fieldList.push({type: 'string', value: 'status', text: '状态', dictCode: ''})
+      fieldList.push({type: 'string', value: 'status', text: 'Status', dictCode: ''})
       this.superFieldList = fieldList
     },
     computeInfo(selectedRowKeys, selectionRows) {
