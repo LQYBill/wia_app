@@ -1,12 +1,18 @@
 package org.jeecg.modules.business.controller.client;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.shiro.SecurityUtils;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.aspect.annotation.AutoLog;
+import org.jeecg.common.system.query.QueryGenerator;
+import org.jeecg.common.system.vo.LoginUser;
+import org.jeecg.common.util.oConvertUtils;
+import org.jeecg.modules.business.entity.ClientPlatformOrderContent;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.service.IPlatformOrderService;
@@ -15,10 +21,19 @@ import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage
 import org.jeecg.modules.business.vo.clientPlatformOrder.PurchaseConfirmation;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrderQuantity;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
+import org.jeecgframework.poi.excel.def.NormalExcelConstants;
+import org.jeecgframework.poi.excel.entity.ExportParams;
+import org.jeecgframework.poi.excel.view.JeecgEntityExcelView;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @Description: API handler for any request related to platform order when request sender is a client.
@@ -32,6 +47,49 @@ import java.util.List;
 @Slf4j
 public class ClientPlatformOrderController {
     private final IPlatformOrderService platformOrderService;
+
+    /**
+     * Export data filtered by conditions to a excel file
+     *
+     * @param request       a request that contains the condition
+     * @param platformOrder a model and view
+     */
+    @RequestMapping(value = "/exportXls")
+    public ModelAndView exportXls(HttpServletRequest request, PlatformOrder platformOrder) {
+        // Step.1 组装查询条件查询数据
+        QueryWrapper<PlatformOrder> queryWrapper = QueryGenerator.initQueryWrapper(platformOrder, request.getParameterMap());
+        LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+
+        //Step.2 获取导出数据
+        List<PlatformOrder> queryList = platformOrderService.list(queryWrapper);
+        // 过滤选中数据
+        String selections = request.getParameter("selections");
+        List<PlatformOrder> platformOrderList;
+        if (oConvertUtils.isEmpty(selections)) {
+            platformOrderList = queryList;
+        } else {
+            List<String> selectionList = Arrays.asList(selections.split(","));
+            platformOrderList = queryList.stream().filter(item -> selectionList.contains(item.getId())).collect(Collectors.toList());
+        }
+
+        // Step.3 组装pageList
+        List<ClientPlatformOrderPage> pageList = new ArrayList<>();
+        for (PlatformOrder main : platformOrderList) {
+            ClientPlatformOrderPage vo = new ClientPlatformOrderPage();
+            BeanUtils.copyProperties(main, vo);
+            List<ClientPlatformOrderContent> platformOrderContentList = platformOrderService.selectClientVersionByMainId(main.getId());
+            vo.setPlatformOrderContentList(platformOrderContentList);
+            pageList.add(vo);
+        }
+
+        // Step.4 AutoPoi 导出Excel
+        ModelAndView mv = new ModelAndView(new JeecgEntityExcelView());
+        mv.addObject(NormalExcelConstants.FILE_NAME, "Platform order list");
+        mv.addObject(NormalExcelConstants.CLASS, ClientPlatformOrderPage.class);
+        mv.addObject(NormalExcelConstants.PARAMS, new ExportParams("Platform order data", "Export by:" + sysUser.getRealname(), "Orders"));
+        mv.addObject(NormalExcelConstants.DATA_LIST, pageList);
+        return mv;
+    }
 
     @Autowired
     public ClientPlatformOrderController(IPlatformOrderService platformOrderService) {
