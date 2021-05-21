@@ -1,6 +1,7 @@
 package org.jeecg.modules.business.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import org.jeecg.modules.business.entity.ClientPlatformOrderContent;
 import org.jeecg.modules.business.entity.OrderContentDetail;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.entity.PlatformOrder;
@@ -51,6 +52,7 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
     OrdersStatisticData getPlatformOrdersStatisticData(List<String> orderIds);
 
     List<PlatformOrderContent> selectByMainId(String mainId);
+    List<ClientPlatformOrderContent> selectClientVersionByMainId(String mainId);
 
     PurchaseConfirmation confirmPurchaseByPlatformOrder(List<String> platformOrderIdList);
     PurchaseConfirmation confirmPurchaseBySkuQuantity(List<SkuQuantity> skuIDQuantityMap);

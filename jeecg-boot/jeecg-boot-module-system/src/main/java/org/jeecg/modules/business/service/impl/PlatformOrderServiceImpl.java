@@ -3,10 +3,7 @@ package org.jeecg.modules.business.service.impl;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
-import org.jeecg.modules.business.entity.Client;
-import org.jeecg.modules.business.entity.OrderContentDetail;
-import org.jeecg.modules.business.entity.PlatformOrder;
-import org.jeecg.modules.business.entity.PlatformOrderContent;
+import org.jeecg.modules.business.entity.*;
 import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
 import org.jeecg.modules.business.service.IClientService;
@@ -156,6 +153,11 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
     @Override
     public List<PlatformOrderContent> selectByMainId(String mainId) {
         return platformOrderContentMap.selectByMainId(mainId);
+    }
+
+    @Override
+    public List<ClientPlatformOrderContent> selectClientVersionByMainId(String mainId) {
+        return platformOrderContentMap.selectClientVersionByMainId(mainId);
     }
 
     @Override

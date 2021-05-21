@@ -13,6 +13,12 @@
         FROM platform_order_content
         WHERE platform_order_id = #{mainId}    </select>
 
+    <select id="selectClientVersionByMainId" parameterType="java.lang.String"
+            resultType="org.jeecg.modules.business.entity.ClientPlatformOrderContent">
+        SELECT *
+        FROM platform_order_content
+        WHERE platform_order_id = #{mainId}    </select>
+
     <select id="searchOrderContent" resultType="org.jeecg.modules.business.vo.SkuQuantity">
         SELECT sku_id as 'key', sum(quantity) AS 'value'
         FROM platform_order_content
