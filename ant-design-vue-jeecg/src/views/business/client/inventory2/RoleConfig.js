@@ -162,7 +162,8 @@ export default {
       }
       let skusToBuy = records.map(r => (r['id']))
       console.log(skusToBuy)
-      comp.$refs.popup.display(skusToBuy)
+      console.log(comp.$refs)
+      comp.$refs["popup"].display(skusToBuy)
     },
     cancelText:"Cancel",
     cancelHandler(keys, records, comp){

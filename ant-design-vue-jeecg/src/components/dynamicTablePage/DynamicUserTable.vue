@@ -110,6 +110,13 @@ export default {
       type: Object,
       required: true
     },
+    /**
+     * The father component that uses this component
+     */
+    host: {
+      type: Object,
+      required: true
+    }
   },
   data() {
     return {
@@ -124,7 +131,7 @@ export default {
       },
       superFieldList: [],
       buttonDisplay: true,
-      currentUser:{}
+      currentUser: {}
     }
   },
   created() {
@@ -186,12 +193,12 @@ export default {
     },
     okHandler(keys, records) {
       if (this.currentUser.okHandler) {
-        this.currentUser.okHandler(keys, records, this)
+        this.currentUser.okHandler(keys, records, this.host)
       }
     },
     cancelHandler(keys, records) {
       if (this.currentUser.cancelHandler) {
-        this.currentUser.cancelHandler(keys, records, this)
+        this.currentUser.cancelHandler(keys, records, this.host)
       }
     },
     clearSelected() {

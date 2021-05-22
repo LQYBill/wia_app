@@ -2,6 +2,7 @@
   <dynamic-user-table
     :data-source-url="url.list"
     :user-config="roleConfig"
+    :host="this"
     ref="table">
 
     <template slot="sub-table" slot-scope="record">

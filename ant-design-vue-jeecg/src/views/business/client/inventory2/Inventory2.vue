@@ -3,6 +3,7 @@
     <dynamic-user-table
       :data-source-url="url.list"
       :user-config="userConfig"
+      :host="this"
       ref="table"
     >
       <template slot="sub-table" slot-scope="record">
@@ -69,7 +70,7 @@ export default {
       },
       skuToBuy: [],
       currentUser: Object,
-      userConfig:role_config
+      userConfig:role_config,
     }
   },
   computed: {}
