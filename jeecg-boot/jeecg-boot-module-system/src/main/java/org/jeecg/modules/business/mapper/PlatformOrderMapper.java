@@ -5,6 +5,7 @@ import com.google.common.collect.Lists;
 import org.apache.ibatis.annotations.Param;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage;
+import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrderQuantity;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -21,7 +22,9 @@ public interface PlatformOrderMapper extends BaseMapper<PlatformOrder> {
 
     List<ClientPlatformOrderPage> pagePendingOrderByClientId(@Param("clientId") String clientId, @Param("offset") long offset, @Param("size") long size);
 
-    int countTotal(@Param("clientId") String clientId);
+    List<ClientPlatformOrderPage> pagePurchasingOrderByClientId(@Param("clientId") String clientId, @Param("offset") long offset, @Param("size") long size);
+
+    List<ClientPlatformOrderPage> pageProcessedOrderByClientId(@Param("clientId") String clientId, @Param("offset") long offset, @Param("size") long size);
 
     /**
      * Update a platform's status.
@@ -38,5 +41,7 @@ public interface PlatformOrderMapper extends BaseMapper<PlatformOrder> {
      * @param status      the status to set
      */
     void batchUpdateStatus(@Param("orderIDList") List<String> orderIDList, @Param("status") int status);
+
+    OrderQuantity queryQuantities(@Param("clientId") String clientId);
 
 }

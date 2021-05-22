@@ -3,6 +3,7 @@ package org.jeecg.modules.business.mapper;
 import java.util.List;
 import java.util.Map;
 
+import org.jeecg.modules.business.entity.ClientPlatformOrderContent;
 import org.jeecg.modules.business.entity.OrderContentDetail;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -23,6 +24,7 @@ public interface PlatformOrderContentMapper extends BaseMapper<PlatformOrderCont
     boolean deleteByMainId(@Param("mainId") String mainId);
 
     List<PlatformOrderContent> selectByMainId(@Param("mainId") String mainId);
+    List<ClientPlatformOrderContent> selectClientVersionByMainId(@Param("mainId") String mainId);
 
 
     /**

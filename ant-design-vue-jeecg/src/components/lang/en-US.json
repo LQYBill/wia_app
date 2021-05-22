@@ -15,7 +15,7 @@
     "reset": "Reset"
   },
   "client": {
-    "familyName": "Family Name",
+    "familyName": "Last Name",
     "firstName": "First Name",
     "email": "Email",
     "telephone": "Telephone",
@@ -26,7 +26,7 @@
   },
   "order": {
     "orders": "orders",
-    "Content": "Order Contents",
+    "Content": "Order Content",
     "items": "items",
     "Num": "Order Number",
     "transNum": "Transaction Number",
@@ -40,10 +40,10 @@
     "postalCode": "zip code"
   },
   "logistics": {
-    "registerFee": "Registration Fee",
-    "invoiceNum": "Logistics Invoice Number"
+    "registerFee": "FRET Fees",
+    "invoiceNum": "Shipping Invoice Number"
   },
-  "storeID": "Store ID",
+  "storeID": "Store name",
   "status": "Status",
   "batchOperation": "Operations",
   "deleteConfirmation": "Are you sure you want to delete ?",

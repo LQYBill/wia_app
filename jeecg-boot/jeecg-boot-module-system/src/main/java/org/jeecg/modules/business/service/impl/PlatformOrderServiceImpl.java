@@ -3,10 +3,7 @@ package org.jeecg.modules.business.service.impl;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
-import org.jeecg.modules.business.entity.Client;
-import org.jeecg.modules.business.entity.OrderContentDetail;
-import org.jeecg.modules.business.entity.PlatformOrder;
-import org.jeecg.modules.business.entity.PlatformOrderContent;
+import org.jeecg.modules.business.entity.*;
 import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
 import org.jeecg.modules.business.service.IClientService;
@@ -15,6 +12,7 @@ import org.jeecg.modules.business.vo.SkuQuantity;
 import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage;
 import org.jeecg.modules.business.vo.clientPlatformOrder.PurchaseConfirmation;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.ClientInfo;
+import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrderQuantity;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -97,7 +95,7 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
     }
 
     @Override
-    public void initPlatformOrderPage(IPage<ClientPlatformOrderPage> page) {
+    public void pendingPlatformOrderPage(IPage<ClientPlatformOrderPage> page) {
         // search client id for current user
         Client client = clientService.getCurrentClient();
         // in case of other roles
@@ -108,7 +106,39 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
             String clientId = client.getId();
             List<ClientPlatformOrderPage> orders = platformOrderMap.pagePendingOrderByClientId(clientId, page.offset(), page.getSize());
             page.setRecords(orders);
-            page.setTotal(platformOrderMap.countTotal(clientId));
+            page.setTotal(platformOrderMap.queryQuantities(clientId).getPending());
+        }
+    }
+
+    @Override
+    public void purchasingPlatformOrderPage(IPage<ClientPlatformOrderPage> page) {
+        // search client id for current user
+        Client client = clientService.getCurrentClient();
+        // in case of other roles
+        if (null == client) {
+            page.setRecords(Collections.emptyList());
+            page.setTotal(0);
+        } else {
+            String clientId = client.getId();
+            List<ClientPlatformOrderPage> orders = platformOrderMap.pagePurchasingOrderByClientId(clientId, page.offset(), page.getSize());
+            page.setRecords(orders);
+            page.setTotal(platformOrderMap.queryQuantities(clientId).getPurchasing());
+        }
+    }
+
+    @Override
+    public void processedPlatformOrderPage(IPage<ClientPlatformOrderPage> page) {
+        // search client id for current user
+        Client client = clientService.getCurrentClient();
+        // in case of other roles
+        if (null == client) {
+            page.setRecords(Collections.emptyList());
+            page.setTotal(0);
+        } else {
+            String clientId = client.getId();
+            List<ClientPlatformOrderPage> orders = platformOrderMap.pageProcessedOrderByClientId(clientId, page.offset(), page.getSize());
+            page.setRecords(orders);
+            page.setTotal(platformOrderMap.queryQuantities(clientId).getProcessed());
         }
     }
 
@@ -123,6 +153,11 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
     @Override
     public List<PlatformOrderContent> selectByMainId(String mainId) {
         return platformOrderContentMap.selectByMainId(mainId);
+    }
+
+    @Override
+    public List<ClientPlatformOrderContent> selectClientVersionByMainId(String mainId) {
+        return platformOrderContentMap.selectClientVersionByMainId(mainId);
     }
 
     @Override
@@ -167,6 +202,18 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
         log.info(details.toString());
         // SKU ID -> SKU detail -- (quantity) --> Order Content Detail
         return  details;
+    }
+
+    @Override
+    public OrderQuantity queryOrderQuantities() {
+        // search client id for current user
+        Client client = clientService.getCurrentClient();
+        // in case of other roles
+        if (null == client) {
+            return new OrderQuantity();
+        } else {
+            return platformOrderMap.queryQuantities(client.getId());
+        }
     }
 
 

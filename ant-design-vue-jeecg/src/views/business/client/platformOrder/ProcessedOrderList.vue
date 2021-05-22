@@ -1,46 +1,5 @@
 <template>
   <a-card class="j-inner-table-wrapper" :bordered="false">
-    <!-- 操作按钮区域 begin -->
-    <div class="table-operator">
-      <a-button type="primary" icon="download" @click="handleExportXls('PendingOrders')">{{ $t("Export") }}</a-button>
-      <!-- 高级查询区域 -->
-      <j-super-query :fieldList="superFieldList" ref="superQueryModal"
-                     @handleSuperQuery="handleSuperQuery"></j-super-query>
-    </div>
-    <!-- 操作按钮区域 end -->
-
-    <template>
-      <a-row :gutter="16">
-        <a-col :span="6">
-          <a-statistic title="SKU Number" :value="orderData.skuNumber" style="margin-right: 50px">
-            <template #suffix>
-              <span>units</span>
-            </template>
-          </a-statistic>
-        </a-col>
-        <a-col :span="6">
-          <a-statistic title="Total Quantity" :value="orderData.totalQuantity" class="demo-class">
-            <template #suffix>
-              <span>units</span>
-            </template>
-          </a-statistic>
-        </a-col>
-        <a-col :span="6">
-          <a-statistic title="Estimated Price" :value="orderData.estimatedTotalPrice" class="demo-class">
-            <template #suffix>
-              <span>€</span>
-            </template>
-          </a-statistic>
-        </a-col>
-        <a-col :span="6">
-          <a-statistic title="Reduced Amount" :value="orderData.reducedAmount" class="demo-class">
-            <template #suffix>
-              <span>€</span>
-            </template>
-          </a-statistic>
-        </a-col>
-      </a-row>
-    </template>
 
     <!-- 查询区域 begin -->
     <div class="table-page-search-wrapper">
@@ -50,6 +9,15 @@
       </a-form>
     </div>
     <!-- 查询区域 end -->
+
+    <!-- 操作按钮区域 begin -->
+    <div class="table-operator">
+      <a-button type="primary" icon="download" @click="handleExportXls('ProcessedOrders')">{{ $t("Export") }}</a-button>
+      <!-- 高级查询区域 -->
+      <j-super-query :fieldList="superFieldList" ref="superQueryModal"
+                     @handleSuperQuery="handleSuperQuery"></j-super-query>
+    </div>
+    <!-- 操作按钮区域 end -->
 
     <!-- table区域 begin -->
     <div>
@@ -65,7 +33,7 @@
 
 
       <a-table
-        ref="table"
+        ref="table3"
         size="middle"
         bordered
         rowKey="id"
@@ -76,7 +44,7 @@
         :dataSource="dataSource"
         :pagination="ipagination"
         :expandedRowKeys="expandedRowKeys"
-        :rowSelection="{selectedRowKeys, onChange: computeInfo}"
+        :rowSelection="{selectedRowKeys, onChange: onSelectChange}"
         @expand="handleExpand"
         @change="handleTableChange"
       >
@@ -113,7 +81,6 @@
 <script>
 
 import {JeecgListMixin} from '@/mixins/JeecgListMixin'
-import PopupConfirmation from './modules/ConfirmationContainer'
 import OrderContent from './subTables/OrderContent'
 
 import '@assets/less/TableExpand.less'
@@ -121,15 +88,14 @@ import '@assets/less/TableExpand.less'
 const {postAction} = require("@api/manage");
 
 export default {
-  name: 'PendingOrderList',
+  name: 'ProcessedOrderList',
   mixins: [JeecgListMixin],
   components: {
-    PopupConfirmation,
-    OrderContent,
+    OrderContent
   },
   data() {
     return {
-      description: 'Pending order page',
+      description: 'Processed order page',
       // 表头
       columns: [
         {
@@ -219,20 +185,13 @@ export default {
       // 展开的行test
       expandedRowKeys: [],
       url: {
-        list: '/business/clientPlatformOrder/list',
+        list: '/business/clientPlatformOrder/listProcessed',
         delete: '/business/clientPlatformOrder/delete',
         deleteBatch: '/business/clientPlatformOrder/deleteBatch',
         exportXlsUrl: '/business/clientPlatformOrder/exportXls',
-        importExcelUrl: '/business/clientPlatformOrder/importExcel',
-        computeInfo: '/business/clientPlatformOrder/computeInfo'
+        importExcelUrl: '/business/clientPlatformOrder/importExcel'
       },
-      superFieldList: [],
-      orderData: {
-        skuNumber: 0,
-        totalQuantity: 0,
-        estimatedPrice: 0,
-        reducedAmount: 0
-      }
+      superFieldList: []
     }
   },
   created() {
@@ -275,52 +234,7 @@ export default {
       })
       fieldList.push({type: 'string', value: 'status', text: 'Status', dictCode: ''})
       this.superFieldList = fieldList
-    },
-    computeInfo(selectedRowKeys, selectionRows) {
-      this.selectedRowKeys = selectedRowKeys;
-      this.selectionRows = selectionRows;
-
-      const params = this.selectedRowKeys
-      console.log(params)
-      if (params.length === 0) {
-        this.resetOrderData()
-      } else {
-        let self = this
-        postAction(this.url.computeInfo, params)
-          .then(
-            res => {
-              console.log(res.result)
-              self.orderData = res.result
-            }
-          )
-      }
-    },
-    handleOrder() {
-      if (this.selectedRowKeys.length === 0){
-        this.$message.warning("You should select at least 1 order to continue !", 5)
-        return
-      }
-      this.$refs.popup.display()
-    },
-    onClearSelected() {
-      this.selectedRowKeys = [];
-      this.selectionRows = [];
-      this.resetOrderData()
-    },
-    resetOrderData() {
-      this.orderData = {
-        skuNumber: 0,
-        totalQuantity: 0,
-        estimatedTotalPrice: 0,
-        reducedAmount: 0
-      }
     }
   }
 }
 </script>
-<style lang="less" scoped>
-@import '~@assets/less/common.less';
-.bottomButtons {
-  margin-left: 88%;
-}
-</style>

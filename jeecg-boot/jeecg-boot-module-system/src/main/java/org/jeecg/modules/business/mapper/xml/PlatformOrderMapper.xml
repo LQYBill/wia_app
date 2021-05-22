@@ -11,15 +11,48 @@
           AND p.status = 2
     </sql>
 
+    <sql id="pagePurchasingOrderByClientId">
+        SELECT p.*
+        FROM platform_order p
+                 JOIN shop s ON p.shop_id = s.id
+                 JOIN client c ON s.owner_id = c.id
+        WHERE c.id = #{clientId}
+          AND p.status = 3
+    </sql>
+
+    <sql id="pageProcessedOrderByClientId">
+        SELECT p.*
+        FROM platform_order p
+                 JOIN shop s ON p.shop_id = s.id
+                 JOIN client c ON s.owner_id = c.id
+        WHERE c.id = #{clientId}
+          AND p.status = 1
+    </sql>
+
+    <sql id="allOrderByClientId">
+        SELECT p.*
+        FROM platform_order p
+                 JOIN shop s ON p.shop_id = s.id
+                 JOIN client c ON s.owner_id = c.id
+        WHERE c.id = #{clientId}
+    </sql>
+
     <select id="pagePendingOrderByClientId"
             resultType="org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage">
         <include refid="pagePendingOrderByClientId"/>
         LIMIT #{offset}, #{size}
     </select>
 
-    <select id="countTotal" resultType="java.lang.Integer">
-        SELECT COUNT(*)
-        FROM (<include refid="pagePendingOrderByClientId"/>) AS t
+    <select id="pagePurchasingOrderByClientId"
+            resultType="org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage">
+        <include refid="pagePurchasingOrderByClientId"/>
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="pageProcessedOrderByClientId"
+            resultType="org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage">
+        <include refid="pageProcessedOrderByClientId"/>
+        LIMIT #{offset}, #{size}
     </select>
 
     <update id="updateStatus">
@@ -37,5 +70,13 @@
             #{item}
         </foreach>
     </update>
+
+    <select id="queryQuantities" resultType="org.jeecg.modules.business.vo.clientPlatformOrder.section.OrderQuantity">
+        SELECT
+        sum(IF(status = '1', 1, 0)) as processed,
+        sum(IF(status = '2', 1, 0)) as pending,
+        sum(IF(status = '3', 1, 0)) as purchasing
+        FROM (<include refid="allOrderByClientId"/>) AS t
+    </select>
 
 </mapper>

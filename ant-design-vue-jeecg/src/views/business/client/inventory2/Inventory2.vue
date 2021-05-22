@@ -16,7 +16,7 @@
       </template>
 
       <template slot="redAndGreenCell" slot-scope="tuple">
-        <a-tooltip title="purchasing" style="color: #00DB00">
+        <a-tooltip title="Purchasing" style="color: #00DB00">
           {{ dealNull(tuple.record['greenQuantity']) }}
         </a-tooltip>
         |
