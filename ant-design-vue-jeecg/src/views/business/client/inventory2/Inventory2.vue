@@ -1,6 +1,6 @@
 <template>
   <div>
-    <dynamic-user-table
+    ²<dynamic-user-table
       :data-source-url="url.list"
       :user-config="userConfig"
       :host="this"
@@ -25,12 +25,26 @@
         </a-tooltip>
       </template>
 
+      <template slot="salesQuantitySlot" slot-scope="tuple">
+        <a-tooltip title="Sales from last 7 days">
+          {{ dealNull(tuple.record['sales7']) }}
+        </a-tooltip>
+        |
+        <a-tooltip title="Sales from last 14 days">
+          {{ dealNull(tuple.record['sales14']) }}
+        </a-tooltip>
+        |
+        <a-tooltip title="Sales from last 28 days">
+          {{ dealNull(tuple.record['sales28']) }}
+        </a-tooltip>
+      </template>
+
       <template slot="imgSlot" slot-scope="tuple">
         <span v-if="!tuple.record['imageSource']">No picture available</span>
         <img v-else
              :src="getImgView(tuple.record['imageSource'])"
              :preview="getImgView(tuple.record['imageSource'])"
-             alt="Sku picture"
+             alt="SKU picture"
              style="min-width:50px;max-width:80px;height:50px;"
         />
       </template>
