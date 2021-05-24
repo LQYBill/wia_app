@@ -43,6 +43,8 @@
                    javaType="String"/>
             <arg column="erp_code"
                  javaType="String"/>
+            <arg column="image_source"
+                 javaType="String"/>
             <arg column="product_name"
                  javaType="String"/>
             <arg javaType="org.jeecg.modules.business.entity.SkuPrice"
