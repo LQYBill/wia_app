@@ -30,6 +30,18 @@
         :dataSource="orderDetails"
       >
 
+        <template slot="imgSlot" slot-scope="text">
+          <div style="font-size: 12px;font-style: italic;">
+            <span v-if="!text">No picture available</span>
+            <img v-else
+                 :src="getImgView(text)"
+                 :preview="getImgView(text)"
+                 alt="SKU photo"
+                 style="min-width:50px;max-width:80px;height:50px;"
+            />
+          </div>
+        </template>
+
         <template slot="adjustNumber" slot-scope="text, record, index">
           <div>
             <a-input-number
@@ -48,6 +60,7 @@
 
 <script>
 import DetailList from '@comp/tools/DetailList'
+import {JeecgListMixin} from '@/mixins/JeecgListMixin'
 import {JEditableTableModelMixin} from '@/mixins/JEditableTableModelMixin'
 
 const DetailListItem = DetailList.Item
@@ -56,7 +69,7 @@ const {postAction} = require("@api/manage");
 
 export default {
   name: 'ClientPlatformOrderDetail',
-  mixins: [JEditableTableModelMixin],
+  mixins: [JEditableTableModelMixin, JeecgListMixin],
   components: {
     DetailList,
     DetailListItem,
@@ -64,6 +77,12 @@ export default {
   data() {
     return {
       columns: [
+        {
+          title: 'Photo',
+          align: 'center',
+          dataIndex: 'imageSource',
+          scopedSlots: {customRender: 'imgSlot'}
+        },
         {
           title: 'SKU Code',
           dataIndex: 'erpCode',
