@@ -53,7 +53,7 @@ public class PlatformOrder implements Serializable {
     /**
      * 创建日期
      */
-    @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(timezone = "GMT+2", pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @ApiModelProperty(value = "创建日期")
     private Date createTime;
@@ -65,7 +65,7 @@ public class PlatformOrder implements Serializable {
     /**
      * 更新日期
      */
-    @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(timezone = "GMT+2", pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @ApiModelProperty(value = "更新日期")
     private Date updateTime;
@@ -104,17 +104,17 @@ public class PlatformOrder implements Serializable {
     /**
      * 订单交易时间
      */
-    @Excel(name = "订单交易时间", width = 15, format = "yyyy-MM-dd")
-    @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd")
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    @Excel(name = "订单交易时间", width = 15, format = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(timezone = "GMT+2", pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @ApiModelProperty(value = "订单交易时间")
     private Date orderTime;
     /**
      * 订单发货时间
      */
-    @Excel(name = "订单发货时间", width = 15, format = "yyyy-MM-dd")
-    @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd")
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    @Excel(name = "订单发货时间", width = 15, format = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(timezone = "GMT+2", pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @ApiModelProperty(value = "订单发货时间")
     private Date shippingTime;
     /**
