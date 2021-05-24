@@ -65,15 +65,6 @@
 
     <!-- 表单区域 -->
     <popup-confirmation ref="popup" :ok-callback="modalFormOk" :data-for-child="selectedRowKeys"/>
-    <a-space class="bottomButtons">
-      <a-button type="danger" @click="onClearSelected">
-        Reset
-      </a-button>
-      <a-button type="primary" @click="handleOrder">
-        Place Order
-        <a-icon type="right"/>
-      </a-button>
-    </a-space>
 
   </a-card>
 </template>

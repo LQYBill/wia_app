@@ -101,7 +101,7 @@ export default {
     Tabs
   },
   props: {
-    /* url for data source, after the domaine, return type: Page */
+    /* url for data source, after the domain, return type: Page */
     dataSourceUrl: {
       type: String,
       required: true
