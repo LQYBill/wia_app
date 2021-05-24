@@ -28,7 +28,6 @@
         style="margin-bottom: 24px"
         :columns="columns"
         :dataSource="orderDetails"
-
       >
 
         <template slot="imgSlot" slot-scope="text">
@@ -47,7 +46,7 @@
           <div>
             <a-input-number
               v-model="currentQuantity[index]"
-              :min="1"
+              :min="0"
               @change="adjustOrder"
             />
           </div>
@@ -150,7 +149,7 @@ export default {
           quantity: 1
         })
       )
-      console.log("SKU to buy: " + this.skuIdentifier)
+      console.log("SKU to buy: " + this.skuIdentifiers)
       postAction(this.url.adjustOrder, params)
         .then(
           res => {

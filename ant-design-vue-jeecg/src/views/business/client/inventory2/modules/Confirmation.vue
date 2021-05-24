@@ -46,7 +46,7 @@
           <div>
             <a-input-number
               v-model="currentQuantity[index]"
-              :min="1"
+              :min="0"
               @change="adjustOrder"
             />
           </div>
@@ -142,6 +142,7 @@ export default {
   },
   methods: {
     loadData(data) {
+      console.log("data : " + data)
       const params = data.map(
         id => ({
           ID: id,
