@@ -19,10 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -187,9 +184,7 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
                         );
 
         // Get list of sku ID
-        List<String> skuList = skuQuantities.stream()
-                .map(SkuQuantity::getID)
-                .collect(Collectors.toList());
+        List<String> skuList = new ArrayList<>(skuQuantity.keySet());
 
         List<OrderContentDetail> details = platformOrderContentMap.searchSkuDetail(skuList).stream()
                 .map(
