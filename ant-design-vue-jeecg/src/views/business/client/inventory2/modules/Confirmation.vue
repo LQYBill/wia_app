@@ -7,7 +7,7 @@
         <detail-list-item term="Total Amount">{{ orderData.estimatedTotalPrice }}</detail-list-item>
         <detail-list-item term="Discount">{{ orderData.reducedAmount }}</detail-list-item>
       </detail-list>
-      <a-divider style="margin-bottom: 32px"/>
+      <a-divider style="margin-bottom: 10px"/>
       <detail-list title="Client Information">
         <detail-list-item term="First Name">{{ client.firstName }}</detail-list-item>
         <detail-list-item term="Family Name">{{ client.surname }}</detail-list-item>
@@ -21,9 +21,23 @@
           }}({{ client.companyIdType }})
         </detail-list-item>
       </detail-list>
-      <a-divider style="margin-bottom: 32px"/>
+      <a-divider style="margin-bottom: 10px"/>
 
-      <div class="title">Order Details</div>
+      <div class="title">Order Details
+        <a-tooltip :title=" getProvisionTooltip() ">
+          <a-card style='text-align: center'>
+            Stock up for
+            <a-input-number
+              v-model="currentProvisionDays"
+              :defaultValue='0'
+              :min='0'
+              :max='28'
+              @change="adjustProvision"
+            />
+            {{ currentProvisionDays > 1 ? " Days" : " Day" }}
+          </a-card>
+        </a-tooltip>
+      </div>
       <a-table
         style="margin-bottom: 24px"
         :columns="columns"
@@ -169,6 +183,7 @@ export default {
         totalQuantity: undefined,
       },
       orderDetails: [],
+      currentProvisionDays: 0,
       currentQuantity: [],
       url: {
         orderInfo: '/business/clientPlatformOrder/placeOrder',
@@ -304,7 +319,41 @@ export default {
           console.log(this.currentQuantity)
         })
     },
-
+    calculateSalesPerDay(sales7, sales14, sales28) {
+      let salesPerDay = 0;
+      if (sales14 === 0) {
+        if (sales28 === 0) {
+          salesPerDay = sales7 / 7
+        } else {
+          salesPerDay = sales7 / 7 * 0.9 + sales28/ 28 * 0.1
+        }
+      } else if (sales28 === 0) {
+        salesPerDay = sales7 / 7 * 0.7 + sales14 / 14 * 0.3
+      } else {
+        salesPerDay = sales7 / 7 * 0.6 + sales14 / 14 * 0.3 + sales28 / 28 * 0.1
+      }
+      return salesPerDay;
+    },
+    adjustProvision() {
+      for (let i = 0; i < this.skuInfoArray.length; i++) {
+        let salesPerDay = 0;
+        let sales7 = this.skuInfoArray[i]['sales7'];
+        let sales14 = this.skuInfoArray[i]['sales14'];
+        let sales28 = this.skuInfoArray[i]['sales28'];
+        let availableQuantity = this.skuInfoArray[i]['availableQuantity'];
+        let purchasingQuantity = this.skuInfoArray[i]['purchasingQuantity'];
+        let platformOrderQuantity = this.skuInfoArray[i]['platformOrderQuantity'];
+        salesPerDay = this.calculateSalesPerDay(sales7, sales14, sales28)
+        let provisionalQuantity = availableQuantity + purchasingQuantity - platformOrderQuantity;
+        let salesEstimate = Math.ceil(salesPerDay * this.currentProvisionDays)
+        if (provisionalQuantity - salesEstimate >= 0) {
+          this.currentQuantity[i] = 0
+        } else {
+          this.currentQuantity[i] = salesEstimate - provisionalQuantity
+        }
+      }
+      this.adjustOrder();
+    },
     confirmOrder() {
       const params = {
         skuQuantity: this.orderDetails.map(
