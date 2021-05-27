@@ -47,5 +47,6 @@
   "status": "Status",
   "batchOperation": "Operations",
   "deleteConfirmation": "Are you sure you want to delete ?",
-  "abbreviation": "Abbreviation"
+  "abbreviation": "Abbreviation",
+  "filter": "Filter"
 }
