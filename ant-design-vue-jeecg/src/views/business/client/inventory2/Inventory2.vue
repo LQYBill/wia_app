@@ -1,6 +1,6 @@
 <template>
   <div>
-    ²<dynamic-user-table
+    <dynamic-user-table
       :data-source-url="url.list"
       :user-config="userConfig"
       :host="this"
@@ -50,7 +50,7 @@
       </template>
 
     </dynamic-user-table>
-    <popup-confirmation ref="popup" :ok-callback="modalFormOk" :sku-identifiers="skuToBuy"/>
+    <popup-confirmation ref="popup" :ok-callback="modalFormOk" :data-for-child="skuToBuy"/>
   </div>
 
 </template>

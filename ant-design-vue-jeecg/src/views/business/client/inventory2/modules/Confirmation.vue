@@ -28,6 +28,7 @@
         style="margin-bottom: 24px"
         :columns="columns"
         :dataSource="orderDetails"
+        :pagination="false"
       >
 
         <template slot="imgSlot" slot-scope="text">
@@ -40,6 +41,32 @@
                  style="min-width:50px;max-width:80px;height:50px;"
             />
           </div>
+        </template>
+
+        <template slot="salesQuantitySlot" slot-scope="record">
+          <a-tooltip title="Sales from last 7 days">
+            {{ getSales(record['skuId'])["sales7"] }}
+          </a-tooltip>
+          |
+          <a-tooltip title="Sales from last 14 days">
+            {{ getSales(record['skuId'])["sales14"] }}
+          </a-tooltip>
+          |
+          <a-tooltip title="Sales from last 28 days">
+            {{ getSales(record['skuId'])["sales28"] }}
+          </a-tooltip>
+        </template>
+
+        <template slot="provisionalStockSlot" slot-scope="record">
+          <a-tooltip :title=" getProvisionalTooltip(record['skuId']) ">
+            {{ getProvisionalStock(record['skuId']) }}
+          </a-tooltip>
+        </template>
+
+        <template slot="futureProvisionalStockSlot" slot-scope="record">
+          <a-tooltip :title=" getFutureProvisionalTooltip(record['skuId'], record['quantity']) ">
+            {{ getProvisionalStock(record['skuId']) + record['quantity']}}
+          </a-tooltip>
         </template>
 
         <template slot="adjustNumber" slot-scope="text, record, index">
@@ -93,13 +120,26 @@ export default {
           dataIndex: 'product',
         },
         {
+          title: 'Sales from last 7/14/28 days',
+          align: 'center',
+          scopedSlots: {customRender: 'salesQuantitySlot'}
+        },
+        {
+          title: 'Provisional stock',
+          scopedSlots: {customRender: 'provisionalStockSlot'}
+        },
+        {
+          title: 'Future provisional stock',
+          scopedSlots: {customRender: 'futureProvisionalStockSlot'}
+        },
+        {
           title: 'Unit Price',
           dataIndex: 'price',
         },
         {
           title: 'Quantity',
           dataIndex: 'quantity',
-          align: 'right',
+          align: 'center',
           scopedSlots: {customRender: 'adjustNumber'},
         },
         {
@@ -138,18 +178,23 @@ export default {
     }
   },
   props: {
+    skuInfoArray: Array,
     okCallback: Function
   },
   methods: {
-    loadData(data) {
-      console.log("data : " + data)
-      const params = data.map(
-        id => ({
-          ID: id,
-          quantity: 1
-        })
+    loadData() {
+      console.log(this.skuInfoArray);
+      const params = this.skuInfoArray.map(
+        skuInfo => {
+          let sku = skuInfo["id"];
+          let provisionalStock = this.getProvisionalStock(sku);
+          return {
+            ID: sku,
+            quantity: provisionalStock < 0 ? -provisionalStock : 0
+          }
+        }
       )
-      console.log("SKU to buy: " + this.skuIdentifiers)
+      console.log(params);
       postAction(this.url.adjustOrder, params)
         .then(
           res => {
@@ -162,6 +207,82 @@ export default {
             console.log(this.currentQuantity)
           }
         )
+    },
+    getSales(sku) {
+      let sales;
+      this.skuInfoArray.map(
+        skuInfo => {
+          if (skuInfo["id"] === sku) {
+            sales = {
+              sales7: skuInfo["sales7"],
+              sales14: skuInfo["sales14"],
+              sales28: skuInfo["sales28"]
+            }
+          }
+        }
+      )
+      return sales;
+    },
+    getProvisionalStock(sku) {
+      let provisionalStock;
+      this.skuInfoArray.map(
+        skuInfo => {
+          if (skuInfo["id"] === sku) {
+            provisionalStock = skuInfo["availableQuantity"] +  skuInfo["purchasingQuantity"] - skuInfo["platformOrderQuantity"];
+          }
+        }
+      )
+      return provisionalStock;
+    },
+    getAvailableQuantity(sku) {
+      let availableQuantity;
+      this.skuInfoArray.map(
+        skuInfo => {
+          if (skuInfo["id"] === sku) {
+            availableQuantity = skuInfo["availableQuantity"];
+          }
+        }
+      )
+      return availableQuantity;
+    },
+    getPurchasingQuantity(sku) {
+      let purchasingQuantity;
+      this.skuInfoArray.map(
+        skuInfo => {
+          if (skuInfo["id"] === sku) {
+            purchasingQuantity = skuInfo["purchasingQuantity"];
+          }
+        }
+      )
+      return purchasingQuantity;
+    },
+    getPlatformOrderQuantity(sku) {
+      let platformOrderQuantity;
+      this.skuInfoArray.map(
+        skuInfo => {
+          if (skuInfo["id"] === sku) {
+            platformOrderQuantity = skuInfo["platformOrderQuantity"];
+          }
+        }
+      )
+      return platformOrderQuantity;
+    },
+    getProvisionalTooltip(sku) {
+      return this.getAvailableQuantity(sku) + " (Available Quantity)\n"
+        + "+"
+        + this.getPurchasingQuantity(sku) + " (Purchasing Quantity)\n"
+        + "-"
+        + this.getPlatformOrderQuantity(sku) + " (Platform order Quantity)"
+    },
+    getFutureProvisionalTooltip(sku, quantityToPurchase) {
+      return this.getProvisionalStock(sku) + " (Provisional Quantity)\n"
+        + "+"
+        + quantityToPurchase + " (Quantity to purchase)"
+    },
+    getProvisionTooltip() {
+      return "Purchasing additional quantity enough for " + (this.currentProvisionDays || 0) + " day"
+        + (this.currentProvisionDays > 1 ? "s" : "")
+        + ", based on sales from last 28 days"
     },
     adjustOrder() {
       let params = []
@@ -219,5 +340,11 @@ export default {
   font-size: 16px;
   font-weight: 500;
   margin-bottom: 16px;
+}
+</style>
+<style>
+/* Force line break in tooltip */
+.ant-tooltip-inner {
+  white-space: pre-line;
 }
 </style>
