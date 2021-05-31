@@ -191,6 +191,7 @@ export default {
         availableQuantity: r['availableAmount'] || 0,
         purchasingQuantity: r['redQuantity'] + r['greenQuantity'],
         platformOrderQuantity: r['platformOrderQuantity'] || 0,
+        moq: r['moq'] || 0
       }))
       console.log(skusToBuy)
       comp.$refs["popup"]._props["dataForChild"] = skusToBuy;

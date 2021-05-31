@@ -85,11 +85,13 @@
 
         <template slot="adjustNumber" slot-scope="text, record, index">
           <div>
-            <a-input-number
-              v-model="currentQuantity[index]"
-              :min="0"
-              @change="adjustOrder"
-            />
+            <a-tooltip :title=" getMoqTooltip(record['skuId']) ">
+              <a-input-number
+                v-model="currentQuantity[index]"
+                :min="0"
+                @change="adjustOrder"
+              />
+            </a-tooltip>
           </div>
         </template>
       </a-table>
@@ -203,9 +205,17 @@ export default {
         skuInfo => {
           let sku = skuInfo["id"];
           let provisionalStock = this.getProvisionalStock(sku);
+          let moq = skuInfo["moq"];
+          let q;
+          if (provisionalStock >= 0) {
+            q = 0;
+          } else {
+            // The ordered quantity must be equal or larger than the MOQ
+            q = -provisionalStock < moq ? moq : -provisionalStock;
+          }
           return {
             ID: sku,
-            quantity: provisionalStock < 0 ? -provisionalStock : 0
+            quantity: q
           }
         }
       )
@@ -218,7 +228,6 @@ export default {
             this.orderDetails = res.result.voPurchaseDetails
             this.currentQuantity = this.orderDetails.map(line => (line['quantity']))
             console.log(this.orderDetails)
-            console.log(this.minQuantity)
             console.log(this.currentQuantity)
           }
         )
@@ -282,6 +291,17 @@ export default {
       )
       return platformOrderQuantity;
     },
+    getMoq(sku) {
+      let moq;
+      this.skuInfoArray.map(
+        skuInfo => {
+          if (skuInfo["id"] === sku) {
+            moq = skuInfo["moq"];
+          }
+        }
+      )
+      return moq;
+    },
     getProvisionalTooltip(sku) {
       return this.getAvailableQuantity(sku) + " (Available Quantity)\n"
         + "+"
@@ -299,12 +319,20 @@ export default {
         + (this.currentProvisionDays > 1 ? "s" : "")
         + ", based on sales from last 28 days"
     },
+    getMoqTooltip(sku) {
+      return "The MOQ (Minimum Order Quantity) of this product is " + this.getMoq(sku)
+    },
     adjustOrder() {
       let params = []
       for (let i = 0; i < this.orderDetails.length; i++) {
+        let currentQuantity = this.currentQuantity[i]
+        let moq = this.skuInfoArray[i]['moq']
+        if (currentQuantity > 0 && currentQuantity < moq) {
+          currentQuantity = moq
+        }
         params.push({
           ID: this.orderDetails[i]['skuId'],
-          quantity: this.currentQuantity[i]
+          quantity: currentQuantity
         })
       }
 
@@ -315,7 +343,6 @@ export default {
           this.orderDetails = res.result.voPurchaseDetails
           this.currentQuantity = this.orderDetails.map(line => (line['quantity']))
           console.log(this.orderDetails)
-          console.log(this.minQuantity)
           console.log(this.currentQuantity)
         })
     },

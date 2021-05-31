@@ -50,7 +50,7 @@
       </template>
 
     </dynamic-user-table>
-    <popup-confirmation ref="popup" :ok-callback="modalFormOk" :data-for-child="skuToBuy"/>
+    <popup-confirmation ref="popup" :ok-callback="modalFormOk" :data-for-child="skusToBuy"/>
   </div>
 
 </template>
@@ -82,7 +82,7 @@ export default {
         list: rootURL + 'list',
         exportXlsUrl: rootURL + 'exportXls',
       },
-      skuToBuy: [],
+      skusToBuy: [],
       currentUser: Object,
       userConfig:role_config,
     }
