@@ -41,6 +41,12 @@ export default {
         scopedSlots: {customRender: 'redAndGreenCell'}
       },
       {
+        title: 'Sales from last 7/14/28 days',
+        dataIndex: 'sales7',
+        align: 'center',
+        scopedSlots: {customRender: 'salesQuantitySlot'}
+      },
+      {
         title: '平台单数量',
         align: 'center',
         dataIndex: 'platformOrderQuantity',
@@ -90,6 +96,12 @@ export default {
         scopedSlots: {customRender: 'redAndGreenCell'}
       },
       {
+        title: 'Sales from last 7/14/28 days',
+        dataIndex: 'sales7',
+        align: 'center',
+        scopedSlots: {customRender: 'salesQuantitySlot'}
+      },
+      {
         title: '平台单数量',
         align: 'center',
         dataIndex: 'platformOrderQuantity',
@@ -104,9 +116,14 @@ export default {
         comp.$message.error("You should select at least 1 item to continue")
         return
       }
-      let skusToBuy = records.map(r => (r['id']))
+      let skusToBuy = records.map(r => ({
+        id: r['id'],
+        sales7: r['sales7'],
+        sales28: r['sales28'],
+        sales42: r['sales42']
+      }))
       console.log(skusToBuy)
-      comp.$refs.popup.display(skusToBuy)
+      comp.$refs["popup"].display(skusToBuy)
     },
   },
   'Client (for test)': {
@@ -146,6 +163,12 @@ export default {
         scopedSlots: {customRender: 'redAndGreenCell'}
       },
       {
+        title: 'Sales from last 7/14/28 days',
+        dataIndex: 'sales7',
+        align: 'center',
+        scopedSlots: {customRender: 'salesQuantitySlot'}
+      },
+      {
         title: '平台单数量',
         align: 'center',
         dataIndex: 'platformOrderQuantity',
@@ -160,9 +183,17 @@ export default {
         comp.$message.error("You should select at least 1 item to continue")
         return
       }
-      let skusToBuy = records.map(r => (r['id']))
+      let skusToBuy = records.map(r => ({
+        id: r['id'],
+        sales7: r['sales7'] || 0,
+        sales14: r['sales14'] || 0,
+        sales28: r['sales28'] || 0,
+        availableQuantity: r['availableAmount'] || 0,
+        purchasingQuantity: r['redQuantity'] + r['greenQuantity'],
+        platformOrderQuantity: r['platformOrderQuantity'] || 0,
+      }))
       console.log(skusToBuy)
-      console.log(comp.$refs)
+      comp.$refs["popup"]._props["dataForChild"] = skusToBuy;
       comp.$refs["popup"].display(skusToBuy)
     },
     cancelText:"Cancel",

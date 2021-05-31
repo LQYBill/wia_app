@@ -45,5 +45,6 @@
   "status": "状态",
   "batchOperation": "更多操作",
   "deleteConfirmation": "你确定要删除吗",
-  "abbreviation": "缩写"
+  "abbreviation": "缩写",
+  "filter": "高级查询"
 }

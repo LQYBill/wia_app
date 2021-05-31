@@ -14,12 +14,12 @@
       <a-button-group>
         <a-button type="primary" @click="handleOpen">
           <a-icon type="appstore" theme="twoTone" spin/>
-          <span>高级查询</span>
+          <span>{{$t('filter')}}</span>
         </a-button>
         <a-button v-if="izMobile" type="primary" icon="delete" @click="handleReset"/>
       </a-button-group>
     </a-tooltip>
-    <a-button v-else type="primary" icon="filter" @click="handleOpen">高级查询</a-button>
+    <a-button v-else type="primary" icon="filter" @click="handleOpen">{{$t('filter')}}</a-button>
   </slot>
 
   <j-modal

@@ -13,15 +13,18 @@ public class SkuDetail {
 
     private final String erpCode;
 
+    private final String imageSource;
+
     private final String product;
 
     private final SkuPrice price;
 
     private final Promotion promotion;
 
-    public SkuDetail(String skuId, String erpCode, String product, SkuPrice price, Promotion promotion) {
+    public SkuDetail(String skuId, String erpCode, String imageSource, String product, SkuPrice price, Promotion promotion) {
         this.skuId = Objects.requireNonNull(skuId);
         this.erpCode = erpCode;
+        this.imageSource = imageSource;
         this.product = product;
         this.price = Objects.requireNonNull(price);
         this.promotion = promotion == null ? Promotion.ZERO_PROMOTION : promotion;

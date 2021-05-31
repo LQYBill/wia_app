@@ -31,7 +31,7 @@ public class PlatformOrderPage {
 	@ApiModelProperty(value = "创建人")
     private String createBy;
 	/**创建日期*/
-	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(timezone = "GMT+2",pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
 	@ApiModelProperty(value = "创建日期")
     private Date createTime;
@@ -39,7 +39,7 @@ public class PlatformOrderPage {
 	@ApiModelProperty(value = "更新人")
     private String updateBy;
 	/**更新日期*/
-	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(timezone = "GMT+2",pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
 	@ApiModelProperty(value = "更新日期")
     private Date updateTime;
@@ -66,15 +66,15 @@ public class PlatformOrderPage {
 	@ApiModelProperty(value = "物流跟踪号")
     private String trackingNumber;
 	/**订单交易时间*/
-	@Excel(name = "订单交易时间", width = 15, format = "yyyy-MM-dd")
-	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd")
-    @DateTimeFormat(pattern="yyyy-MM-dd")
+	@Excel(name = "订单交易时间", width = 15, format = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(timezone = "GMT+2", pattern = "yyyy-MM-dd HH:mm:ss")
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
 	@ApiModelProperty(value = "订单交易时间")
     private Date orderTime;
 	/**订单发货时间*/
-	@Excel(name = "订单发货时间", width = 15, format = "yyyy-MM-dd")
-	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd")
-    @DateTimeFormat(pattern="yyyy-MM-dd")
+	@Excel(name = "订单发货时间", width = 15, format = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(timezone = "GMT+2", pattern = "yyyy-MM-dd HH:mm:ss")
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
 	@ApiModelProperty(value = "订单发货时间")
     private Date shippingTime;
 	/**订单收件人*/

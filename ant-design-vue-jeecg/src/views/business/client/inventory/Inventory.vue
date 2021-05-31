@@ -58,7 +58,7 @@
             <img v-else
                  :src="getImgView(text)"
                  :preview="getImgView(text)"
-                 alt="Sku picture"
+                 alt="SKU picture"
                  style="min-width:50px;max-width:80px;height:50px;"
             />
           </div>
@@ -71,6 +71,20 @@
           |
           <a-tooltip title="Pending" style="color: #cc0000">
             {{ dealNull(record['redQuantity']) }}
+          </a-tooltip>
+        </template>
+
+        <template slot="salesQuantitySlot" slot-scope="text, record, index">
+          <a-tooltip title="Sales from last 7 days">
+            {{ dealNull(record['sales7']) }}
+          </a-tooltip>
+          |
+          <a-tooltip title="Sales from last 14 days">
+            {{ dealNull(record['sales14']) }}
+          </a-tooltip>
+          |
+          <a-tooltip title="Sales from last 28 days">
+            {{ dealNull(record['sales28']) }}
           </a-tooltip>
         </template>
 
@@ -150,6 +164,12 @@ export default {
           dataIndex: 'redQuantity',
           align: 'center',
           scopedSlots: {customRender: 'shippingQuantitySlot'}
+        },
+        {
+          title: 'Sales from last 7/14/28 days',
+          dataIndex: 'sales7',
+          align: 'center',
+          scopedSlots: {customRender: 'salesQuantitySlot'}
         },
         {
           title: '平台单数量',

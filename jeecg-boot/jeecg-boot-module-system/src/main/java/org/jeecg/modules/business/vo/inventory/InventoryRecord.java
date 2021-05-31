@@ -66,6 +66,18 @@ public class InventoryRecord implements Serializable {
     @ApiModelProperty(value = "redQuantity")
     private Integer redQuantity;
 
+    @Excel(name = "Sales from last 7 days", width = 15)
+    @ApiModelProperty(value = "sales7")
+    private Integer sales7 = 0;
+
+    @Excel(name = "Sales from last 14 days", width = 15)
+    @ApiModelProperty(value = "sales14")
+    private Integer sales14 = 0;
+
+    @Excel(name = "Sales from last 28 days", width = 15)
+    @ApiModelProperty(value = "sales28")
+    private Integer sales28 = 0;
+
     @Excel(name = "platform Order Quantity", width = 15)
     @ApiModelProperty(value = "platformOrderQuantity")
     private Integer platformOrderQuantity;

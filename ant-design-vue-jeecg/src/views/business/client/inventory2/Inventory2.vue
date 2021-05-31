@@ -25,18 +25,32 @@
         </a-tooltip>
       </template>
 
+      <template slot="salesQuantitySlot" slot-scope="tuple">
+        <a-tooltip title="Sales from last 7 days">
+          {{ dealNull(tuple.record['sales7']) }}
+        </a-tooltip>
+        |
+        <a-tooltip title="Sales from last 14 days">
+          {{ dealNull(tuple.record['sales14']) }}
+        </a-tooltip>
+        |
+        <a-tooltip title="Sales from last 28 days">
+          {{ dealNull(tuple.record['sales28']) }}
+        </a-tooltip>
+      </template>
+
       <template slot="imgSlot" slot-scope="tuple">
         <span v-if="!tuple.record['imageSource']">No picture available</span>
         <img v-else
              :src="getImgView(tuple.record['imageSource'])"
              :preview="getImgView(tuple.record['imageSource'])"
-             alt="Sku picture"
+             alt="SKU picture"
              style="min-width:50px;max-width:80px;height:50px;"
         />
       </template>
 
     </dynamic-user-table>
-    <popup-confirmation ref="popup" :ok-callback="modalFormOk" :sku-identifiers="skuToBuy"/>
+    <popup-confirmation ref="popup" :ok-callback="modalFormOk" :data-for-child="skuToBuy"/>
   </div>
 
 </template>

@@ -8,7 +8,7 @@
     ok-text="Confirm"
     @ok="handleOk"
     @cancel="handleCancel">
-    <Confirmation ref="content" :ok-callback="okCallback"/>
+    <Confirmation ref="content" :ok-callback="okCallback" :sku-info-array="dataForChild"/>
   </j-modal>
 </template>
 
@@ -27,16 +27,15 @@ export default {
     }
   },
   props: {
+    dataForChild: Array,
     okCallback: Function
   },
   methods: {
-    display(data) {
+    display() {
       this.visible = true
-      console.log("container prop: ")
-      console.log(data)
       /* child component does not finish rendering, one should call its methods at next tick */
       this.$nextTick(() => {
-          this.$refs.content.loadData(data);
+          this.$refs.content.loadData();
         }
       )
     },
