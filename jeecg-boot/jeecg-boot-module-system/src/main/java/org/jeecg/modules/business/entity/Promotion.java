@@ -43,6 +43,13 @@ public class Promotion {
     @Getter
     private final String name;
 
+    public Promotion(String id, int promoMilestone, int quantityPurchased, BigDecimal discount) {
+        this.id = id;
+        this.promoMilestone = promoMilestone;
+        this.quantityPurchased = quantityPurchased;
+        this.discount = discount;
+        this.name = "";
+    }
 
     /**
      * Given the quantity of the sku, simulating the calculation of amount of exemption and return it.

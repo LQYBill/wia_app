@@ -1,7 +1,5 @@
 package org.jeecg.modules.business.domain;
 
-import net.sf.saxon.functions.NamespaceUri_1;
-import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.ss.usermodel.*;
 
 import java.text.DateFormat;
@@ -12,7 +10,8 @@ public class InvoiceStyleFactory {
 
     private final Workbook workbook;
 
-    private CellStyle tableCell;
+    private CellStyle leftSideStyle;
+    private CellStyle rightSideStyle;
     private CellStyle otherStyle;
 
     public InvoiceStyleFactory(Workbook workbook) {
@@ -37,23 +36,42 @@ public class InvoiceStyleFactory {
         return style;
     }
 
-    public CellStyle tableCellStyle() {
-        if (tableCell != null)
-            return tableCell;
+    public CellStyle leftSideStyle() {
+        if (leftSideStyle != null)
+            return leftSideStyle;
         // border
-        tableCell = workbook.createCellStyle();
-        tableCell.setBorderBottom(BorderStyle.NONE);
-        tableCell.setBorderLeft(BorderStyle.THIN);
-        tableCell.setBorderRight(BorderStyle.THIN);
-        tableCell.setBorderTop(BorderStyle.NONE);
-        tableCell.setAlignment(HorizontalAlignment.CENTER);
-        tableCell.setVerticalAlignment(VerticalAlignment.CENTER);
+        leftSideStyle = workbook.createCellStyle();
+        leftSideStyle.setBorderBottom(BorderStyle.NONE);
+        leftSideStyle.setBorderLeft(BorderStyle.THIN);
+        leftSideStyle.setBorderRight(BorderStyle.THIN);
+        leftSideStyle.setBorderTop(BorderStyle.NONE);
+        leftSideStyle.setAlignment(HorizontalAlignment.LEFT);
+        leftSideStyle.setVerticalAlignment(VerticalAlignment.CENTER);
         // font
         Font font = workbook.createFont();
         font.setFontName("Arial");
         font.setFontHeightInPoints((short) 11);
-        tableCell.setFont(font);
-        return tableCell;
+        leftSideStyle.setFont(font);
+        return leftSideStyle;
+    }
+
+    public CellStyle rightSideStyle() {
+        if (rightSideStyle != null)
+            return rightSideStyle;
+        // border
+        rightSideStyle = workbook.createCellStyle();
+        rightSideStyle.setBorderBottom(BorderStyle.NONE);
+        rightSideStyle.setBorderLeft(BorderStyle.THIN);
+        rightSideStyle.setBorderRight(BorderStyle.THIN);
+        rightSideStyle.setBorderTop(BorderStyle.NONE);
+        rightSideStyle.setAlignment(HorizontalAlignment.RIGHT);
+        rightSideStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        // font
+        Font font = workbook.createFont();
+        font.setFontName("Arial");
+        font.setFontHeightInPoints((short) 11);
+        rightSideStyle.setFont(font);
+        return rightSideStyle;
     }
 
     public CellStyle otherStyle() {

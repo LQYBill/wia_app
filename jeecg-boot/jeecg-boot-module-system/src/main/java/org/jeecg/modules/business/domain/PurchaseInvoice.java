@@ -4,6 +4,8 @@ import cn.hutool.poi.excel.ExcelUtil;
 import cn.hutool.poi.excel.ExcelWriter;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
+import org.jeecg.modules.business.domain.codeGeneration.InvoiceRef;
+import org.jeecg.modules.business.domain.codeGeneration.PurchaseInvoiceCodeRule;
 import org.jeecg.modules.business.entity.Client;
 import org.jeecg.modules.business.vo.PromotionDetail;
 
@@ -52,12 +54,14 @@ public class PurchaseInvoice {
             writer.writeCellValue(entry.getKey(), entry.getValue());
             writer.setStyle(factory.otherStyle(), entry.getKey());
         }
-
+        // table section
         for (Map.Entry<String, Object> entry : tableData().entrySet()) {
             writer.writeCellValue(entry.getKey(), entry.getValue());
-            writer.setStyle(factory.tableCellStyle(), entry.getKey());
+            if (entry.getKey().charAt(0) <= 'D')
+                writer.setStyle(factory.leftSideStyle(), entry.getKey());
+            else
+                writer.setStyle(factory.rightSideStyle(), entry.getKey());
         }
-
         writer.setStyle(factory.invoiceCodeStyle(), INVOICE_CODE_LOCATION);
         // revaluate formulae to enable automatic calculation
         FormulaEvaluator evaluator = writer.getWorkbook().getCreationHelper().createFormulaEvaluator();
@@ -94,9 +98,11 @@ public class PurchaseInvoice {
     private Map<String, Object> tableData() {
         Map<String, Object> cellContentMap = new HashMap<>();
 
+        InvoiceRef refRule = new InvoiceRef();
+
         int row = FIRST_ROW;
         for (PurchaseInvoiceEntry entry : purchaseInvoiceEntries) {
-            int ref = row - FIRST_ROW + 1;
+            String ref = refRule.next(String.valueOf(row - FIRST_ROW + 1));
             cellContentMap.put(NUM_COL[0] + row, ref);
 
             String desc = entry.getSku_en_name();
@@ -115,7 +121,7 @@ public class PurchaseInvoice {
         }
 
         for (PromotionDetail pd : promotions) {
-            int ref = row - FIRST_ROW + 1;
+            String ref = refRule.next(String.valueOf(row - FIRST_ROW + 1));
             cellContentMap.put(NUM_COL[0] + row, ref);
 
             String desc = String.format("Promotion: %s", pd.getName());
