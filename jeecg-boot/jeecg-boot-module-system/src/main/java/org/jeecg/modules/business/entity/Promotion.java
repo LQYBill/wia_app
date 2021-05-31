@@ -1,5 +1,6 @@
 package org.jeecg.modules.business.entity;
 
+import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
@@ -10,10 +11,10 @@ import java.math.BigDecimal;
  * A promotion of a sku to which it belongs, it's a immutable objet.
  */
 @EqualsAndHashCode
+@AllArgsConstructor
 public class Promotion {
 
-    public static final Promotion ZERO_PROMOTION = new Promotion("-1", 1, 0, BigDecimal.ZERO);
-
+    public static final Promotion ZERO_PROMOTION = new Promotion("-1", 1, 0, BigDecimal.ZERO, "No Promotion");
 
     /**
      * Identifier of promotion
@@ -39,16 +40,9 @@ public class Promotion {
     @Getter
     private final BigDecimal discount;
 
+    @Getter
+    private final String name;
 
-    /**
-     * Construct a promotion by its attributes
-     */
-    public Promotion(String id, int promoMilestone, int quantityPurchased, BigDecimal discount) {
-        this.id = id;
-        this.promoMilestone = promoMilestone;
-        this.quantityPurchased = quantityPurchased;
-        this.discount = discount;
-    }
 
     /**
      * Given the quantity of the sku, simulating the calculation of amount of exemption and return it.
@@ -72,7 +66,7 @@ public class Promotion {
         if (new_quantity > promoMilestone) {
             new_quantity %= promoMilestone;
         }
-        return new Promotion(id, promoMilestone, new_quantity, discount);
+        return new Promotion(id, promoMilestone, new_quantity, discount, name);
     }
 
     public int promotionCount(int quantity) {

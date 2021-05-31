@@ -12,6 +12,13 @@
         SELECT *
         FROM purchase_order_sku
         WHERE purchase_order_id = #{mainId}    </select>
+    <select id="selectInvoiceDataByID" resultType="org.jeecg.modules.business.domain.PurchaseInvoiceEntry">
+        SELECT s.erp_code, p.en_name, pos.quantity, pos.total_amount
+        FROM purchase_order_sku pos
+        JOIN sku s on pos.sku_id = s.id
+        JOIN product p on s.product_id = p.id
+        WHERE purchase_order_id = #{purchaseID}
+    </select>
 
     <insert id="addAll">
         INSERT INTO purchase_order_sku(id, create_by, create_time, update_by, update_time, purchase_order_id, quantity,

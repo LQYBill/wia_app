@@ -52,9 +52,11 @@
         type="primary"
         icon="download"
         size="small"
+        :disabled="!canDownloadInvoice(tuple.record['status'])"
         @click="downloadInvoice(tuple.record['id'])"
       >
-        <span>预览</span>
+        <span v-if="canDownloadInvoice(tuple.record['status'])">Download</span>
+        <span v-else>Not available</span>
       </a-button>
 
     </template>
@@ -166,7 +168,7 @@ export default {
         head['tenant-id'] = tenantid
       }
       return head;
-    }
+    },
   },
   methods: {
     initDictConfig() {
@@ -195,7 +197,9 @@ export default {
       }
       return true
     },
-
+    canDownloadInvoice(status) {
+      return status === "confirmed" || status === "purchasing" || status === "received";
+    },
     downloadFile(filename) {
       // download file by name
       const param = {filename: filename}

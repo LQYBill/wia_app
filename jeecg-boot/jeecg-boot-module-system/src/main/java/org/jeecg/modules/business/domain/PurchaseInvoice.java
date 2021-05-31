@@ -2,8 +2,10 @@ package org.jeecg.modules.business.domain;
 
 import cn.hutool.poi.excel.ExcelUtil;
 import cn.hutool.poi.excel.ExcelWriter;
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.jeecg.modules.business.entity.Client;
+import org.jeecg.modules.business.vo.PromotionDetail;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
@@ -16,10 +18,16 @@ public class PurchaseInvoice {
 
     private final List<PurchaseInvoiceEntry> purchaseInvoiceEntries;
 
-    public PurchaseInvoice(Client targetClient, String code, List<PurchaseInvoiceEntry> purchaseInvoiceEntries) {
+    private final List<PromotionDetail> promotions;
+
+    public PurchaseInvoice(Client targetClient,
+                           String code,
+                           List<PurchaseInvoiceEntry> purchaseInvoiceEntries,
+                           List<PromotionDetail> promotions) {
         this.targetClient = targetClient;
         this.code = code;
         this.purchaseInvoiceEntries = purchaseInvoiceEntries;
+        this.promotions = promotions;
     }
 
     /* constants of cell location */
@@ -38,11 +46,19 @@ public class PurchaseInvoice {
 
     public void toExcelFile(Path out) {
         ExcelWriter writer = ExcelUtil.getWriter(out.toFile(), "FACTURE");
-        Map<String, Object> data = new HashMap<>(invoiceInformation());
-        data.putAll(tableData());
-        for (Map.Entry<String, Object> entry : data.entrySet()) {
+        InvoiceStyleFactory factory = new InvoiceStyleFactory(writer.getWorkbook());
+
+        for (Map.Entry<String, Object> entry : invoiceInformation().entrySet()) {
             writer.writeCellValue(entry.getKey(), entry.getValue());
+            writer.setStyle(factory.otherStyle(), entry.getKey());
         }
+
+        for (Map.Entry<String, Object> entry : tableData().entrySet()) {
+            writer.writeCellValue(entry.getKey(), entry.getValue());
+            writer.setStyle(factory.tableCellStyle(), entry.getKey());
+        }
+
+        writer.setStyle(factory.invoiceCodeStyle(), INVOICE_CODE_LOCATION);
         // revaluate formulae to enable automatic calculation
         FormulaEvaluator evaluator = writer.getWorkbook().getCreationHelper().createFormulaEvaluator();
         evaluator.evaluateAll();
@@ -53,11 +69,11 @@ public class PurchaseInvoice {
     private Map<String, Object> invoiceInformation() {
         Map<String, Object> cellContentMap = new HashMap<>();
         cellContentMap.put(INVOICE_CODE_LOCATION, code);
-        cellContentMap.put(GENERATED_DATE_LOCATION, new Date().toString());
+        cellContentMap.put(GENERATED_DATE_LOCATION, InvoiceStyleFactory.INVOICE_CODE_DATETIME_FORMAT.format(new Date()));
         cellContentMap.put(ENTITY_NAME_LOCATION, targetClient.fullName());
         cellContentMap.put(
                 INVOICE_ADR_LINE1,
-                String.format("%s %s %s",
+                String.format("%s %s, %s",
                         targetClient.getStreetNumber(),
                         targetClient.getStreetName(),
                         targetClient.getPostcode()
@@ -65,7 +81,7 @@ public class PurchaseInvoice {
         );
         cellContentMap.put(
                 INVOICE_ADR_LINE2,
-                String.format("%s %s",
+                String.format("%s, %s",
                         targetClient.getCity(),
                         targetClient.getCountry()
                 )
@@ -86,30 +102,33 @@ public class PurchaseInvoice {
             String desc = entry.getSku_en_name();
             cellContentMap.put(NUM_COL[1] + row, desc);
 
-            BigDecimal unitPrice = entry.getUnitPrice();
+            BigDecimal unitPrice = entry.unitPrice();
             cellContentMap.put(NUM_COL[2] + row, unitPrice);
 
             int quantity = entry.getQuantity();
             cellContentMap.put(NUM_COL[3] + row, quantity);
 
-            BigDecimal totalAmount = entry.totalAmount();
+            BigDecimal totalAmount = entry.getTotalAmount();
             cellContentMap.put(NUM_COL[5] + row, totalAmount);
 
-            if (entry.hasPromotion()) {
-                row++;
-                ref = row - FIRST_ROW + 1;
-                cellContentMap.put(NUM_COL[0] + row, ref);
+            row++;
+        }
 
-                desc = String.format("Promotion for sku %s", entry.getSku_en_name());
-                cellContentMap.put(NUM_COL[1] + row, desc);
+        for (PromotionDetail pd : promotions) {
+            int ref = row - FIRST_ROW + 1;
+            cellContentMap.put(NUM_COL[0] + row, ref);
 
-                totalAmount = entry.getPromotionAmount()
-                        .multiply(BigDecimal.valueOf(entry.getPromotionCount()));
-                cellContentMap.put(NUM_COL[4] + row, totalAmount);
-            }
+            String desc = String.format("Promotion: %s", pd.getName());
+            cellContentMap.put(NUM_COL[1] + row, desc);
+
+            BigDecimal totalAmount = pd.getUnitAmount()
+                    .multiply(BigDecimal.valueOf(pd.getCount()));
+            cellContentMap.put(NUM_COL[4] + row, totalAmount);
             row++;
         }
         return cellContentMap;
-
     }
+
+
 }
+

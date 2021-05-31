@@ -16,6 +16,7 @@ import org.jeecg.modules.business.service.IPurchaseOrderService;
 import org.jeecg.modules.business.service.ISkuService;
 import org.jeecg.modules.business.service.domain.codeGenerationRule.PurchaseInvoiceCodeRule;
 import org.jeecg.modules.business.vo.OrderContentEntry;
+import org.jeecg.modules.business.vo.PromotionDetail;
 import org.jeecg.modules.business.vo.PromotionHistoryEntry;
 import org.jeecg.modules.business.vo.SkuQuantity;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
@@ -355,18 +356,11 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         Files.deleteIfExists(tmp);
         Files.copy(template, tmp);
         Client client = clientService.getCurrentClient();
-        List<PurchaseInvoiceEntry> l = Arrays.asList(
-                new PurchaseInvoiceEntry(
-                        "pants", 5,
-                        new BigDecimal(25), new BigDecimal(10), 2
-                ),
-                new PurchaseInvoiceEntry(
-                        "shoes", 5,
-                        new BigDecimal(25), new BigDecimal(10), 0
-                )
-        );
+        List<PurchaseInvoiceEntry> purchaseOrderSkuList = purchaseOrderContentMapper.selectInvoiceDataByID(purchaseID);
+        List<PromotionDetail> promotionDetails = skuPromotionHistoryMapper.selectPromotionByPurchase(purchaseID);
+        String invoiceCode = purchaseOrderMapper.selectById(purchaseID).getInvoiceNumber();
 
-        PurchaseInvoice pv = new PurchaseInvoice(client, "123456", l);
+        PurchaseInvoice pv = new PurchaseInvoice(client, invoiceCode, purchaseOrderSkuList, promotionDetails);
         pv.toExcelFile(tmp);
         return Files.readAllBytes(tmp);
     }
