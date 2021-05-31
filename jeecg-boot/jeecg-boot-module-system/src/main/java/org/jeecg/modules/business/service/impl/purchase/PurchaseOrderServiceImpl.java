@@ -331,4 +331,9 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         Path target = Paths.get(PAYMENT_DOC_DIR, filename);
         return Files.readAllBytes(target);
     }
+
+    @Override
+    public byte[] downloadInvoice(String purchaseID) throws IOException {
+        return Files.readAllBytes(INVOICE_TEMPLATE_PATH);
+    }
 }

@@ -11,6 +11,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +24,12 @@ import java.util.Map;
  * @Version: V1.0
  */
 public interface IPurchaseOrderService extends IService<PurchaseOrder> {
+
+    Path INVOICE_TEMPLATE_PATH = Paths.get(
+            "src",
+            "main",
+            "resources", "templates", "Invoice_Template.xlsx"
+    );
 
     /**
      * 添加一对多
@@ -62,7 +70,7 @@ public interface IPurchaseOrderService extends IService<PurchaseOrder> {
      * If not, put null.
      *
      * @param SkuQuantity map of sku ID and quantity.
-     * @param orderIDs         orders on which the purchase is based
+     * @param orderIDs    orders on which the purchase is based
      * @return the new purchase order identifier
      */
     @Transactional
@@ -93,4 +101,12 @@ public interface IPurchaseOrderService extends IService<PurchaseOrder> {
      * @param purchaseID the identifier of the purchase order to confirm
      */
     void confirmPurchase(String purchaseID);
+
+
+    /**
+     * @param purchaseID
+     * @return the file in binary
+     * @throws IOException IO error while reading the file.
+     */
+    byte[] downloadInvoice(String purchaseID) throws IOException;
 }

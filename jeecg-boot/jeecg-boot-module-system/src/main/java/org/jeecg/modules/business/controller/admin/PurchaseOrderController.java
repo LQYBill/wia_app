@@ -345,4 +345,18 @@ public class PurchaseOrderController {
     }
 
 
+    /**
+     *
+     * @param purchaseID purchaseID
+     */
+    @RequestMapping(value = "/downloadFile", method = RequestMethod.GET)
+    public void downloadPurchaseInvoice(@RequestParam String purchaseID, HttpServletResponse response) throws IOException {
+        byte[] out = purchaseOrderService.downloadInvoice(purchaseID);
+        response.setContentType("application/octet-stream;charset=utf-8");
+        response.setHeader("Content-Disposition", "attachment;");
+        response.setHeader("Content-Transfer-Encoding", "binary");
+        response.getOutputStream().write(out);
+    }
+
+
 }
