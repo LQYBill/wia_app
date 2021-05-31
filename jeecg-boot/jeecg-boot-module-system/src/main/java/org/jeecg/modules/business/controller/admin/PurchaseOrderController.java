@@ -89,22 +89,6 @@ public class PurchaseOrderController {
     }
 
     /**
-     * 添加
-     *
-     * @param purchaseOrderPage
-     * @return
-     */
-    @AutoLog(value = "商品采购订单-添加")
-    @ApiOperation(value = "商品采购订单-添加", notes = "商品采购订单-添加")
-    @PostMapping(value = "/add")
-    public Result<?> add(@RequestBody PurchaseOrderPage purchaseOrderPage) {
-        PurchaseOrder purchaseOrder = new PurchaseOrder();
-        BeanUtils.copyProperties(purchaseOrderPage, purchaseOrder);
-        purchaseOrderService.saveMain(purchaseOrder, purchaseOrderPage.getPurchaseOrderSkuList(), null);
-        return Result.OK("添加成功！");
-    }
-
-    /**
      * 编辑
      *
      * @param purchaseOrderPage

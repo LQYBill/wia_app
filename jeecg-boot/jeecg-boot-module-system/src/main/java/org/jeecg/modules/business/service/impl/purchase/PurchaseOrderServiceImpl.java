@@ -2,6 +2,9 @@ package org.jeecg.modules.business.service.impl.purchase;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
+import org.jeecg.modules.business.domain.PurchaseInvoice;
+import org.jeecg.modules.business.domain.PurchaseInvoiceEntry;
 import org.jeecg.modules.business.entity.*;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
 import org.jeecg.modules.business.mapper.PurchaseOrderContentMapper;
@@ -28,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -245,7 +249,15 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
 
         // 2. save purchase's content
         List<OrderContentEntry> entries = details.stream()
-                .map(d -> (new OrderContentEntry(d.getQuantity(), d.totalPrice(), d.getSkuDetail().getSkuId())))
+                .map(
+                        d -> (
+                                new OrderContentEntry(
+                                        d.getQuantity(),
+                                        d.totalPrice(),
+                                        d.getSkuDetail().getSkuId()
+                                )
+                        )
+                )
                 .collect(Collectors.toList());
         purchaseOrderContentMapper.addAll(client.fullName(), purchaseID, entries);
 
@@ -338,11 +350,24 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
 
     @Override
     public byte[] downloadInvoice(String purchaseID) throws IOException, URISyntaxException {
-        Path path = Paths.get(INVOICE_TEMPLATE);
+        Path template = Paths.get(INVOICE_TEMPLATE);
+        Path tmp = Paths.get(template.getParent().toString(), "tmp.xlsx");
+        Files.deleteIfExists(tmp);
+        Files.copy(template, tmp);
+        Client client = clientService.getCurrentClient();
+        List<PurchaseInvoiceEntry> l = Arrays.asList(
+                new PurchaseInvoiceEntry(
+                        "pants", 5,
+                        new BigDecimal(25), new BigDecimal(10), 2
+                ),
+                new PurchaseInvoiceEntry(
+                        "shoes", 5,
+                        new BigDecimal(25), new BigDecimal(10), 0
+                )
+        );
 
-
-
-
-        return Files.readAllBytes(path);
+        PurchaseInvoice pv = new PurchaseInvoice(client, "123456", l);
+        pv.toExcelFile(tmp);
+        return Files.readAllBytes(tmp);
     }
 }
