@@ -25,8 +25,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -41,7 +43,6 @@ import java.util.stream.Collectors;
  */
 @Service
 public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, PurchaseOrder> implements IPurchaseOrderService {
-
     private final PurchaseOrderMapper purchaseOrderMapper;
 
     private final PurchaseOrderContentMapper purchaseOrderContentMapper;
@@ -60,6 +61,9 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
      */
     @Value("${jeecg.path.save}")
     private String PAYMENT_DOC_DIR;
+
+    @Value("${jeecg.path.template}")
+    private String INVOICE_TEMPLATE;
 
     @Autowired
     private PushMsgUtil pushMsgUtil;
@@ -328,12 +332,17 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
      */
     @Override
     public byte[] downloadPaymentDocumentOfPurchase(String filename) throws IOException {
-        Path target = Paths.get(PAYMENT_DOC_DIR, filename);
+        Path target = new File(PAYMENT_DOC_DIR, filename).toPath();
         return Files.readAllBytes(target);
     }
 
     @Override
-    public byte[] downloadInvoice(String purchaseID) throws IOException {
-        return Files.readAllBytes(INVOICE_TEMPLATE_PATH);
+    public byte[] downloadInvoice(String purchaseID) throws IOException, URISyntaxException {
+        Path path = Paths.get(INVOICE_TEMPLATE);
+
+
+
+
+        return Files.readAllBytes(path);
     }
 }

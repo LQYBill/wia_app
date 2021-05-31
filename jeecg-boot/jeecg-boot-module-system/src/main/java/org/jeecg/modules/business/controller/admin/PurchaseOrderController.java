@@ -1,6 +1,7 @@
 package org.jeecg.modules.business.controller.admin;
 
 import java.io.*;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -349,8 +350,8 @@ public class PurchaseOrderController {
      *
      * @param purchaseID purchaseID
      */
-    @RequestMapping(value = "/downloadFile", method = RequestMethod.GET)
-    public void downloadPurchaseInvoice(@RequestParam String purchaseID, HttpServletResponse response) throws IOException {
+    @RequestMapping(value = "/downloadInvoice", method = RequestMethod.GET)
+    public void downloadPurchaseInvoice(@RequestParam String purchaseID, HttpServletResponse response) throws IOException, URISyntaxException {
         byte[] out = purchaseOrderService.downloadInvoice(purchaseID);
         response.setContentType("application/octet-stream;charset=utf-8");
         response.setHeader("Content-Disposition", "attachment;");

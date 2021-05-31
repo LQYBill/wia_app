@@ -46,6 +46,19 @@
       </a-upload>
     </template>
 
+    <template slot="invoiceSlot" slot-scope="tuple">
+      <a-button
+        ghost
+        type="primary"
+        icon="download"
+        size="small"
+        @click="downloadInvoice(tuple.record['id'])"
+      >
+        <span>预览</span>
+      </a-button>
+
+    </template>
+
     <template slot="fileSlot" slot-scope="{text, record, index}">
       <span v-if="!fileName" style="font-size: 12px;font-style: italic;">无文件</span>
       <a-button
@@ -107,6 +120,7 @@ import {ACCESS_TOKEN, TENANT_ID} from "@/store/mutation-types"
 import Vue from 'vue'
 import {getFile, postAction} from "@api/manage";
 import Template1 from "@views/jeecg/JVxeDemo/layout-demo/Template1";
+import {saveAs} from 'file-saver';
 
 const URL_PREFIX = "/business/purchaseOrder/client/"
 export default {
@@ -132,6 +146,7 @@ export default {
         downloadFile: '/business/purchaseOrder/downloadFile',
         confirmPayment: '/business/purchaseOrder/confirmPayment',
         confirmPurchase: '/business/purchaseOrder/confirmPurchase',
+        downloadInvoice: '/business/purchaseOrder/downloadInvoice',
       },
       superFieldList: [],
       roleConfig: roleConfig,
@@ -190,6 +205,18 @@ export default {
           //let rawData = window.atob(res.result.data)
           //console.log("decode: \n" + rawData)
           saveAs(res, filename)
+        })
+    },
+
+    downloadInvoice(purchaseID) {
+      // download file by name
+      const param = {purchaseID: purchaseID}
+      getFile(this.url.downloadInvoice, param)
+        .then(res => {
+          console.log(res)
+          //let rawData = window.atob(res.result.data)
+          //console.log("decode: \n" + rawData)
+          saveAs(res, "invoice.xlsx")
         })
     },
     confirmPayment(purchaseID) {

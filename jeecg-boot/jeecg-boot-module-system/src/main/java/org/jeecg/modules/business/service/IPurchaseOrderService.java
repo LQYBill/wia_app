@@ -1,5 +1,6 @@
 package org.jeecg.modules.business.service;
 
+import cn.hutool.core.io.resource.FileResource;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.jeecg.modules.business.entity.PurchaseOrder;
@@ -11,6 +12,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -24,14 +27,7 @@ import java.util.Map;
  * @Version: V1.0
  */
 public interface IPurchaseOrderService extends IService<PurchaseOrder> {
-
-    Path INVOICE_TEMPLATE_PATH = Paths.get(
-            "src",
-            "main",
-            "resources", "templates", "Invoice_Template.xlsx"
-    );
-
-    /**
+        /**
      * 添加一对多
      */
     public void saveMain(PurchaseOrder purchaseOrder, List<PurchaseOrderSku> purchaseOrderSkuList, List<SkuPromotionHistory> skuPromotionHistoryList);
@@ -108,5 +104,5 @@ public interface IPurchaseOrderService extends IService<PurchaseOrder> {
      * @return the file in binary
      * @throws IOException IO error while reading the file.
      */
-    byte[] downloadInvoice(String purchaseID) throws IOException;
+    byte[] downloadInvoice(String purchaseID) throws IOException, URISyntaxException;
 }
