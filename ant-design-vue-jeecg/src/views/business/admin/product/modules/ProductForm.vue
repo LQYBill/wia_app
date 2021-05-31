@@ -34,6 +34,11 @@
               <a-input-number v-model="model.volume" placeholder="请输入体积重，单位为立方厘米" style="width: 100%" />
             </a-form-model-item>
           </a-col>
+          <a-col :span="12" >
+            <a-form-model-item label="最低采购数量" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="moq">
+              <a-input-number v-model="model.moq" placeholder="请输入最低采购数量" style="width: 100%" />
+            </a-form-model-item>
+          </a-col>
         </a-row>
       </a-form-model>
     </j-form-container>
