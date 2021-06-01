@@ -53,7 +53,7 @@
         icon="download"
         size="small"
         :disabled="!canDownloadInvoice(tuple.record['status'])"
-        @click="downloadInvoice(tuple.record['id'])"
+        @click="downloadInvoice(tuple.record)"
       >
         <span v-if="canDownloadInvoice(tuple.record['status'])">Download</span>
         <span v-else>Not available</span>
@@ -224,11 +224,12 @@ export default {
      * Download purchase invoice by purchase ID
      * @param purchaseID ID of the purchase that to download invoice
      */
-    downloadInvoice(purchaseID) {
-      const param = {purchaseID: purchaseID}
+    downloadInvoice(record) {
+      const param = {purchaseID: record["id"]}
+      const invoice_code = record["invoiceNumber"]
       getFile(this.url.downloadInvoice, param)
         .then(res => {
-          saveAs(res, "invoice.xlsx")
+          saveAs(res, "invoice "+invoice_code+".xlsx")
         })
     },
     /**
