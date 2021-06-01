@@ -13,6 +13,9 @@ import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.util.*;
 
+/**
+ * Control content of purchase invoice
+ */
 public class PurchaseInvoice {
     private final Client targetClient;
 
@@ -46,6 +49,11 @@ public class PurchaseInvoice {
     private final static int LAST_ROW = 39;
 
 
+    /**
+     * Export content to the excel file; indicated by path out.
+     *
+     * @param out the excel file to export, extension: "xlsx"
+     */
     public void toExcelFile(Path out) {
         ExcelWriter writer = ExcelUtil.getWriter(out.toFile(), "FACTURE");
         InvoiceStyleFactory factory = new InvoiceStyleFactory(writer.getWorkbook());
@@ -70,6 +78,11 @@ public class PurchaseInvoice {
         writer.close();
     }
 
+    /**
+     * Fill content that does not belong to the table section.
+     *
+     * @return a map between a cell location and its contents. For example: G3 -> Toto
+     */
     private Map<String, Object> invoiceInformation() {
         Map<String, Object> cellContentMap = new HashMap<>();
         cellContentMap.put(INVOICE_CODE_LOCATION, code);
@@ -95,6 +108,11 @@ public class PurchaseInvoice {
         return cellContentMap;
     }
 
+    /**
+     * Fill cells that belong to the table section.
+     *
+     * @return map between location and table cell
+     */
     private Map<String, Object> tableData() {
         Map<String, Object> cellContentMap = new HashMap<>();
 

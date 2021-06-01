@@ -69,7 +69,7 @@
         type="primary"
         icon="download"
         size="small"
-        @click="downloadFile(fileName)"
+        @click="downloadPaymentFile(fileName)"
       >
         <span>预览</span>
       </a-button>
@@ -197,32 +197,44 @@ export default {
       }
       return true
     },
+    /**
+     * Client can download purchase invoice when the purchase status is confirmed,
+     * purchasing or received.
+     * @param status the status of a purchase
+     * @returns {boolean}
+     */
     canDownloadInvoice(status) {
       return status === "confirmed" || status === "purchasing" || status === "received";
     },
-    downloadFile(filename) {
+
+    /**
+     * Download payment file by its filename.
+     * @param filename name of the file to download.
+     */
+    downloadPaymentFile(filename) {
       // download file by name
       const param = {filename: filename}
       getFile(this.url.downloadFile, param)
         .then(res => {
           console.log(res)
-          //let rawData = window.atob(res.result.data)
-          //console.log("decode: \n" + rawData)
           saveAs(res, filename)
         })
     },
-
+    /**
+     * Download purchase invoice by purchase ID
+     * @param purchaseID ID of the purchase that to download invoice
+     */
     downloadInvoice(purchaseID) {
-      // download file by name
       const param = {purchaseID: purchaseID}
       getFile(this.url.downloadInvoice, param)
         .then(res => {
-          console.log(res)
-          //let rawData = window.atob(res.result.data)
-          //console.log("decode: \n" + rawData)
           saveAs(res, "invoice.xlsx")
         })
     },
+    /**
+     * Change status of a purchase to confirmed.
+     * @param purchaseID ID of the purchase to change.
+     */
     confirmPayment(purchaseID) {
       const params = {purchaseID: purchaseID}
       postAction(this.url.confirmPayment, params)
@@ -232,6 +244,10 @@ export default {
           }
         })
     },
+    /**
+     * Change status of a purchase to purchasing.
+     * @param purchaseID ID of the purchase to change.
+     */
     confirmPurchase(purchaseID) {
       const params = {purchaseID: purchaseID}
       postAction(this.url.confirmPurchase, params)
