@@ -124,6 +124,8 @@ import {getFile, postAction} from "@api/manage";
 import Template1 from "@views/jeecg/JVxeDemo/layout-demo/Template1";
 import {saveAs} from 'file-saver';
 
+const {getAction} = require("@api/manage");
+
 const URL_PREFIX = "/business/purchaseOrder/client/"
 export default {
   name: 'PurchaseOrderList',
@@ -149,6 +151,7 @@ export default {
         confirmPayment: '/business/purchaseOrder/confirmPayment',
         confirmPurchase: '/business/purchaseOrder/confirmPurchase',
         downloadInvoice: '/business/purchaseOrder/downloadInvoice',
+        InvoiceMeta: '/business/purchaseOrder/invoiceMeta',
       },
       superFieldList: [],
       roleConfig: roleConfig,
@@ -226,11 +229,20 @@ export default {
      */
     downloadInvoice(record) {
       const param = {purchaseID: record["id"]}
-      const invoice_code = record["invoiceNumber"]
-      getFile(this.url.downloadInvoice, param)
-        .then(res => {
-          saveAs(res, "invoice "+invoice_code+".xlsx")
-        })
+      getAction(this.url.InvoiceMeta, param).then(
+        res => {
+          console.log(res)
+          let entity = res.entity
+          let code = res.code;
+          const param = {invoiceCode: res.code}
+          getFile(this.url.downloadInvoice, param)
+            .then(res => {
+              console.log(res)
+              saveAs(res, "Invoice N°" + code + " (" + entity + ").xlsx")
+            })
+        }
+      )
+
     },
     /**
      * Change status of a purchase to confirmed.
