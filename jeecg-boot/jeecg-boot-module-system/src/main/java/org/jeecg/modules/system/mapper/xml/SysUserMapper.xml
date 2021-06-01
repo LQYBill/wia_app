@@ -45,7 +45,7 @@
 			and username = #{username}
 		</if>
 	</select>
-	
+
 	<!--  修改用户部门code -->
 	<update id="updateUserDepart">
 		UPDATE sys_user SET org_code = #{orgCode} where username = #{username}
@@ -55,7 +55,7 @@
 	<select id="getUserByPhone"  resultType="org.jeecg.modules.system.entity.SysUser">
 		select * from  sys_user  where phone = #{phone} and del_flag = 0
 	</select>
-	
+
 	<!-- 根据邮箱查询用户信息 -->
 	<select id="getUserByEmail" resultType="org.jeecg.modules.system.entity.SysUser">
 	select * from  sys_user  where email = #{email} and del_flag = 0
@@ -147,8 +147,12 @@
     <update id="updateNullByEmptyString">
         UPDATE sys_user SET ${fieldName} = NULL WHERE ${fieldName} = ''
     </update>
+    <update id="updateCGS">
+		UPDATE sys_user SET agree = true
+		WHERE id = #{id}
+	</update>
 
-	<!-- 通过多个部门IDS，查询部门下的用户信息 -->
+    <!-- 通过多个部门IDS，查询部门下的用户信息 -->
 	<select id="queryByDepIds" resultType="org.jeecg.modules.system.entity.SysUser">
 		select * from sys_user where del_flag = 0
 		<if test="departIds!=null  and departIds.size()>0">

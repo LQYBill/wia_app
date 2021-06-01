@@ -1,7 +1,6 @@
 package org.jeecg.modules.system.controller;
 
 import cn.hutool.core.util.RandomUtil;
-import cn.hutool.crypto.SecureUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.aliyuncs.exceptions.ClientException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -28,11 +27,15 @@ import org.jeecg.modules.system.service.ISysUserService;
 import org.jeecg.modules.system.util.RandImageUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -61,17 +64,16 @@ public class LoginController {
 
 	private static final String BASE_CHECK_CODES = "qwertyuiplkjhgfdsazxcvbnmQWERTYUPLKJHGFDSAZXCVBNM1234567890";
 
+	@Value("${jeecg.path.CGS}")
+	private String CDGpath;
+
 	@ApiOperation("登录接口")
 	@RequestMapping(value = "/login", method = RequestMethod.POST)
 	public Result<JSONObject> login(@RequestBody SysLoginModel sysLoginModel){
 		Result<JSONObject> result = new Result<JSONObject>();
 		String username = sysLoginModel.getUsername();
 		String password = sysLoginModel.getPassword();
-		//update-begin--Author:scott  Date:20190805 for：暂时注释掉密码加密逻辑，有点问题
-		//前端密码加密，后端进行密码解密
-		//password = AesEncryptUtil.desEncrypt(sysLoginModel.getPassword().replaceAll("%2B", "\\+")).trim();//密码解密
-		//update-begin--Author:scott  Date:20190805 for：暂时注释掉密码加密逻辑，有点问题
-		
+
 		//1. 校验用户是否有效
 		//update-begin-author:wangshuai date:20200601 for: 登录代码验证用户是否注销bug，if条件永远为false
 		LambdaQueryWrapper<SysUser> queryWrapper = new LambdaQueryWrapper<>();
@@ -82,7 +84,7 @@ public class LoginController {
 		if(!result.isSuccess()) {
 			return result;
 		}
-		
+
 		//2. 校验用户名或密码是否正确
 		String userpassword = PasswordUtil.encrypt(username, password, sysUser.getSalt());
 		String syspassword = sysUser.getPassword();
@@ -90,7 +92,7 @@ public class LoginController {
 			result.error500("用户名或密码错误");
 			return result;
 		}
-				
+
 		//用户登录信息
 		userInfo(sysUser, result);
 		LoginUser loginUser = new LoginUser();
@@ -99,7 +101,7 @@ public class LoginController {
         //update-end--Author:wangshuai  Date:20200714  for：登录日志没有记录人员
 		return result;
 	}
-	
+
 	/**
 	 * 退出登录
 	 * @param request
@@ -133,7 +135,7 @@ public class LoginController {
 	    	return Result.error("Token无效!");
 	    }
 	}
-	
+
 	/**
 	 * 获取访问量
 	 * @return
@@ -164,7 +166,7 @@ public class LoginController {
 		result.success("登录成功");
 		return result;
 	}
-	
+
 	/**
 	 * 获取访问量
 	 * @return
@@ -185,8 +187,8 @@ public class LoginController {
 		result.setResult(oConvertUtils.toLowerCasePageList(list));
 		return result;
 	}
-	
-	
+
+
 	/**
 	 * 登陆成功选择用户当前部门
 	 * @param user
@@ -211,7 +213,7 @@ public class LoginController {
 
 	/**
 	 * 短信登录接口
-	 * 
+	 *
 	 * @param jsonObject
 	 * @return
 	 */
@@ -260,7 +262,7 @@ public class LoginController {
 					}
 					return result;
 				}
-				
+
 				/**
 				 * smsmode 短信模板方式  0 .登录模板、1.注册模板、2.忘记密码模板
 				 */
@@ -292,11 +294,11 @@ public class LoginController {
 		}
 		return result;
 	}
-	
+
 
 	/**
 	 * 手机号登录接口
-	 * 
+	 *
 	 * @param jsonObject
 	 * @return
 	 */
@@ -305,14 +307,14 @@ public class LoginController {
 	public Result<JSONObject> phoneLogin(@RequestBody JSONObject jsonObject) {
 		Result<JSONObject> result = new Result<JSONObject>();
 		String phone = jsonObject.getString("mobile");
-		
+
 		//校验用户有效性
 		SysUser sysUser = sysUserService.getUserByPhone(phone);
 		result = sysUserService.checkUserIsEffective(sysUser);
 		if(!result.isSuccess()) {
 			return result;
 		}
-		
+
 		String smscode = jsonObject.getString("captcha");
 		Object code = redisUtil.get(phone);
 		if (!smscode.equals(code)) {
@@ -408,7 +410,7 @@ public class LoginController {
 		}
 		return res;
 	}
-	
+
 	/**
 	 * app登录
 	 * @param sysLoginModel
@@ -420,14 +422,14 @@ public class LoginController {
 		Result<JSONObject> result = new Result<JSONObject>();
 		String username = sysLoginModel.getUsername();
 		String password = sysLoginModel.getPassword();
-		
+
 		//1. 校验用户是否有效
 		SysUser sysUser = sysUserService.getUserByName(username);
 		result = sysUserService.checkUserIsEffective(sysUser);
 		if(!result.isSuccess()) {
 			return result;
 		}
-		
+
 		//2. 校验用户名或密码是否正确
 		String userpassword = PasswordUtil.encrypt(username, password, sysUser.getSalt());
 		String syspassword = sysUser.getPassword();
@@ -435,7 +437,7 @@ public class LoginController {
 			result.error500("用户名或密码错误");
 			return result;
 		}
-		
+
 		String orgCode = sysUser.getOrgCode();
 		if(oConvertUtils.isEmpty(orgCode)) {
 			//如果当前用户无选择部门 查看部门关联信息
@@ -451,7 +453,7 @@ public class LoginController {
 		JSONObject obj = new JSONObject();
 		//用户登录信息
 		obj.put("userInfo", sysUser);
-		
+
 		// 生成token
 		String token = JwtUtil.sign(username, syspassword);
 		// 设置超时时间
@@ -465,6 +467,35 @@ public class LoginController {
 		result.setCode(200);
 		baseCommonService.addLog("用户名: " + username + ",登录成功[移动端]！", CommonConstant.LOG_TYPE_1, null);
 		return result;
+	}
+
+	/**
+	 * Check CGS
+	 * @throws ture if user has agreed CGS, false otherwise
+	 */
+	@RequestMapping(value = "/checkCGS", method = RequestMethod.GET)
+	public Boolean checkCGS(){
+		LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+		SysUser user = sysUserService.getUserByName(sysUser.getUsername());
+		return user.getAgree() == 1;
+	}
+
+	/**
+	 * Check CGS
+	 * @throws ture if user has agreed CGS, false otherwise
+	 */
+	@RequestMapping(value = "/getCGS", method = RequestMethod.GET)
+	public byte[] getCGS() throws IOException {
+		return Files.readAllBytes(Paths.get(CDGpath));
+	}
+
+	@RequestMapping(value = "/agreeCGS", method = RequestMethod.GET)
+	public Result<?> agreeCGS(){
+		LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+		log.info("User: "+sysUser.getUsername()+" agree the term");
+		sysUser.setAgree(1);
+		sysUserService.updateLoginUser(sysUser);
+		return Result.OK();
 	}
 
 }
