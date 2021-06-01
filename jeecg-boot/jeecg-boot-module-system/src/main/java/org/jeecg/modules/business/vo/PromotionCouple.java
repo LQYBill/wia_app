@@ -5,11 +5,10 @@ import lombok.Data;
 import java.math.BigDecimal;
 
 /**
- * For purchase invoice.
+ * Entry of promotion history detail in purchase page.
  */
 @Data
-public class PromotionDetail {
+public class PromotionCouple {
     private final int count;
     private final BigDecimal unitAmount;
-    private final String name;
 }

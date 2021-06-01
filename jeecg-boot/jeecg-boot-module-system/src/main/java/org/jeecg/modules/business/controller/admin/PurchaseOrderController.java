@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.SecurityUtils;
 import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.common.util.oConvertUtils;
+import org.jeecg.modules.business.vo.PromotionCouple;
 import org.jeecg.modules.business.vo.PromotionDetail;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
@@ -182,8 +183,8 @@ public class PurchaseOrderController {
     @ApiOperation(value = "SKU采购折扣历史-通过主表ID查询", notes = "SKU采购折扣历史-通过主表ID查询")
     @GetMapping(value = "/querySkuPromotionHistoryByMainId")
     public Result<?> querySkuPromotionHistoryListByMainId(@RequestParam(name = "id", required = true) String id) {
-        List<PromotionDetail> skuPromotionHistoryList = skuPromotionHistoryService.selectByMainId(id);
-        IPage<PromotionDetail> page = new Page<>();
+        List<PromotionCouple> skuPromotionHistoryList = skuPromotionHistoryService.selectByMainId(id);
+        IPage<PromotionCouple> page = new Page<>();
         page.setRecords(skuPromotionHistoryList);
         page.setTotal(skuPromotionHistoryList.size());
         return Result.OK(page);

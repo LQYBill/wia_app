@@ -3,6 +3,7 @@ package org.jeecg.modules.business.service.impl.purchase;
 import org.jeecg.modules.business.entity.SkuPromotionHistory;
 import org.jeecg.modules.business.mapper.SkuPromotionHistoryMapper;
 import org.jeecg.modules.business.service.ISkuPromotionHistoryService;
+import org.jeecg.modules.business.vo.PromotionCouple;
 import org.jeecg.modules.business.vo.PromotionDetail;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -22,7 +23,7 @@ public class SkuPromotionHistoryServiceImpl extends ServiceImpl<SkuPromotionHist
 	private SkuPromotionHistoryMapper skuPromotionHistoryMapper;
 
 	@Override
-	public List<PromotionDetail> selectByMainId(String mainId) {
+	public List<PromotionCouple> selectByMainId(String mainId) {
 		return skuPromotionHistoryMapper.selectByMainId(mainId);
 	}
 }
