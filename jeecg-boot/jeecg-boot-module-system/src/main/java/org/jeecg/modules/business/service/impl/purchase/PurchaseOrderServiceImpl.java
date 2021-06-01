@@ -2,9 +2,9 @@ package org.jeecg.modules.business.service.impl.purchase;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.google.common.collect.Lists;
-import org.jeecg.modules.business.domain.PurchaseInvoice;
-import org.jeecg.modules.business.domain.PurchaseInvoiceEntry;
+import org.jeecg.modules.business.domain.purchase.invoice.InvoiceData;
+import org.jeecg.modules.business.domain.purchase.invoice.PurchaseInvoice;
+import org.jeecg.modules.business.domain.purchase.invoice.PurchaseInvoiceEntry;
 import org.jeecg.modules.business.entity.*;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
 import org.jeecg.modules.business.mapper.PurchaseOrderContentMapper;
@@ -32,7 +32,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -350,18 +349,27 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
     }
 
     @Override
-    public byte[] downloadInvoice(String purchaseID) throws IOException, URISyntaxException {
-        Path template = Paths.get(INVOICE_TEMPLATE);
-        Path tmp = Paths.get(template.getParent().toString(), "tmp.xlsx");
-        Files.deleteIfExists(tmp);
-        Files.copy(template, tmp);
+    public InvoiceData makeInvoice(String purchaseID) throws IOException, URISyntaxException {
         Client client = clientService.getCurrentClient();
         List<PurchaseInvoiceEntry> purchaseOrderSkuList = purchaseOrderContentMapper.selectInvoiceDataByID(purchaseID);
         List<PromotionDetail> promotionDetails = skuPromotionHistoryMapper.selectPromotionByPurchase(purchaseID);
         String invoiceCode = purchaseOrderMapper.selectById(purchaseID).getInvoiceNumber();
 
-        PurchaseInvoice pv = new PurchaseInvoice(client, invoiceCode, purchaseOrderSkuList, promotionDetails);
-        pv.toExcelFile(tmp);
-        return Files.readAllBytes(tmp);
+        Path template = Paths.get(INVOICE_TEMPLATE);
+        Path newInvoice = Paths.get(template.getParent().toString(), invoiceCode + ".xlsx");
+        if (Files.notExists(newInvoice)) {
+            Files.copy(template, newInvoice);
+            PurchaseInvoice pv = new PurchaseInvoice(client, invoiceCode, purchaseOrderSkuList, promotionDetails);
+            pv.toExcelFile(newInvoice);
+            return new InvoiceData(pv.entity(), invoiceCode);
+        }
+        return new InvoiceData(client.getInvoiceEntity(), invoiceCode);
+    }
+
+    @Override
+    public byte[] getInvoiceByte(String invoiceCode) throws IOException {
+        Path template = Paths.get(INVOICE_TEMPLATE);
+        Path invoice = Paths.get(template.getParent().toString(), invoiceCode + ".xlsx");
+        return Files.readAllBytes(invoice);
     }
 }

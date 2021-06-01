@@ -1,11 +1,9 @@
-package org.jeecg.modules.business.domain;
+package org.jeecg.modules.business.domain.purchase.invoice;
 
 import cn.hutool.poi.excel.ExcelUtil;
 import cn.hutool.poi.excel.ExcelWriter;
-import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.jeecg.modules.business.domain.codeGeneration.InvoiceRef;
-import org.jeecg.modules.business.domain.codeGeneration.PurchaseInvoiceCodeRule;
 import org.jeecg.modules.business.entity.Client;
 import org.jeecg.modules.business.vo.PromotionDetail;
 
@@ -78,6 +76,10 @@ public class PurchaseInvoice {
         writer.close();
     }
 
+    public String entity(){
+        return targetClient.getInvoiceEntity();
+    }
+
     /**
      * Fill content that does not belong to the table section.
      *
@@ -87,7 +89,7 @@ public class PurchaseInvoice {
         Map<String, Object> cellContentMap = new HashMap<>();
         cellContentMap.put(INVOICE_CODE_LOCATION, code);
         cellContentMap.put(GENERATED_DATE_LOCATION, InvoiceStyleFactory.INVOICE_CODE_DATETIME_FORMAT.format(new Date()));
-        cellContentMap.put(ENTITY_NAME_LOCATION, targetClient.fullName());
+        cellContentMap.put(ENTITY_NAME_LOCATION, targetClient.getInvoiceEntity());
         cellContentMap.put(
                 INVOICE_ADR_LINE1,
                 String.format("%s %s, %s",

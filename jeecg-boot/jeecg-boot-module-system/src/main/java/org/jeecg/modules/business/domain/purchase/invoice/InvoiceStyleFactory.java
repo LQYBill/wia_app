@@ -1,4 +1,4 @@
-package org.jeecg.modules.business.domain;
+package org.jeecg.modules.business.domain.purchase.invoice;
 
 import org.apache.poi.ss.usermodel.*;
 

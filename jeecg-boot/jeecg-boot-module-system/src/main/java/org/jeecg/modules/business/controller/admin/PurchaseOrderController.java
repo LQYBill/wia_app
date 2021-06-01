@@ -14,8 +14,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.SecurityUtils;
 import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.common.util.oConvertUtils;
+import org.jeecg.modules.business.domain.purchase.invoice.InvoiceData;
 import org.jeecg.modules.business.vo.PromotionCouple;
-import org.jeecg.modules.business.vo.PromotionDetail;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
 import org.jeecgframework.poi.excel.entity.ExportParams;
@@ -332,16 +332,19 @@ public class PurchaseOrderController {
 
 
     /**
-     *
+     * @param purchaseID purchaseID
+     */
+    @RequestMapping(value = "/invoiceMeta", method = RequestMethod.GET)
+    public InvoiceData getInvoiceMetaData(@RequestParam String purchaseID, HttpServletResponse response) throws IOException, URISyntaxException {
+        return purchaseOrderService.makeInvoice(purchaseID);
+    }
+
+    /**
      * @param purchaseID purchaseID
      */
     @RequestMapping(value = "/downloadInvoice", method = RequestMethod.GET)
-    public void downloadPurchaseInvoice(@RequestParam String purchaseID, HttpServletResponse response) throws IOException, URISyntaxException {
-        byte[] out = purchaseOrderService.downloadInvoice(purchaseID);
-        response.setContentType("application/octet-stream;charset=utf-8");
-        response.setHeader("Content-Disposition", "attachment;");
-        response.setHeader("Content-Transfer-Encoding", "binary");
-        response.getOutputStream().write(out);
+    public byte[] downloadInvoiceFile(@RequestParam String invoiceCode) throws IOException, URISyntaxException {
+        return purchaseOrderService.getInvoiceByte(invoiceCode);
     }
 
 

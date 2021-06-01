@@ -3,6 +3,7 @@ package org.jeecg.modules.business.service;
 import cn.hutool.core.io.resource.FileResource;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.jeecg.modules.business.domain.purchase.invoice.InvoiceData;
 import org.jeecg.modules.business.entity.PurchaseOrder;
 import org.jeecg.modules.business.entity.PurchaseOrderSku;
 import org.jeecg.modules.business.entity.SkuPromotionHistory;
@@ -30,7 +31,7 @@ public interface IPurchaseOrderService extends IService<PurchaseOrder> {
         /**
      * 添加一对多
      */
-    public void saveMain(PurchaseOrder purchaseOrder, List<PurchaseOrderSku> purchaseOrderSkuList, List<SkuPromotionHistory> skuPromotionHistoryList);
+        void saveMain(PurchaseOrder purchaseOrder, List<PurchaseOrderSku> purchaseOrderSkuList, List<SkuPromotionHistory> skuPromotionHistoryList);
 
     /**
      * 修改一对多
@@ -40,7 +41,7 @@ public interface IPurchaseOrderService extends IService<PurchaseOrder> {
     /**
      * 删除一对多
      */
-    public void delMain(String id);
+    void delMain(String id);
 
     /**
      * 批量删除一对多
@@ -100,9 +101,12 @@ public interface IPurchaseOrderService extends IService<PurchaseOrder> {
 
 
     /**
+     * Make invoice file
      * @param purchaseID
      * @return the file in binary
      * @throws IOException IO error while reading the file.
      */
-    byte[] downloadInvoice(String purchaseID) throws IOException, URISyntaxException;
+    InvoiceData makeInvoice(String purchaseID) throws IOException, URISyntaxException;
+
+    byte[] getInvoiceByte(String invoiceCode) throws IOException;
 }
