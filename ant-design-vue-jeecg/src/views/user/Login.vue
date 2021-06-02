@@ -60,7 +60,7 @@
       @cancel="stepCaptchaCancel"></two-step-captcha>
 
     <login-select-tenant ref="loginSelect" @success="loginSelectOk"></login-select-tenant>
-    <statement-cds ref="statement" :on-click-ok="welcome"></statement-cds>
+    <statement-cds ref="statement" :ok-callback="welcome"></statement-cds>
 
   </div>
 </template>
