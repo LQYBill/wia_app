@@ -2,3 +2,5 @@
 /.idea/
 *.iml
 rebel.xml
+
+**/*-dev.yml
