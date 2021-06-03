@@ -1,4 +1,4 @@
-package org.jeecg.modules.business.domain.mabangapi;
+package org.jeecg.modules.business.domain.mabangapi.getorderlist;
 
 /**
  * This class represents error that is returned by target get-order-list API

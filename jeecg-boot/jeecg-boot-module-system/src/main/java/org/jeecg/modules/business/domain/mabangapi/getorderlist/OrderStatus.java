@@ -1,4 +1,4 @@
-package org.jeecg.modules.business.domain.mabangapi;
+package org.jeecg.modules.business.domain.mabangapi.getorderlist;
 
 public enum OrderStatus {
     Pending(1),

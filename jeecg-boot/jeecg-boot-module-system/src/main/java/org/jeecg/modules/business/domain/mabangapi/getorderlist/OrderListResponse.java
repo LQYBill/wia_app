@@ -1,4 +1,4 @@
-package org.jeecg.modules.business.domain.mabangapi;
+package org.jeecg.modules.business.domain.mabangapi.getorderlist;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;

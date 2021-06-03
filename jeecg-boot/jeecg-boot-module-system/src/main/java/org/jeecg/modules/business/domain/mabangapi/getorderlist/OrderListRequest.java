@@ -1,17 +1,15 @@
-package org.jeecg.modules.business.domain.mabangapi;
+package org.jeecg.modules.business.domain.mabangapi.getorderlist;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.commons.codec.binary.Hex;
 import org.jeecg.common.util.RestUtil;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
