@@ -1,14 +1,10 @@
-package org.jeecg.modules.business.org.jeecg.modules.business.domain.mabangapi;
+package org.jeecg.modules.business.org.jeecg.modules.business.domain.mabangapi.getorderlist;
 
-import org.jeecg.modules.business.domain.mabangapi.*;
+import org.jeecg.modules.business.domain.mabangapi.getorderlist.*;
 import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.Month;
-import java.time.ZoneId;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 
 public class OrderListRequestTest {
