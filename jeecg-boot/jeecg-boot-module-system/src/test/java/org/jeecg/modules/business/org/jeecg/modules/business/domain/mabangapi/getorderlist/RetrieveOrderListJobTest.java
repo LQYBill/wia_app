@@ -7,14 +7,11 @@ import org.jeecg.modules.business.domain.mabangapi.getorderlist.Order;
 import org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderItem;
 import org.jeecg.modules.business.domain.mabangapi.getorderlist.RetrieveOrderListJob;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.BeanUtils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Map;
-
-import static org.jeecg.modules.business.domain.mabangapi.getorderlist.RetrieveOrderListJob.parseData;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -207,7 +204,7 @@ public class RetrieveOrderListJobTest {
     @Test
     void updateDateFromMabangTest() {
         RetrieveOrderListJob job = new RetrieveOrderListJob();
-        job.updateDateFromMabang();
+        job.updateNewOrder();
     }
 
 }

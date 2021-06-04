@@ -2,46 +2,62 @@ package org.jeecg.modules.business.domain.mabangapi.getorderlist;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
+import org.jeecg.modules.business.mapper.PlatformOrderMapper;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.OffsetTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class RetrieveOrderListJob implements Job {
+    @Autowired
+    private PlatformOrderMapper platformOrderMapper;
+    @Autowired
+    private PlatformOrderContentMapper platformOrderContentMapper;
 
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
 
     }
 
-    public void updateDateFromMabang(){
+    /**
+     * Retrieve last 30 minutes new paid order
+     */
+    public void updateNewOrder() {
         OrderListRequestBody body = new OrderListRequestBody();
         LocalDateTime end = LocalDateTime.now();
-        LocalDateTime begin = end.minusDays(1);
+        LocalDateTime begin = end.minusMinutes(30);
 
         body.setDatetimeType(DateType.PAID)
                 .setStartDate(begin)
                 .setEndDate(end);
 
         OrderListRequest request = new OrderListRequest(body);
-        try{
-            while (request.hasNext()){
+        try {
+            while (request.hasNext()) {
                 JSONArray data = request.next();
-                System.out.println(data);
-                System.out.println(parseData(data));
+
+                Map<Order, List<OrderItem>> order = parseData(data);
+
             }
-        } catch (OrderListRequestErrorException e){
+        } catch (OrderListRequestErrorException e) {
             throw new RuntimeException(e.getMessage());
         }
 
+    }
+
+    /**
+     * Retrieve changed order and merge them
+     */
+    public void updateChangedOrder() {
+        // 1. query for orders that updated last 30 minutes,
+        // 2. select those that are canceled, matching its content
+        // with those whose content is increased and content is the same
     }
 
 
