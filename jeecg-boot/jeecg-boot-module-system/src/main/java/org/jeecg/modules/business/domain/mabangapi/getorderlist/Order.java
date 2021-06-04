@@ -1,12 +1,10 @@
 package org.jeecg.modules.business.domain.mabangapi.getorderlist;
 
 import com.alibaba.fastjson.annotation.JSONField;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
-import java.util.TimeZone;
 import java.util.UUID;
 
 /**
@@ -41,8 +39,11 @@ public class Order {
     @JSONField(name = "salesRecordNumber")
     private String platformOrderNumber;
 
+    /**
+     * If tracking is empty, set it null
+     */
     @JSONField(name = "trackNumber")
-    private String trackingNumber = "";
+    private String trackingNumber;
 
     @JSONField(name = "paidTime")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -72,4 +73,11 @@ public class Order {
      */
     @JSONField(name = "orderStatus")
     private String status;
+
+    public void setTrackingNumber(String trackingNumber) {
+        if (trackingNumber.length() == 0) {
+            this.trackingNumber = null;
+        } else
+            this.trackingNumber = trackingNumber;
+    }
 }
