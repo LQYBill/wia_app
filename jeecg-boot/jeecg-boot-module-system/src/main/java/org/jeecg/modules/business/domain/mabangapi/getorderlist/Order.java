@@ -7,9 +7,11 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.UUID;
 
 /**
- * Data container of platform Order, mabang side, annotation is JSON key of mabang
+ * Data container of platform Order, mabang side,
+ * annotation is JSON key of mabang
  */
 @Data
 public class Order {
@@ -17,10 +19,10 @@ public class Order {
      * Primary key
      */
     @JSONField(deserialize = false)
-    private String id;
+    private String id = UUID.randomUUID().toString();
 
     /**
-     * 店铺 erp code
+     * shop id of mabang api is shop erp code
      */
     @JSONField(name = "shopId")
     private String shopErpCode;
@@ -40,7 +42,7 @@ public class Order {
     private String platformOrderNumber;
 
     @JSONField(name = "trackNumber")
-    private String trackingNumber;
+    private String trackingNumber = "";
 
     @JSONField(name = "paidTime")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")

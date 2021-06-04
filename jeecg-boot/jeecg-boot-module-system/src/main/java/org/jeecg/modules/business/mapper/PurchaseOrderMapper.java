@@ -95,8 +95,5 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrder> {
 
     String getInvoiceNumber(@Param("purchaseID") String purchaseID);
 
-    void insertFromMabang(Order order){
-
-    }
 
 }

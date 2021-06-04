@@ -41,7 +41,7 @@
             parameterType="org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderItem">
         INSERT INTO platform_order_content(id, create_by, create_time,
         update_by, update_time, platform_order_id, sku_id, quantity)
-        SELECT #{id}, 'admin', NOW(), 'admin', NOW(), #{platformOrderId}, sku.id, #{quantity}
+        SELECT UUID(), 'admin', NOW(), 'admin', NOW(), #{platformOrderId}, sku.id, #{quantity}
         FROM sku
         WHERE erp_code = #{erpCode}
     </insert>

@@ -41,6 +41,7 @@ public interface PlatformOrderContentMapper extends BaseMapper<PlatformOrderCont
 
     /**
      * Insert platform order content from mabang side,
+     * OrderItem doest not need to provide uuid.
      * sku erp code will be replaced to sku id.
      *
      * @param item the order content to insert

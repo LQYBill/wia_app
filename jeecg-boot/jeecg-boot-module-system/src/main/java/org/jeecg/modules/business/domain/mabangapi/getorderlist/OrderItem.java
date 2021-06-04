@@ -9,13 +9,10 @@ import lombok.Data;
 @Data
 public class OrderItem {
 
-    @JSONField(deserialize = false)
-    private String mainKey;
-
     @JSONField(name = "stockSku")
     private String erpCode;
 
-    @JSONField(name = "quantity")
+    @JSONField(deserialize = false)
     private String platformOrderId;
 
     @JSONField(name = "quantity")
