@@ -3,6 +3,7 @@ package org.jeecg.modules.business.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.google.common.collect.Lists;
 import org.apache.ibatis.annotations.Param;
+import org.jeecg.modules.business.domain.mabangapi.getorderlist.Order;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrderQuantity;
@@ -43,5 +44,12 @@ public interface PlatformOrderMapper extends BaseMapper<PlatformOrder> {
     void batchUpdateStatus(@Param("orderIDList") List<String> orderIDList, @Param("status") int status);
 
     OrderQuantity queryQuantities(@Param("clientId") String clientId);
+
+    /**
+     * Insert platform order data from Mabang side.
+     * replace shop erp code by shop id.
+     * @param order the order to insert
+     */
+    void insertFromMabangOrder(Order order);
 
 }

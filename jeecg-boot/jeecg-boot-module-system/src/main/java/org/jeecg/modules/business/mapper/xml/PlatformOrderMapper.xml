@@ -36,6 +36,32 @@
                  JOIN client c ON s.owner_id = c.id
         WHERE c.id = #{clientId}
     </sql>
+    <insert id="insertFromMabangOrder" parameterType="org.jeecg.modules.business.domain.mabangapi.getorderlist.Order">
+        INSERT INTO platform_order(id, create_by,
+                                   create_time, update_by,
+                                   update_time, shop_id,
+                                   logistic_channel_name, platform_order_id,
+                                   platform_order_number, tracking_number,
+                                   order_time, shipping_time,
+                                   recipient, country, status)
+        SELECT #{id},
+               'admin',
+               NOW(),
+               'admin',
+               NOW(),
+               shop.id,
+               #{logisticChannelName},
+               #{platformOrderId},
+               #{platformOrderNumber},
+               #{trackingNumber},
+               #{orderTime},
+               #{shippingTime},
+               #{recipient},
+               #{country},
+               #{status}
+        FROM shop
+        WHERE erp_code = #{shopErpCode}
+    </insert>
 
     <select id="pagePendingOrderByClientId"
             resultType="org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage">
