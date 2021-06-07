@@ -3,6 +3,7 @@ package org.jeecg.modules.business.service.impl;
 import org.jeecg.modules.business.entity.ShippingFeesWaiverProduct;
 import org.jeecg.modules.business.mapper.ShippingFeesWaiverProductMapper;
 import org.jeecg.modules.business.service.IShippingFeesWaiverProductService;
+import org.jeecg.modules.business.vo.SkuShippingFeesWaiver;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -23,5 +24,10 @@ public class ShippingFeesWaiverProductServiceImpl extends ServiceImpl<ShippingFe
 	@Override
 	public List<ShippingFeesWaiverProduct> selectByMainId(String mainId) {
 		return shippingFeesWaiverProductMapper.selectByMainId(mainId);
+	}
+
+	@Override
+	public List<SkuShippingFeesWaiver> selectBySkuIds(List<String> skuIds) {
+		return shippingFeesWaiverProductMapper.searchWaiversBySkuIds(skuIds);
 	}
 }

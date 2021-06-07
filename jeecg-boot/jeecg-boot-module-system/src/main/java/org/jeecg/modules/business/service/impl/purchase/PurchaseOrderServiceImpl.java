@@ -222,7 +222,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         Client client = clientService.getCurrentClient();
 
         List<OrderContentDetail> details = platformOrderService.searchPurchaseOrderDetail(skuQuantities);
-        OrdersStatisticData data = OrdersStatisticData.makeData(details);
+        OrdersStatisticData data = OrdersStatisticData.makeData(details, null);
 
         String purchaseID = UUID.randomUUID().toString();
 

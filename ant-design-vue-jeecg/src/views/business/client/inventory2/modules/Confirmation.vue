@@ -6,6 +6,14 @@
         <detail-list-item term="Sku Quantity">{{ orderData.totalQuantity }}</detail-list-item>
         <detail-list-item term="Total Amount">{{ orderData.estimatedTotalPrice }}</detail-list-item>
         <detail-list-item term="Discount">{{ orderData.reducedAmount }}</detail-list-item>
+        <a-tooltip v-if='orderData.extraShippingFees > 0' placement="bottom"
+                   title="Each type of product that doesn't meet the SFWQ (Shipping Fees Waiver Quantity) will occur an extra fee of 2€.
+        For example, if you order 10 yellow cups and 10 green cups, which are from the same supplier whose SFWQ is 30, you will pay 1 * 2€ = 2€ because 10 + 10 = 20 < 30.
+        But if you order 15 yellow cups and 15 green cups from the same supplier, you don't have to pay because 15 + 15 = 30 where the SFWQ is met.">
+          <detail-list-item term="Exceptional shipping fees inside China">
+            <span style='color: red'>{{ orderData.extraShippingFees }}</span>
+          </detail-list-item>
+        </a-tooltip>
       </detail-list>
       <a-divider style="margin-bottom: 10px"/>
       <detail-list title="Client Information">
@@ -85,7 +93,7 @@
 
         <template slot="adjustNumber" slot-scope="text, record, index">
           <div>
-            <a-tooltip :title=" getMoqTooltip(record['skuId']) ">
+            <a-tooltip :title=" getMoqTooltip(record['skuId']) " trigger='click'>
               <a-input-number
                 v-model="currentQuantity[index]"
                 :min="0"
@@ -183,6 +191,7 @@ export default {
         reducedAmount: undefined,
         skuNumber: undefined,
         totalQuantity: undefined,
+        extraShippingFees: undefined,
       },
       orderDetails: [],
       currentProvisionDays: 0,

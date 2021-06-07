@@ -209,7 +209,7 @@ public class ClientPlatformOrderController {
     @ApiOperation(
             value = "Place a purchase order by platform orders",
             notes = "Place a purchase order by platform orders, return purchase details to let" +
-                    "client confirme information."
+                    "client confirm information."
     )
     @PostMapping(value = "/placeOrder", consumes = "application/json", produces = "application/json")
     public Result<PurchaseConfirmation> placeOrder(@RequestBody List<String> orderIds) {
