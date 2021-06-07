@@ -20,8 +20,8 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * @Description: 采购运费免除
  * @Author: jeecg-boot
- * @Date: 2021-06-02
- * @Version: V1.0
+ * @Date: 2021-06-07
+ * @Version: V1.1
  */
 @Data
 @ApiModel(value = "shipping_fees_waiverPage对象", description = "采购运费免除")
@@ -68,6 +68,13 @@ public class ShippingFeesWaiverPage {
     @Excel(name = "免除所需购买量", width = 15)
     @ApiModelProperty(value = "免除所需购买量")
     private Integer threshold;
+
+    /**
+     * 免除费用
+     */
+    @Excel(name = "免除费用", width = 15)
+    @ApiModelProperty(value = "免除费用")
+    private java.math.BigDecimal fees;
 
     @ExcelCollection(name = "采购运费免除产品")
     @ApiModelProperty(value = "采购运费免除产品")

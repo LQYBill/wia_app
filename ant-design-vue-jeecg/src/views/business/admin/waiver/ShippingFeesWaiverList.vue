@@ -165,6 +165,11 @@
             dataIndex: 'threshold',
           },
           {
+            title:'免除费用',
+            align:"center",
+            dataIndex: 'fees'
+          },
+          {
             title: '操作',
             dataIndex: 'action',
             align: 'center',
@@ -208,6 +213,7 @@
         let fieldList=[];
         fieldList.push({type:'string',value:'name',text:'名称',dictCode:''})
         fieldList.push({type:'int',value:'threshold',text:'免除所需购买量',dictCode:''})
+        fieldList.push({type:'BigDecimal',value:'fees',text:'免除费用',dictCode:''})
         this.superFieldList = fieldList
       }
     }

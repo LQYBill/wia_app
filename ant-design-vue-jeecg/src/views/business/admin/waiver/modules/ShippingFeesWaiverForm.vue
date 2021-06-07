@@ -14,6 +14,11 @@
               <a-input-number v-model="model.threshold" placeholder="请输入免除所需购买量" style="width: 100%" />
             </a-form-model-item>
           </a-col>
+           <a-col :xs="24" :sm="12">
+             <a-form-model-item label="免除费用" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="fees">
+               <a-input-number v-model="model.fees" placeholder="请输入免除费用" style="width: 100%" />
+             </a-form-model-item>
+           </a-col>
         </a-row>
       </a-form-model>
      </j-form-container>
