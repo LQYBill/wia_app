@@ -34,7 +34,7 @@ public class ShippingFeesWaiverServiceImpl extends ServiceImpl<ShippingFeesWaive
 		if(shippingFeesWaiverProductList!=null && shippingFeesWaiverProductList.size()>0) {
 			for(ShippingFeesWaiverProduct entity:shippingFeesWaiverProductList) {
 				//外键设置
-				entity.setProductId(shippingFeesWaiver.getId());
+				entity.setWaiverId(shippingFeesWaiver.getId());
 				shippingFeesWaiverProductMapper.insert(entity);
 			}
 		}
@@ -52,7 +52,7 @@ public class ShippingFeesWaiverServiceImpl extends ServiceImpl<ShippingFeesWaive
 		if(shippingFeesWaiverProductList!=null && shippingFeesWaiverProductList.size()>0) {
 			for(ShippingFeesWaiverProduct entity:shippingFeesWaiverProductList) {
 				//外键设置
-				entity.setProductId(shippingFeesWaiver.getId());
+				entity.setWaiverId(shippingFeesWaiver.getId());
 				shippingFeesWaiverProductMapper.insert(entity);
 			}
 		}
