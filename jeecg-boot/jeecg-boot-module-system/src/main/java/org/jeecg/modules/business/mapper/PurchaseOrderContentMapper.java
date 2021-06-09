@@ -2,7 +2,7 @@ package org.jeecg.modules.business.mapper;
 
 import java.util.List;
 
-import org.jeecg.modules.business.entity.OrderContentDetail;
+import org.jeecg.modules.business.domain.purchase.invoice.PurchaseInvoiceEntry;
 import org.jeecg.modules.business.entity.PurchaseOrderSku;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
@@ -23,4 +23,6 @@ public interface PurchaseOrderContentMapper extends BaseMapper<PurchaseOrderSku>
     List<PurchaseOrderSku> selectByMainId(@Param("mainId") String mainId);
 
     void addAll(@Param("creator") String creator, @Param("purchaseID") String purchaseID, @Param("data") List<OrderContentEntry> orderContent);
+
+    List<PurchaseInvoiceEntry> selectInvoiceDataByID(@Param("purchaseID") String purchaseID);
 }

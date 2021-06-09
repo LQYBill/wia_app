@@ -46,6 +46,21 @@
       </a-upload>
     </template>
 
+    <template slot="invoiceSlot" slot-scope="tuple">
+      <a-button
+        ghost
+        type="primary"
+        icon="download"
+        size="small"
+        :disabled="!canDownloadInvoice(tuple.record['status'])"
+        @click="downloadInvoice(tuple.record)"
+      >
+        <span v-if="canDownloadInvoice(tuple.record['status'])">Download</span>
+        <span v-else>Not available</span>
+      </a-button>
+
+    </template>
+
     <template slot="fileSlot" slot-scope="{text, record, index}">
       <span v-if="!fileName" style="font-size: 12px;font-style: italic;">无文件</span>
       <a-button
@@ -54,7 +69,7 @@
         type="primary"
         icon="download"
         size="small"
-        @click="downloadFile(fileName)"
+        @click="downloadPaymentFile(fileName)"
       >
         <span>预览</span>
       </a-button>
@@ -107,6 +122,9 @@ import {ACCESS_TOKEN, TENANT_ID} from "@/store/mutation-types"
 import Vue from 'vue'
 import {getFile, postAction} from "@api/manage";
 import Template1 from "@views/jeecg/JVxeDemo/layout-demo/Template1";
+import {saveAs} from 'file-saver';
+
+const {getAction} = require("@api/manage");
 
 const URL_PREFIX = "/business/purchaseOrder/client/"
 export default {
@@ -132,6 +150,8 @@ export default {
         downloadFile: '/business/purchaseOrder/downloadFile',
         confirmPayment: '/business/purchaseOrder/confirmPayment',
         confirmPurchase: '/business/purchaseOrder/confirmPurchase',
+        downloadInvoice: '/business/purchaseOrder/downloadInvoice',
+        InvoiceMeta: '/business/purchaseOrder/invoiceMeta',
       },
       superFieldList: [],
       roleConfig: roleConfig,
@@ -151,7 +171,7 @@ export default {
         head['tenant-id'] = tenantid
       }
       return head;
-    }
+    },
   },
   methods: {
     initDictConfig() {
@@ -180,18 +200,54 @@ export default {
       }
       return true
     },
+    /**
+     * Client can download purchase invoice when the purchase status is confirmed,
+     * purchasing or received.
+     * @param status the status of a purchase
+     * @returns {boolean}
+     */
+    canDownloadInvoice(status) {
+      return status === "confirmed" || status === "purchasing" || status === "received";
+    },
 
-    downloadFile(filename) {
+    /**
+     * Download payment file by its filename.
+     * @param filename name of the file to download.
+     */
+    downloadPaymentFile(filename) {
       // download file by name
       const param = {filename: filename}
       getFile(this.url.downloadFile, param)
         .then(res => {
           console.log(res)
-          //let rawData = window.atob(res.result.data)
-          //console.log("decode: \n" + rawData)
           saveAs(res, filename)
         })
     },
+    /**
+     * Download purchase invoice by purchase ID
+     * @param purchaseID ID of the purchase that to download invoice
+     */
+    downloadInvoice(record) {
+      const param = {purchaseID: record["id"]}
+      getAction(this.url.InvoiceMeta, param).then(
+        res => {
+          console.log(res)
+          let entity = res.entity
+          let code = res.code;
+          const param = {invoiceCode: res.code}
+          getFile(this.url.downloadInvoice, param)
+            .then(res => {
+              console.log(res)
+              saveAs(res, "Invoice N°" + code + " (" + entity + ").xlsx")
+            })
+        }
+      )
+
+    },
+    /**
+     * Change status of a purchase to confirmed.
+     * @param purchaseID ID of the purchase to change.
+     */
     confirmPayment(purchaseID) {
       const params = {purchaseID: purchaseID}
       postAction(this.url.confirmPayment, params)
@@ -201,6 +257,10 @@ export default {
           }
         })
     },
+    /**
+     * Change status of a purchase to purchasing.
+     * @param purchaseID ID of the purchase to change.
+     */
     confirmPurchase(purchaseID) {
       const params = {purchaseID: purchaseID}
       postAction(this.url.confirmPurchase, params)

@@ -64,6 +64,8 @@ import PopupConfirmation from './modules/ConfirmationContainer'
 import {getFileAccessHttpUrl} from "@api/manage";
 import role_config from "./RoleConfig"
 
+
+
 const rootURL = '/business/inventory/client/'
 
 export default {

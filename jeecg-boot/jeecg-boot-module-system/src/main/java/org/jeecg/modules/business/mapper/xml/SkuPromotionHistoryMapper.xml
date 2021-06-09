@@ -8,11 +8,19 @@
         WHERE purchase_order_id = #{mainId}    </delete>
 
     <select id="selectByMainId" parameterType="java.lang.String"
-            resultType="org.jeecg.modules.business.vo.PromotionDetail">
+            resultType="org.jeecg.modules.business.vo.PromotionCouple">
         SELECT sph.promo_count AS count, sp.discount AS unitAmount
         FROM sku_promotion_history sph
         JOIN sku_promotion sp ON sp.id = sph.promotion_id
         WHERE purchase_order_id = #{mainId}    </select>
+
+
+    <select id="selectPromotionByPurchase" resultType="org.jeecg.modules.business.vo.PromotionDetail">
+        SELECT sph.promo_count, sp.discount, sp.name
+        FROM sku_promotion_history sph
+        JOIN sku_promotion sp ON sph.promotion_id = sp.id
+        WHERE purchase_order_id = #{purchaseID}
+    </select>
 
     <insert id="addAll">
         INSERT INTO sku_promotion_history(id, create_by, create_time, update_by, update_time, promotion_id,

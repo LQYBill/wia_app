@@ -30,8 +30,9 @@ public class OrderContentDetail {
 
     /**
      * Calculate the total price by applying the price to the sku.
+     * Total price = price * quantity
      *
-     * @return the total price.
+     * @return the total price (price * quantity)
      */
     public BigDecimal totalPrice() {
         BigDecimal unit = skuDetail.getPrice().getPrice(quantity);

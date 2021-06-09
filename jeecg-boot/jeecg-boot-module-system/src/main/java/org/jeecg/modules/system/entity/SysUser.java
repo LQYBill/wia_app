@@ -112,6 +112,8 @@ public class SysUser implements Serializable {
     @Dict(dicCode = "user_status")
     private Integer status;
 
+    private Integer agree;
+
     /**
      * 删除状态（0，正常，1已删除）
      */

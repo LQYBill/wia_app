@@ -1,6 +1,7 @@
 package org.jeecg.modules.business.controller.admin;
 
 import java.io.*;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -13,7 +14,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.SecurityUtils;
 import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.common.util.oConvertUtils;
-import org.jeecg.modules.business.vo.PromotionDetail;
+import org.jeecg.modules.business.domain.purchase.invoice.InvoiceData;
+import org.jeecg.modules.business.vo.PromotionCouple;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
 import org.jeecgframework.poi.excel.entity.ExportParams;
@@ -85,22 +87,6 @@ public class PurchaseOrderController {
         Page<PurchaseOrder> page = new Page<>(pageNo, pageSize);
         IPage<PurchaseOrder> pageList = purchaseOrderService.page(page, queryWrapper);
         return Result.OK(pageList);
-    }
-
-    /**
-     * 添加
-     *
-     * @param purchaseOrderPage
-     * @return
-     */
-    @AutoLog(value = "商品采购订单-添加")
-    @ApiOperation(value = "商品采购订单-添加", notes = "商品采购订单-添加")
-    @PostMapping(value = "/add")
-    public Result<?> add(@RequestBody PurchaseOrderPage purchaseOrderPage) {
-        PurchaseOrder purchaseOrder = new PurchaseOrder();
-        BeanUtils.copyProperties(purchaseOrderPage, purchaseOrder);
-        purchaseOrderService.saveMain(purchaseOrder, purchaseOrderPage.getPurchaseOrderSkuList(), null);
-        return Result.OK("添加成功！");
     }
 
     /**
@@ -197,8 +183,8 @@ public class PurchaseOrderController {
     @ApiOperation(value = "SKU采购折扣历史-通过主表ID查询", notes = "SKU采购折扣历史-通过主表ID查询")
     @GetMapping(value = "/querySkuPromotionHistoryByMainId")
     public Result<?> querySkuPromotionHistoryListByMainId(@RequestParam(name = "id", required = true) String id) {
-        List<PromotionDetail> skuPromotionHistoryList = skuPromotionHistoryService.selectByMainId(id);
-        IPage<PromotionDetail> page = new Page<>();
+        List<PromotionCouple> skuPromotionHistoryList = skuPromotionHistoryService.selectByMainId(id);
+        IPage<PromotionCouple> page = new Page<>();
         page.setRecords(skuPromotionHistoryList);
         page.setTotal(skuPromotionHistoryList.size());
         return Result.OK(page);
@@ -342,6 +328,23 @@ public class PurchaseOrderController {
         log.info("Request to confirm purchase : {}", purchaseID);
         purchaseOrderService.confirmPurchase(purchaseID);
         return Result.OK();
+    }
+
+
+    /**
+     * @param purchaseID purchaseID
+     */
+    @RequestMapping(value = "/invoiceMeta", method = RequestMethod.GET)
+    public InvoiceData getInvoiceMetaData(@RequestParam String purchaseID, HttpServletResponse response) throws IOException, URISyntaxException {
+        return purchaseOrderService.makeInvoice(purchaseID);
+    }
+
+    /**
+     * @param purchaseID purchaseID
+     */
+    @RequestMapping(value = "/downloadInvoice", method = RequestMethod.GET)
+    public byte[] downloadInvoiceFile(@RequestParam String invoiceCode) throws IOException, URISyntaxException {
+        return purchaseOrderService.getInvoiceByte(invoiceCode);
     }
 
 

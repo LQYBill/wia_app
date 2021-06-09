@@ -4,6 +4,7 @@ import buyer_config from "@views/business/client/purchaseOrder/buyer_config";
 
 export default {
   caiwu: account_config.account,
+  admin:account_config.account,
   client: clientConfig.client,
   'Client (for test)': clientConfig.client,
   buyer:buyer_config.buyer

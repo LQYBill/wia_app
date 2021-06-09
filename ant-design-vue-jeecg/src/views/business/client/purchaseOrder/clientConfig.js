@@ -59,7 +59,14 @@ export default{
         dataIndex: 'status',
         key: 'doc_status',
         scopedSlots: {customRender: 'uploadSlot'},
-      }
+      },
+      {
+        title: 'Invoice',
+        align: 'center',
+        dataIndex: 'status',
+        key: 'doc_status_for_invoice',
+        scopedSlots: {customRender: 'invoiceSlot'},
+      },
     ],
   },
 }
