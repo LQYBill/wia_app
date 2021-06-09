@@ -13,6 +13,7 @@ import org.jeecg.modules.business.mapper.SkuPriceMapper;
 import org.jeecg.modules.business.service.IClientService;
 import org.jeecg.modules.business.service.ISkuService;
 import org.jeecg.modules.business.vo.SkuQuantity;
+import org.jeecg.modules.business.vo.StockUpdate;
 import org.jeecg.modules.business.vo.inventory.InventoryRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -157,5 +158,11 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
         }
 
         skuMapper.addSkuQuantity(quantityPurchased);
+    }
+
+    @Override
+    @Transactional
+    public void batchUpdateStock(List<StockUpdate> list) {
+        skuMapper.batchUpdateStock(list);
     }
 }

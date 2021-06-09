@@ -3,10 +3,11 @@ package org.jeecg.modules.business.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
 import org.jeecg.modules.business.entity.Sku;
-import org.jeecg.modules.business.vo.SkuQuantity;
+import org.jeecg.modules.business.vo.StockUpdate;
 import org.jeecg.modules.business.vo.inventory.InventoryRecord;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -33,4 +34,10 @@ public interface SkuMapper extends BaseMapper<Sku> {
      * @param skuQuantities map between sku and its quantity to increase.
      */
     void addSkuQuantity(@Param("quantities") Map<String, Integer> skuQuantities);
+
+    /**
+     * Batch update stock
+     * @param list List of stock update
+     */
+    void batchUpdateStock(@Param("list") List<StockUpdate> list);
 }

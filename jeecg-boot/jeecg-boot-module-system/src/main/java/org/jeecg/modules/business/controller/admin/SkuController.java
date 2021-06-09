@@ -3,15 +3,13 @@ package org.jeecg.modules.business.controller.admin;
 import java.io.UnsupportedEncodingException;
 import java.io.IOException;
 import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.jeecg.modules.business.vo.StockUpdate;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
 import org.jeecgframework.poi.excel.entity.ExportParams;
@@ -275,6 +273,45 @@ public class SkuController {
                     BeanUtils.copyProperties(page, po);
                     skuService.saveMain(po, page.getSkuPriceList(), page.getShippingDiscountList());
                 }
+                return Result.OK("文件导入成功！数据行数:" + list.size());
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+                return Result.error("文件导入失败:" + e.getMessage());
+            } finally {
+                try {
+                    file.getInputStream().close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return Result.OK("文件导入失败！");
+    }
+
+    /**
+     * 通过excel批量更新库存（马帮导出）
+     *
+     * @param request
+     * @param response
+     * @return
+     */
+    @RequestMapping(value = "/updateStock", method = RequestMethod.POST)
+    public Result<?> updateStock(HttpServletRequest request, HttpServletResponse response) {
+        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+        Map<String, MultipartFile> fileMap = multipartRequest.getFileMap();
+        LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+        for (Map.Entry<String, MultipartFile> entity : fileMap.entrySet()) {
+            MultipartFile file = entity.getValue();// 获取上传文件对象
+            ImportParams params = new ImportParams();
+            params.setHeadRows(1);
+            params.setNeedSave(true);
+            try {
+                List<StockUpdate> list = ExcelImportUtil.importExcel(file.getInputStream(), StockUpdate.class, params);
+                for (StockUpdate stock : list) {
+                    stock.setUpdateBy(sysUser.getUsername());
+                    stock.setUpdateTime(new Date());
+                }
+                skuService.batchUpdateStock(list);
                 return Result.OK("文件导入成功！数据行数:" + list.size());
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
