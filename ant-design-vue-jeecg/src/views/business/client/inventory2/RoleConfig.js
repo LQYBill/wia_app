@@ -118,13 +118,22 @@ export default {
       }
       let skusToBuy = records.map(r => ({
         id: r['id'],
-        sales7: r['sales7'],
-        sales28: r['sales28'],
-        sales42: r['sales42']
+        sales7: r['sales7'] || 0,
+        sales14: r['sales14'] || 0,
+        sales28: r['sales28'] || 0,
+        availableQuantity: r['availableAmount'] || 0,
+        purchasingQuantity: r['redQuantity'] + r['greenQuantity'],
+        platformOrderQuantity: r['platformOrderQuantity'] || 0,
+        moq: r['moq'] || 0
       }))
       console.log(skusToBuy)
+      comp.$refs["popup"]._props["dataForChild"] = skusToBuy;
       comp.$refs["popup"].display(skusToBuy)
     },
+    cancelText:"Cancel",
+    cancelHandler(keys, records, comp){
+      comp.clearSelected()
+    }
   },
   'Client (for test)': {
     columns: [
