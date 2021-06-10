@@ -30,6 +30,8 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
      */
     void saveMain(PlatformOrder platformOrder, List<PlatformOrderContent> platformOrderContentList);
 
+    public boolean saveBatch(Map<PlatformOrder, List<PlatformOrderContent>> orderMap);
+
     /**
      * 修改一对多
      */

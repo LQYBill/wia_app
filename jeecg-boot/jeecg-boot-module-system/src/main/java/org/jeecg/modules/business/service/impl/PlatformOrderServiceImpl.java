@@ -1,7 +1,9 @@
 package org.jeecg.modules.business.service.impl;
 
+import com.baomidou.mybatisplus.core.enums.SqlMethod;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.jeecg.modules.business.entity.*;
 import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
@@ -62,6 +64,28 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
                 platformOrderContentMap.insert(entity);
             }
         }
+    }
+
+    @Transactional
+    public boolean saveBatch(Map<PlatformOrder, List<PlatformOrderContent>> orderMap) {
+        String orderInsertStm = SqlHelper.getSqlStatement(PlatformOrderMapper.class, SqlMethod.INSERT_ONE);
+        String orderContentInsertStm = SqlHelper.getSqlStatement(PlatformOrderContentMapper.class, SqlMethod.INSERT_ONE);
+
+        return this.executeBatch((sqlSession) -> {
+            for (Map.Entry<PlatformOrder, List<PlatformOrderContent>> entry : orderMap.entrySet()) {
+                PlatformOrder platformOrder = entry.getKey();
+                List<PlatformOrderContent> platformOrderContentList = entry.getValue();
+                sqlSession.insert(orderInsertStm, platformOrder);
+                if (platformOrderContentList != null && platformOrderContentList.size() > 0) {
+                    for (PlatformOrderContent orderContent : platformOrderContentList) {
+                        //外键设置
+                        orderContent.setStatus(platformOrder.getStatus());
+                        orderContent.setPlatformOrderId(platformOrder.getId());
+                        sqlSession.insert(orderContentInsertStm, orderContent);
+                    }
+                }
+            }
+        });
     }
 
     @Override
