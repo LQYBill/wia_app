@@ -88,4 +88,8 @@ public class InventoryRecord implements Serializable {
     @Excel(name = "图片链接", width = 15)
     @ApiModelProperty(value = "图片链接")
     private String imageSource;
+
+    @Excel(name = "MOQ", width = 15)
+    @ApiModelProperty(value = "moq")
+    private Integer moq = 0;
 }

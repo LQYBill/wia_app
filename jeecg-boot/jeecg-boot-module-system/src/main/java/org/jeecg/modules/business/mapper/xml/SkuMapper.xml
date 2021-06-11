@@ -44,4 +44,42 @@
         </foreach>
     </update>
 
+    <update id="batchUpdateStock" parameterType="java.util.List">
+        UPDATE sku
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="purchasing_amount =case" suffix="end,">
+                <foreach collection="list" item="i" index="index">
+                    <if test="i.purchasingAmount!=null">
+                        when erp_code=#{i.erpCode} then #{i.purchasingAmount}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="available_amount =case" suffix="end,">
+                <foreach collection="list" item="i" index="index">
+                    <if test="i.availableAmount!=null">
+                        when erp_code=#{i.erpCode} then #{i.availableAmount}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="update_by =case" suffix="end,">
+                <foreach collection="list" item="i" index="index">
+                    <if test="i.updateBy!=null">
+                        when erp_code=#{i.erpCode} then #{i.updateBy}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="update_time =case" suffix="end,">
+                <foreach collection="list" item="i" index="index">
+                    <if test="i.updateTime!=null">
+                        when erp_code=#{i.erpCode} then #{i.updateTime}
+                    </if>
+                </foreach>
+            </trim>
+        </trim>
+        WHERE
+        <foreach collection="list" separator="or" item="i" index="index" >
+            erp_code=#{i.erpCode}
+        </foreach>
+    </update>
+
 </mapper>

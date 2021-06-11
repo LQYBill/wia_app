@@ -124,16 +124,19 @@
           {
             title:'商品代码',
             align:"center",
+            sorter: true,
             dataIndex: 'code'
           },
           {
             title:'中文名',
             align:"center",
+            sorter: true,
             dataIndex: 'zhName'
           },
           {
             title:'英文名',
             align:"center",
+            sorter: true,
             dataIndex: 'enName'
           },
           {
@@ -144,12 +147,20 @@
           {
             title:'重量，单位为克',
             align:"center",
+            sorter: true,
             dataIndex: 'weight'
           },
           {
             title:'体积重，单位为立方厘米',
             align:"center",
+            sorter: true,
             dataIndex: 'volume'
+          },
+          {
+            title:'最低采购数量',
+            align:"center",
+            sorter: true,
+            dataIndex: 'moq'
           },
           {
             title: '操作',
@@ -191,6 +202,7 @@
          fieldList.push({type:'string',value:'sensitiveAttributeId',text:'敏感属性ID',dictCode:'sensitive_attribute,zh_name,id'})
          fieldList.push({type:'int',value:'weight',text:'重量，单位为克',dictCode:''})
          fieldList.push({type:'int',value:'volume',text:'体积重，单位为立方厘米',dictCode:''})
+         fieldList.push({type:'int',value:'moq',text:'最低采购数量',dictCode:''})
         this.superFieldList = fieldList
       }
     }

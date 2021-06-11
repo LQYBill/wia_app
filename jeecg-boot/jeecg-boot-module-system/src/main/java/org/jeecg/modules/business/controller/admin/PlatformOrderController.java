@@ -3,10 +3,7 @@ package org.jeecg.modules.business.controller.admin;
 import java.io.UnsupportedEncodingException;
 import java.io.IOException;
 import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
@@ -242,12 +239,14 @@ public class PlatformOrderController {
             params.setHeadRows(1);
             params.setNeedSave(true);
             try {
+                Map<PlatformOrder, List<PlatformOrderContent>> orderMap = new HashMap<>();
                 List<PlatformOrderPage> list = ExcelImportUtil.importExcel(file.getInputStream(), PlatformOrderPage.class, params);
                 for (PlatformOrderPage page : list) {
                     PlatformOrder po = new PlatformOrder();
                     BeanUtils.copyProperties(page, po);
-                    platformOrderService.saveMain(po, page.getPlatformOrderContentList());
+                    orderMap.put(po, page.getPlatformOrderContentList());
                 }
+                platformOrderService.saveBatch(orderMap);
                 return Result.OK("文件导入成功！数据行数:" + list.size());
             } catch (Exception e) {
                 log.error(e.getMessage(), e);

@@ -13,12 +13,9 @@
     <!-- 操作按钮区域 begin -->
     <div class="table-operator">
       <a-button type="primary" icon="plus" @click="handleAdd">新增</a-button>
-      <a-button type="primary" icon="download" @click="handleExportXls('SKU表')">导出</a-button>
+      <a-button type="primary" icon="download" @click="handleExportXls('采购运费免除')">导出</a-button>
       <a-upload name="file" :showUploadList="false" :multiple="false" :headers="tokenHeader" :action="importExcelUrl" @change="handleImportExcel">
         <a-button type="primary" icon="import">导入</a-button>
-      </a-upload>
-      <a-upload name="file" :showUploadList="false" :multiple="false" :headers="tokenHeader" :action="updateStock" @change="handleImportExcel">
-        <a-button type="danger" icon="cloud-upload">导入库存</a-button>
       </a-upload>
       <!-- 高级查询区域 -->
       <j-super-query :fieldList="superFieldList" ref="superQueryModal" @handleSuperQuery="handleSuperQuery"></j-super-query>
@@ -69,11 +66,8 @@
         <!-- 内嵌table区域 begin -->
         <template slot="expandedRowRender" slot-scope="record">
           <a-tabs tabPosition="top">
-            <a-tab-pane tab="SKU价格表" key="skuPrice" forceRender>
-              <sku-price-sub-table :record="record"/>
-            </a-tab-pane>
-            <a-tab-pane tab="SKU物流折扣" key="shippingDiscount" forceRender>
-              <shipping-discount-sub-table :record="record"/>
+            <a-tab-pane tab="采购运费免除产品" key="shippingFeesWaiverProduct" forceRender>
+              <shipping-fees-waiver-product-sub-table :record="record"/>
             </a-tab-pane>
           </a-tabs>
         </template>
@@ -86,7 +80,7 @@
         <template slot="imgSlot" slot-scope="text">
           <div style="font-size: 12px;font-style: italic;">
             <span v-if="!text">无图片</span>
-            <img v-else :src="getImgView(text)" :preview="getImgView(text)" alt="" style="min-width:50px;max-width:80px;height:50px;"/>
+            <img v-else :src="getImgView(text)" alt="" style="max-width:80px;height:25px;"/>
           </div>
         </template>
 
@@ -94,6 +88,7 @@
         <template slot="fileSlot" slot-scope="text">
           <span v-if="!text" style="font-size: 12px;font-style: italic;">无文件</span>
           <a-button
+            v-else
             v-else
             ghost
             type="primary"
@@ -128,7 +123,7 @@
     <!-- table区域 end -->
 
     <!-- 表单区域 -->
-    <sku-modal ref="modalForm" @ok="modalFormOk"/>
+    <shipping-fees-waiver-modal ref="modalForm" @ok="modalFormOk"/>
 
   </a-card>
 </template>
@@ -136,25 +131,20 @@
 <script>
 
   import { JeecgListMixin } from '@/mixins/JeecgListMixin'
-  import SkuModal from './modules/SkuModal'
-  import SkuPriceSubTable from './subTables/SkuPriceSubTable'
-  import ShippingDiscountSubTable from './subTables/ShippingDiscountSubTable'
-  import ARow from 'ant-design-vue/es/grid/Row'
-  import {filterMultiDictText} from '@/components/dict/JDictSelectUtil'
+  import ShippingFeesWaiverModal from './modules/ShippingFeesWaiverModal'
+  import ShippingFeesWaiverProductSubTable from './subTables/ShippingFeesWaiverProductSubTable'
   import '@/assets/less/TableExpand.less'
 
   export default {
-    name: 'SkuList',
+    name: 'ShippingFeesWaiverList',
     mixins: [JeecgListMixin],
     components: {
-      SkuModal,
-      SkuPriceSubTable,
-      ShippingDiscountSubTable,
-      ARow
+      ShippingFeesWaiverModal,
+      ShippingFeesWaiverProductSubTable,
     },
     data() {
       return {
-        description: 'SKU表列表管理页面',
+        description: '采购运费免除列表管理页面',
         // 表头
         columns: [
           {
@@ -165,30 +155,19 @@
             customRender: (t, r, index) => parseInt(index) + 1
           },
           {
-            title: '商品ID',
+            title: '名称',
             align: 'center',
-            dataIndex: 'productId_dictText'
+            dataIndex: 'name',
           },
           {
-            title: 'ERP中商品代码',
+            title: '免除所需购买量',
             align: 'center',
-            dataIndex: 'erpCode',
+            dataIndex: 'threshold',
           },
           {
-            title: '图片链接',
-            align: 'center',
-            dataIndex: 'imageSource',
-            scopedSlots: {customRender: 'imgSlot'}
-          },
-          {
-            title: '库存数量',
-            align: 'center',
-            dataIndex: 'availableAmount',
-          },
-          {
-            title: '在途数量',
-            align: 'center',
-            dataIndex: 'purchasingAmount',
+            title:'免除费用',
+            align:"center",
+            dataIndex: 'fees'
           },
           {
             title: '操作',
@@ -203,12 +182,11 @@
         // 展开的行test
         expandedRowKeys: [],
         url: {
-          list: '/business/sku/list',
-          delete: '/business/sku/delete',
-          deleteBatch: '/business/sku/deleteBatch',
-          exportXlsUrl: '/business/sku/exportXls',
-          importExcelUrl: '/business/sku/importExcel',
-          updateStock: '/business/sku/updateStock',
+          list: '/waiver/shippingFeesWaiver/list',
+          delete: '/waiver/shippingFeesWaiver/delete',
+          deleteBatch: '/waiver/shippingFeesWaiver/deleteBatch',
+          exportXlsUrl: '/waiver/shippingFeesWaiver/exportXls',
+          importExcelUrl: '/waiver/shippingFeesWaiver/importExcel',
         },
         superFieldList:[],
       }
@@ -219,9 +197,6 @@
     computed: {
       importExcelUrl() {
         return window._CONFIG['domainURL'] + this.url.importExcelUrl
-      },
-      updateStock() {
-        return window._CONFIG['domainURL'] + this.url.updateStock
       }
     },
     methods: {
@@ -236,10 +211,9 @@
       },
       getSuperFieldList(){
         let fieldList=[];
-        fieldList.push({type:'sel_search',value:'productId',text:'商品ID',dictTable:'product', dictText:'code', dictCode:'id'})
-        fieldList.push({type:'string',value:'erpCode',text:'ERP中商品代码',dictCode:''})
-        fieldList.push({type:'int',value:'availableAmount',text:'库存数量',dictCode:''})
-        fieldList.push({type:'int',value:'purchasingAmount',text:'在途数量',dictCode:''})
+        fieldList.push({type:'string',value:'name',text:'名称',dictCode:''})
+        fieldList.push({type:'int',value:'threshold',text:'免除所需购买量',dictCode:''})
+        fieldList.push({type:'BigDecimal',value:'fees',text:'免除费用',dictCode:''})
         this.superFieldList = fieldList
       }
     }

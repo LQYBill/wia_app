@@ -16,7 +16,7 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * @Description: 商品
  * @Author: jeecg-boot
- * @Date:   2021-04-01
+ * @Date:   2021-05-31
  * @Version: V1.0
  */
 @ApiModel(value="product对象", description="商品")
@@ -74,4 +74,8 @@ public class Product implements Serializable {
 	/**更新人*/
     @ApiModelProperty(value = "更新人")
     private String updateBy;
+	/**最低采购数量*/
+	@Excel(name = "最低采购数量", width = 15)
+    @ApiModelProperty(value = "最低采购数量")
+    private Integer moq;
 }

@@ -6,6 +6,14 @@
         <detail-list-item term="Sku Quantity">{{ orderData.totalQuantity }}</detail-list-item>
         <detail-list-item term="Total Amount">{{ orderData.estimatedTotalPrice }}</detail-list-item>
         <detail-list-item term="Discount">{{ orderData.reducedAmount }}</detail-list-item>
+        <a-tooltip v-if='orderData.extraShippingFees > 0' placement="bottom"
+                   title="Each type of product that doesn't meet the SFWQ (Shipping Fees Waiver Quantity) will occur an extra fee of 2€.
+        For example, if you order 10 yellow cups and 10 green cups, which are from the same supplier whose SFWQ is 30, you will pay 1 * 2€ = 2€ because 10 + 10 = 20 < 30.
+        But if you order 15 yellow cups and 15 green cups from the same supplier, you don't have to pay because 15 + 15 = 30 where the SFWQ is met.">
+          <detail-list-item term="Exceptional shipping fees inside China">
+            <span style='color: red'>{{ orderData.extraShippingFees }}</span>
+          </detail-list-item>
+        </a-tooltip>
       </detail-list>
       <a-divider style="margin-bottom: 10px"/>
       <detail-list title="Client Information">
@@ -85,11 +93,13 @@
 
         <template slot="adjustNumber" slot-scope="text, record, index">
           <div>
-            <a-input-number
-              v-model="currentQuantity[index]"
-              :min="0"
-              @change="adjustOrder"
-            />
+            <a-tooltip :title=" getMoqTooltip(record['skuId']) " trigger='click'>
+              <a-input-number
+                v-model="currentQuantity[index]"
+                :min="0"
+                @change="adjustOrder"
+              />
+            </a-tooltip>
           </div>
         </template>
       </a-table>
@@ -181,6 +191,7 @@ export default {
         reducedAmount: undefined,
         skuNumber: undefined,
         totalQuantity: undefined,
+        extraShippingFees: undefined,
       },
       orderDetails: [],
       currentProvisionDays: 0,
@@ -203,9 +214,17 @@ export default {
         skuInfo => {
           let sku = skuInfo["id"];
           let provisionalStock = this.getProvisionalStock(sku);
+          let moq = skuInfo["moq"];
+          let q;
+          if (provisionalStock >= 0) {
+            q = 0;
+          } else {
+            // The ordered quantity must be equal or larger than the MOQ
+            q = -provisionalStock < moq ? moq : -provisionalStock;
+          }
           return {
             ID: sku,
-            quantity: provisionalStock < 0 ? -provisionalStock : 0
+            quantity: q
           }
         }
       )
@@ -218,7 +237,6 @@ export default {
             this.orderDetails = res.result.voPurchaseDetails
             this.currentQuantity = this.orderDetails.map(line => (line['quantity']))
             console.log(this.orderDetails)
-            console.log(this.minQuantity)
             console.log(this.currentQuantity)
           }
         )
@@ -282,6 +300,17 @@ export default {
       )
       return platformOrderQuantity;
     },
+    getMoq(sku) {
+      let moq;
+      this.skuInfoArray.map(
+        skuInfo => {
+          if (skuInfo["id"] === sku) {
+            moq = skuInfo["moq"];
+          }
+        }
+      )
+      return moq;
+    },
     getProvisionalTooltip(sku) {
       return this.getAvailableQuantity(sku) + " (Available Quantity)\n"
         + "+"
@@ -299,12 +328,20 @@ export default {
         + (this.currentProvisionDays > 1 ? "s" : "")
         + ", based on sales from last 28 days"
     },
+    getMoqTooltip(sku) {
+      return "The MOQ (Minimum Order Quantity) of this product is " + this.getMoq(sku)
+    },
     adjustOrder() {
       let params = []
       for (let i = 0; i < this.orderDetails.length; i++) {
+        let currentQuantity = this.currentQuantity[i]
+        let moq = this.skuInfoArray[i]['moq']
+        if (currentQuantity > 0 && currentQuantity < moq) {
+          currentQuantity = moq
+        }
         params.push({
           ID: this.orderDetails[i]['skuId'],
-          quantity: this.currentQuantity[i]
+          quantity: currentQuantity
         })
       }
 
@@ -315,7 +352,6 @@ export default {
           this.orderDetails = res.result.voPurchaseDetails
           this.currentQuantity = this.orderDetails.map(line => (line['quantity']))
           console.log(this.orderDetails)
-          console.log(this.minQuantity)
           console.log(this.currentQuantity)
         })
     },

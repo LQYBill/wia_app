@@ -24,7 +24,7 @@ public class OrdersStatisticDataTest {
     @ParameterizedTest
     @MethodSource("orderContentDetailProvider")
     void makeDataCorrect_Is_Correct(List<OrderContentDetail> source, BigDecimal totalPrice, BigDecimal reducedAmount, int skuNumber, int quantity) {
-        OrdersStatisticData data = OrdersStatisticData.makeData(source);
+        OrdersStatisticData data = OrdersStatisticData.makeData(source, null);
         assertEquals(totalPrice, data.getEstimatedTotalPrice());
         assertEquals(reducedAmount, data.getReducedAmount());
         assertEquals(skuNumber, data.getSkuNumber());

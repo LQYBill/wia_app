@@ -1,14 +1,18 @@
 package org.jeecg.modules.business.service.impl;
 
+import com.baomidou.mybatisplus.core.enums.SqlMethod;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.jeecg.modules.business.entity.*;
 import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
 import org.jeecg.modules.business.service.IClientService;
 import org.jeecg.modules.business.service.IPlatformOrderService;
+import org.jeecg.modules.business.service.IShippingFeesWaiverProductService;
 import org.jeecg.modules.business.vo.SkuQuantity;
+import org.jeecg.modules.business.vo.SkuShippingFeesWaiver;
 import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage;
 import org.jeecg.modules.business.vo.clientPlatformOrder.PurchaseConfirmation;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.ClientInfo;
@@ -22,6 +26,8 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.*;
+
 /**
  * @Description: 平台订单表
  * @Author: jeecg-boot
@@ -34,12 +40,15 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
 
     private final PlatformOrderMapper platformOrderMap;
     private final PlatformOrderContentMapper platformOrderContentMap;
+    private final IShippingFeesWaiverProductService shippingFeesWaiverProductService;
     private final IClientService clientService;
 
     @Autowired
-    public PlatformOrderServiceImpl(PlatformOrderMapper platformOrderMap, PlatformOrderContentMapper platformOrderContentMap, IClientService clientService) {
+    public PlatformOrderServiceImpl(PlatformOrderMapper platformOrderMap, PlatformOrderContentMapper platformOrderContentMap,
+                                    IShippingFeesWaiverProductService shippingFeesWaiverProductService, IClientService clientService) {
         this.platformOrderMap = platformOrderMap;
         this.platformOrderContentMap = platformOrderContentMap;
+        this.shippingFeesWaiverProductService = shippingFeesWaiverProductService;
         this.clientService = clientService;
     }
 
@@ -55,6 +64,28 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
                 platformOrderContentMap.insert(entity);
             }
         }
+    }
+
+    @Transactional
+    public boolean saveBatch(Map<PlatformOrder, List<PlatformOrderContent>> orderMap) {
+        String orderInsertStm = SqlHelper.getSqlStatement(PlatformOrderMapper.class, SqlMethod.INSERT_ONE);
+        String orderContentInsertStm = SqlHelper.getSqlStatement(PlatformOrderContentMapper.class, SqlMethod.INSERT_ONE);
+
+        return this.executeBatch((sqlSession) -> {
+            for (Map.Entry<PlatformOrder, List<PlatformOrderContent>> entry : orderMap.entrySet()) {
+                PlatformOrder platformOrder = entry.getKey();
+                List<PlatformOrderContent> platformOrderContentList = entry.getValue();
+                sqlSession.insert(orderInsertStm, platformOrder);
+                if (platformOrderContentList != null && platformOrderContentList.size() > 0) {
+                    for (PlatformOrderContent orderContent : platformOrderContentList) {
+                        //外键设置
+                        orderContent.setStatus(platformOrder.getStatus());
+                        orderContent.setPlatformOrderId(platformOrder.getId());
+                        sqlSession.insert(orderContentInsertStm, orderContent);
+                    }
+                }
+            }
+        });
     }
 
     @Override
@@ -143,7 +174,7 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
     public OrdersStatisticData getPlatformOrdersStatisticData(List<String> orderIds) {
         List<SkuQuantity> skuIDQuantityMap = platformOrderContentMap.searchOrderContent(orderIds);
         List<OrderContentDetail> data = searchPurchaseOrderDetail(skuIDQuantityMap);
-        return OrdersStatisticData.makeData(data);
+        return OrdersStatisticData.makeData(data, null);
     }
 
 
@@ -168,7 +199,8 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
     public PurchaseConfirmation confirmPurchaseBySkuQuantity(List<SkuQuantity> skuIDQuantityMap) {
         Client client = clientService.getCurrentClient();
         ClientInfo clientInfo = new ClientInfo(client);
-        return new PurchaseConfirmation(clientInfo, searchPurchaseOrderDetail(skuIDQuantityMap));
+        return new PurchaseConfirmation(clientInfo, searchPurchaseOrderDetail(skuIDQuantityMap),
+                getShippingFeesWaiverMap(skuIDQuantityMap.stream().map(SkuQuantity::getID).collect(toList())));
     }
 
     @Override
@@ -193,10 +225,19 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
                                 skuQuantity.get(skuDetail.getSkuId())
                         )
                 )
-                .collect(Collectors.toList());
+                .collect(toList());
         log.info(details.toString());
         // SKU ID -> SKU detail -- (quantity) --> Order Content Detail
         return  details;
+    }
+
+    public Map<ShippingFeesWaiver, List<String>> getShippingFeesWaiverMap(List<String> skuIds) {
+        List<SkuShippingFeesWaiver> skuShippingFeesWaivers = shippingFeesWaiverProductService.selectBySkuIds(skuIds);
+        Map<ShippingFeesWaiver, List<String>> waiverSkuIdsMap = skuShippingFeesWaivers.stream().collect(
+                groupingBy(
+                        SkuShippingFeesWaiver::getShippingFeesWaiver,
+                        collectingAndThen(mapping(SkuShippingFeesWaiver::getSkuId, toList()), Collections::unmodifiableList)));
+        return waiverSkuIdsMap;
     }
 
     @Override

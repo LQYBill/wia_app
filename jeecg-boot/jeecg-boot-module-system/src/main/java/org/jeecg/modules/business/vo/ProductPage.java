@@ -16,7 +16,7 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * @Description: 商品
  * @Author: jeecg-boot
- * @Date:   2021-04-01
+ * @Date:   2021-05-31
  * @Version: V1.0
  */
 @Data
@@ -71,7 +71,10 @@ public class ProductPage {
 	/**更新人*/
 	@ApiModelProperty(value = "更新人")
     private String updateBy;
-
+	/**最低采购数量*/
+	@Excel(name = "最低采购数量", width = 15)
+	@ApiModelProperty(value = "最低采购数量")
+	private java.lang.Integer moq;
 	@ExcelCollection(name="SKU表")
 	@ApiModelProperty(value = "SKU表")
 	private List<Sku> skuList;
