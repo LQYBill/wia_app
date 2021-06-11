@@ -1,7 +1,6 @@
 package org.jeecg.modules.business.domain.mabangapi.getorderlist;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import org.apache.commons.codec.binary.Hex;
 import org.jeecg.common.util.RestUtil;
 import org.springframework.http.HttpHeaders;
@@ -10,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
@@ -31,15 +31,21 @@ public class OrderListRequest {
     /**
      * Instance's current request.
      */
-    private final OrderListRequestBody currentRequest;
+    private final OrderListRequestBody currentBody;
     /**
      * Response of last request.
      */
     private OrderListResponse currentResponse;
 
+    private List<Order> currentOrders;
+
+    private int currentIndex;
+
     public OrderListRequest(OrderListRequestBody firstBody) {
-        this.currentRequest = firstBody;
+        this.currentBody = firstBody;
         this.currentResponse = null;
+        currentOrders = null;
+        this.currentIndex = 0;
     }
 
     /**
@@ -47,12 +53,27 @@ public class OrderListRequest {
      *
      * @return true if there are, otherwise false.
      */
-    public boolean hasNext() {
-        // of course if never sent request
-        if (currentResponse == null)
+    public boolean hasNext() throws OrderListRequestErrorException {
+        // if never sent request, send the request and check result length
+        if (currentResponse == null) {
+            this.currentResponse = sendRequest(currentBody);
+            currentOrders = currentResponse.getData().toJavaList(Order.class);
+            currentIndex = 0;
+            return currentOrders.size() != 0;
+        }
+        // current index doesn't arrive at the end, return true.
+        if (currentIndex < currentOrders.size())
             return true;
-        // check whether arrive at last page
-        return currentRequest.getPage() <= currentResponse.getTotalPage();
+        // although at the end, but still has page left
+        if (currentBody.getPage() <= currentResponse.getTotalPage()) {
+            currentBody.goNextPage();
+            this.currentResponse = sendRequest(currentBody);
+            currentOrders = currentResponse.getData().toJavaList(Order.class);
+            currentIndex = 0;
+            return true;
+        }
+        // at end and no page left
+        return false;
     }
 
     /**
@@ -62,12 +83,11 @@ public class OrderListRequest {
      * @throws NoSuchElementException         if data is already empty.
      * @throws OrderListRequestErrorException if request format is not valid.
      */
-    public JSONArray next() throws OrderListRequestErrorException {
+    public Order next() throws OrderListRequestErrorException {
         if (!hasNext())
             throw new NoSuchElementException();
-        currentResponse = sendRequest(currentRequest);
-        currentRequest.goNextPage();
-        return currentResponse.getData();
+        currentIndex++;
+        return currentOrders.get(currentIndex - 1);
     }
 
     /**
@@ -90,7 +110,7 @@ public class OrderListRequest {
     }
 
     /**
-     * By applying algorithm "HmacSHA256", encrypt http body with developer key provided by mabang.
+     * By applying algorithm "HmacSHA256", encrypt http body with developer key that provided by mabang.
      *
      * @param body the json string to encrypt
      * @return encrypted string encoded by Hexadecimal.

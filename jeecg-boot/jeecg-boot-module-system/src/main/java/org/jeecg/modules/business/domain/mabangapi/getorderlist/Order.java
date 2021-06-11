@@ -5,6 +5,7 @@ import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -73,6 +74,9 @@ public class Order {
      */
     @JSONField(name = "orderStatus")
     private String status;
+
+    @JSONField(name = "orderItem")
+    private List<OrderItem> orderItems;
 
     public void setTrackingNumber(String trackingNumber) {
         if (trackingNumber.length() == 0) {

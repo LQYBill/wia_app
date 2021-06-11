@@ -22,11 +22,12 @@ public class RetrieveOrderListJob implements Job {
 
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
-
+        // 1. request orders that newly paid in last 30 minutes and save them to db.
+        // 2. request orders that newly updated in last 30 minutes,
     }
 
     /**
-     * Retrieve last 30 minutes new paid order
+     * Retrieve last 30 minutes newly paid order.
      */
     public void updateNewOrder() {
         OrderListRequestBody body = new OrderListRequestBody();
@@ -38,21 +39,11 @@ public class RetrieveOrderListJob implements Job {
                 .setEndDate(end);
 
         OrderListRequest request = new OrderListRequest(body);
-        try {
-            while (request.hasNext()) {
-                JSONArray data = request.next();
-
-                Map<Order, List<OrderItem>> order = parseData(data);
-
-            }
-        } catch (OrderListRequestErrorException e) {
-            throw new RuntimeException(e.getMessage());
-        }
 
     }
 
     /**
-     * Retrieve changed order and merge them
+     * Retrieve changed order and merge them.
      */
     public void updateChangedOrder() {
         // 1. query for orders that updated last 30 minutes,
