@@ -55,6 +55,10 @@ public class OrderListResponse {
         return data;
     }
 
+    public int getDataCount(){
+        return dataCount;
+    }
+
     @Override
     public String toString() {
         return "OrderListResponse{" +

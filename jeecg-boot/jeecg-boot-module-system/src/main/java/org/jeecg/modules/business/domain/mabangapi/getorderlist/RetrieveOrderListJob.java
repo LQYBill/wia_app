@@ -1,24 +1,31 @@
 package org.jeecg.modules.business.domain.mabangapi.getorderlist;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
-import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
-import org.jeecg.modules.business.mapper.PlatformOrderMapper;
+import org.jeecg.modules.business.service.impl.PlatformOrderServiceImpl;
+import org.jeecg.modules.business.service.impl.purchase.PlatformOrderContentServiceImpl;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.HashMap;
+import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class RetrieveOrderListJob implements Job {
+
     @Autowired
-    private PlatformOrderMapper platformOrderMapper;
+    private PlatformOrderServiceImpl platformOrderService;
     @Autowired
-    private PlatformOrderContentMapper platformOrderContentMapper;
+    private PlatformOrderContentServiceImpl platformOrderContentService;
+
+    private final static SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:dd", Locale.CHINA);
+
 
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
@@ -29,7 +36,7 @@ public class RetrieveOrderListJob implements Job {
     /**
      * Retrieve last 30 minutes newly paid order.
      */
-    public void updateNewOrder() {
+    public void updateNewOrder() throws OrderListRequestErrorException {
         OrderListRequestBody body = new OrderListRequestBody();
         LocalDateTime end = LocalDateTime.now();
         LocalDateTime begin = end.minusMinutes(30);
@@ -39,34 +46,76 @@ public class RetrieveOrderListJob implements Job {
                 .setEndDate(end);
 
         OrderListRequest request = new OrderListRequest(body);
-
+        List<Order> newlyPaidOrders = request.getAll();
+        platformOrderService.saveOrderFromMabang(newlyPaidOrders);
     }
 
     /**
      * Retrieve changed order and merge them.
      */
-    public void updateChangedOrder() {
-        // 1. query for orders that updated last 30 minutes,
-        // 2. select those that are canceled, matching its content
-        // with those whose content is increased and content is the same
+    public void updateMergedOrder(Duration duration) throws OrderListRequestErrorException {
+        LocalDateTime end = LocalDateTime.now();
+        LocalDateTime begin = end.minus(duration);
+
+        // Query orders that updated in a certain duration of time in the past.
+        OrderListRequestBody updatedOrderBody = new OrderListRequestBody();
+        updatedOrderBody
+                .setStartDate(begin)
+                .setEndDate(end)
+                .setDatetimeType(DateType.UPDATE)
+                .setStatus(OrderStatus.Pending);
+        OrderListRequest updatedOrderRequest = new OrderListRequest(updatedOrderBody);
+        List<Order> updatedOrders = updatedOrderRequest.getAll();
+        // filter orders that are merged
+        List<Order> mergedOrders = updatedOrders.stream()
+                .filter(this::isMergedOrder)
+                .collect(Collectors.toList());
+        // search other source orders of the merged order and make a map
+        Map<Order, List<Order>> mergedOrderToSourceOrders = mergedOrders.stream()
+                .collect(Collectors.toMap(Function.identity(), this::searchMergeSources));
+        // update in DB
+        mergedOrderToSourceOrders.forEach(platformOrderService::updateOrderFromMabang);
     }
 
 
-    /**
-     * Parse the json array data to image between order and its items
-     *
-     * @param data the data to parse
-     * @return the image between platform order and its elements
-     */
-    public static Map<Order, List<OrderItem>> parseData(JSONArray data) {
-        Map<Order, List<OrderItem>> res = new HashMap<>();
+    private boolean isMergedOrder(Order order) {
+        Map<String, Integer> erpCodeToQuantity = order.getOrderItems().stream()
+                .collect(Collectors.toMap(
+                        OrderItem::getErpCode,
+                        OrderItem::getQuantity
+                        )
+                );
+        return platformOrderContentService.hasMoreContent(order.getPlatformOrderNumber(), erpCodeToQuantity);
+    }
 
-        for (JSONObject dataEntry : data.toJavaList(JSONObject.class)) {
-            Order order = dataEntry.toJavaObject(Order.class);
-            List<OrderItem> items = dataEntry.getJSONArray("orderItem").toJavaList(OrderItem.class);
-            items.forEach(item -> item.setPlatformOrderId(order.getId()));
-            res.put(order, items);
-        }
-        return res;
+    /**
+     * Search merge sources of the order in argument.
+     *
+     * @param order
+     * @return
+     */
+    private List<Order> searchMergeSources(Order order) throws OrderListRequestErrorException {
+        LocalDateTime begin = LocalDateTime.ofInstant(order.getOrderTime().toInstant(), ZoneOffset.ofHours(8));
+        LocalDateTime end = LocalDateTime.now();
+        OrderListRequestBody obsoletedOrderRequestBody = new OrderListRequestBody();
+        obsoletedOrderRequestBody.setStatus(OrderStatus.Obsolete)
+                .setDatetimeType(DateType.UPDATE)
+                .setStartDate(begin)
+                .setEndDate(end);
+        OrderListRequest requestForObsoletedOrder = new OrderListRequest(obsoletedOrderRequestBody);
+        return requestForObsoletedOrder.getAll().stream()
+                .filter(candidat -> isSource(order, candidat))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Determine if candidate is the source of the target.
+     *
+     * @param target   target order
+     * @param candidate candidat order
+     * @return true if it is
+     */
+    private static boolean isSource(Order target, Order candidate) {
+        return false;
     }
 }

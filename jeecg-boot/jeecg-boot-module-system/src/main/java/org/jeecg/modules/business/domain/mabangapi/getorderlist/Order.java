@@ -10,7 +10,9 @@ import java.util.UUID;
 
 /**
  * Data container of platform Order, mabang side,
- * annotation is JSON key of mabang
+ * annotation is JSON key of mabang.
+ * <p>
+ * This is a domain object.
  */
 @Data
 public class Order {
@@ -21,9 +23,9 @@ public class Order {
     private String id = UUID.randomUUID().toString();
 
     /**
-     * shop id of mabang api is shop erp code
+     * Shop name is correspondant the shop erp code in our data base
      */
-    @JSONField(name = "shopId")
+    @JSONField(name = "shopName")
     private String shopErpCode;
 
     /**
@@ -75,13 +77,21 @@ public class Order {
     @JSONField(name = "orderStatus")
     private String status;
 
+    @JSONField(name = "isUnion")
+    private String isUnion;
+
     @JSONField(name = "orderItem")
     private List<OrderItem> orderItems;
+
 
     public void setTrackingNumber(String trackingNumber) {
         if (trackingNumber.length() == 0) {
             this.trackingNumber = null;
         } else
             this.trackingNumber = trackingNumber;
+    }
+
+    public boolean isUnion() {
+        return isUnion.equals("1");
     }
 }

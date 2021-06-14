@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
 import lombok.extern.slf4j.Slf4j;
+import org.jeecg.modules.business.domain.mabangapi.getorderlist.Order;
+import org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderItem;
 import org.jeecg.modules.business.entity.*;
 import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
@@ -228,7 +230,7 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
                 .collect(toList());
         log.info(details.toString());
         // SKU ID -> SKU detail -- (quantity) --> Order Content Detail
-        return  details;
+        return details;
     }
 
     public Map<ShippingFeesWaiver, List<String>> getShippingFeesWaiverMap(List<String> skuIds) {
@@ -250,6 +252,20 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
         } else {
             return platformOrderMap.queryQuantities(client.getId());
         }
+    }
+
+    @Override
+    public void saveOrderFromMabang(List<Order> orders) {
+        for (Order order : orders) {
+            platformOrderMap.insertFromMabangOrder(order);
+            for (OrderItem orderItem : order.getOrderItems())
+                platformOrderContentMap.insertFromMabangOrder(orderItem);
+        }
+    }
+
+    @Override
+    public void updateOrderFromMabang(Order order, List<Order> sourceOrder){
+        // TODO 2021/6/14 finish it
     }
 
 

@@ -27,8 +27,10 @@ public class OrderListRequestBody {
         json.put("action", "get-order-list");
         putNonNull(json, "status", status, OrderStatus::getCode);
         putNonNull(json, "platformOrderIds", platformOrderIds, (ids) -> String.join(",", ids));
-        putNonNull(json, datetimeType.text() + "Start", startDate, formatter::format);
-        putNonNull(json, datetimeType.text() + "End", endDate, formatter::format);
+        if(datetimeType != null){
+            putNonNull(json, datetimeType.text() + "Start", startDate, formatter::format);
+            putNonNull(json, datetimeType.text() + "End", endDate, formatter::format);
+        }
         putNonNull(json, "canSend", canSend);
         putNonNull(json, "page", page);
         return json;

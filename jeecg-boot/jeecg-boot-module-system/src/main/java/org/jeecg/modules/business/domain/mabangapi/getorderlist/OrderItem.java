@@ -9,6 +9,9 @@ import lombok.Data;
 @Data
 public class OrderItem {
 
+    /**
+     * Erp code of sku in DB.
+     */
     @JSONField(name = "stockSku")
     private String erpCode;
 
