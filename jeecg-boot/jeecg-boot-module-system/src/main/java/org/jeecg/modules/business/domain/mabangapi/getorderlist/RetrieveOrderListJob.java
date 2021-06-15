@@ -78,11 +78,20 @@ public class RetrieveOrderListJob implements Job {
             mergedOrderToSourceOrders.put(order, searchMergeSources(order));
         }
         // update in DB
-        mergedOrderToSourceOrders.forEach(platformOrderService::updateOrderFromMabang);
+        mergedOrderToSourceOrders.forEach(platformOrderService::updateMergedOrderFromMabang);
     }
 
-
+    /**
+     * This function check if the order in argument is a merged order.
+     * The definition of merged order is that the content of order is more than that in our DB.
+     * <p>
+     * Here the identification of order is operated by erp code.
+     *
+     * @param order the order to check
+     * @return true if the order is a merged order.
+     */
     private boolean isMergedOrder(Order order) {
+        // extract erp code and quantity of order items to a map
         Map<String, Integer> erpCodeToQuantity = order.getOrderItems().stream()
                 .collect(Collectors.toMap(
                         OrderItem::getErpCode,
@@ -98,16 +107,18 @@ public class RetrieveOrderListJob implements Job {
      * @param target target order
      * @return source orders of the target order
      */
-    private List<Order> searchMergeSources(Order target) throws OrderListRequestErrorException {
+    private static List<Order> searchMergeSources(Order target) throws OrderListRequestErrorException {
+        // search period: target order paid time - now
         LocalDateTime begin = LocalDateTime.ofInstant(target.getOrderTime().toInstant(), ZoneOffset.ofHours(8));
         LocalDateTime end = LocalDateTime.now();
+        // send request
         OrderListRequestBody obsoletedOrderRequestBody = new OrderListRequestBody();
         obsoletedOrderRequestBody.setStatus(OrderStatus.Obsolete)
                 .setDatetimeType(DateType.UPDATE)
                 .setStartDate(begin)
                 .setEndDate(end);
-
         OrderListRequest requestForObsoletedOrder = new OrderListRequest(obsoletedOrderRequestBody);
+        // filter results and return them
         return requestForObsoletedOrder.getAll().stream()
                 .filter(target::isSource)
                 .collect(Collectors.toList());

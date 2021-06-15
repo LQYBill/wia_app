@@ -75,5 +75,13 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
      */
     void saveOrderFromMabang(List<Order> orders);
 
-    void updateOrderFromMabang(Order mergedOrder, List<Order> sourceOrder);
+    /**
+     * Update merged platform order date by data from mabang.
+     * <p>
+     * This function updates both correspondant platform order and its content.
+     *
+     * @param mergedOrder order as merge target
+     * @param sourceOrder source orders that are merged
+     */
+    void updateMergedOrderFromMabang(Order mergedOrder, List<Order> sourceOrder);
 }
