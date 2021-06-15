@@ -69,7 +69,7 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
     OrderQuantity queryOrderQuantities();
 
     /**
-     * Save orders to db from mabang api.
+     * Save orders to DB from mabang api.
      *
      * @param orders the orders to save.
      */

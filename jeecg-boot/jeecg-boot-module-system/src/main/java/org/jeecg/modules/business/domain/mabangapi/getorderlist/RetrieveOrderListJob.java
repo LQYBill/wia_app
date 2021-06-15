@@ -1,5 +1,7 @@
 package org.jeecg.modules.business.domain.mabangapi.getorderlist;
 
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.jeecg.modules.business.service.impl.PlatformOrderServiceImpl;
 import org.jeecg.modules.business.service.impl.purchase.PlatformOrderContentServiceImpl;
 import org.quartz.Job;
@@ -10,22 +12,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class RetrieveOrderListJob implements Job {
 
     @Autowired
+    @Setter
     private PlatformOrderServiceImpl platformOrderService;
+
     @Autowired
+    @Setter
     private PlatformOrderContentServiceImpl platformOrderContentService;
 
-    private final static SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:dd", Locale.CHINA);
-
+    private final static Duration executionDuration = Duration.ofMinutes(30);
 
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
@@ -37,25 +41,27 @@ public class RetrieveOrderListJob implements Job {
      * Retrieve last 30 minutes newly paid order.
      */
     public void updateNewOrder() throws OrderListRequestErrorException {
-        OrderListRequestBody body = new OrderListRequestBody();
+        // request time parameter period: now - 30m -> now
         LocalDateTime end = LocalDateTime.now();
         LocalDateTime begin = end.minusMinutes(30);
 
+        // sent request for newly paid orders
+        OrderListRequestBody body = new OrderListRequestBody();
         body.setDatetimeType(DateType.PAID)
                 .setStartDate(begin)
                 .setEndDate(end);
-
         OrderListRequest request = new OrderListRequest(body);
         List<Order> newlyPaidOrders = request.getAll();
+        // update in DB
         platformOrderService.saveOrderFromMabang(newlyPaidOrders);
     }
 
     /**
      * Retrieve changed order and merge them.
      */
-    public void updateMergedOrder(Duration duration) throws OrderListRequestErrorException {
+    public void updateMergedOrder() throws OrderListRequestErrorException {
         LocalDateTime end = LocalDateTime.now();
-        LocalDateTime begin = end.minus(duration);
+        LocalDateTime begin = end.minus(executionDuration);
 
         // Query orders that updated in a certain duration of time in the past.
         OrderListRequestBody updatedOrderBody = new OrderListRequestBody();
@@ -66,40 +72,25 @@ public class RetrieveOrderListJob implements Job {
                 .setStatus(OrderStatus.Pending);
         OrderListRequest updatedOrderRequest = new OrderListRequest(updatedOrderBody);
         List<Order> updatedOrders = updatedOrderRequest.getAll();
+        log.debug("Size of updated order:{}", updatedOrders.size());
+
         // filter orders that are merged
         List<Order> mergedOrders = updatedOrders.stream()
-                .filter(this::isMergedOrder)
+                .filter(Order::isUnion)
                 .collect(Collectors.toList());
-
+        log.debug("Size of merged order:{}", mergedOrders.size());
         // search other source orders of the merged order and make a map
 
         Map<Order, List<Order>> mergedOrderToSourceOrders = new HashMap<>();
         for (Order order : mergedOrders) {
             mergedOrderToSourceOrders.put(order, searchMergeSources(order));
+            log.debug("Order {}", order.getPlatformOrderNumber());
+            log.debug("Source {}", mergedOrderToSourceOrders.get(order));
         }
         // update in DB
         mergedOrderToSourceOrders.forEach(platformOrderService::updateMergedOrderFromMabang);
     }
 
-    /**
-     * This function check if the order in argument is a merged order.
-     * The definition of merged order is that the content of order is more than that in our DB.
-     * <p>
-     * Here the identification of order is operated by erp code.
-     *
-     * @param order the order to check
-     * @return true if the order is a merged order.
-     */
-    private boolean isMergedOrder(Order order) {
-        // extract erp code and quantity of order items to a map
-        Map<String, Integer> erpCodeToQuantity = order.getOrderItems().stream()
-                .collect(Collectors.toMap(
-                        OrderItem::getErpCode,
-                        OrderItem::getQuantity
-                        )
-                );
-        return platformOrderContentService.hasMoreContent(order.getPlatformOrderNumber(), erpCodeToQuantity);
-    }
 
     /**
      * Search merge sources of target order from mabang API.
@@ -109,8 +100,8 @@ public class RetrieveOrderListJob implements Job {
      */
     private static List<Order> searchMergeSources(Order target) throws OrderListRequestErrorException {
         // search period: target order paid time - now
-        LocalDateTime begin = LocalDateTime.ofInstant(target.getOrderTime().toInstant(), ZoneOffset.ofHours(8));
         LocalDateTime end = LocalDateTime.now();
+        LocalDateTime begin = end.minus(executionDuration);
         // send request
         OrderListRequestBody obsoletedOrderRequestBody = new OrderListRequestBody();
         obsoletedOrderRequestBody.setStatus(OrderStatus.Obsolete)
