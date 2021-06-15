@@ -59,22 +59,22 @@ public class OrderListRequest {
     public boolean hasNext() throws OrderListRequestErrorException {
         // if never sent request, send the request and check result length
         if (currentResponse == null) {
-            log.debug("Current response is null");
+            log.trace("Current response is null");
             this.currentResponse = sendRequest(currentBody);
             currentOrders = currentResponse.getData().toJavaList(Order.class);
             currentIndex = 0;
-            log.debug("Response size: {}", currentResponse.getDataCount());
+            log.trace("Response size: {}", currentResponse.getDataCount());
             return currentOrders.size() != 0;
         }
         // current index doesn't arrive at the end, return true.
         if (currentIndex < currentOrders.size()) {
-            log.debug("Current index: {}, total size: {}", currentIndex, currentOrders.size());
+            log.trace("Current index: {}, total size: {}", currentIndex, currentOrders.size());
             return true;
 
         }
         // although at the end, but still has page left
         if (currentBody.getPage() < currentResponse.getTotalPage()) {
-            log.debug("Current page: {}, total size: {}", currentBody.getPage(), currentResponse.getTotalPage());
+            log.trace("Current page: {}, total size: {}", currentBody.getPage(), currentResponse.getTotalPage());
             currentBody.goNextPage();
             this.currentResponse = sendRequest(currentBody);
             currentOrders = currentResponse.getData().toJavaList(Order.class);
