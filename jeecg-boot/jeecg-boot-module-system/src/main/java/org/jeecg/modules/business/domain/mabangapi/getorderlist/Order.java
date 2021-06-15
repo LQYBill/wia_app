@@ -6,6 +6,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -93,5 +94,17 @@ public class Order {
 
     public boolean isUnion() {
         return isUnion.equals("1");
+    }
+
+    /**
+     * Another order is source only if they have the same recipient, postcode, country.
+     *
+     * @param candidate candidate
+     * @return true if candidate is a merge source, false otherwise
+     */
+    public boolean isSource(Order candidate) {
+        return Objects.equals(recipient, candidate.recipient)
+                && Objects.equals(postcode, candidate.postcode)
+                && Objects.equals(country, candidate.country);
     }
 }

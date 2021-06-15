@@ -1,7 +1,6 @@
 package org.jeecg.modules.business.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.google.common.collect.Lists;
 import org.apache.ibatis.annotations.Param;
 import org.jeecg.modules.business.domain.mabangapi.getorderlist.Order;
 import org.jeecg.modules.business.entity.PlatformOrder;
@@ -9,7 +8,6 @@ import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrderQuantity;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -48,8 +46,24 @@ public interface PlatformOrderMapper extends BaseMapper<PlatformOrder> {
     /**
      * Insert platform order data from Mabang side.
      * replace shop erp code by shop id.
+     *
      * @param order the order to insert
      */
     void insertFromMabangOrder(Order order);
 
+    /**
+     * Get platform order ID by erp code.
+     *
+     * @param platformOrderNumber erp code == platform order number
+     */
+    String findIdByErpCode(String platformOrderNumber);
+
+    /**
+     * Update merged order.
+     * Mark in the sources their target as ID of target.
+     *
+     * @param targetID  ID of target platform order
+     * @param sourceIDs IDs of source platform order
+     */
+    void updateMergedOrder(@Param("target") String targetID, @Param("sources") List<String> sourceIDs);
 }

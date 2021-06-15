@@ -96,6 +96,20 @@
             #{item}
         </foreach>
     </update>
+    <update id="updateMergedOrder">
+        UPDATE platform_order
+        SET target = #{target}
+        WHERE platform_order_id IN
+        <foreach
+                collection="sources"
+                separator=","
+                index="i"
+                item="v"
+                open="("
+                close=")">
+            #{v}
+        </foreach>
+    </update>
 
     <select id="queryQuantities" resultType="org.jeecg.modules.business.vo.clientPlatformOrder.section.OrderQuantity">
         SELECT
@@ -103,6 +117,12 @@
         sum(IF(status = '2', 1, 0)) as pending,
         sum(IF(status = '3', 1, 0)) as purchasing
         FROM (<include refid="allOrderByClientId"/>) AS t
+    </select>
+
+    <select id="findIdByErpCode" resultType="java.lang.String">
+        SELECT id
+        FROM platform_order
+        WHERE platform_order_number = #{1}
     </select>
 
 </mapper>

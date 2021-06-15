@@ -11,10 +11,10 @@ import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class RetrieveOrderListJob implements Job {
@@ -70,9 +70,13 @@ public class RetrieveOrderListJob implements Job {
         List<Order> mergedOrders = updatedOrders.stream()
                 .filter(this::isMergedOrder)
                 .collect(Collectors.toList());
+
         // search other source orders of the merged order and make a map
-        Map<Order, List<Order>> mergedOrderToSourceOrders = mergedOrders.stream()
-                .collect(Collectors.toMap(Function.identity(), this::searchMergeSources));
+
+        Map<Order, List<Order>> mergedOrderToSourceOrders = new HashMap<>();
+        for (Order order : mergedOrders) {
+            mergedOrderToSourceOrders.put(order, searchMergeSources(order));
+        }
         // update in DB
         mergedOrderToSourceOrders.forEach(platformOrderService::updateOrderFromMabang);
     }
@@ -89,33 +93,23 @@ public class RetrieveOrderListJob implements Job {
     }
 
     /**
-     * Search merge sources of the order in argument.
+     * Search merge sources of target order from mabang API.
      *
-     * @param order
-     * @return
+     * @param target target order
+     * @return source orders of the target order
      */
-    private List<Order> searchMergeSources(Order order) throws OrderListRequestErrorException {
-        LocalDateTime begin = LocalDateTime.ofInstant(order.getOrderTime().toInstant(), ZoneOffset.ofHours(8));
+    private List<Order> searchMergeSources(Order target) throws OrderListRequestErrorException {
+        LocalDateTime begin = LocalDateTime.ofInstant(target.getOrderTime().toInstant(), ZoneOffset.ofHours(8));
         LocalDateTime end = LocalDateTime.now();
         OrderListRequestBody obsoletedOrderRequestBody = new OrderListRequestBody();
         obsoletedOrderRequestBody.setStatus(OrderStatus.Obsolete)
                 .setDatetimeType(DateType.UPDATE)
                 .setStartDate(begin)
                 .setEndDate(end);
+
         OrderListRequest requestForObsoletedOrder = new OrderListRequest(obsoletedOrderRequestBody);
         return requestForObsoletedOrder.getAll().stream()
-                .filter(candidat -> isSource(order, candidat))
+                .filter(target::isSource)
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * Determine if candidate is the source of the target.
-     *
-     * @param target   target order
-     * @param candidate candidat order
-     * @return true if it is
-     */
-    private static boolean isSource(Order target, Order candidate) {
-        return false;
     }
 }

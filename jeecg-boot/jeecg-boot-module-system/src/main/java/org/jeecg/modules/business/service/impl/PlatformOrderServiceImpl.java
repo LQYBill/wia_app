@@ -264,9 +264,22 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
     }
 
     @Override
-    public void updateOrderFromMabang(Order order, List<Order> sourceOrder){
-        // TODO 2021/6/14 finish it
+    @Transactional
+    public void updateOrderFromMabang(Order order, List<Order> sourceOrders) {
+        String targetID = platformOrderMap.findIdByErpCode(order.getPlatformOrderNumber());
+        List<String> sourceIDs = sourceOrders.stream()
+                .map(
+                        sourceOrder ->
+                                platformOrderMap.findIdByErpCode(
+                                        sourceOrder.getPlatformOrderNumber()
+                                )
+                )
+                .collect(toList());
+
+        platformOrderMap.updateMergedOrder(targetID, sourceIDs);
+        platformOrderContentMap.updateMergedOrder(targetID, sourceIDs);
     }
+
 
 
 }

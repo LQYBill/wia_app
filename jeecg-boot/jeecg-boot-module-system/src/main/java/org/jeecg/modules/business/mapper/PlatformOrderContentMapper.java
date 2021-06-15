@@ -48,5 +48,14 @@ public interface PlatformOrderContentMapper extends BaseMapper<PlatformOrderCont
      */
     void insertFromMabangOrder(OrderItem item);
 
+    /**
+     * Update merged order content, move the content of sources to target's.
+     *
+     * @param targetID  ID of target platform order
+     * @param sourceIDs IDs of sources platform order
+     */
+    void updateMergedOrder(@Param("target") String targetID, @Param("sources") List<String> sourceIDs);
+
+
 
 }
