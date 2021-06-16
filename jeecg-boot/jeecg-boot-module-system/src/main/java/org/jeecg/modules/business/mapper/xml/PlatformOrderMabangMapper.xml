@@ -51,49 +51,40 @@
                                    platform_order_id, platform_order_number, erp_order_id,
                                    tracking_number, order_time, shipping_time, recipient,
                                    country, postcode, status)
-        SELECT #{id},
+        SELECT #{order.id},
                'mabang api',
                NOW(),
                'mabang api',
                NOW(),
                id,
-               #{logisticChannelName},
-               #{platformOrderId},
-               #{platformOrderNumber},
-               #{erpOrderId},
-               #{trackingNumber},
-               #{orderTime},
-               #{shippingTime},
-               #{recipient},
-               #{country},
-               #{postcode},
-               #{status}
+               #{order.logisticChannelName},
+               #{order.platformOrderId},
+               #{order.platformOrderNumber},
+               #{order.erpOrderId},
+               #{order.trackingNumber},
+               #{order.orderTime},
+               #{order.shippingTime},
+               #{order.recipient},
+               #{order.country},
+               #{order.postcode},
+               #{order.status}
         FROM shop
-        WHERE erp_code = #{shopErpCode} ;
+        WHERE erp_code = #{order.shopErpCode};
     </insert>
 
     <insert id="insertOrderItemsFromMabang">
         INSERT INTO platform_order_content(id, create_by, create_time,
-        update_by, update_time, platform_order_id, sku_id, quantity)
+                                           update_by, update_time, platform_order_id, sku_id, quantity)
         SELECT UUID(),
-        'admin',
-        NOW(),
-        'admin',
-        NOW(),
-        #{platformOrderId},
-        sku.id,
-        #{quantity}
+               'admin',
+               NOW(),
+               'admin',
+               NOW(),
+               #{mainId},
+               sku.id,
+               #{item.quantity}
         FROM sku
-        WHERE erp_code IN
-        <foreach
-                collection="#{orderItems}"
-                index="index"
-                item="item"
-                open="("
-                close=")"
-                separator=",">
-            #{item.erpCode}
-        </foreach>
+        WHERE erp_code = #{item.erpCode}
     </insert>
 
 </mapper>

@@ -23,7 +23,7 @@ public class RetrieveOrderListJob implements Job {
     @Setter
     private IPlatformOrderMabangService platformOrderMabangService;
 
-    private final static Duration EXECUTION_DURATION = Duration.ofMinutes(300);
+    private final static Duration EXECUTION_DURATION = Duration.ofMinutes(30);
 
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
@@ -46,7 +46,7 @@ public class RetrieveOrderListJob implements Job {
      * Duration is specified by {@code EXECUTION_DURATION}
      */
     public void updateNewOrder() throws OrderListRequestErrorException {
-        // request time parameter period: now - 30m -> now
+        // request time parameter period
         LocalDateTime end = LocalDateTime.now();
         LocalDateTime begin = end.minus(EXECUTION_DURATION);
 
@@ -54,7 +54,8 @@ public class RetrieveOrderListJob implements Job {
         OrderListRequestBody body = new OrderListRequestBody();
         body.setDatetimeType(DateType.PAID)
                 .setStartDate(begin)
-                .setEndDate(end);
+                .setEndDate(end)
+                .setStatus(OrderStatus.AllUnshipped);
         OrderListRequest request = new OrderListRequest(body);
         List<Order> newlyPaidOrders = request.getAll();
         log.info("newly paid order size: {}", newlyPaidOrders.size());

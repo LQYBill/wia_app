@@ -2,10 +2,12 @@ package org.jeecg.modules.business.domain.mabangapi.getorderlist;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Immutable object
  */
+@Slf4j
 public class OrderListResponse {
     public final static String ERROR_CODE = "999";
     public final static String SUCCESS_CODE = "000";
@@ -44,6 +46,7 @@ public class OrderListResponse {
         int pageCount = Integer.parseInt(json.getString("pageCount"));
         int dataCount = Integer.parseInt(json.getString("dataCount"));
         JSONArray data = json.getJSONArray("data");
+        log.info("New response, page size {}, data size {}", pageCount, dataCount);
         return new OrderListResponse(pageCount, dataCount, data);
     }
 
