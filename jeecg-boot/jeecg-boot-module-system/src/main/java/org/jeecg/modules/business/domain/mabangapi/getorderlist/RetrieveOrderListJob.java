@@ -23,16 +23,26 @@ public class RetrieveOrderListJob implements Job {
     @Setter
     private IPlatformOrderMabangService platformOrderMabangService;
 
-    private final static Duration EXECUTION_DURATION = Duration.ofHours(6);
+    private final static Duration EXECUTION_DURATION = Duration.ofMinutes(300);
 
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
-        // 1. request orders that newly paid in last 30 minutes and save them to db.
-        // 2. request orders that newly updated in last 30 minutes,
+        try {
+            updateNewOrder();
+        } catch (OrderListRequestErrorException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            updateMergedOrder();
+        } catch (OrderListRequestErrorException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     /**
-     * Retrieve last 30 minutes newly paid order.
+     * Retrieve newly paid order.
      * Duration is specified by {@code EXECUTION_DURATION}
      */
     public void updateNewOrder() throws OrderListRequestErrorException {
@@ -47,6 +57,7 @@ public class RetrieveOrderListJob implements Job {
                 .setEndDate(end);
         OrderListRequest request = new OrderListRequest(body);
         List<Order> newlyPaidOrders = request.getAll();
+        log.info("newly paid order size: {}", newlyPaidOrders.size());
         // update in DB
         platformOrderMabangService.saveOrderFromMabang(newlyPaidOrders);
     }
@@ -74,7 +85,7 @@ public class RetrieveOrderListJob implements Job {
         List<Order> mergedOrders = updatedOrders.stream()
                 .filter(Order::isUnion)
                 .collect(Collectors.toList());
-        log.debug("Size of merged order:{}", mergedOrders.size());
+        log.info("Size of merged order:{}", mergedOrders.size());
         // search other source orders of the merged order and make a map
 
         Map<Order, Set<String>> mergedOrderToSourceOrdersErpId = mergedOrders.stream()
