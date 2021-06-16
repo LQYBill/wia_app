@@ -2,6 +2,8 @@ package org.jeecg.modules.business.service;
 
 import org.jeecg.modules.business.entity.LogisticChannelPrice;
 import com.baomidou.mybatisplus.extension.service.IService;
+
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -13,4 +15,6 @@ import java.util.List;
 public interface ILogisticChannelPriceService extends IService<LogisticChannelPrice> {
 
 	public List<LogisticChannelPrice> selectByMainId(String mainId);
+
+    List<String> getAllCountry();
 }

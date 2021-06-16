@@ -3,14 +3,31 @@
 <mapper namespace="org.jeecg.modules.business.mapper.LogisticChannelPriceMapper">
 
 	<delete id="deleteByMainId" parameterType="java.lang.String">
-		DELETE 
-		FROM  logistic_channel_price 
+		DELETE
+		FROM  logistic_channel_price
 		WHERE
 			 channel_id = #{mainId} 	</delete>
-	
+
 	<select id="selectByMainId" parameterType="java.lang.String" resultType="org.jeecg.modules.business.entity.LogisticChannelPrice">
-		SELECT * 
+		SELECT *
 		FROM  logistic_channel_price
 		WHERE
 			 channel_id = #{mainId} 	</select>
+
+	<select id="findLogisticsChannelPrice" resultType="org.jeecg.modules.business.entity.LogisticChannelPrice">
+        SELECT lcp.*
+        FROM logistic_channel_price lcp
+            JOIN logistic_channel lc ON lc.id = lcp.channel_id
+            WHERE zh_name = #{channelName}
+            AND weight_range_start &lt;= #{trueWeight}
+            AND weight_range_end &gt;= #{trueWeight}
+            AND effective_country = #{country}
+            AND effective_date &lt;= #{date}
+            ORDER BY effective_date DESC
+            LIMIT 1	</select>
+
+	<select id="getAllCountry" resultType="java.lang.String">
+		SELECT DISTINCT effective_country
+		FROM logistic_channel_price
+		ORDER BY effective_country	</select>
 </mapper>

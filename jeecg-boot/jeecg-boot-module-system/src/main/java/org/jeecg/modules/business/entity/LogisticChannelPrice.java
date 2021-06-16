@@ -1,17 +1,17 @@
 package org.jeecg.modules.business.entity;
 
-import java.io.Serializable;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.jeecgframework.poi.excel.annotation.Excel;
-import java.util.Date;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import java.io.UnsupportedEncodingException;
+import lombok.Data;
+import org.jeecgframework.poi.excel.annotation.Excel;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.io.Serializable;
+import java.util.Date;
 
 /**
  * @Description: 物流渠道价格
@@ -90,4 +90,24 @@ public class LogisticChannelPrice implements Serializable {
 	@Excel(name = "挂号费", width = 15)
     @ApiModelProperty(value = "挂号费")
     private java.math.BigDecimal registrationFee;
+
+    /**
+     * Calculate shipping cost based on weight.
+     *
+     * @param weight the weight
+     * @return cost
+     */
+    public double calculateShippingCost(double weight) {
+        double cost;
+        if (weight <= minimumWeight) {
+            cost = minimumWeightPrice.doubleValue();
+        } else {
+            if (calUnit == 1) {
+                cost = (weight / calUnit) * calUnitPrice.doubleValue();
+            } else {
+                cost = minimumWeightPrice.doubleValue() + Math.ceil((weight - minimumWeight) / calUnit) * calUnitPrice.doubleValue();
+            }
+        }
+        return cost;
+    }
 }

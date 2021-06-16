@@ -1,46 +1,41 @@
 package org.jeecg.modules.business.controller.admin;
 
-import java.io.UnsupportedEncodingException;
-import java.io.IOException;
-import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.shiro.SecurityUtils;
+import org.jeecg.common.api.vo.Result;
+import org.jeecg.common.aspect.annotation.AutoLog;
+import org.jeecg.common.system.query.QueryGenerator;
+import org.jeecg.common.system.vo.LoginUser;
+import org.jeecg.common.util.oConvertUtils;
+import org.jeecg.modules.business.domain.country.Country;
+import org.jeecg.modules.business.domain.logistic.CostTrialCalculation;
+import org.jeecg.modules.business.entity.LogisticChannel;
+import org.jeecg.modules.business.entity.LogisticChannelPrice;
+import org.jeecg.modules.business.service.ILogisticChannelPriceService;
+import org.jeecg.modules.business.service.ILogisticChannelService;
+import org.jeecg.modules.business.vo.LogisticChannelPage;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
 import org.jeecgframework.poi.excel.entity.ExportParams;
 import org.jeecgframework.poi.excel.entity.ImportParams;
 import org.jeecgframework.poi.excel.view.JeecgEntityExcelView;
-import org.jeecg.common.system.vo.LoginUser;
-import org.apache.shiro.SecurityUtils;
-import org.jeecg.common.api.vo.Result;
-import org.jeecg.common.system.query.QueryGenerator;
-import org.jeecg.common.util.oConvertUtils;
-import org.jeecg.modules.business.entity.LogisticChannelPrice;
-import org.jeecg.modules.business.entity.LogisticChannel;
-import org.jeecg.modules.business.vo.LogisticChannelPage;
-import org.jeecg.modules.business.service.ILogisticChannelService;
-import org.jeecg.modules.business.service.ILogisticChannelPriceService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import lombok.extern.slf4j.Slf4j;
-import com.alibaba.fastjson.JSON;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import org.jeecg.common.aspect.annotation.AutoLog;
+import org.springframework.web.servlet.ModelAndView;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @Description: 物流渠道
@@ -262,4 +257,42 @@ public class LogisticChannelController {
         return Result.OK("文件导入失败！");
     }
 
+    @GetMapping(value = "/find")
+    public Result<List<CostTrialCalculation>> findPrices(@RequestParam(name = "country") String country,
+                                                         @RequestParam(name = "weight") int weight,
+                                                         @RequestParam(name = "volume", defaultValue = "1") int volume) {
+        List<LogisticChannel> channels = logisticChannelService.list();
+
+        List<CostTrialCalculation> calculations = channels.stream()
+                .map(c -> {
+                    String channelName = c.getZhName();
+                    boolean useVolumetricWeight = c.getUseVolumetricWeight() == 1;
+                    int trueWeight;
+                    if (useVolumetricWeight) {
+                        trueWeight = Math.max(weight, volume / c.getVolumetricWeightFactor());
+                    } else {
+                        trueWeight = weight;
+                    }
+                    LogisticChannelPrice price = logisticChannelService.findLogisticsChannelPrice(channelName, new Date(), trueWeight, country);
+                    if (price != null) {
+                        return new CostTrialCalculation(price, trueWeight, channelName);
+                    } else {
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .sorted(Comparator.comparing(CostTrialCalculation::getTotalCost))
+                .collect(Collectors.toList());
+        return Result.OK(calculations);
+    }
+
+
+    @GetMapping(value = "/countries")
+    public Result<List<Country>> countryList() {
+        List<Country> countries = logisticChannelPriceService.getAllCountry()
+                .stream()
+                .map(code -> Country.makeCountry(code, Country.ATTRIBUTE_CODE))
+                .collect(Collectors.toList());
+        return Result.OK(countries);
+    }
 }

@@ -5,6 +5,7 @@ import org.jeecg.modules.business.entity.LogisticChannel;
 import com.baomidou.mybatisplus.extension.service.IService;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -36,5 +37,6 @@ public interface ILogisticChannelService extends IService<LogisticChannel> {
 	 * 批量删除一对多
 	 */
 	public void delBatchMain (Collection<? extends Serializable> idList);
-	
+
+	LogisticChannelPrice findLogisticsChannelPrice(String channelName, Date date, int trueWeight, String country);
 }

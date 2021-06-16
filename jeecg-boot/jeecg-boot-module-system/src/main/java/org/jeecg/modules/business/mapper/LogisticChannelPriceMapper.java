@@ -1,5 +1,6 @@
 package org.jeecg.modules.business.mapper;
 
+import java.util.Date;
 import java.util.List;
 import org.jeecg.modules.business.entity.LogisticChannelPrice;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -16,4 +17,8 @@ public interface LogisticChannelPriceMapper extends BaseMapper<LogisticChannelPr
 	public boolean deleteByMainId(@Param("mainId") String mainId);
     
 	public List<LogisticChannelPrice> selectByMainId(@Param("mainId") String mainId);
+
+	LogisticChannelPrice findLogisticsChannelPrice(String channelName, Date date, int trueWeight, String country);
+
+	List<String> getAllCountry();
 }
