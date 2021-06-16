@@ -10,9 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -22,7 +23,7 @@ public class RetrieveOrderListJob implements Job {
     @Setter
     private IPlatformOrderMabangService platformOrderMabangService;
 
-    private final static Duration executionDuration = Duration.ofHours(6);
+    private final static Duration EXECUTION_DURATION = Duration.ofHours(6);
 
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
@@ -32,11 +33,12 @@ public class RetrieveOrderListJob implements Job {
 
     /**
      * Retrieve last 30 minutes newly paid order.
+     * Duration is specified by {@code EXECUTION_DURATION}
      */
     public void updateNewOrder() throws OrderListRequestErrorException {
         // request time parameter period: now - 30m -> now
         LocalDateTime end = LocalDateTime.now();
-        LocalDateTime begin = end.minusMinutes(30);
+        LocalDateTime begin = end.minus(EXECUTION_DURATION);
 
         // sent request for newly paid orders
         OrderListRequestBody body = new OrderListRequestBody();
@@ -50,11 +52,12 @@ public class RetrieveOrderListJob implements Job {
     }
 
     /**
-     * Retrieve changed order and merge them.
+     * Retrieve newly changed order and merge them.
+     * Duration is specified by {@code EXECUTION_DURATION}
      */
     public void updateMergedOrder() throws OrderListRequestErrorException {
         LocalDateTime end = LocalDateTime.now();
-        LocalDateTime begin = end.minus(executionDuration);
+        LocalDateTime begin = end.minus(EXECUTION_DURATION);
 
         // Query orders that updated in a certain duration of time in the past.
         OrderListRequestBody updatedOrderBody = new OrderListRequestBody();
@@ -74,14 +77,22 @@ public class RetrieveOrderListJob implements Job {
         log.debug("Size of merged order:{}", mergedOrders.size());
         // search other source orders of the merged order and make a map
 
-        Map<Order, List<Order>> mergedOrderToSourceOrders = new HashMap<>();
-        for (Order order : mergedOrders) {
-            mergedOrderToSourceOrders.put(order, searchMergeSources(order));
-            log.debug("Order {}", order);
-            log.debug("Source {}", mergedOrderToSourceOrders.get(order));
-        }
+        Map<Order, Set<String>> mergedOrderToSourceOrdersErpId = mergedOrders.stream()
+                .collect(
+                        Collectors.toMap(
+                                Function.identity(),
+                                o -> o.getOrderItems().stream()
+                                        .filter(
+                                                item -> !item.getOriginOrderId().equals(o.getErpOrderId())
+                                        )
+                                        .map(OrderItem::getOriginOrderId)
+                                        .collect(Collectors.toSet())
+
+                        )
+                );
+
         // update in DB
-        mergedOrderToSourceOrders.forEach(platformOrderMabangService::updateMergedOrderFromMabang);
+        mergedOrderToSourceOrdersErpId.forEach(platformOrderMabangService::updateMergedOrderFromMabang);
     }
 
 
@@ -94,7 +105,7 @@ public class RetrieveOrderListJob implements Job {
     private static List<Order> searchMergeSources(Order target) throws OrderListRequestErrorException {
         // search period: target order paid time - now
         LocalDateTime end = LocalDateTime.now();
-        LocalDateTime begin = end.minus(executionDuration);
+        LocalDateTime begin = end.minus(EXECUTION_DURATION);
         // send request
         OrderListRequestBody obsoletedOrderRequestBody = new OrderListRequestBody();
         obsoletedOrderRequestBody.setStatus(OrderStatus.Obsolete)
