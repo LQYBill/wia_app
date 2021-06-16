@@ -33,7 +33,8 @@ public class PlatformOrderMabangServiceImpl implements IPlatformOrderMabangServi
     @Override
     public void saveOrderFromMabang(List<Order> orders) {
         for (Order order : orders) {
-            platformOrderMabangMapper.insertFromMabangOrder(order);
+            platformOrderMabangMapper.insertOrderFromMabang(order);
+            platformOrderMabangMapper.insertOrderItemsFromMabang(order.getId(), order.getOrderItems());
         }
     }
 
@@ -44,7 +45,9 @@ public class PlatformOrderMabangServiceImpl implements IPlatformOrderMabangServi
         List<String> sourceIDs = sourceOrderErpId.stream()
                 .map(platformOrderMabangMapper::findIdByErpId)
                 .collect(toList());
+
         platformOrderMabangMapper.updateMergedOrder(targetID, sourceIDs);
+        platformOrderMabangMapper.updateMergedOrderItems(targetID, sourceIDs);
     }
 
 

@@ -14,6 +14,24 @@ import java.util.List;
  */
 @Repository
 public interface PlatformOrderMabangMapper extends BaseMapper<PlatformOrder> {
+
+    /**
+     * Update order in a merge operation.
+     *
+     * @param targetID
+     * @param sourceIDs
+     */
+    void updateMergedOrder(@Param("target") String targetID, @Param("sources") List<String> sourceIDs);
+
+    /**
+     * Update orders content in a merge operation.
+     *
+     * @param targetID
+     * @param sourceIDs
+     */
+    void updateMergedOrderItems(@Param("target") String targetID, @Param("sources") List<String> sourceIDs);
+
+
     /**
      * Insert platform order content from mabang side,
      * OrderItem doest not need to provide uuid.
@@ -21,7 +39,14 @@ public interface PlatformOrderMabangMapper extends BaseMapper<PlatformOrder> {
      *
      * @param order the order content to insert
      */
-    void insertFromMabangOrder(@Param("order") Order order);
+    int insertOrderFromMabang(@Param("order") Order order);
+
+    /**
+     * Insert platform order content from mabang side,
+     * OrderItem doest not need to provide uuid.
+     * sku erp code will be replaced by sku ID.
+     */
+    int insertOrderItemsFromMabang(@Param("mainId") String mainId, @Param("items") List<OrderItem> items);
 
     /**
      * Get platform order ID by erp code.
@@ -32,12 +57,5 @@ public interface PlatformOrderMabangMapper extends BaseMapper<PlatformOrder> {
 
     String findIdByErpId(String erpId);
 
-    /**
-     * Update merged order.
-     * Mark in the sources their target as ID of target.move the content of sources to target's.
-     *
-     * @param targetID  ID of target platform order
-     * @param sourceIDs IDs of source platform order
-     */
-    void updateMergedOrder(@Param("target") String targetID, @Param("sources") List<String> sourceIDs);
+
 }

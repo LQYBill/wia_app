@@ -15,6 +15,9 @@
                 close=")">
             #{v}
         </foreach>;
+    </update>
+
+    <update id="updateMergedOrderItems">
         UPDATE platform_order_content
         SET platform_order_id = #{target}
         WHERE platform_order_id IN
@@ -42,33 +45,34 @@
         WHERE erp_order_id = #{1}
     </select>
 
-
-    <insert id="insertFromMabangOrder"
-            parameterType="org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderItem">
+    <insert id="insertOrderFromMabang">
         INSERT INTO platform_order(id, create_by, create_time, update_by,
-        update_time, shop_id, logistic_channel_name,
-        platform_order_id, platform_order_number, erp_order_id,
-        tracking_number, order_time, shipping_time, recipient,
-        country, postcode, status)
+                                   update_time, shop_id, logistic_channel_name,
+                                   platform_order_id, platform_order_number, erp_order_id,
+                                   tracking_number, order_time, shipping_time, recipient,
+                                   country, postcode, status)
         SELECT #{id},
-        'mabang api',
-        NOW(),
-        'mabang api',
-        NOW(),
-        id,
-        #{logisticChannelName},
-        #{platformOrderId},
-        #{platformOrderNumber},
-        #{erpOrderId},
-        #{trackingNumber},
-        #{orderTime},
-        #{shippingTime},
-        #{recipient},
-        #{country},
-        #{postcode},
-        #{status}
+               'mabang api',
+               NOW(),
+               'mabang api',
+               NOW(),
+               id,
+               #{logisticChannelName},
+               #{platformOrderId},
+               #{platformOrderNumber},
+               #{erpOrderId},
+               #{trackingNumber},
+               #{orderTime},
+               #{shippingTime},
+               #{recipient},
+               #{country},
+               #{postcode},
+               #{status}
         FROM shop
         WHERE erp_code = #{shopErpCode} ;
+    </insert>
+
+    <insert id="insertOrderItemsFromMabang">
         INSERT INTO platform_order_content(id, create_by, create_time,
         update_by, update_time, platform_order_id, sku_id, quantity)
         SELECT UUID(),
