@@ -5,8 +5,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
 import lombok.extern.slf4j.Slf4j;
-import org.jeecg.modules.business.domain.mabangapi.getorderlist.Order;
-import org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderItem;
 import org.jeecg.modules.business.entity.*;
 import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
@@ -253,32 +251,5 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
             return platformOrderMap.queryQuantities(client.getId());
         }
     }
-
-    @Override
-    public void saveOrderFromMabang(List<Order> orders) {
-        for (Order order : orders) {
-            platformOrderMap.insertFromMabangOrder(order);
-            for (OrderItem orderItem : order.getOrderItems())
-                platformOrderContentMap.insertFromMabangOrder(orderItem);
-        }
-    }
-
-    @Override
-    @Transactional
-    public void updateMergedOrderFromMabang(Order order, List<Order> sourceOrders) {
-        String targetID = platformOrderMap.findIdByErpCode(order.getPlatformOrderNumber());
-        List<String> sourceIDs = sourceOrders.stream()
-                .map(
-                        sourceOrder ->
-                                platformOrderMap.findIdByErpCode(
-                                        sourceOrder.getPlatformOrderNumber()
-                                )
-                )
-                .collect(toList());
-
-        platformOrderMap.updateMergedOrder(targetID, sourceIDs);
-        platformOrderContentMap.updateMergedOrder(targetID, sourceIDs);
-    }
-
 
 }

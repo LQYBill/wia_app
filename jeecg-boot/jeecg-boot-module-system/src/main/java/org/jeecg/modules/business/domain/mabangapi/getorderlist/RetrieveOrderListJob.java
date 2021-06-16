@@ -2,19 +2,16 @@ package org.jeecg.modules.business.domain.mabangapi.getorderlist;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.jeecg.modules.business.service.impl.PlatformOrderServiceImpl;
-import org.jeecg.modules.business.service.impl.purchase.PlatformOrderContentServiceImpl;
+import org.jeecg.modules.business.service.IPlatformOrderMabangService;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -23,13 +20,9 @@ public class RetrieveOrderListJob implements Job {
 
     @Autowired
     @Setter
-    private PlatformOrderServiceImpl platformOrderService;
+    private IPlatformOrderMabangService platformOrderMabangService;
 
-    @Autowired
-    @Setter
-    private PlatformOrderContentServiceImpl platformOrderContentService;
-
-    private final static Duration executionDuration = Duration.ofMinutes(30);
+    private final static Duration executionDuration = Duration.ofHours(6);
 
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
@@ -53,7 +46,7 @@ public class RetrieveOrderListJob implements Job {
         OrderListRequest request = new OrderListRequest(body);
         List<Order> newlyPaidOrders = request.getAll();
         // update in DB
-        platformOrderService.saveOrderFromMabang(newlyPaidOrders);
+        platformOrderMabangService.saveOrderFromMabang(newlyPaidOrders);
     }
 
     /**
@@ -84,11 +77,11 @@ public class RetrieveOrderListJob implements Job {
         Map<Order, List<Order>> mergedOrderToSourceOrders = new HashMap<>();
         for (Order order : mergedOrders) {
             mergedOrderToSourceOrders.put(order, searchMergeSources(order));
-            log.debug("Order {}", order.getPlatformOrderNumber());
+            log.debug("Order {}", order);
             log.debug("Source {}", mergedOrderToSourceOrders.get(order));
         }
         // update in DB
-        mergedOrderToSourceOrders.forEach(platformOrderService::updateMergedOrderFromMabang);
+        mergedOrderToSourceOrders.forEach(platformOrderMabangService::updateMergedOrderFromMabang);
     }
 
 

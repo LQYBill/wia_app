@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.jeecg.modules.business.mapper.PlatformOrderMabangMapper">
+
+    <update id="updateMergedOrder">
+        UPDATE platform_order
+        SET target = #{target}
+        WHERE platform_order_id IN
+        <foreach
+                collection="sources"
+                separator=","
+                index="i"
+                item="v"
+                open="("
+                close=")">
+            #{v}
+        </foreach>;
+        UPDATE platform_order_content
+        SET platform_order_id = #{target}
+        WHERE platform_order_id IN
+        <foreach
+                collection="sources"
+                separator=","
+                index="i"
+                item="v"
+                open="("
+                close=")">
+            #{v}
+        </foreach>
+    </update>
+
+
+    <select id="findIdByErpCode" resultType="java.lang.String">
+        SELECT id
+        FROM platform_order
+        WHERE platform_order_number = #{1}
+    </select>
+
+    <select id="findIdByErpId" resultType="java.lang.String">
+        SELECT id
+        FROM platform_order
+        WHERE erp_order_id = #{1}
+    </select>
+
+
+    <insert id="insertFromMabangOrder"
+            parameterType="org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderItem">
+        INSERT INTO platform_order(id, create_by, create_time, update_by,
+        update_time, shop_id, logistic_channel_name,
+        platform_order_id, platform_order_number, erp_order_id,
+        tracking_number, order_time, shipping_time, recipient,
+        country, postcode, status)
+        SELECT #{id},
+        'mabang api',
+        NOW(),
+        'mabang api',
+        NOW(),
+        id,
+        #{logisticChannelName},
+        #{platformOrderId},
+        #{platformOrderNumber},
+        #{erpOrderId},
+        #{trackingNumber},
+        #{orderTime},
+        #{shippingTime},
+        #{recipient},
+        #{country},
+        #{postcode},
+        #{status}
+        FROM shop
+        WHERE erp_code = #{shopErpCode} ;
+        INSERT INTO platform_order_content(id, create_by, create_time,
+        update_by, update_time, platform_order_id, sku_id, quantity)
+        SELECT UUID(),
+        'admin',
+        NOW(),
+        'admin',
+        NOW(),
+        #{platformOrderId},
+        sku.id,
+        #{quantity}
+        FROM sku
+        WHERE erp_code IN
+        <foreach
+                collection="#{orderItems}"
+                index="index"
+                item="item"
+                open="("
+                close=")"
+                separator=",">
+            #{item.erpCode}
+        </foreach>
+    </insert>
+
+</mapper>

@@ -39,22 +39,7 @@ public interface PlatformOrderContentMapper extends BaseMapper<PlatformOrderCont
     List<SkuDetail> searchSkuDetail(List<String> skuIDs);
 
 
-    /**
-     * Insert platform order content from mabang side,
-     * OrderItem doest not need to provide uuid.
-     * sku erp code will be replaced to sku id.
-     *
-     * @param item the order content to insert
-     */
-    void insertFromMabangOrder(OrderItem item);
 
-    /**
-     * Update merged order content, move the content of sources to target's.
-     *
-     * @param targetID  ID of target platform order
-     * @param sourceIDs IDs of sources platform order
-     */
-    void updateMergedOrder(@Param("target") String targetID, @Param("sources") List<String> sourceIDs);
 
 
 

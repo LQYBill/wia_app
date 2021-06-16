@@ -20,4 +20,7 @@ public class OrderItem {
 
     @JSONField(name = "quantity")
     private int quantity;
+
+    @JSONField(name = "originOrderId")
+    private String originOrderId;
 }

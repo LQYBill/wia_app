@@ -2,7 +2,6 @@ package org.jeecg.modules.business.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
-import org.jeecg.modules.business.domain.mabangapi.getorderlist.Order;
 import org.jeecg.modules.business.entity.ClientPlatformOrderContent;
 import org.jeecg.modules.business.entity.OrderContentDetail;
 import org.jeecg.modules.business.entity.PlatformOrder;
@@ -67,21 +66,4 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
     List<OrderContentDetail> searchPurchaseOrderDetail(List<SkuQuantity> skuQuantities);
 
     OrderQuantity queryOrderQuantities();
-
-    /**
-     * Save orders to DB from mabang api.
-     *
-     * @param orders the orders to save.
-     */
-    void saveOrderFromMabang(List<Order> orders);
-
-    /**
-     * Update merged platform order date by data from mabang.
-     * <p>
-     * This function updates both correspondant platform order and its content.
-     *
-     * @param mergedOrder order as merge target
-     * @param sourceOrder source orders that are merged
-     */
-    void updateMergedOrderFromMabang(Order mergedOrder, List<Order> sourceOrder);
 }

@@ -43,6 +43,9 @@ public class Order {
     @JSONField(name = "salesRecordNumber")
     private String platformOrderNumber;
 
+    @JSONField(name = "erpOrderId")
+    private String erpOrderId;
+
     /**
      * If tracking is empty, set it null
      */
@@ -83,6 +86,8 @@ public class Order {
 
     @JSONField(name = "orderItem")
     private List<OrderItem> orderItems;
+
+
 
 
     public void setTrackingNumber(String trackingNumber) {
