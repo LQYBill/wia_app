@@ -2,6 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.jeecg.modules.business.mapper.PlatformOrderContentMapper">
 
+
     <delete id="deleteByMainId" parameterType="java.lang.String">
         DELETE
         FROM platform_order_content
@@ -36,6 +37,8 @@
         WHERE sku_id IN
         <foreach collection="list" index="i" item="item" open="(" separator="," close=")">#{item}</foreach>
     </select>
+
+
 
     <resultMap id="skuDetailResultMap" type="org.jeecg.modules.business.vo.SkuDetail">
         <constructor>

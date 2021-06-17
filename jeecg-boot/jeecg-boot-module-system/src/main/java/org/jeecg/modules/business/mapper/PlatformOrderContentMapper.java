@@ -1,16 +1,15 @@
 package org.jeecg.modules.business.mapper;
 
-import java.util.List;
-import java.util.Map;
-
-import org.jeecg.modules.business.entity.ClientPlatformOrderContent;
-import org.jeecg.modules.business.entity.OrderContentDetail;
-import org.jeecg.modules.business.entity.PlatformOrderContent;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
+import org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderItem;
+import org.jeecg.modules.business.entity.ClientPlatformOrderContent;
+import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.vo.SkuDetail;
 import org.jeecg.modules.business.vo.SkuQuantity;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 /**
  * @Description: 平台订单内容
@@ -24,11 +23,13 @@ public interface PlatformOrderContentMapper extends BaseMapper<PlatformOrderCont
     boolean deleteByMainId(@Param("mainId") String mainId);
 
     List<PlatformOrderContent> selectByMainId(@Param("mainId") String mainId);
+
     List<ClientPlatformOrderContent> selectClientVersionByMainId(@Param("mainId") String mainId);
 
 
     /**
      * Search order contents of a list of order
+     *
      * @param orderIDList list of identifiers of orders
      * @return map of sku ID and its quantity
      */
@@ -36,6 +37,9 @@ public interface PlatformOrderContentMapper extends BaseMapper<PlatformOrderCont
 
 
     List<SkuDetail> searchSkuDetail(List<String> skuIDs);
+
+
+
 
 
 

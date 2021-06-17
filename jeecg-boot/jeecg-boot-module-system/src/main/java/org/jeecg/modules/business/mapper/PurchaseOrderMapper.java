@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.ibatis.annotations.Param;
+import org.jeecg.modules.business.domain.mabangapi.getorderlist.Order;
 import org.jeecg.modules.business.entity.OrderContentDetail;
 import org.jeecg.modules.business.entity.Promotion;
 import org.jeecg.modules.business.entity.PurchaseOrder;
@@ -93,5 +94,6 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrder> {
     void confirmPurchase(@Param("purchaseID") String purchaseID);
 
     String getInvoiceNumber(@Param("purchaseID") String purchaseID);
+
 
 }

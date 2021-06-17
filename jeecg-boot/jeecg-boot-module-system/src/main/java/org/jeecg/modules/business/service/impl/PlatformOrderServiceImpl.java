@@ -228,7 +228,7 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
                 .collect(toList());
         log.info(details.toString());
         // SKU ID -> SKU detail -- (quantity) --> Order Content Detail
-        return  details;
+        return details;
     }
 
     public Map<ShippingFeesWaiver, List<String>> getShippingFeesWaiverMap(List<String> skuIds) {
@@ -251,6 +251,5 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
             return platformOrderMap.queryQuantities(client.getId());
         }
     }
-
 
 }

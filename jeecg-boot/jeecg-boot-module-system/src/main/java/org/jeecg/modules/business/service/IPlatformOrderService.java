@@ -1,16 +1,16 @@
 package org.jeecg.modules.business.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.service.IService;
 import org.jeecg.modules.business.entity.ClientPlatformOrderContent;
 import org.jeecg.modules.business.entity.OrderContentDetail;
-import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.entity.PlatformOrder;
-import com.baomidou.mybatisplus.extension.service.IService;
+import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.vo.SkuQuantity;
 import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage;
+import org.jeecg.modules.business.vo.clientPlatformOrder.PurchaseConfirmation;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrderQuantity;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
-import org.jeecg.modules.business.vo.clientPlatformOrder.PurchaseConfirmation;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -48,15 +48,19 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
     void delBatchMain(Collection<? extends Serializable> idList);
 
     void pendingPlatformOrderPage(IPage<ClientPlatformOrderPage> page);
+
     void purchasingPlatformOrderPage(IPage<ClientPlatformOrderPage> page);
+
     void processedPlatformOrderPage(IPage<ClientPlatformOrderPage> page);
 
     OrdersStatisticData getPlatformOrdersStatisticData(List<String> orderIds);
 
     List<PlatformOrderContent> selectByMainId(String mainId);
+
     List<ClientPlatformOrderContent> selectClientVersionByMainId(String mainId);
 
     PurchaseConfirmation confirmPurchaseByPlatformOrder(List<String> platformOrderIdList);
+
     PurchaseConfirmation confirmPurchaseBySkuQuantity(List<SkuQuantity> skuIDQuantityMap);
 
     List<OrderContentDetail> searchPurchaseOrderDetail(List<SkuQuantity> skuQuantities);
