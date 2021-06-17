@@ -1,6 +1,7 @@
 package org.jeecg.modules.business.domain.mabangapi.getorderlist;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -52,12 +53,14 @@ public class Order {
     @JSONField(name = "trackNumber")
     private String trackingNumber;
 
-    @JSONField(name = "paidTime")
+    @JSONField(name = "paidTime", format = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", locale = "fr", timezone = "GMT+1")
     private Date orderTime;
 
     @JSONField(name = "expressTime")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", locale = "fr", timezone = "GMT+1")
     private Date shippingTime;
     /**
      * 订单收件人
@@ -87,14 +90,16 @@ public class Order {
     @JSONField(name = "orderItem")
     private List<OrderItem> orderItems;
 
-
-
-
     public void setTrackingNumber(String trackingNumber) {
         if (trackingNumber.length() == 0) {
             this.trackingNumber = null;
         } else
             this.trackingNumber = trackingNumber;
+    }
+
+    public void setOrderTime(String orderTime) {
+        System.out.println(orderTime);
+        // TODO 确认马帮api返回时间时差
     }
 
     public boolean isUnion() {

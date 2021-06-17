@@ -2,7 +2,6 @@ package org.jeecg.modules.business.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.jeecg.modules.business.domain.mabangapi.getorderlist.Order;
-import org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderItem;
 import org.jeecg.modules.business.mapper.PlatformOrderMabangMapper;
 import org.jeecg.modules.business.service.IPlatformOrderMabangService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,9 +34,7 @@ public class PlatformOrderMabangServiceImpl implements IPlatformOrderMabangServi
     public void saveOrderFromMabang(List<Order> orders) {
         for (Order order : orders) {
             platformOrderMabangMapper.insertOrderFromMabang(order);
-            for (OrderItem item : order.getOrderItems()) {
-                platformOrderMabangMapper.insertOrderItemsFromMabang(order.getId(), item);
-            }
+            platformOrderMabangMapper.insertOrderItemsFromMabang(order.getId(), order.getOrderItems());
         }
     }
 
@@ -52,6 +49,4 @@ public class PlatformOrderMabangServiceImpl implements IPlatformOrderMabangServi
         platformOrderMabangMapper.updateMergedOrder(targetID, sourceIDs);
         platformOrderMabangMapper.updateMergedOrderItems(targetID, sourceIDs);
     }
-
-
 }

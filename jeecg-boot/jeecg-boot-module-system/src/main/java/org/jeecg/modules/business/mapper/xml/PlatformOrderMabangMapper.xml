@@ -74,17 +74,11 @@
 
     <insert id="insertOrderItemsFromMabang">
         INSERT INTO platform_order_content(id, create_by, create_time,
-                                           update_by, update_time, platform_order_id, sku_id, quantity)
-        SELECT UUID(),
-               'admin',
-               NOW(),
-               'admin',
-               NOW(),
-               #{mainId},
-               sku.id,
-               #{item.quantity}
-        FROM sku
-        WHERE erp_code = #{item.erpCode}
+        update_by, update_time, platform_order_id, sku_id, quantity)
+        VALUES
+        <foreach collection="#{items}" separator="," open="" close="" item="item" index="index">
+            (UUID(), 'Mabang API', NOW(), 'Mabang API', NOW(), #{mainId}, shopErpToId(#{item.erpCode}), #{item.quantity})
+        </foreach>
     </insert>
 
 </mapper>

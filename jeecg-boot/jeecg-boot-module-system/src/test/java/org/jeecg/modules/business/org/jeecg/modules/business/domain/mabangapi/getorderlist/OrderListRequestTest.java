@@ -19,8 +19,8 @@ public class OrderListRequestTest {
     @Test
     void testToReq1() throws OrderListRequestErrorException {
         OrderListRequestBody body = new OrderListRequestBody();
-        LocalDateTime start = LocalDateTime.of(2021, Month.JUNE, 1, 12, 30, 59);
-        LocalDateTime end = start.minusHours(-2);
+        LocalDateTime end = LocalDateTime.now();
+        LocalDateTime start = end.minusMinutes(400);
         body.setStatus(OrderStatus.Pending)
                 .setDatetimeType(DateType.PAID)
                 .setStartDate(start)
@@ -43,7 +43,7 @@ public class OrderListRequestTest {
     @Test
     void testToReq2() throws OrderListRequestErrorException {
         LocalDateTime end = LocalDateTime.now();
-        LocalDateTime start = end.minusHours(12);
+        LocalDateTime start = end.minusHours(2);
 
         OrderListRequestBody body = new OrderListRequestBody();
         body.setStatus(OrderStatus.Pending)
