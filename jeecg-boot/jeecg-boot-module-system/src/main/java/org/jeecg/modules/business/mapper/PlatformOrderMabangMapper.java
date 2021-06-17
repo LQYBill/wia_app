@@ -37,16 +37,16 @@ public interface PlatformOrderMabangMapper extends BaseMapper<PlatformOrder> {
      * OrderItem doest not need to provide uuid.
      * sku erp code will be replaced by sku ID.
      *
-     * @param order the order content to insert
+     * @param orders the order content to insert
      */
-    int insertOrderFromMabang(@Param("order") Order order);
+    int insertOrdersFromMabang(@Param("orders") List<Order> orders);
 
     /**
      * Insert platform order content from mabang side,
      * OrderItem doest not need to provide uuid.
      * sku erp code will be replaced by sku ID.
      */
-    int insertOrderItemsFromMabang(@Param("mainId") String mainId, @Param("items") List<OrderItem> items);
+    int insertOrderItemsFromMabang(@Param("items") List<OrderItem> items);
 
     /**
      * Get platform order ID by erp code.

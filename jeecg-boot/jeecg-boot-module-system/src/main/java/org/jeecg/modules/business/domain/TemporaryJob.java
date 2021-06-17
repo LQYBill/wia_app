@@ -18,21 +18,25 @@ public class TemporaryJob implements Job {
     @Setter
     private IPlatformOrderMabangService platformOrderMabangService;
 
-
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-        List<Order> res = allOrder();
+        List<Order> res = all28DaysOrdersOfStatus(OrderStatus.AllNonUnshipped);
+        platformOrderMabangService.saveOrderFromMabang(res);
+
+        res = all28DaysOrdersOfStatus(OrderStatus.Completed);
+        platformOrderMabangService.saveOrderFromMabang(res);
+
+        res = all28DaysOrdersOfStatus(OrderStatus.Pending);
         platformOrderMabangService.saveOrderFromMabang(res);
     }
 
-    public List<Order> allOrder() {
+    public List<Order> all28DaysOrdersOfStatus(OrderStatus status) {
         LocalDateTime end = LocalDateTime.now();
         LocalDateTime start = end.minusDays(1);
         List<Order> res = new ArrayList<>();
         try {
             for (int i = 0; i < 28; i++) {
-
-                OrderListRequestBody body = OrderListRequestBodys.allShippedOrderOfDate(start, end);
+                OrderListRequestBody body = OrderListRequestBodys.allOrderOfPaidDateOfStatus(start, end, status);
                 OrderListRequest request = new OrderListRequest(body);
                 res.addAll(request.getAll());
 
@@ -44,4 +48,5 @@ public class TemporaryJob implements Job {
             throw new RuntimeException(e);
         }
     }
+
 }

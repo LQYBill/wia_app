@@ -45,39 +45,45 @@
         WHERE erp_order_id = #{1}
     </select>
 
-    <insert id="insertOrderFromMabang">
+    <insert id="insertOrdersFromMabang" parameterType="list">
         INSERT INTO platform_order(id, create_by, create_time, update_by,
-                                   update_time, shop_id, logistic_channel_name,
-                                   platform_order_id, platform_order_number, erp_order_id,
-                                   tracking_number, order_time, shipping_time, recipient,
-                                   country, postcode, status)
-        SELECT #{order.id},
-               'mabang api',
-               NOW(),
-               'mabang api',
-               NOW(),
-               id,
-               #{order.logisticChannelName},
-               #{order.platformOrderId},
-               #{order.platformOrderNumber},
-               #{order.erpOrderId},
-               #{order.trackingNumber},
-               #{order.orderTime},
-               #{order.shippingTime},
-               #{order.recipient},
-               #{order.country},
-               #{order.postcode},
-               #{order.status}
-        FROM shop
-        WHERE erp_code = #{order.shopErpCode};
+        update_time, shop_id, logistic_channel_name,
+        platform_order_id, platform_order_number, erp_order_id,
+        tracking_number, order_time, shipping_time, recipient,
+        country, postcode, status)
+        VALUES
+        <if test="orders != null">
+            <foreach collection="orders" separator="," open="" close="" item="order" index="index">
+                (
+                #{order.id},
+                'mabang api',
+                NOW(),
+                'mabang api',
+                NOW(),
+                shopErpToId(#{order.shopErpCode}),
+                #{order.logisticChannelName},
+                #{order.platformOrderId},
+                #{order.platformOrderNumber},
+                #{order.erpOrderId},
+                #{order.trackingNumber},
+                #{order.orderTime},
+                #{order.shippingTime},
+                #{order.recipient},
+                #{order.country},
+                #{order.postcode},
+                #{order.status}
+                )
+            </foreach>
+        </if>
     </insert>
 
     <insert id="insertOrderItemsFromMabang">
         INSERT INTO platform_order_content(id, create_by, create_time,
         update_by, update_time, platform_order_id, sku_id, quantity)
         VALUES
-        <foreach collection="#{items}" separator="," open="" close="" item="item" index="index">
-            (UUID(), 'Mabang API', NOW(), 'Mabang API', NOW(), #{mainId}, shopErpToId(#{item.erpCode}), #{item.quantity})
+        <foreach collection="items" separator="," open="" close="" item="item" index="index">
+            (UUID(), 'Mabang API', NOW(), 'Mabang API', NOW(), #{item.platformOrderId}, skuErpToId(#{item.erpCode}),
+            #{item.quantity})
         </foreach>
     </insert>
 

@@ -47,7 +47,6 @@ public class OrderListResponse {
         int dataCount = Integer.parseInt(json.getString("dataCount"));
         JSONArray data = json.getJSONArray("data");
         log.info("New response, page size {}, data size {}", pageCount, dataCount);
-        log.debug("data json: {}", data);
         return new OrderListResponse(pageCount, dataCount, data);
     }
 

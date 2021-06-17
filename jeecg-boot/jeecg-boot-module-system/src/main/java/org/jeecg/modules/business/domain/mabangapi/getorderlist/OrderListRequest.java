@@ -64,13 +64,13 @@ public class OrderListRequest {
             currentOrders = currentResponse.getData().toJavaList(Order.class);
             currentIndex = 0;
             log.trace("Response size: {}", currentResponse.getDataCount());
+            log.info("Current page: {}", currentBody.getPage());
             return currentOrders.size() != 0;
         }
         // current index doesn't arrive at the end, return true.
         if (currentIndex < currentOrders.size()) {
             log.trace("Current index: {}, total size: {}", currentIndex, currentOrders.size());
             return true;
-
         }
         // although at the end, but still has page left
         if (currentBody.getPage() < currentResponse.getTotalPage()) {

@@ -1,9 +1,12 @@
 package org.jeecg.modules.business.domain.mabangapi.getorderlist;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
+import com.baomidou.mybatisplus.core.incrementer.DefaultIdentifierGenerator;
 
 import java.util.Date;
 import java.util.List;
@@ -22,7 +25,8 @@ public class Order {
      * Primary key
      */
     @JSONField(deserialize = false)
-    private String id = UUID.randomUUID().toString();
+    @TableId(type = IdType.ASSIGN_ID)
+    private String id = String.valueOf(new DefaultIdentifierGenerator().nextId(this));
 
     /**
      * Shop name is correspondant the shop erp code in our data base
@@ -56,12 +60,13 @@ public class Order {
     @JSONField(name = "paidTime", format = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", locale = "fr", timezone = "GMT+1")
-    private Date orderTime;
+    private String orderTime;
 
     @JSONField(name = "expressTime")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", locale = "fr", timezone = "GMT+1")
-    private Date shippingTime;
+    private String shippingTime;
+
     /**
      * 订单收件人
      */
@@ -97,11 +102,6 @@ public class Order {
             this.trackingNumber = trackingNumber;
     }
 
-    public void setOrderTime(String orderTime) {
-        System.out.println(orderTime);
-        // TODO 确认马帮api返回时间时差
-    }
-
     public boolean isUnion() {
         return isUnion.equals("1");
     }
@@ -116,5 +116,12 @@ public class Order {
         return Objects.equals(recipient, candidate.recipient)
                 && Objects.equals(postcode, candidate.postcode)
                 && Objects.equals(country, candidate.country);
+    }
+
+    public void setShippingTime(String shippingTime) {
+        if (shippingTime.length() == 0) {
+            this.shippingTime = null;
+        } else
+            this.shippingTime = shippingTime;
     }
 }
