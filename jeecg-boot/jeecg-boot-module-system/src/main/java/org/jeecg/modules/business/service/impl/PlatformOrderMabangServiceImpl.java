@@ -33,17 +33,25 @@ public class PlatformOrderMabangServiceImpl implements IPlatformOrderMabangServi
     }
 
     @Override
+    @Transactional
     public void saveOrderFromMabang(List<Order> orders) {
         List<OrderItem> allItems = new ArrayList<>();
         for (Order order : orders) {
             order.getOrderItems().forEach(item -> {
-                item.setPlatformOrderId(order.getPlatformOrderId());
+                item.setPlatformOrderId(order.getId());
             });
             allItems.addAll(order.getOrderItems());
         }
-        log.debug("{}", orders.get(1));
-        platformOrderMabangMapper.insertOrdersFromMabang(orders);
-        platformOrderMabangMapper.insertOrderItemsFromMabang(allItems);
+        try{
+            if (orders.size() != 0) {
+                platformOrderMabangMapper.insertOrdersFromMabang(orders);
+            }
+            if (allItems.size() != 0) {
+                platformOrderMabangMapper.insertOrderItemsFromMabang(allItems); }
+        }catch (RuntimeException e){
+            log.error(e.getLocalizedMessage());
+            log.error(e.getLocalizedMessage());
+        }
 
     }
 

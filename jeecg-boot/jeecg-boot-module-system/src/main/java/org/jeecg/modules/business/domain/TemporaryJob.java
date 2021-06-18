@@ -1,6 +1,7 @@
 package org.jeecg.modules.business.domain;
 
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.jeecg.modules.business.domain.mabangapi.getorderlist.*;
 import org.jeecg.modules.business.service.IPlatformOrderMabangService;
 import org.quartz.Job;
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 public class TemporaryJob implements Job {
 
     @Autowired
@@ -20,14 +22,14 @@ public class TemporaryJob implements Job {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-        List<Order> res = all28DaysOrdersOfStatus(OrderStatus.AllNonUnshipped);
-        platformOrderMabangService.saveOrderFromMabang(res);
+            List<Order> res = all28DaysOrdersOfStatus(OrderStatus.AllNonUnshipped);
+            platformOrderMabangService.saveOrderFromMabang(res);
 
-        res = all28DaysOrdersOfStatus(OrderStatus.Completed);
-        platformOrderMabangService.saveOrderFromMabang(res);
+            res = all28DaysOrdersOfStatus(OrderStatus.Completed);
+            platformOrderMabangService.saveOrderFromMabang(res);
 
-        res = all28DaysOrdersOfStatus(OrderStatus.Pending);
-        platformOrderMabangService.saveOrderFromMabang(res);
+            res = all28DaysOrdersOfStatus(OrderStatus.Pending);
+            platformOrderMabangService.saveOrderFromMabang(res);
     }
 
     public List<Order> all28DaysOrdersOfStatus(OrderStatus status) {
@@ -35,7 +37,7 @@ public class TemporaryJob implements Job {
         LocalDateTime start = end.minusDays(1);
         List<Order> res = new ArrayList<>();
         try {
-            for (int i = 0; i < 28; i++) {
+            for (int i = 0; i < 1; i++) {
                 OrderListRequestBody body = OrderListRequestBodys.allOrderOfPaidDateOfStatus(start, end, status);
                 OrderListRequest request = new OrderListRequest(body);
                 res.addAll(request.getAll());

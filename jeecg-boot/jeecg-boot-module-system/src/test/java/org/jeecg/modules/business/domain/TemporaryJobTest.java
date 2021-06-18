@@ -8,6 +8,5 @@ public class TemporaryJobTest {
     @Test
     void get28Order(){
         TemporaryJob job = new TemporaryJob();
-        System.out.println(job.allOrder());
     }
 }
