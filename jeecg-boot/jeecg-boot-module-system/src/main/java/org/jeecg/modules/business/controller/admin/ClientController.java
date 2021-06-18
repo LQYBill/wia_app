@@ -104,6 +104,15 @@ public class ClientController {
     }
 
     /**
+     * List of all clients
+     * @return list of all clients
+     */
+    @GetMapping(value = "/all")
+    public Result<List<Client>> all(){
+        return Result.OK(clientService.list());
+    }
+
+    /**
      * 编辑
      *
      * @param clientPage
