@@ -4,19 +4,14 @@ import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.modules.business.entity.Shop;
-import org.jeecg.modules.business.service.IClientService;
 import org.jeecg.modules.business.service.IShopService;
+import org.jeecg.modules.business.service.PlatformOrderShippingInvoiceService;
 import org.jeecg.modules.business.vo.Period;
 import org.jeecg.modules.business.vo.ShippingInvoiceParam;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Instant;
 import java.util.List;
 
 /**
@@ -28,12 +23,10 @@ import java.util.List;
 @Slf4j
 public class InvoiceController {
     @Autowired
-    private IClientService clientService;
-    @Autowired
     private IShopService shopService;
+    @Autowired
+    private PlatformOrderShippingInvoiceService shippingInvoiceService;
 
-    @Value("${jeecg.path.shippingInvoiceDir}")
-    private String DIR;
 
     @GetMapping(value = "/shopsByClient")
     public Result<List<Shop>> getShopsByClient(@RequestParam("clientID") String clientID) {
@@ -43,21 +36,25 @@ public class InvoiceController {
 
     @PostMapping(value = "/period")
     public Result<Period> getValidPeriod(@RequestBody List<String> shopIDs) {
-        log.info(shopIDs.toString());
-        return Result.OK(new Period(Instant.now(), Instant.now()));
+        log.info("Request for valide period for shops: " + shopIDs.toString());
+        Period period = shippingInvoiceService.getValidePeriod(shopIDs);
+        return Result.OK(period);
     }
 
     @PostMapping(value = "/make")
     public Result<String> makeInvoice(@RequestBody ShippingInvoiceParam param) {
-        log.info(param.toString());
-        return Result.OK("Hello World.xlsx");
+        String filename = shippingInvoiceService.makeInvoice(param);
+        return Result.OK(filename);
     }
 
     @GetMapping(value = "/download")
-    public byte[] downloadInvoice(@RequestParam("filename") String filename) throws IOException {
+    public byte[] downloadInvoice(@RequestParam("filename") String filename) {
         log.info("request for downloading shipping invoice");
-        Path template = Paths.get(DIR, "template.xlsx");
-        return Files.readAllBytes(template);
+        try {
+            return shippingInvoiceService.getInvoiceBinary(filename);
+        } catch (IOException e) {
+            return new byte[0];
+        }
     }
 
 
