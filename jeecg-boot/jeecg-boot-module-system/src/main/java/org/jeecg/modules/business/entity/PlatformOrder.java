@@ -2,6 +2,7 @@ package org.jeecg.modules.business.entity;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.util.Date;
 
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -9,6 +10,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import org.jeecg.modules.business.domain.shippingInvoice.Country;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.jeecgframework.poi.excel.annotation.Excel;
 import org.jeecg.common.aspect.annotation.Dict;
@@ -155,4 +157,10 @@ public class PlatformOrder implements Serializable {
     @Dict(dictTable = "sku_status", dicText = "status_text", dicCode = "status_code")
     @ApiModelProperty(value = "状态")
     private Integer status;
+
+    public BigDecimal totalFee(){
+        // TODO to finish
+        return null;
+    }
+
 }
