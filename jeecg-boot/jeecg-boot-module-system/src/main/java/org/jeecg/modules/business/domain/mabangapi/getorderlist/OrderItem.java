@@ -23,4 +23,6 @@ public class OrderItem {
 
     @JSONField(name = "originOrderId")
     private String originOrderId;
+
+    private String erpStatus;
 }

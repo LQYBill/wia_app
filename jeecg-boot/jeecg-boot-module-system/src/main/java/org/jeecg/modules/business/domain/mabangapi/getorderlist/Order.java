@@ -8,10 +8,8 @@ import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 import com.baomidou.mybatisplus.core.incrementer.DefaultIdentifierGenerator;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 /**
  * Data container of platform Order, mabang side,
@@ -92,6 +90,9 @@ public class Order {
     @JSONField(name = "isUnion")
     private String isUnion;
 
+    @JSONField(name = "isNewOrder")
+    private String isNewOrder;
+
     @JSONField(name = "orderItem")
     private List<OrderItem> orderItems;
 
@@ -104,6 +105,14 @@ public class Order {
 
     public boolean isUnion() {
         return isUnion.equals("1");
+    }
+
+    public boolean isPending() {
+        return isNewOrder.equals("1") && status.equals("2");
+    }
+
+    public boolean isPreparing() {
+        return isNewOrder.equals("2") && status.equals("2");
     }
 
     /**
@@ -123,5 +132,22 @@ public class Order {
             this.shippingTime = null;
         } else
             this.shippingTime = shippingTime;
+    }
+
+    /**
+     * As of 2021-06-18, according to Mabang's API documentation, the "status" in request parameters is NOT the
+     * equivalent of "orderStatus" in the API response.
+     * "orderStatus" : 1.风控中 2.配货中 3.已发货 4.已完成 5.已作废
+     * "status" : 1.待处理 2.配货中 3.已发货 4.已完成 5.已作废 6.所有未发货 7.所有非未发货 默认配货中订单
+     * Hence even if we explicitly request orders in the status of 待处理 (=1), the orderStatus in return will be 配货中(=2)
+     * Therefore, in order to distinguish orders of status 待处理 and 配货中, we must rely on the following attributes :
+     * "isNewOrder" : 1.待处理订单 2.配货中订单 and "orderStatus" mentioned before.
+     */
+    public void resolveStatus() {
+        if (isPending()) {
+            this.status = OrderStatus.Pending.getCode();
+        } else if (isPreparing()) {
+            this.status = OrderStatus.Preparing.getCode();
+        }
     }
 }
