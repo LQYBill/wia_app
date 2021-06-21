@@ -161,19 +161,22 @@ export default {
           customRender: (t, r, index) => parseInt(index) + 1
         },
         {
-          title: '姓',
+          title: '简称',
           align: 'center',
-          dataIndex: 'surname',
+          dataIndex: 'internalCode',
+          sorter: true
         },
         {
           title: '名',
           align: 'center',
           dataIndex: 'firstName',
+          sorter: true
         },
         {
-          title: '简称',
+          title: '姓',
           align: 'center',
-          dataIndex: 'internalCode',
+          dataIndex: 'surname',
+          sorter: true
         },
         {
           title: '发票实体',
@@ -221,6 +224,7 @@ export default {
           title: '国家',
           align: 'center',
           dataIndex: 'country',
+          sorter: true
         },
         {
           title: '货币',

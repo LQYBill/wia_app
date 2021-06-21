@@ -56,7 +56,7 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
         if (clientSkuList != null && clientSkuList.size() > 0) {
             for (ClientSku entity : clientSkuList) {
                 //外键设置
-                entity.setSkuId(client.getId());
+                entity.setClientId(client.getId());
                 clientSkuMapper.insert(entity);
             }
         }
@@ -82,7 +82,7 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
         if (clientSkuList != null && clientSkuList.size() > 0) {
             for (ClientSku entity : clientSkuList) {
                 //外键设置
-                entity.setSkuId(client.getId());
+                entity.setClientId(client.getId());
                 clientSkuMapper.insert(entity);
             }
         }

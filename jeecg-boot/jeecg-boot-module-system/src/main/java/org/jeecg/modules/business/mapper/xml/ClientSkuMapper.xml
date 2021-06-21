@@ -6,7 +6,7 @@
 		DELETE 
 		FROM  client_sku 
 		WHERE
-			 sku_id = #{mainId} 	</delete>
+			client_id = #{mainId} 	</delete>
 	
 	<select id="selectByMainId" parameterType="java.lang.String" resultType="org.jeecg.modules.business.entity.ClientSku">
 		SELECT * 
