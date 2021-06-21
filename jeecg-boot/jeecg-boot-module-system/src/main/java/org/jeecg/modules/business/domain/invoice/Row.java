@@ -16,12 +16,12 @@ class Row {
 
     private final BigDecimal totalAmount;
 
-    public Row(String ref, String description, BigDecimal PU, int quantity, BigDecimal discount, BigDecimal totalAmount) {
-        this.ref = ref;
+    public Row(String description, BigDecimal PU, int quantity, BigDecimal discount, BigDecimal totalAmount) {
         this.description = description;
         this.PU = PU;
         this.quantity = quantity;
         this.discount = discount;
         this.totalAmount = totalAmount;
     }
+
 }

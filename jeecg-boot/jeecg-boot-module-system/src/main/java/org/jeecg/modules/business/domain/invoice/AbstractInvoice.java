@@ -50,33 +50,10 @@ public abstract class AbstractInvoice {
         this.writer = ExcelUtil.getWriter(out.toFile(), "FACTURE");
         InvoiceStyleFactory factory = new InvoiceStyleFactory(writer.getWorkbook());
 
-        List<Row> data = tableData();
-        int lineNum;
-        Row rowValue;
-        // table section
-        for (int i = 0; i < data.size(); i++) {
-            lineNum = i + FIRST_ROW;
-            rowValue = data.get(i);
-            writer.writeCellValue("C" + lineNum, String.format("%06d", i + 1));
-            writer.setStyle(factory.leftSideStyle(), "C" + lineNum);
+        fillInformation(factory);
 
-            writer.writeCellValue("D" + lineNum, rowValue.getDescription());
-            writer.setStyle(factory.leftSideStyle(), "D" + lineNum);
+        fillTable(factory);
 
-            writer.writeCellValue("E" + lineNum, rowValue.getDescription());
-            writer.setStyle(factory.leftSideStyle(), "D" + lineNum);
-
-            writer.writeCellValue("F" + lineNum, String.format("%06d", i + 1));
-            writer.setStyle(factory.rightSideStyle(), "C" + lineNum);
-
-            writer.writeCellValue("G" + lineNum, rowValue.getDescription());
-            writer.setStyle(factory.rightSideStyle(), "D" + lineNum);
-
-            configCell("H" + lineNum,);
-            writer.writeCellValue(, rowValue.getDescription());
-            writer.setStyle(factory.rightSideStyle(), "D" + lineNum);
-        }
-        writer.setStyle(factory.invoiceCodeStyle(), INVOICE_CODE_LOCATION);
         // revaluate formulae to enable automatic calculation
         FormulaEvaluator evaluator = writer.getWorkbook().getCreationHelper().createFormulaEvaluator();
         evaluator.evaluateAll();
@@ -84,36 +61,24 @@ public abstract class AbstractInvoice {
         writer.close();
     }
 
-    /**
-     * A shortcut to configure a cell of a sheet with a value and a style by global writer.
-     *
-     * @param locationRef location of the cell, for example "C11"
-     * @param value       the value to set
-     * @param style       the style to apply
-     */
-    private void configCell(String locationRef, Object value, CellStyle style) {
-        writer.writeCellValue(locationRef, value);
-        writer.setStyle(style, locationRef);
-    }
-
     public String entity() {
         return targetClient.getInvoiceEntity();
     }
 
-
-    private void fillInformation(ExcelWriter writer, InvoiceStyleFactory factory) {
-        for (Map.Entry<String, Object> entry : invoiceInformation().entrySet()) {
-            writer.writeCellValue(entry.getKey(), entry.getValue());
-            writer.setStyle(factory.otherStyle(), entry.getKey());
-        }
-    }
+    /**
+     * Methods to set content of table, left child to implement.
+     *
+     * @return List of rows
+     */
+    protected abstract List<Row> tableData();
 
     /**
      * Fill content that does not belong to the table section.
      *
-     * @return a map between a cell location and its contents. For example: G3 -> Toto
+     * @param factory factory of style
      */
-    private Map<String, Object> invoiceInformation() {
+    private void fillInformation(InvoiceStyleFactory factory) {
+        // Set each cell's content
         Map<String, Object> cellContentMap = new HashMap<>();
         cellContentMap.put(INVOICE_CODE_LOCATION, code);
         cellContentMap.put(GENERATED_DATE_LOCATION, InvoiceStyleFactory.INVOICE_CODE_DATETIME_FORMAT.format(new Date()));
@@ -135,13 +100,60 @@ public abstract class AbstractInvoice {
         );
         cellContentMap.put(PHONE_LOCATION, targetClient.getPhone());
         cellContentMap.put(MAIL_LOCATION, targetClient.getEmail());
-        return cellContentMap;
+        // write content to cell and apply style
+        for (Map.Entry<String, Object> entry : cellContentMap.entrySet()) {
+            configCell(entry.getKey(), entry.getValue(), factory.otherStyle());
+        }
+        // config particulier style
+        configCell(INVOICE_CODE_LOCATION, subject, factory.invoiceCodeStyle());
     }
 
     /**
-     * Fill cells that belong to the table section.
+     * Fill content of the table in invoice, extract data from {@code tableData} method.
      *
-     * @return map between location and table cell
+     * @param factory factory of style
      */
-    protected abstract List<Row> tableData();
+    private void fillTable(InvoiceStyleFactory factory) {
+        List<Row> data = tableData();
+        int lineNum;
+        Row rowValue;
+        // table section
+        for (int i = 0; i < data.size(); i++) {
+            lineNum = i + FIRST_ROW;
+            rowValue = data.get(i);
+
+            configCell("C", lineNum, String.format("%06d", i + 1), factory.leftSideStyle());
+            configCell("D", lineNum, rowValue.getDescription(), factory.leftSideStyle());
+            configCell("E", lineNum, rowValue.getPU(), factory.rightSideStyle());
+            configCell("F", lineNum, rowValue.getQuantity(), factory.rightSideStyle());
+            configCell("G", lineNum, rowValue.getDiscount(), factory.rightSideStyle());
+            configCell("H", lineNum, rowValue.getTotalAmount(), factory.rightSideStyle());
+        }
+    }
+
+
+    /**
+     * A shortcut to configure a cell of a sheet with a value and a style by global writer.
+     *
+     * @param col   column of location of the cell, for example "C"
+     * @param line  line number of location of the cell, for example 11
+     * @param value the value to set
+     * @param style the style to apply
+     */
+    private void configCell(String col, int line, Object value, CellStyle style) {
+        configCell(col + line, value, style);
+    }
+
+
+    /**
+     * A shortcut to configure a cell of a sheet with a value and a style by global writer.
+     *
+     * @param locationRef location of the cell, for example "C11"
+     * @param value       the value to set
+     * @param style       the style to apply
+     */
+    private void configCell(String locationRef, Object value, CellStyle style) {
+        writer.writeCellValue(locationRef, value);
+        writer.setStyle(style, locationRef);
+    }
 }
