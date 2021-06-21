@@ -22,14 +22,34 @@ public class TemporaryJob implements Job {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-            List<Order> res = all28DaysOrdersOfStatus(OrderStatus.AllNonUnshipped);
-            platformOrderMabangService.saveOrderFromMabang(res);
+        LocalDateTime end = LocalDateTime.now();
+        LocalDateTime start = end.minusDays(1);
+        try {
+            for (int i = 0; i < 28; i++) {
+                OrderListRequestBody body = OrderListRequestBodys.allOrderOfPaidDateOfStatus(start, end, OrderStatus.AllUnshipped);
+                OrderListRequest request = new OrderListRequest(body);
+                List<Order> unshipped = request.getAll();
+                log.trace("{} unshipped orders from {} to {} to be inserted/update.", start, end, unshipped.size());
+                platformOrderMabangService.saveOrderFromMabang(unshipped);
 
-            res = all28DaysOrdersOfStatus(OrderStatus.Completed);
-            platformOrderMabangService.saveOrderFromMabang(res);
+                body = OrderListRequestBodys.allOrderOfPaidDateOfStatus(start, end, OrderStatus.Completed);
+                request = new OrderListRequest(body);
+                List<Order> completed = request.getAll();
+                log.trace("{} completed orders from {} to {} to be inserted/update.", start, end, completed.size());
+                platformOrderMabangService.saveOrderFromMabang(completed);
 
-            res = all28DaysOrdersOfStatus(OrderStatus.Pending);
-            platformOrderMabangService.saveOrderFromMabang(res);
+                body = OrderListRequestBodys.allOrderOfPaidDateOfStatus(start, end, OrderStatus.Shipped);
+                request = new OrderListRequest(body);
+                List<Order> shipped = request.getAll();
+                log.trace("{} shipped orders from {} to {} to be inserted/update.", start, end, shipped.size());
+                platformOrderMabangService.saveOrderFromMabang(shipped);
+
+                end = end.minusDays(1);
+                start = start.minusDays(1);
+            }
+        } catch (OrderListRequestErrorException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public List<Order> all28DaysOrdersOfStatus(OrderStatus status) {
