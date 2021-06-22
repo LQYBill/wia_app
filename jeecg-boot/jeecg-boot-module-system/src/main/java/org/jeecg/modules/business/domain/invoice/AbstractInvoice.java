@@ -12,14 +12,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public abstract class AbstractInvoice {
-    private final Client targetClient;
+public abstract class AbstractInvoice<E, F, G, H, I> {
+    protected final Client targetClient;
 
     private final String code;
 
     private final String subject;
 
-    private ExcelWriter writer;
+    protected ExcelWriter writer;
 
     public AbstractInvoice(Client targetClient,
                            String code, String subject) {
@@ -61,8 +61,12 @@ public abstract class AbstractInvoice {
         writer.close();
     }
 
-    public String entity() {
-        return targetClient.getInvoiceEntity();
+    public Client client() {
+        return targetClient;
+    }
+
+    public String code() {
+        return code;
     }
 
     /**
@@ -70,18 +74,16 @@ public abstract class AbstractInvoice {
      *
      * @return List of rows
      */
-    protected abstract List<Row> tableData();
+    protected abstract List<Row<E, F, G, H, I>> tableData();
 
     /**
      * Fill content that does not belong to the table section.
      *
      * @param factory factory of style
      */
-    private void fillInformation(InvoiceStyleFactory factory) {
+    protected void fillInformation(InvoiceStyleFactory factory) {
         // Set each cell's content
         Map<String, Object> cellContentMap = new HashMap<>();
-        cellContentMap.put(INVOICE_CODE_LOCATION, code);
-        cellContentMap.put(GENERATED_DATE_LOCATION, InvoiceStyleFactory.INVOICE_CODE_DATETIME_FORMAT.format(new Date()));
         cellContentMap.put(ENTITY_NAME_LOCATION, targetClient.getInvoiceEntity());
         cellContentMap.put(
                 INVOICE_ADR_LINE1,
@@ -104,8 +106,14 @@ public abstract class AbstractInvoice {
         for (Map.Entry<String, Object> entry : cellContentMap.entrySet()) {
             configCell(entry.getKey(), entry.getValue(), factory.otherStyle());
         }
-        // config particulier style
-        configCell(INVOICE_CODE_LOCATION, subject, factory.invoiceCodeStyle());
+        // config particulier style and content
+        configCell(INVOICE_CODE_LOCATION, code, factory.invoiceCodeStyle());
+        configCell(
+                GENERATED_DATE_LOCATION,
+                InvoiceStyleFactory.INVOICE_CODE_DATETIME_FORMAT.format(new Date()),
+                factory.otherStyle()
+        );
+        configCell(SUBJECT_LOCATION, subject, factory.rightSideStyle());
     }
 
     /**
@@ -113,21 +121,21 @@ public abstract class AbstractInvoice {
      *
      * @param factory factory of style
      */
-    private void fillTable(InvoiceStyleFactory factory) {
-        List<Row> data = tableData();
+    protected void fillTable(InvoiceStyleFactory factory) {
+        List<Row<E, F, G, H, I>> data = tableData();
         int lineNum;
-        Row rowValue;
+        Row<E, F, G, H, I> rowValue;
         // table section
         for (int i = 0; i < data.size(); i++) {
             lineNum = i + FIRST_ROW;
             rowValue = data.get(i);
 
             configCell("C", lineNum, String.format("%06d", i + 1), factory.leftSideStyle());
-            configCell("D", lineNum, rowValue.getDescription(), factory.leftSideStyle());
-            configCell("E", lineNum, rowValue.getPU(), factory.rightSideStyle());
-            configCell("F", lineNum, rowValue.getQuantity(), factory.rightSideStyle());
-            configCell("G", lineNum, rowValue.getDiscount(), factory.rightSideStyle());
-            configCell("H", lineNum, rowValue.getTotalAmount(), factory.rightSideStyle());
+            configCell("D", lineNum, rowValue.getCol1(), factory.leftSideStyle());
+            configCell("E", lineNum, rowValue.getCol2(), factory.rightSideStyle());
+            configCell("F", lineNum, rowValue.getCol3(), factory.rightSideStyle());
+            configCell("G", lineNum, rowValue.getCol4(), factory.rightSideStyle());
+            configCell("H", lineNum, rowValue.getCol5(), factory.rightSideStyle());
         }
     }
 
@@ -140,7 +148,7 @@ public abstract class AbstractInvoice {
      * @param value the value to set
      * @param style the style to apply
      */
-    private void configCell(String col, int line, Object value, CellStyle style) {
+    protected void configCell(String col, int line, Object value, CellStyle style) {
         configCell(col + line, value, style);
     }
 
@@ -152,7 +160,7 @@ public abstract class AbstractInvoice {
      * @param value       the value to set
      * @param style       the style to apply
      */
-    private void configCell(String locationRef, Object value, CellStyle style) {
+    protected void configCell(String locationRef, Object value, CellStyle style) {
         writer.writeCellValue(locationRef, value);
         writer.setStyle(style, locationRef);
     }

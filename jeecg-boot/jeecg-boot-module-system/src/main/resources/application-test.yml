@@ -179,7 +179,7 @@ jeecg :
     upload: C:\Users\matth\Desktop\upFilesTmp
     save: C://Users//matth//Desktop//upFiles
     # purchase invoice templte
-    template: C://Users//matth//Desktop//templates//Invoice_Template.xlsx
+    template: C://Users//matth//Desktop//templates//Purchase_Invoice_Template.xlsx
     # CDG location
     CGS:  C://Users//matth//Desktop//files//WIASourcingCGCVF_mai.pdf
     #webapp文件路径

@@ -3,6 +3,7 @@ package org.jeecg.modules.business.controller.admin.shippingInvoice;
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
 import org.jeecg.common.api.vo.Result;
+import org.jeecg.modules.business.controller.UserException;
 import org.jeecg.modules.business.entity.Shop;
 import org.jeecg.modules.business.service.IShopService;
 import org.jeecg.modules.business.service.PlatformOrderShippingInvoiceService;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.List;
 
 /**
@@ -42,7 +44,7 @@ public class InvoiceController {
     }
 
     @PostMapping(value = "/make")
-    public Result<String> makeInvoice(@RequestBody ShippingInvoiceParam param) {
+    public Result<String> makeInvoice(@RequestBody ShippingInvoiceParam param) throws ParseException, IOException, UserException {
         String filename = shippingInvoiceService.makeInvoice(param);
         return Result.OK(filename);
     }

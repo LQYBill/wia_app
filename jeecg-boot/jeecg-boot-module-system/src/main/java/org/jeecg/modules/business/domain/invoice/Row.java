@@ -2,26 +2,23 @@ package org.jeecg.modules.business.domain.invoice;
 
 import lombok.Data;
 
-import java.math.BigDecimal;
-
 @Data
-class Row {
-    private final String description;
+public class Row<E, F, G, H, I> {
+    private final E col1;
 
-    private final BigDecimal PU;
+    private final F col2;
 
-    private final int quantity;
+    private final G col3;
 
-    private final BigDecimal discount;
+    private final H col4;
 
-    private final BigDecimal totalAmount;
+    private final I col5;
 
-    public Row(String description, BigDecimal PU, int quantity, BigDecimal discount, BigDecimal totalAmount) {
-        this.description = description;
-        this.PU = PU;
-        this.quantity = quantity;
-        this.discount = discount;
-        this.totalAmount = totalAmount;
+    public Row(E col1, F col2, G col3, H col4, I col5) {
+        this.col1 = col1;
+        this.col2 = col2;
+        this.col3 = col3;
+        this.col4 = col4;
+        this.col5 = col5;
     }
-
 }

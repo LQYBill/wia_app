@@ -135,8 +135,4 @@ public class Client implements Serializable {
     public String fullName() {
         return firstName + " " + surname;
     }
-
-    public String fullAddr(){
-        return
-    }
 }

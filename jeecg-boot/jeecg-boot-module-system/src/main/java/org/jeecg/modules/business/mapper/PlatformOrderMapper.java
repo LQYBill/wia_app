@@ -4,11 +4,14 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
 import org.jeecg.modules.business.domain.mabangapi.getorderlist.Order;
 import org.jeecg.modules.business.entity.PlatformOrder;
+import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrderQuantity;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Description: 平台订单表
@@ -66,4 +69,21 @@ public interface PlatformOrderMapper extends BaseMapper<PlatformOrder> {
      * @param sourceIDs IDs of source platform order
      */
     void updateMergedOrder(@Param("target") String targetID, @Param("sources") List<String> sourceIDs);
+
+    /**
+     * Find all uninvoiced platform orders and its content of certains shops in a period.
+     *
+     * @param shopIds list of the shops
+     * @param begin   begin of the period
+     * @param end     end of the period
+     * @return list of uninvoiced orders
+     */
+    Map<PlatformOrder, List<PlatformOrderContent>> findUninvoicedOrders(List<String> shopIds, Date begin, Date end);
+
+    /**
+     * Find previous invoice code.
+     *
+     * @return previous code.
+     */
+    String findPreviousInvoice();
 }

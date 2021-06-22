@@ -2,6 +2,7 @@ package org.jeecg.modules.business.service.impl.purchase;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.jeecg.modules.business.domain.codeGeneration.PurchaseInvoiceCodeRule;
 import org.jeecg.modules.business.domain.purchase.invoice.InvoiceData;
 import org.jeecg.modules.business.domain.purchase.invoice.PurchaseInvoice;
 import org.jeecg.modules.business.domain.purchase.invoice.PurchaseInvoiceEntry;
@@ -14,7 +15,6 @@ import org.jeecg.modules.business.service.IClientService;
 import org.jeecg.modules.business.service.IPlatformOrderService;
 import org.jeecg.modules.business.service.IPurchaseOrderService;
 import org.jeecg.modules.business.service.ISkuService;
-import org.jeecg.modules.business.service.domain.codeGenerationRule.PurchaseInvoiceCodeRule;
 import org.jeecg.modules.business.vo.OrderContentEntry;
 import org.jeecg.modules.business.vo.PromotionDetail;
 import org.jeecg.modules.business.vo.PromotionHistoryEntry;
@@ -66,8 +66,11 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
     @Value("${jeecg.path.save}")
     private String PAYMENT_DOC_DIR;
 
-    @Value("${jeecg.path.template}")
+    @Value("${jeecg.path.purchaseTemplatePath}")
     private String INVOICE_TEMPLATE;
+
+    @Value("${jeecg.path.purchaseInvoiceDir}")
+    private String INVOICE_DIR;
 
     @Autowired
     private PushMsgUtil pushMsgUtil;
@@ -356,10 +359,10 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         String invoiceCode = purchaseOrderMapper.selectById(purchaseID).getInvoiceNumber();
 
         Path template = Paths.get(INVOICE_TEMPLATE);
-        Path newInvoice = Paths.get(template.getParent().toString(), invoiceCode + ".xlsx");
+        Path newInvoice = Paths.get(INVOICE_DIR, invoiceCode + ".xlsx");
         if (Files.notExists(newInvoice)) {
             Files.copy(template, newInvoice);
-            PurchaseInvoice pv = new PurchaseInvoice(client, invoiceCode, purchaseOrderSkuList, promotionDetails);
+            PurchaseInvoice pv = new PurchaseInvoice(client, invoiceCode, "Purchase Invoice", purchaseOrderSkuList, promotionDetails);
             pv.toExcelFile(newInvoice);
             return new InvoiceData(pv.entity(), invoiceCode);
         }
@@ -368,8 +371,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
 
     @Override
     public byte[] getInvoiceByte(String invoiceCode) throws IOException {
-        Path template = Paths.get(INVOICE_TEMPLATE);
-        Path invoice = Paths.get(template.getParent().toString(), invoiceCode + ".xlsx");
+        Path invoice = Paths.get(INVOICE_DIR, invoiceCode + ".xlsx");
         return Files.readAllBytes(invoice);
     }
 }
