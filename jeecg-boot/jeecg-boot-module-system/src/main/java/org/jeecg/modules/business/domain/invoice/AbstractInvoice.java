@@ -113,7 +113,7 @@ public abstract class AbstractInvoice<E, F, G, H, I> {
                 InvoiceStyleFactory.INVOICE_CODE_DATETIME_FORMAT.format(new Date()),
                 factory.otherStyle()
         );
-        configCell(SUBJECT_LOCATION, subject, factory.rightSideStyle());
+        configCell(SUBJECT_LOCATION, subject, factory.subjectStyle());
     }
 
     /**

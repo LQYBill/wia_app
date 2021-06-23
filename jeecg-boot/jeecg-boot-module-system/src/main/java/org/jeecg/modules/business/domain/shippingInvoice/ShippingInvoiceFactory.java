@@ -9,7 +9,6 @@ import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.mapper.ClientMapper;
 import org.jeecg.modules.business.mapper.LogisticChannelPriceMapper;
-import org.jeecg.modules.business.mapper.PlatformOrderMapper;
 import org.jeecg.modules.business.service.IPlatformOrderContentService;
 import org.jeecg.modules.business.service.IPlatformOrderService;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
@@ -78,7 +77,10 @@ public class ShippingInvoiceFactory {
         for (PlatformOrder uninvoicedOrder : uninvoicedOrderToContent.keySet()) {
             List<PlatformOrderContent> contents = uninvoicedOrderToContent.get(uninvoicedOrder);
             LogisticChannelPrice price;
-            BigDecimal contentWeight = platformOrderContentService.calculateWeight(contents);
+            BigDecimal contentWeight = platformOrderContentService.calculateWeight(
+                    uninvoicedOrder.getLogisticChannelName(),
+                    contents
+            );
             try {
                 price = logisticChannelPriceMapper.findBy(
                         uninvoicedOrder.getLogisticChannelName(),
@@ -87,8 +89,19 @@ public class ShippingInvoiceFactory {
                         uninvoicedOrder.getCountry()
                 );
                 if (price == null) {
-                    String msg = "Can not find propre channel price for package Serial No: "
-                            + uninvoicedOrder.getPlatformOrderNumber() + ", delivered at " + uninvoicedOrder.getShippingTime().toString();
+                    String msg = String.format(
+                            "Can not find propre channel price for" +
+                                    "package Serial No: %s," +
+                                    " delivered at %s, " +
+                                    "weight: %s, " +
+                                    "channel name: %s, " +
+                                    "destination: %s",
+                            uninvoicedOrder.getPlatformOrderId(),
+                            uninvoicedOrder.getShippingTime(),
+                            contentWeight,
+                            uninvoicedOrder.getLogisticChannelName(),
+                            uninvoicedOrder.getCountry()
+                    );
                     log.error(msg);
                     throw new UserException(msg);
                 }

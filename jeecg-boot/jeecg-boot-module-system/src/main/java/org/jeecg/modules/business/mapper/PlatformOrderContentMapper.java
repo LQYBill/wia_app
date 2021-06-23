@@ -10,6 +10,7 @@ import org.jeecg.modules.business.vo.SkuQuantity;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Description: 平台订单内容
@@ -39,8 +40,5 @@ public interface PlatformOrderContentMapper extends BaseMapper<PlatformOrderCont
     List<SkuDetail> searchSkuDetail(List<String> skuIDs);
 
 
-
-
-
-
+    List<Map<String, Object>> searchWeightVolumes(@Param("skuIDs") List<String> skuIDs);
 }
