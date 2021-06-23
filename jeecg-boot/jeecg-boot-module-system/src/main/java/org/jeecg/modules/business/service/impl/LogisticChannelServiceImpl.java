@@ -10,14 +10,15 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 import java.util.Collection;
 
 /**
  * @Description: 物流渠道
- * @Author: jeecg-boot
- * @Date:   2021-04-03
- * @Version: V1.0
+ * @Author: William
+ * @Date:   2021-06-16
+ * @Version: V1.1
  */
 @Service
 public class LogisticChannelServiceImpl extends ServiceImpl<LogisticChannelMapper, LogisticChannel> implements ILogisticChannelService {
@@ -73,5 +74,9 @@ public class LogisticChannelServiceImpl extends ServiceImpl<LogisticChannelMappe
 			logisticChannelMapper.deleteById(id);
 		}
 	}
-	
+
+	@Override
+	public LogisticChannelPrice findLogisticsChannelPrice(String channelName, Date date, int trueWeight, String country) {
+		return logisticChannelPriceMapper.findLogisticsChannelPrice(channelName, new java.util.Date(), trueWeight, country);
+	}
 }

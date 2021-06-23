@@ -10,8 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @Description: 物流渠道价格
- * @Author: jeecg-boot
- * @Date:   2021-04-03
+ * @Author: William
+ * @Date:   2021-06-16
  * @Version: V1.0
  */
 @Service
@@ -23,5 +23,10 @@ public class LogisticChannelPriceServiceImpl extends ServiceImpl<LogisticChannel
 	@Override
 	public List<LogisticChannelPrice> selectByMainId(String mainId) {
 		return logisticChannelPriceMapper.selectByMainId(mainId);
+	}
+
+	@Override
+	public List<String> getAllCountry() {
+		return logisticChannelPriceMapper.getAllCountry();
 	}
 }
