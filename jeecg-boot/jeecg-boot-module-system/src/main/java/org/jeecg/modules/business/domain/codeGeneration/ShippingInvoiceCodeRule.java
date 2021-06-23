@@ -1,9 +1,9 @@
-package org.jeecg.modules.business.service.domain.codeGenerationRule;
+package org.jeecg.modules.business.domain.codeGeneration;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-public class PurchaseInvoiceCodeRule implements CodeGenerationRule<String> {
+public class ShippingInvoiceCodeRule implements CodeGenerationRule<String> {
 
     @Override
     public String next(String previous) {
@@ -18,6 +18,6 @@ public class PurchaseInvoiceCodeRule implements CodeGenerationRule<String> {
     @Override
     public String next() {
         String yearAndMonth = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM"));
-        return "" + yearAndMonth + "-1001";
+        return "" + yearAndMonth + "-2001";
     }
 }
