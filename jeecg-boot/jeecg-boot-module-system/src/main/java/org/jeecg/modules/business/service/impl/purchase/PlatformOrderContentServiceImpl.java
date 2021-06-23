@@ -1,6 +1,8 @@
 package org.jeecg.modules.business.service.impl.purchase;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import lombok.extern.slf4j.Slf4j;
 import org.jeecg.modules.business.controller.UserException;
 import org.jeecg.modules.business.entity.LogisticChannel;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
@@ -13,13 +15,14 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class PlatformOrderContentServiceImpl extends ServiceImpl<PlatformOrderContentMapper, PlatformOrderContent> implements IPlatformOrderContentService {
+    @Autowired
     private LogisticChannelMapper logisticChannelMapper;
 
     @Autowired
@@ -30,17 +33,19 @@ public class PlatformOrderContentServiceImpl extends ServiceImpl<PlatformOrderCo
 
     @Override
     public BigDecimal calculateWeight(String channelName, List<PlatformOrderContent> contentList) throws UserException {
-        Map<String, Object> col = new HashMap<>();
-        col.put("zh_name", channelName);
-        List<LogisticChannel> channels = logisticChannelMapper.selectByMap(col);
-        if (channels.size() != 1) {
-            throw new UserException("DB has more than 1 channel named " + channelName);
+        QueryWrapper<LogisticChannel> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(true, "zh_name", channelName);
+
+        LogisticChannel channel = logisticChannelMapper.selectOne(queryWrapper);
+        if (channel == null) {
+            throw new UserException("Can not find channel: " + channelName);
         }
-        LogisticChannel channel = channels.get(0);
 
         List<String> skuIDs = contentList.stream().map(PlatformOrderContent::getSkuId).collect(Collectors.toList());
 
         List<Map<String, Object>> colToValue = platformOrderContentMapper.searchWeightVolumes(skuIDs);
+        log.info("cols");
+        log.info(colToValue.toString());
 
         String attr = channel.getUseVolumetricWeight() == 1 ? "volume" : "height";
 
@@ -48,19 +53,21 @@ public class PlatformOrderContentServiceImpl extends ServiceImpl<PlatformOrderCo
                 .collect(
                         Collectors.toMap(
                                 map -> (String) map.get("id"),
-                                map -> (Integer) map.get(attr)
+                                map -> (Integer) (map.get(attr) == null ? 0 : map.get(attr))
                         )
                 );
+
+        log.info(idToWeightOrVolume.toString());
 
         int total = contentList.stream()
                 .mapToInt(
                         content ->
-                                (content.getQuantity() * idToWeightOrVolume.get(content.getId()))
+                                (content.getQuantity() * idToWeightOrVolume.get(content.getSkuId()))
                 ).sum();
 
         BigDecimal res = BigDecimal.valueOf(total);
 
-        if(channel.getUseVolumetricWeight() == 1){
+        if (channel.getUseVolumetricWeight() == 1) {
             return res.divide(BigDecimal.valueOf(channel.getVolumetricWeightFactor()), RoundingMode.HALF_DOWN);
         }
         return res;
