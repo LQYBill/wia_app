@@ -39,7 +39,7 @@ public class CostTrialCalculation {
     }
 
     public CostTrialCalculation(LogisticChannelPrice price, int weight, String logisticsChannelName) {
-        this(logisticsChannelName, price.getCalUnitPrice().doubleValue(), price.calculateShippingCost(weight),
+        this(logisticsChannelName, price.getCalUnitPrice().doubleValue(), price.calculateShippingPrice(BigDecimal.valueOf(weight)).doubleValue(),
                 price.getRegistrationFee().doubleValue(), price.getAdditionalCost().doubleValue(), price.getEffectiveDate());
     }
 

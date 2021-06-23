@@ -11,6 +11,7 @@ import org.jeecg.modules.business.mapper.ClientMapper;
 import org.jeecg.modules.business.mapper.LogisticChannelPriceMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
 import org.jeecg.modules.business.service.IPlatformOrderContentService;
+import org.jeecg.modules.business.service.IPlatformOrderService;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +24,7 @@ import java.util.Map;
 @Component
 public class ShippingInvoiceFactory {
 
-    private final PlatformOrderMapper platformOrderMapper;
+    private final IPlatformOrderService platformOrderService;
 
     private final ClientMapper clientMapper;
 
@@ -31,12 +32,12 @@ public class ShippingInvoiceFactory {
 
     private final IPlatformOrderContentService platformOrderContentService;
 
-    public ShippingInvoiceFactory(PlatformOrderMapper platformOrderMapper,
+    public ShippingInvoiceFactory(IPlatformOrderService platformOrderService,
                                   ClientMapper clientMapper,
                                   LogisticChannelPriceMapper logisticChannelPriceMapper,
                                   IPlatformOrderContentService platformOrderContentService) {
 
-        this.platformOrderMapper = platformOrderMapper;
+        this.platformOrderService = platformOrderService;
         this.clientMapper = clientMapper;
         this.logisticChannelPriceMapper = logisticChannelPriceMapper;
         this.platformOrderContentService = platformOrderContentService;
@@ -67,10 +68,12 @@ public class ShippingInvoiceFactory {
                 customerId, shopIds.toString(), begin, end
         );
         // find orders and contents of the invoice
-        Map<PlatformOrder, List<PlatformOrderContent>> uninvoicedOrderToContent = platformOrderMapper.findUninvoicedOrders(shopIds, begin, end);
+        Map<PlatformOrder, List<PlatformOrderContent>> uninvoicedOrderToContent = platformOrderService.findUninvoicedOrders(shopIds, begin, end);
         if (uninvoicedOrderToContent == null) {
             throw new UserException("No packages in the selected period!");
         }
+
+        String invoiceCode = generateInvoiceCode();
         // find logistic channel price for each order based on its content
         for (PlatformOrder uninvoicedOrder : uninvoicedOrderToContent.keySet()) {
             List<PlatformOrderContent> contents = uninvoicedOrderToContent.get(uninvoicedOrder);
@@ -96,14 +99,16 @@ public class ShippingInvoiceFactory {
                 throw new UserException(msg);
             }
             uninvoicedOrder.setFretFee(price.getRegistrationFee());
+            uninvoicedOrder.setShippingInvoiceNumber(invoiceCode);
             contents.forEach(content -> {
                 content.setShippingFee(price.calculateShippingPrice(contentWeight));
                 content.setServiceFee(price.getAdditionalCost());
             });
         }
-        String invoiceCode = generateInvoiceCode();
+        platformOrderService.updatePlatformOrder(uninvoicedOrderToContent);
         Client customer = clientMapper.selectById(customerId);
         String subject = String.format("Shipping fees from %s to %s", begin, end);
+
         return new ShippingInvoice(customer, invoiceCode, subject, uninvoicedOrderToContent, BigDecimal.valueOf(1));
     }
 
@@ -116,7 +121,7 @@ public class ShippingInvoiceFactory {
      * @return the invoice code.
      */
     private String generateInvoiceCode() {
-        String lastInvoiceCode = platformOrderMapper.findPreviousInvoice();
+        String lastInvoiceCode = platformOrderService.findPreviousInvoice();
 
         ShippingInvoiceCodeRule rule = new ShippingInvoiceCodeRule();
         return rule.next(lastInvoiceCode);
@@ -128,9 +133,6 @@ public class ShippingInvoiceFactory {
      * @param invoicedOrderToContent invoiced data to update in DB
      */
     private void updateAfterInvoiced(Map<PlatformOrder, List<PlatformOrderContent>> invoicedOrderToContent) {
-        invoicedOrderToContent.forEach(((platformOrder, contents) -> {
-            platformOrderMapper.updateById(platformOrder);
-            contents.forEach(platformOrderContentService::updateById);
-        }));
+
     }
 }

@@ -72,7 +72,7 @@
                 :disabled-date="disabledDate"
                 @change="onDateChange"
                 :disabled="dataDisable"
-                :defaultPickerValue="[this.startDate, this.endDate]"
+                :defaultValue="[this.startDate, this.endDate]"
               />
             </a-form-item>
           </a-col>
@@ -218,11 +218,9 @@ export default {
       this.shopIDs = value
       console.log(this.shopIDs)
       if (this.shopIDs.length !== 0) {
-        this.loadAvailableDate().then(
-          this.dataDisable = false
-        )
+        this.loadAvailableDate()
       } else {
-        this.dataDisable = false
+        this.dataDisable = true
       }
     },
 
@@ -236,15 +234,21 @@ export default {
       return postAction(this.url.getValidPeriod, param)
         .then(res => {
           console.log(res.result)
-          this.startDate = moment(res['result']['start'])
-          this.endDate = moment(res['result']['end'])
+          this.startDate = moment(res['result']['start']).startOf('day')
+          this.endDate = moment(res['result']['end']).endOf('day')
+          if (!this.startDate || !this.endDate) {
+            this.$message.warning("This period does not contain platform order")
+            this.dataDisable = true
+          } else {
+            this.dataDisable = false
+          }
         })
     },
 
     disabledDate(current) {
       // Can not select days before start or end
-      return current <= this.startDate.endOf('day')
-        || current >= moment(this.endDate).endOf('day').add(3, 'day');
+      return current < this.startDate
+        || current > this.endDate;
     },
 
     onDateChange(date, dateString) {
@@ -275,9 +279,11 @@ export default {
             self.buttonLoading = false
             console.log(res)
             if (!res.success) {
-              self.$message.error(res.message)
+              self.$message.error(res.message, 10)
             } else {
-              this.downloadInvoice(res.result)
+              this.downloadInvoice(res.result).then(
+                this.$message.info("Download succeed.")
+              )
             }
           }
         )
@@ -285,10 +291,13 @@ export default {
 
     downloadInvoice(filename) {
       const param = {filename: filename}
-      getFile(this.url.downloadInvoice, param)
+      console.log(filename)
+      return getFile(this.url.downloadInvoice, param)
         .then(res => {
           console.log(res)
           saveAs(res, filename)
+        }).then(() => {
+          this.loadAvailableDate()
         })
     }
   }

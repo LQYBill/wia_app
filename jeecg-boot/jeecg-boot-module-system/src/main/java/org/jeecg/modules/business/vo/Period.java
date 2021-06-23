@@ -3,23 +3,24 @@ package org.jeecg.modules.business.vo;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.Instant;
+import java.util.Date;
 
 public class Period {
     @JsonProperty
-    private final Instant start;
+    private final Date start;
     @JsonProperty
-    private final Instant end;
+    private final Date end;
 
-    public Period(Instant start, Instant end) {
+    public Period(Date start, Date end) {
         this.start = start;
         this.end = end;
     }
 
-    public Instant start() {
+    public Date start() {
         return start;
     }
 
-    public Instant end() {
+    public Date end() {
         return end;
     }
 }

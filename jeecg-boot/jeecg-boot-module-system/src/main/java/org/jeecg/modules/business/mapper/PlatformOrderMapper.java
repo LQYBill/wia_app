@@ -71,14 +71,18 @@ public interface PlatformOrderMapper extends BaseMapper<PlatformOrder> {
     void updateMergedOrder(@Param("target") String targetID, @Param("sources") List<String> sourceIDs);
 
     /**
-     * Find all uninvoiced platform orders and its content of certains shops in a period.
+     * Find all uninvoiced platform orders of certain shops in a period.
      *
      * @param shopIds list of the shops
      * @param begin   begin of the period
      * @param end     end of the period
      * @return list of uninvoiced orders
      */
-    Map<PlatformOrder, List<PlatformOrderContent>> findUninvoicedOrders(List<String> shopIds, Date begin, Date end);
+    List<PlatformOrder> findUninvoicedOrders(
+            @Param("shopIDs") List<String> shopIds,
+            @Param("begin") Date begin,
+            @Param("end") Date end
+    );
 
     /**
      * Find previous invoice code.
