@@ -22,6 +22,8 @@ public interface LogisticChannelPriceMapper extends BaseMapper<LogisticChannelPr
 
     List<LogisticChannelPrice> selectByMainId(@Param("mainId") String mainId);
 
+    List<String> getAllCountry();
+
     /**
      * Find logistic channel price by indicting its channel name, and destination country,
      * also the platform order's shipping time and weight.
@@ -29,8 +31,12 @@ public interface LogisticChannelPriceMapper extends BaseMapper<LogisticChannelPr
      * @param channelName  the channel name
      * @param shippingTime the shipping time
      * @param weight       the weight
-     * @param country      the country
+     * @param country      the country, represented by 2 letters code
      * @return one propre price
      */
-    LogisticChannelPrice findBy(String channelName, Date shippingTime, BigDecimal weight, String country);
+    LogisticChannelPrice findBy(
+            @Param("channelName") String channelName,
+            @Param("date") Date shippingTime,
+            @Param("trueWeight") BigDecimal weight,
+            @Param("country") String country);
 }

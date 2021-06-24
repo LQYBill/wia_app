@@ -364,7 +364,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
             Files.copy(template, newInvoice);
             PurchaseInvoice pv = new PurchaseInvoice(client, invoiceCode, "Purchase Invoice", purchaseOrderSkuList, promotionDetails);
             pv.toExcelFile(newInvoice);
-            return new InvoiceData(pv.entity(), invoiceCode);
+            return new InvoiceData(pv.client().getInvoiceEntity(), invoiceCode);
         }
         return new InvoiceData(client.getInvoiceEntity(), invoiceCode);
     }

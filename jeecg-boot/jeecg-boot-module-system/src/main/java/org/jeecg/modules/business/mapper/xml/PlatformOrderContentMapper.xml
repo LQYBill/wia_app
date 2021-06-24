@@ -37,7 +37,14 @@
         WHERE sku_id IN
         <foreach collection="list" index="i" item="item" open="(" separator="," close=")">#{item}</foreach>
     </select>
-
+    <select id="searchWeightVolumes" resultType="java.util.Map">
+        SELECT *
+        FROM sku_weight_volume
+        WHERE sku_weight_volume.id IN
+        <foreach collection="skuIDs" open="(" close=")" item="item" separator=",">
+            #{item}
+        </foreach>
+    </select>
 
 
     <resultMap id="skuDetailResultMap" type="org.jeecg.modules.business.vo.SkuDetail">

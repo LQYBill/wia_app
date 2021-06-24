@@ -71,7 +71,7 @@ public class LogisticChannelPrice implements Serializable {
     @ApiModelProperty(value = "生效日期")
     private Date effectiveDate;
     /**
-     * 有效国家
+     * 有效国家, represented by code of 2 letters
      */
     @Excel(name = "有效国家", width = 15)
     @ApiModelProperty(value = "有效国家")

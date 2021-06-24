@@ -2,12 +2,13 @@ package org.jeecg.modules.business.mapper;
 
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
 
 @Repository
 public interface ShippingInvoiceMapper {
-    long findEarliestUninvoicedPlatformOrder(List<String> shopIDs);
+    Date findEarliestUninvoicedPlatformOrder(List<String> shopIDs);
 
-    long findLastestUninvoicedPlatformOrder(List<String> shopIDs);
+    Date findLatestUninvoicedPlatformOrder(List<String> shopIDs);
 
 }

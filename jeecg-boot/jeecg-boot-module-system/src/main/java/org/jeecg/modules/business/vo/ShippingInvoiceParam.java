@@ -16,7 +16,7 @@ public class ShippingInvoiceParam {
 
     private final String end;
 
-    private final static SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+    private final static SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 
     public ShippingInvoiceParam(String clientID, List<String> shopIDs, String start, String end) {
         this.clientID = clientID;

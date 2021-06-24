@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.*;
@@ -252,4 +253,30 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
         }
     }
 
+
+    @Override
+    public Map<PlatformOrder, List<PlatformOrderContent>> findUninvoicedOrders(List<String> shopIds, Date begin, Date end) {
+        List<PlatformOrder> orderList = platformOrderMap.findUninvoicedOrders(
+                shopIds, begin, end);
+        return orderList.stream()
+                .collect(
+                        Collectors.toMap(
+                                Function.identity(),
+                                order -> platformOrderContentMap.selectByMainId(order.getId())
+                        )
+                );
+    }
+
+    @Override
+    public String findPreviousInvoice() {
+        return platformOrderMap.findPreviousInvoice();
+    }
+
+    @Override
+    public void updatePlatformOrder(Map<PlatformOrder, List<PlatformOrderContent>> invoicedOrderToContent) {
+        invoicedOrderToContent.forEach(((platformOrder, contents) -> {
+            this.updateById(platformOrder);
+            contents.forEach(platformOrderContentMap::updateById);
+        }));
+    }
 }

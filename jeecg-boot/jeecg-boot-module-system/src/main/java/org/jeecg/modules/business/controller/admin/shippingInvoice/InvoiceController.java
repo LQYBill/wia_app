@@ -43,12 +43,32 @@ public class InvoiceController {
         return Result.OK(period);
     }
 
+    /**
+     * Make invoice of orders indicated by param.
+     *
+     * @param param invoice making parameter
+     * @return Result of the generation, in case of error, message will be contained,
+     * in case of success, data will contain filename.
+     */
     @PostMapping(value = "/make")
-    public Result<String> makeInvoice(@RequestBody ShippingInvoiceParam param) throws ParseException, IOException, UserException {
-        String filename = shippingInvoiceService.makeInvoice(param);
-        return Result.OK(filename);
+    public Result<?> makeInvoice(@RequestBody ShippingInvoiceParam param) {
+        try {
+            String filename = shippingInvoiceService.makeInvoice(param);
+            return Result.OK(filename);
+        } catch (UserException e) {
+            return Result.error(e.getMessage());
+        } catch (IOException | ParseException e) {
+            log.error(e.getMessage());
+            return Result.error("Sorry, server error, please try later");
+        }
     }
 
+    /**
+     * Get binary data of the invoice file.
+     *
+     * @param filename name of the invoice
+     * @return byte array, in case of error, an empty array will be returned.
+     */
     @GetMapping(value = "/download")
     public byte[] downloadInvoice(@RequestParam("filename") String filename) {
         log.info("request for downloading shipping invoice");

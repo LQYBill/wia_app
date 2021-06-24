@@ -14,6 +14,7 @@ import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatistic
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -66,4 +67,28 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
     List<OrderContentDetail> searchPurchaseOrderDetail(List<SkuQuantity> skuQuantities);
 
     OrderQuantity queryOrderQuantities();
+
+    /**
+     * Find all uninvoiced platform orders and its content of certains shops in a period.
+     *
+     * @param shopIds list of the shops
+     * @param begin   begin of the period
+     * @param end     end of the period
+     * @return list of uninvoiced orders
+     */
+    Map<PlatformOrder, List<PlatformOrderContent>> findUninvoicedOrders(List<String> shopIds, Date begin, Date end);
+
+    /**
+     * Find previous invoice code
+     *
+     * @return previous invoice code
+     */
+    String findPreviousInvoice();
+
+    /**
+     * Update orders and their content to DB
+     *
+     * @param invoicedOrderToContent orders and their contents
+     */
+    void updatePlatformOrder(Map<PlatformOrder, List<PlatformOrderContent>> invoicedOrderToContent);
 }

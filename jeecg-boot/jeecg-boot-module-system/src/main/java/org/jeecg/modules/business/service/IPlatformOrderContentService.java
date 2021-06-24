@@ -1,6 +1,8 @@
 package org.jeecg.modules.business.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.jeecg.modules.business.controller.UserException;
+import org.jeecg.modules.business.entity.LogisticChannel;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,6 @@ public interface IPlatformOrderContentService extends IService<PlatformOrderCont
      * @param contentList orderID
      * @return weight
      */
-    BigDecimal calculateWeight(List<PlatformOrderContent> contentList);
+    BigDecimal calculateWeight(String channelName, List<PlatformOrderContent> contentList) throws UserException;
 
 }

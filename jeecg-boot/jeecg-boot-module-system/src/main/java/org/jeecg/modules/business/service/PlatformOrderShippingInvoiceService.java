@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -36,6 +37,9 @@ public class PlatformOrderShippingInvoiceService {
     @Autowired
     IPlatformOrderContentService platformOrderContentService;
 
+    @Autowired
+    IPlatformOrderService platformOrderService;
+
     @Value("${jeecg.path.shippingTemplatePath_EU}")
     private String INVOICE_TEMPLATE_EU;
 
@@ -46,16 +50,14 @@ public class PlatformOrderShippingInvoiceService {
     private String DIR;
 
     public Period getValidePeriod(List<String> shopIDs) {
-        long beginMile = shippingInvoiceMapper.findEarliestUninvoicedPlatformOrder(shopIDs);
-        long endMile = shippingInvoiceMapper.findLastestUninvoicedPlatformOrder(shopIDs);
-        Instant begin = Instant.ofEpochMilli(beginMile);
-        Instant end = Instant.ofEpochMilli(endMile);
+        Date begin = shippingInvoiceMapper.findEarliestUninvoicedPlatformOrder(shopIDs);
+        Date end = shippingInvoiceMapper.findLatestUninvoicedPlatformOrder(shopIDs);
         return new Period(begin, end);
     }
 
     public String makeInvoice(ShippingInvoiceParam param) throws UserException, ParseException, IOException {
         ShippingInvoiceFactory factory = new ShippingInvoiceFactory(
-                platformOrderMapper,
+                platformOrderService,
                 clientMapper,
                 logisticChannelPriceMapper,
                 platformOrderContentService
@@ -73,7 +75,7 @@ public class PlatformOrderShippingInvoiceService {
             src = Paths.get(INVOICE_TEMPLATE_EU);
         }
 
-        String filename = invoice.code() + "xlsx";
+        String filename = invoice.code() + ".xlsx";
         Path out = Paths.get(DIR, filename);
         if (!Files.exists(out, LinkOption.NOFOLLOW_LINKS)) {
             Files.copy(src, out);

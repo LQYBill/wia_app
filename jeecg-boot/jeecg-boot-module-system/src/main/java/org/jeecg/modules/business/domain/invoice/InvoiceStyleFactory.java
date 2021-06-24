@@ -74,6 +74,24 @@ public class InvoiceStyleFactory {
         return rightSideStyle;
     }
 
+    public CellStyle subjectStyle(){
+        // border
+        rightSideStyle = workbook.createCellStyle();
+        rightSideStyle.setBorderBottom(BorderStyle.THIN);
+        rightSideStyle.setBorderLeft(BorderStyle.THIN);
+        rightSideStyle.setBorderRight(BorderStyle.THIN);
+        rightSideStyle.setBorderTop(BorderStyle.THIN);
+        rightSideStyle.setAlignment(HorizontalAlignment.LEFT);
+        rightSideStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        // font
+        Font font = workbook.createFont();
+        font.setFontName("Arial");
+        font.setFontHeightInPoints((short) 11);
+        font.setBold(true);
+        rightSideStyle.setFont(font);
+        return rightSideStyle;
+    }
+
     public CellStyle otherStyle() {
         if (otherStyle != null)
             return otherStyle;

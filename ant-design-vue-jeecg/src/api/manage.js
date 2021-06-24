@@ -77,7 +77,7 @@ export function getFile(url, params){
     url: url,
     method: 'get',
     responseType: 'blob',
-    params: params
+    params: params,
   })
 }
 

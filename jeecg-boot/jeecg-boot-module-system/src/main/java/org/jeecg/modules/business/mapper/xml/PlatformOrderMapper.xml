@@ -125,4 +125,29 @@
         WHERE platform_order_number = #{1}
     </select>
 
+
+    <select id="findUninvoicedOrders" resultType="org.jeecg.modules.business.entity.PlatformOrder">
+        SELECT *
+        FROM platform_order AS po
+        WHERE po.shop_id IN
+        <foreach
+                collection="shopIDs"
+                index="index"
+                item="item"
+                open="("
+                close=")"
+                separator=",">
+            #{item}
+        </foreach>
+        AND shipping_time >= #{begin}
+        AND #{end} >= shipping_time
+        AND shipping_invoice_number IS NULL
+    </select>
+    <select id="findPreviousInvoice" resultType="java.lang.String">
+        SELECT shipping_invoice_number
+        FROM platform_order
+        ORDER BY shipping_invoice_number DESC
+        LIMIT 1
+    </select>
+
 </mapper>
