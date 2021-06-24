@@ -42,7 +42,8 @@ public class PlatformOrderContentServiceImpl extends ServiceImpl<PlatformOrderCo
         }
 
         List<String> skuIDs = contentList.stream().map(PlatformOrderContent::getSkuId).collect(Collectors.toList());
-
+        log.info("sku to search");
+        log.info(skuIDs.toString());
         List<Map<String, Object>> colToValue = platformOrderContentMapper.searchWeightVolumes(skuIDs);
         log.info("cols");
         log.info(colToValue.toString());
@@ -59,17 +60,22 @@ public class PlatformOrderContentServiceImpl extends ServiceImpl<PlatformOrderCo
 
         log.info(idToWeightOrVolume.toString());
 
-        int total = contentList.stream()
-                .mapToInt(
-                        content ->
-                                (content.getQuantity() * idToWeightOrVolume.get(content.getSkuId()))
-                ).sum();
+        try{
+            int total = contentList.stream()
+                    .mapToInt(
+                            content ->
+                                    (content.getQuantity() * idToWeightOrVolume.get(content.getSkuId()))
+                    ).sum();
 
-        BigDecimal res = BigDecimal.valueOf(total);
+            BigDecimal res = BigDecimal.valueOf(total);
 
-        if (channel.getUseVolumetricWeight() == 1) {
-            return res.divide(BigDecimal.valueOf(channel.getVolumetricWeightFactor()), RoundingMode.HALF_DOWN);
+            if (channel.getUseVolumetricWeight() == 1) {
+                return res.divide(BigDecimal.valueOf(channel.getVolumetricWeightFactor()), RoundingMode.HALF_DOWN);
+            }
+            return res;
+        }catch (NullPointerException e){
+            throw new UserException("Can not find weight for one sku in: " +contentList.toString());
         }
-        return res;
+
     }
 }

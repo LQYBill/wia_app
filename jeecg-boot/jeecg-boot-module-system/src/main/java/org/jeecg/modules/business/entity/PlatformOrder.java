@@ -126,7 +126,7 @@ public class PlatformOrder implements Serializable {
     @ApiModelProperty(value = "订单收件人")
     private String recipient;
     /**
-     * 订单收件人国家
+     * 订单收件人国家, represented by full name
      */
     @Excel(name = "订单收件人国家", width = 15)
     @ApiModelProperty(value = "订单收件人国家")

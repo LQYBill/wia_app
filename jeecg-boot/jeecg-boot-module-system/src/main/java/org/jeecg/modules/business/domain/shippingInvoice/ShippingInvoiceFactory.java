@@ -13,6 +13,7 @@ import org.jeecg.modules.business.service.IPlatformOrderContentService;
 import org.jeecg.modules.business.service.IPlatformOrderService;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -61,6 +62,7 @@ public class ShippingInvoiceFactory {
      * @throws UserException if package used by the invoice can not or find more than 1 logistic
      *                       channel price, this exception will be thrown.
      */
+    @Transactional
     public ShippingInvoice createInvoice(String customerId, List<String> shopIds, Date begin, Date end) throws UserException {
         log.info(
                 "Creating a Invoice with arguments:\n customer ID: {}, shop IDs: {}, period:[{} - {}]",
@@ -81,12 +83,16 @@ public class ShippingInvoiceFactory {
                     uninvoicedOrder.getLogisticChannelName(),
                     contents
             );
+
+            String countryCode = Country.makeCountry(uninvoicedOrder.getCountry(), Country.ATTRIBUTE_EN_NAME).getCode();
+
             try {
                 price = logisticChannelPriceMapper.findBy(
                         uninvoicedOrder.getLogisticChannelName(),
                         uninvoicedOrder.getShippingTime(),
                         contentWeight,
-                        uninvoicedOrder.getCountry()
+                        countryCode
+
                 );
                 if (price == null) {
                     String msg = String.format(

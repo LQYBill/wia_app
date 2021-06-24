@@ -31,7 +31,7 @@ public interface LogisticChannelPriceMapper extends BaseMapper<LogisticChannelPr
      * @param channelName  the channel name
      * @param shippingTime the shipping time
      * @param weight       the weight
-     * @param country      the country
+     * @param country      the country, represented by 2 letters code
      * @return one propre price
      */
     LogisticChannelPrice findBy(
