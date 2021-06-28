@@ -2,7 +2,6 @@ package org.jeecg.modules.business.vo;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.time.Instant;
 import java.util.Date;
 
 public class Period {
@@ -22,5 +21,9 @@ public class Period {
 
     public Date end() {
         return end;
+    }
+
+    public boolean isValid() {
+        return start != null && end != null;
     }
 }

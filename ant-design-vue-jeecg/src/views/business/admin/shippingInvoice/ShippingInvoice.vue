@@ -233,15 +233,14 @@ export default {
       const param = this.shopIDs
       return postAction(this.url.getValidPeriod, param)
         .then(res => {
-          console.log(res.result)
-          this.startDate = moment(res['result']['start']).startOf('day')
-          this.endDate = moment(res['result']['end']).endOf('day')
-          if (!this.startDate || !this.endDate) {
-            this.$message.warning("This period does not contain platform order")
-            this.dataDisable = true
-          } else {
+          if (res.success) {
+            this.startDate = moment(res['result']['start']).startOf('day')
+            this.endDate = moment(res['result']['end']).endOf('day')
             this.dataDisable = false
+          } else {
+            this.$message.warning(res.message)
           }
+
         })
     },
 
