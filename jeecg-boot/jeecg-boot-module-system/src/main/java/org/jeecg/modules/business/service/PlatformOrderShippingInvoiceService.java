@@ -38,6 +38,8 @@ public class PlatformOrderShippingInvoiceService {
 
     @Autowired
     IPlatformOrderService platformOrderService;
+    @Autowired
+    CountryService countryService;
 
     @Value("${jeecg.path.shippingTemplatePath_EU}")
     private String INVOICE_TEMPLATE_EU;
@@ -70,8 +72,8 @@ public class PlatformOrderShippingInvoiceService {
                 platformOrderService,
                 clientMapper,
                 logisticChannelPriceMapper,
-                platformOrderContentService
-        );
+                platformOrderContentService,
+                countryService);
         // Creates invoice by factory
         ShippingInvoice invoice = factory.createInvoice(param.clientID(),
                 param.shopIDs(),

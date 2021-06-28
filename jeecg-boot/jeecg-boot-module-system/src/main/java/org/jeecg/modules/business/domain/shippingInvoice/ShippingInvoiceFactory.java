@@ -3,14 +3,14 @@ package org.jeecg.modules.business.domain.shippingInvoice;
 import lombok.extern.slf4j.Slf4j;
 import org.jeecg.modules.business.controller.UserException;
 import org.jeecg.modules.business.domain.codeGeneration.ShippingInvoiceCodeRule;
-import org.jeecg.modules.business.entity.Client;
-import org.jeecg.modules.business.entity.LogisticChannelPrice;
-import org.jeecg.modules.business.entity.PlatformOrder;
-import org.jeecg.modules.business.entity.PlatformOrderContent;
+import org.jeecg.modules.business.entity.*;
 import org.jeecg.modules.business.mapper.ClientMapper;
 import org.jeecg.modules.business.mapper.LogisticChannelPriceMapper;
+import org.jeecg.modules.business.service.CountryService;
 import org.jeecg.modules.business.service.IPlatformOrderContentService;
 import org.jeecg.modules.business.service.IPlatformOrderService;
+import org.jeecg.modules.business.service.exception.MultipleMatchException;
+import org.jeecg.modules.business.service.exception.ZeroResultException;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,17 +33,20 @@ public class ShippingInvoiceFactory {
 
     private final IPlatformOrderContentService platformOrderContentService;
 
+    private final CountryService countryService;
+
     private final SimpleDateFormat SUBJECT_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
     public ShippingInvoiceFactory(IPlatformOrderService platformOrderService,
                                   ClientMapper clientMapper,
                                   LogisticChannelPriceMapper logisticChannelPriceMapper,
-                                  IPlatformOrderContentService platformOrderContentService) {
+                                  IPlatformOrderContentService platformOrderContentService, CountryService countryService) {
 
         this.platformOrderService = platformOrderService;
         this.clientMapper = clientMapper;
         this.logisticChannelPriceMapper = logisticChannelPriceMapper;
         this.platformOrderContentService = platformOrderContentService;
+        this.countryService = countryService;
     }
 
     /**
@@ -90,14 +93,16 @@ public class ShippingInvoiceFactory {
                     contents
             );
             /* Convert country name to country name */
-            String countryCode = Country.makeCountry(uninvoicedOrder.getCountry(), Country.ATTRIBUTE_EN_NAME).getCode();
-            /* Find channel price */
+
             try {
+                /* Find channel price */
+                Country country = countryService.findByEnName(uninvoicedOrder.getCountry());
+
                 price = logisticChannelPriceMapper.findBy(
                         uninvoicedOrder.getLogisticChannelName(),
                         uninvoicedOrder.getShippingTime(),
                         contentWeight,
-                        countryCode
+                        country.getCode()
                 );
                 if (price == null) {
                     String format = "Can not find propre channel price for" +
@@ -153,14 +158,5 @@ public class ShippingInvoiceFactory {
 
         ShippingInvoiceCodeRule rule = new ShippingInvoiceCodeRule();
         return rule.next(lastInvoiceCode);
-    }
-
-    /**
-     * Update data to DB after be invoiced
-     *
-     * @param invoicedOrderToContent invoiced data to update in DB
-     */
-    private void updateAfterInvoiced(Map<PlatformOrder, List<PlatformOrderContent>> invoicedOrderToContent) {
-
     }
 }
