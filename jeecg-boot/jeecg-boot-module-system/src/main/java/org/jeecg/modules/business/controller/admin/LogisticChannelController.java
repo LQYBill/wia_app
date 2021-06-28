@@ -12,10 +12,11 @@ import org.jeecg.common.aspect.annotation.AutoLog;
 import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.common.util.oConvertUtils;
-import org.jeecg.modules.business.domain.country.Country;
 import org.jeecg.modules.business.domain.logistic.CostTrialCalculation;
+import org.jeecg.modules.business.entity.Country;
 import org.jeecg.modules.business.entity.LogisticChannel;
 import org.jeecg.modules.business.entity.LogisticChannelPrice;
+import org.jeecg.modules.business.service.CountryService;
 import org.jeecg.modules.business.service.ILogisticChannelPriceService;
 import org.jeecg.modules.business.service.ILogisticChannelService;
 import org.jeecg.modules.business.vo.LogisticChannelPage;
@@ -50,11 +51,13 @@ import java.util.stream.Collectors;
 public class LogisticChannelController {
     private final ILogisticChannelService logisticChannelService;
     private final ILogisticChannelPriceService logisticChannelPriceService;
+    private final CountryService countryService;
 
     @Autowired
-    public LogisticChannelController(ILogisticChannelService logisticChannelService, ILogisticChannelPriceService logisticChannelPriceService) {
+    public LogisticChannelController(ILogisticChannelService logisticChannelService, ILogisticChannelPriceService logisticChannelPriceService, CountryService countryService) {
         this.logisticChannelService = logisticChannelService;
         this.logisticChannelPriceService = logisticChannelPriceService;
+        this.countryService = countryService;
     }
 
     /**
@@ -291,7 +294,7 @@ public class LogisticChannelController {
     public Result<List<Country>> countryList() {
         List<Country> countries = logisticChannelPriceService.getAllCountry()
                 .stream()
-                .map(code -> Country.makeCountry(code, Country.ATTRIBUTE_CODE))
+                .map(countryService::findByCode)
                 .collect(Collectors.toList());
         return Result.OK(countries);
     }

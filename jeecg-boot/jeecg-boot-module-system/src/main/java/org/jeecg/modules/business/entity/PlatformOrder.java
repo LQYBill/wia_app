@@ -1,21 +1,19 @@
 package org.jeecg.modules.business.entity;
 
-import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
-import java.math.BigDecimal;
-import java.util.Date;
-
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import org.jeecg.modules.business.domain.shippingInvoice.Country;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.jeecgframework.poi.excel.annotation.Excel;
-import org.jeecg.common.aspect.annotation.Dict;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+import org.jeecg.common.aspect.annotation.Dict;
+import org.jeecgframework.poi.excel.annotation.Excel;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * @Description: 平台订单表
@@ -126,7 +124,7 @@ public class PlatformOrder implements Serializable {
     @ApiModelProperty(value = "订单收件人")
     private String recipient;
     /**
-     * 订单收件人国家, represented by full name
+     * 订单收件人国家, represented by full english name
      */
     @Excel(name = "订单收件人国家", width = 15)
     @ApiModelProperty(value = "订单收件人国家")
@@ -158,7 +156,7 @@ public class PlatformOrder implements Serializable {
     @ApiModelProperty(value = "状态")
     private Integer status;
 
-    public BigDecimal totalFee(){
+    public BigDecimal totalFee() {
         // TODO to finish
         return null;
     }

@@ -37,10 +37,12 @@ public class InvoiceController {
     }
 
     @PostMapping(value = "/period")
-    public Result<Period> getValidPeriod(@RequestBody List<String> shopIDs) {
+    public Result<?> getValidPeriod(@RequestBody List<String> shopIDs) {
         log.info("Request for valide period for shops: " + shopIDs.toString());
         Period period = shippingInvoiceService.getValidePeriod(shopIDs);
-        return Result.OK(period);
+        if (period.isValid())
+            return Result.OK(period);
+        else return Result.error("No package in the selected period");
     }
 
     /**
@@ -75,6 +77,7 @@ public class InvoiceController {
         try {
             return shippingInvoiceService.getInvoiceBinary(filename);
         } catch (IOException e) {
+            log.error(e.getMessage());
             return new byte[0];
         }
     }
