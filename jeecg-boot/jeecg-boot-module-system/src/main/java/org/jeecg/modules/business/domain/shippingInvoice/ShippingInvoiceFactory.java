@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,8 @@ public class ShippingInvoiceFactory {
 
     private final IPlatformOrderContentService platformOrderContentService;
 
+    private final SimpleDateFormat SUBJECT_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+
     public ShippingInvoiceFactory(IPlatformOrderService platformOrderService,
                                   ClientMapper clientMapper,
                                   LogisticChannelPriceMapper logisticChannelPriceMapper,
@@ -44,14 +47,16 @@ public class ShippingInvoiceFactory {
     }
 
     /**
-     * Creates a invoice based on a customer id, a list of shop codes, a date range.
+     * Creates a invoice based for a client, a list of shops, a date range.
      * <p>
      * To generate a invoice, it
      * <ol>
-     * <li>generate a new invoice code</li>
-     * <li>selects all uninvoiced packages from repository</li>
-     * <li>update package's logistics cost</li>
-     * <li>gives them to the invoice file</li>
+     * <li>Search orders and their contents based on shop and date range</li>
+     * <li>Generate a new invoice code</li>
+     * <li>Find propre logistic channel price for each order </li>
+     * <li>Update prices of orders and their contents</li>
+     * <li>Generate a invoice</li>
+     * <li>Update invoiced their orders and contents to DB</li>
      * </ol>
      *
      * @param customerId the customer id
@@ -65,13 +70,13 @@ public class ShippingInvoiceFactory {
     @Transactional
     public ShippingInvoice createInvoice(String customerId, List<String> shopIds, Date begin, Date end) throws UserException {
         log.info(
-                "Creating a Invoice with arguments:\n customer ID: {}, shop IDs: {}, period:[{} - {}]",
+                "Creating a invoice with arguments:\n client ID: {}, shop IDs: {}, period:[{} - {}]",
                 customerId, shopIds.toString(), begin, end
         );
-        // find orders and contents of the invoice
+        // find orders and their contents of the invoice
         Map<PlatformOrder, List<PlatformOrderContent>> uninvoicedOrderToContent = platformOrderService.findUninvoicedOrders(shopIds, begin, end);
         if (uninvoicedOrderToContent == null) {
-            throw new UserException("No packages in the selected period!");
+            throw new UserException("None platform order in the selected period!");
         }
 
         String invoiceCode = generateInvoiceCode();
@@ -79,29 +84,27 @@ public class ShippingInvoiceFactory {
         for (PlatformOrder uninvoicedOrder : uninvoicedOrderToContent.keySet()) {
             List<PlatformOrderContent> contents = uninvoicedOrderToContent.get(uninvoicedOrder);
             LogisticChannelPrice price;
+            // calculate weight of a order
             BigDecimal contentWeight = platformOrderContentService.calculateWeight(
                     uninvoicedOrder.getLogisticChannelName(),
                     contents
             );
-
+            /* Convert country name to country name */
             String countryCode = Country.makeCountry(uninvoicedOrder.getCountry(), Country.ATTRIBUTE_EN_NAME).getCode();
-
+            /* Find channel price */
             try {
                 price = logisticChannelPriceMapper.findBy(
                         uninvoicedOrder.getLogisticChannelName(),
                         uninvoicedOrder.getShippingTime(),
                         contentWeight,
                         countryCode
-
                 );
                 if (price == null) {
+                    String format = "Can not find propre channel price for" +
+                            "package Serial No: %s, delivered at %s, " +
+                            "weight: %s, channel name: %s, destination: %s";
                     String msg = String.format(
-                            "Can not find propre channel price for" +
-                                    "package Serial No: %s," +
-                                    " delivered at %s, " +
-                                    "weight: %s, " +
-                                    "channel name: %s, " +
-                                    "destination: %s",
+                            format,
                             uninvoicedOrder.getPlatformOrderId(),
                             uninvoicedOrder.getShippingTime(),
                             contentWeight,
@@ -117,6 +120,7 @@ public class ShippingInvoiceFactory {
                 log.error(msg);
                 throw new UserException(msg);
             }
+            // update attributes of orders and theirs content
             uninvoicedOrder.setFretFee(price.getRegistrationFee());
             uninvoicedOrder.setShippingInvoiceNumber(invoiceCode);
             contents.forEach(content -> {
@@ -124,11 +128,16 @@ public class ShippingInvoiceFactory {
                 content.setServiceFee(price.getAdditionalCost());
             });
         }
+        Client client = clientMapper.selectById(customerId);
+        String subject = String.format(
+                "Shipping fees from %s to %s",
+                SUBJECT_FORMAT.format(begin),
+                SUBJECT_FORMAT.format(end)
+        );
+        ShippingInvoice invoice = new ShippingInvoice(client, invoiceCode, subject, uninvoicedOrderToContent, BigDecimal.valueOf(1));
+        // update them to DB after invoiced
         platformOrderService.updatePlatformOrder(uninvoicedOrderToContent);
-        Client customer = clientMapper.selectById(customerId);
-        String subject = String.format("Shipping fees from %s to %s", begin, end);
-
-        return new ShippingInvoice(customer, invoiceCode, subject, uninvoicedOrderToContent, BigDecimal.valueOf(1));
+        return invoice;
     }
 
     /**
