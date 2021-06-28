@@ -75,6 +75,7 @@ public class InvoiceController {
         try {
             return shippingInvoiceService.getInvoiceBinary(filename);
         } catch (IOException e) {
+            log.error(e.getMessage());
             return new byte[0];
         }
     }
