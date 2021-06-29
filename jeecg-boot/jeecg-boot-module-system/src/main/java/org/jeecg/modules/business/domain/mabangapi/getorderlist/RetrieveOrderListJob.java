@@ -1,20 +1,30 @@
 package org.jeecg.modules.business.domain.mabangapi.getorderlist;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.jeecg.modules.business.domain.remote.RemoteFileSystem;
 import org.jeecg.modules.business.service.IPlatformOrderMabangService;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static java.io.File.createTempFile;
 
 @Slf4j
 public class RetrieveOrderListJob implements Job {
@@ -29,7 +39,7 @@ public class RetrieveOrderListJob implements Job {
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
         try {
             updateNewOrder();
-        } catch (OrderListRequestErrorException e) {
+        } catch (OrderListRequestErrorException | IOException e) {
             throw new RuntimeException(e);
         }
 
@@ -45,7 +55,7 @@ public class RetrieveOrderListJob implements Job {
      * Retrieve newly paid order.
      * Duration is specified by {@code EXECUTION_DURATION}
      */
-    public void updateNewOrder() throws OrderListRequestErrorException {
+    public void updateNewOrder() throws OrderListRequestErrorException, IOException {
         // request time parameter period
         LocalDateTime end = LocalDateTime.now();
         LocalDateTime begin = end.minus(EXECUTION_DURATION);
@@ -59,6 +69,9 @@ public class RetrieveOrderListJob implements Job {
         OrderListRequest request = new OrderListRequest(body);
         List<Order> newlyPaidOrders = request.getAll();
         log.info("newly paid order size: {}", newlyPaidOrders.size());
+
+        uploadToRemote(newlyPaidOrders,new Date().toString());
+
         // update in DB
         platformOrderMabangService.saveOrderFromMabang(newlyPaidOrders);
     }
@@ -129,5 +142,16 @@ public class RetrieveOrderListJob implements Job {
         return requestForObsoletedOrder.getAll().stream()
                 .filter(target::isSource)
                 .collect(Collectors.toList());
+    }
+
+    private void uploadToRemote(List<Order> orders, String name) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        String json = mapper.writeValueAsString(orders);
+        Path out =Files.createTempFile("data", "json");
+        FileWriter writer = new FileWriter(out.toFile());
+        writer.write(json);
+        writer.close();
+        RemoteFileSystem fs = new RemoteFileSystem("test");
+        fs.cp(name, out.toFile());
     }
 }

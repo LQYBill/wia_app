@@ -120,7 +120,7 @@ public class OrderListRequest {
      * @return the response of the body or null, if response
      * @throws OrderListRequestErrorException if response represents error.
      */
-    private static OrderListResponse sendRequest(OrderListRequestBody body) throws OrderListRequestErrorException {
+    public static OrderListResponse sendRequest(OrderListRequestBody body) throws OrderListRequestErrorException {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.CONTENT_TYPE, "application/json");
 
