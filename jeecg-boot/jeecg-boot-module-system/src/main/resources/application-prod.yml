@@ -64,7 +64,7 @@ spring:
   #json 时间戳统一转换
   jackson:
     date-format:   yyyy-MM-dd HH:mm:ss
-    time-zone:   GMT+8
+    time-zone:   GMT+2
   jpa:
     open-in-view: false
   activiti:
@@ -180,16 +180,17 @@ jeecg :
     save: /wia/save
 
     # purchase invoice template
-    purchaseTemplatePath: TODO
+    purchaseTemplatePath: /wia/files/Purchase_Invoice_Template.xlsx
     # where to store generated file
-    purchaseInvoiceDir: TODO
+    purchaseInvoiceDir: /wia/invoices/purchase
 
     # purchase invoice template
-    shippingTemplatePath_EU: TODO
-    shippingTemplatePath_US: TODO
+    shippingTemplatePath_EU: /wia/files/Shipping_Invoice_Template_EU.xlsx
+    shippingTemplatePath_US: /wia/files/Shipping_Invoice_Template_US.xlsx
     # where to store generated file
-    shippingInvoiceDir: TODO
-
+    shippingInvoiceDir: /wia/invoices/shipping
+    # CDG location
+    CGS:  /wia/files/WIASourcingCGCVF_mai.pdf
     #webapp文件路径
     webapp: /wia/webapp
   shiro:

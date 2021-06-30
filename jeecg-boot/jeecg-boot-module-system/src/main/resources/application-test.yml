@@ -64,7 +64,7 @@ spring:
   #json 时间戳统一转换
   jackson:
     date-format:   yyyy-MM-dd HH:mm:ss
-    time-zone:   GMT+8
+    time-zone:   GMT+2
   aop:
     proxy-target-class: true
   activiti:
