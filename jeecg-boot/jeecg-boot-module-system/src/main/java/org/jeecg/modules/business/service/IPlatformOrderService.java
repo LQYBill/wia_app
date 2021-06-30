@@ -85,10 +85,4 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
      */
     String findPreviousInvoice();
 
-    /**
-     * Update orders and their content to DB
-     *
-     * @param invoicedOrderToContent orders and their contents
-     */
-    void updatePlatformOrder(Map<PlatformOrder, List<PlatformOrderContent>> invoicedOrderToContent);
 }

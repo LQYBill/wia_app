@@ -272,11 +272,4 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
         return platformOrderMap.findPreviousInvoice();
     }
 
-    @Override
-    public void updatePlatformOrder(Map<PlatformOrder, List<PlatformOrderContent>> invoicedOrderToContent) {
-        invoicedOrderToContent.forEach(((platformOrder, contents) -> {
-            this.updateById(platformOrder);
-            contents.forEach(platformOrderContentMap::updateById);
-        }));
-    }
 }

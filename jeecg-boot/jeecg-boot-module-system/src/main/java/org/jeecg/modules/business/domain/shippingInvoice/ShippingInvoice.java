@@ -44,26 +44,32 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
                 .collect(
                         Collectors.groupingBy(PlatformOrder::getCountry)
                 );
+        Map<String, List<PlatformOrderContent>> orderMap = ordersToContent.entrySet()
+                .stream()
+                .collect(Collectors.toMap(entry -> entry.getKey().getPlatformOrderId(), Map.Entry::getValue));
 
         List<Row<String, Object, Integer, Object, String>> rows = new ArrayList<>();
 
         for (Map.Entry<String, List<PlatformOrder>> entry : countryPackageMap.entrySet()) {
             String country = entry.getKey();
-            List<PlatformOrder> order = entry.getValue();
+            List<PlatformOrder> orders = entry.getValue();
 
-            BigDecimal countryAmount = order.stream()
+            BigDecimal countryOtherFees = orders.stream()
                     .map(o ->
-                            ordersToContent.get(o).stream()
+                            orderMap.get(o.getPlatformOrderId()).stream()
                                     .map(PlatformOrderContent::getTotalFee)
                                     .reduce(BigDecimal.ZERO, BigDecimal::add)
                     )
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal countryFretFees = orders.stream()
+                    .map(PlatformOrder::getFretFee)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
             Row<String, Object, Integer, Object, String> row = new Row<>(
                     String.format("Total cost for %s", country),
                     null,
-                    order.size(),
+                    orders.size(),
                     null,
-                    String.format("%.2f", countryAmount)
+                    String.format("%.2f", countryOtherFees.add(countryFretFees))
             );
             rows.add(row);
         }

@@ -2,13 +2,10 @@ package org.jeecg.modules.business.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.jeecg.modules.business.controller.UserException;
-import org.jeecg.modules.business.entity.LogisticChannel;
-import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
-import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.List;
+import java.util.Map;
 
 /**
  * @Description: 平台订单内容
@@ -21,9 +18,9 @@ public interface IPlatformOrderContentService extends IService<PlatformOrderCont
     /**
      * Calculate weight of a platform order
      *
-     * @param contentList orderID
+     * @param contentMap Map of <SKU ID, Quantity>
      * @return weight
      */
-    BigDecimal calculateWeight(String channelName, List<PlatformOrderContent> contentList) throws UserException;
+    BigDecimal calculateWeight(String channelName, Map<String, Integer> contentMap) throws UserException;
 
 }
