@@ -72,7 +72,7 @@
                 :disabled-date="disabledDate"
                 @change="onDateChange"
                 :disabled="dataDisable"
-                :defaultValue="[this.startDate, this.endDate]"
+                :defaultValue="datePickerDefaultValue()"
               />
             </a-form-item>
           </a-col>
@@ -142,7 +142,9 @@ export default {
     this.loadClientList();
   },
 
-  computed: {}
+  computed: {
+
+  }
 
   ,
   methods: {
@@ -239,6 +241,7 @@ export default {
             this.dataDisable = false
           } else {
             this.$message.warning(res.message)
+            this.dataDisable = true
           }
 
         })
@@ -253,6 +256,10 @@ export default {
     onDateChange(date, dateString) {
       this.selectedStartDate = dateString[0]
       this.selectedEndDate = dateString[1]
+    },
+
+    datePickerDefaultValue(){
+      return [this.startDate, this.endDate]
     },
 
     makeInvoice() {
