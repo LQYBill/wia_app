@@ -1,27 +1,26 @@
 <template>
   <j-modal
     :title="title"
-    :width="1200"
+    :width="width"
     :visible="visible"
-    :maskClosable="false"
     switchFullscreen
     @ok="handleOk"
     :okButtonProps="{ class:{'jee-hidden': disableSubmit} }"
-    @cancel="handleCancel">
-    <request-order-form ref="realForm" @ok="submitCallback" :disabled="disableSubmit"/>
+    @cancel="handleCancel"
+    cancelText="关闭">
+    <exchange-rates-form ref="realForm" @ok="submitCallback" :disabled="disableSubmit"></exchange-rates-form>
   </j-modal>
 </template>
 
 <script>
 
-  import RequestOrderForm from './RequestOrderForm'
-
+  import ExchangeRatesForm from './ExchangeRatesForm'
   export default {
-    name: 'RequestOrderModal',
+    name: 'ExchangeRatesModal',
     components: {
-      RequestOrderForm
+      ExchangeRatesForm
     },
-    data() {
+    data () {
       return {
         title:'',
         width:800,
@@ -29,7 +28,7 @@
         disableSubmit: false
       }
     },
-    methods:{
+    methods: {
       add () {
         this.visible=true
         this.$nextTick(()=>{
@@ -47,7 +46,7 @@
         this.visible = false;
       },
       handleOk () {
-        this.$refs.realForm.handleOk();
+        this.$refs.realForm.submitForm();
       },
       submitCallback(){
         this.$emit('ok');
@@ -59,6 +58,3 @@
     }
   }
 </script>
-
-<style scoped>
-</style>

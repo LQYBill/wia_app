@@ -10,7 +10,7 @@
     <select id="findByEnName" resultType="org.jeecg.modules.business.entity.Country">
         SELECT *
         FROM country
-        WHERE name_en = #{param1}
+        WHERE name_en = #{param1} or special_name = #{param1}
     </select>
 
     <select id="findByZhName" resultType="org.jeecg.modules.business.entity.Country">

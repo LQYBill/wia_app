@@ -3,6 +3,11 @@ package org.jeecg.modules.business.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.jeecgframework.poi.excel.annotation.Excel;
+import org.jeecg.common.aspect.annotation.Dict;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -14,8 +19,8 @@ import java.math.BigDecimal;
 /**
  * @Description: 客户
  * @Author: jeecg-boot
- * @Date: 2021-04-02
- * @Version: V1.0
+ * @Date: 2021-06-29
+ * @Version: V1.1
  */
 @ApiModel(value = "client对象", description = "客户")
 @Data
@@ -28,7 +33,31 @@ public class Client implements Serializable {
      */
     @TableId(type = IdType.ASSIGN_ID)
     @ApiModelProperty(value = "主键")
-    private String id;
+    private java.lang.String id;
+    /**
+     * 创建人
+     */
+    @ApiModelProperty(value = "创建人")
+    private java.lang.String createBy;
+    /**
+     * 创建日期
+     */
+    @JsonFormat(timezone = "GMT+2", pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @ApiModelProperty(value = "创建日期")
+    private java.util.Date createTime;
+    /**
+     * 更新人
+     */
+    @ApiModelProperty(value = "更新人")
+    private java.lang.String updateBy;
+    /**
+     * 更新日期
+     */
+    @JsonFormat(timezone = "GMT+2", pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @ApiModelProperty(value = "更新日期")
+    private java.util.Date updateTime;
     /**
      * 姓
      */
@@ -98,7 +127,8 @@ public class Client implements Serializable {
     /**
      * 国家
      */
-    @Excel(name = "国家", width = 15)
+    @Excel(name = "国家", width = 15, dictTable = "country", dicText = "name_en", dicCode = "id")
+    @Dict(dictTable = "country", dicText = "name_en", dicCode = "id")
     @ApiModelProperty(value = "国家")
     private String country;
     /**
@@ -131,6 +161,18 @@ public class Client implements Serializable {
     @Excel(name = "账户余额", width = 15)
     @ApiModelProperty(value = "账户余额")
     private BigDecimal balance;
+    /**
+     * IOSS号码
+     */
+    @Excel(name = "IOSS号码", width = 15)
+    @ApiModelProperty(value = "IOSS号码")
+    private java.lang.String iossNumber;
+    /**
+     * VAT代缴比例
+     */
+    @Excel(name = "VAT代缴比例", width = 15)
+    @ApiModelProperty(value = "VAT代缴比例")
+    private java.math.BigDecimal vatPercentage;
 
     public String fullName() {
         return firstName + " " + surname;

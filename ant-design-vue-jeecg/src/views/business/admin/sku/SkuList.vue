@@ -3,7 +3,7 @@
 
     <!-- 查询区域 begin -->
     <div class="table-page-search-wrapper">
-      <a-form layout="inline">
+      <a-form layout="inline" @keyup.enter.native="searchQuery">
         <a-row :gutter="24">
         </a-row>
       </a-form>
@@ -75,6 +75,9 @@
             <a-tab-pane tab="SKU物流折扣" key="shippingDiscount" forceRender>
               <shipping-discount-sub-table :record="record"/>
             </a-tab-pane>
+            <a-tab-pane tab="SKU申报价格" key="skuDeclaredValue" forceRender>
+              <sku-declared-value-sub-table :record="record"/>
+            </a-tab-pane>
           </a-tabs>
         </template>
         <!-- 内嵌table区域 end -->
@@ -139,6 +142,7 @@
   import SkuModal from './modules/SkuModal'
   import SkuPriceSubTable from './subTables/SkuPriceSubTable'
   import ShippingDiscountSubTable from './subTables/ShippingDiscountSubTable'
+  import SkuDeclaredValueSubTable from './subTables/SkuDeclaredValueSubTable'
   import ARow from 'ant-design-vue/es/grid/Row'
   import {filterMultiDictText} from '@/components/dict/JDictSelectUtil'
   import '@/assets/less/TableExpand.less'
@@ -150,6 +154,7 @@
       SkuModal,
       SkuPriceSubTable,
       ShippingDiscountSubTable,
+      SkuDeclaredValueSubTable,
       ARow
     },
     data() {
@@ -189,6 +194,12 @@
             title: '在途数量',
             align: 'center',
             dataIndex: 'purchasingAmount',
+          },
+          {
+            title: '图片链接',
+            align: 'center',
+            dataIndex: 'imageSource',
+            scopedSlots: {customRender: 'imgSlot'}
           },
           {
             title: '操作',
@@ -240,6 +251,7 @@
         fieldList.push({type:'string',value:'erpCode',text:'ERP中商品代码',dictCode:''})
         fieldList.push({type:'int',value:'availableAmount',text:'库存数量',dictCode:''})
         fieldList.push({type:'int',value:'purchasingAmount',text:'在途数量',dictCode:''})
+        fieldList.push({type:'string',value:'imageSource',text:'图片链接',dictCode:''})
         this.superFieldList = fieldList
       }
     }

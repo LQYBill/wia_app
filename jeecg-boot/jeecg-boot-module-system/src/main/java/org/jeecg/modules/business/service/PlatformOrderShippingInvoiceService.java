@@ -35,6 +35,8 @@ public class PlatformOrderShippingInvoiceService {
     LogisticChannelPriceMapper logisticChannelPriceMapper;
     @Autowired
     IPlatformOrderContentService platformOrderContentService;
+    @Autowired
+    ISkuDeclaredValueService skuDeclaredValueService;
 
     @Autowired
     IPlatformOrderService platformOrderService;
@@ -73,6 +75,7 @@ public class PlatformOrderShippingInvoiceService {
                 clientMapper,
                 logisticChannelPriceMapper,
                 platformOrderContentService,
+                skuDeclaredValueService,
                 countryService);
         // Creates invoice by factory
         ShippingInvoice invoice = factory.createInvoice(param.clientID(),
@@ -82,7 +85,7 @@ public class PlatformOrderShippingInvoiceService {
         );
         // Chooses invoice template based on client's preference on currency
         Path src;
-        if (invoice.client().getCurrency().equals("US")) {
+        if (invoice.client().getCurrency().equals("USD")) {
             src = Paths.get(INVOICE_TEMPLATE_US);
         } else {
             src = Paths.get(INVOICE_TEMPLATE_EU);

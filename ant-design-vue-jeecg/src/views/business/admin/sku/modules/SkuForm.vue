@@ -58,6 +58,18 @@
             :rowSelection="true"
             :actionButton="true"/>
         </a-tab-pane>
+        <a-tab-pane tab="SKU申报价格" :key="refKeys[2]" :forceRender="true">
+          <j-editable-table
+            :ref="refKeys[2]"
+            :loading="skuDeclaredValueTable.loading"
+            :columns="skuDeclaredValueTable.columns"
+            :dataSource="skuDeclaredValueTable.dataSource"
+            :maxHeight="300"
+            :disabled="formDisabled"
+            :rowNumber="true"
+            :rowSelection="true"
+            :actionButton="true"/>
+        </a-tab-pane>
       </a-tabs>
        <a-row v-if="showFlowSubmitButton" style="text-align: center;width: 100%;margin-top: 16px;"><a-button @click="handleOk">提 交</a-button></a-row>
     </a-spin>
@@ -98,8 +110,8 @@
         },
         // 新增时子表默认添加几行空数据
         addDefaultRowNum: 1,
-        refKeys: ['skuPrice', 'shippingDiscount', ],
-        tableKeys:['skuPrice', 'shippingDiscount', ],
+        refKeys: ['skuPrice', 'shippingDiscount', 'skuDeclaredValue', ],
+        tableKeys:['skuPrice', 'shippingDiscount', 'skuDeclaredValue', ],
         activeKey: 'skuPrice',
         // SKU价格表
         skuPriceTable: {
@@ -183,6 +195,38 @@
             },
           ]
         },
+        // SKU申报价格
+        skuDeclaredValueTable: {
+          loading: false,
+          dataSource: [],
+          columns: [
+            {
+              title: 'SKU ID',
+              key: 'skuId',
+              type: FormTypes.sel_search,
+              dictCode:"sku,erp_code,id",
+              width:"200px",
+              placeholder: '请输入${title}',
+              defaultValue:'',
+            },
+            {
+              title: '申报价格',
+              key: 'declaredValue',
+              type: FormTypes.input,
+              width:"200px",
+              placeholder: '请输入${title}',
+              defaultValue:'',
+            },
+            {
+              title: '生效日期',
+              key: 'effectiveDate',
+              type: FormTypes.date,
+              width:"200px",
+              placeholder: '请输入${title}',
+              defaultValue:'',
+            },
+          ]
+        },
         url: {
           add: "/business/sku/add",
           edit: "/business/sku/edit",
@@ -191,6 +235,9 @@
           },
           shippingDiscount: {
             list: '/business/sku/queryShippingDiscountByMainId'
+          },
+          skuDeclaredValue: {
+            list: '/business/sku/querySkuDeclaredValueByMainId'
           },
         }
       }
@@ -242,6 +289,7 @@
      addBefore(){
             this.skuPriceTable.dataSource=[]
             this.shippingDiscountTable.dataSource=[]
+            this.skuDeclaredValueTable.dataSource=[]
       },
       getAllTable() {
         let values = this.tableKeys.map(key => getRefPromise(this, key))
@@ -256,6 +304,7 @@
           let params = { id: this.model.id }
           this.requestSubTableData(this.url.skuPrice.list, params, this.skuPriceTable)
           this.requestSubTableData(this.url.shippingDiscount.list, params, this.shippingDiscountTable)
+          this.requestSubTableData(this.url.skuDeclaredValue.list, params, this.skuDeclaredValueTable)
         }
       },
       //校验所有一对一子表表单
@@ -282,6 +331,7 @@
           ...main, // 展开
           skuPriceList: allValues.tablesValue[0].values,
           shippingDiscountList: allValues.tablesValue[1].values,
+          skuDeclaredValueList: allValues.tablesValue[2].values,
         }
       },
       //渲染流程表单数据

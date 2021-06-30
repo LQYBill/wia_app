@@ -138,6 +138,7 @@ import {JeecgListMixin} from '@/mixins/JeecgListMixin'
 import ClientModal from './modules/ClientModal'
 import ShopSubTable from './subTables/ShopSubTable'
 import ClientSkuSubTable from './subTables/ClientSkuSubTable'
+import {filterMultiDictText} from '@/components/dict/JDictSelectUtil'
 import '@assets/less/TableExpand.less'
 
 export default {
@@ -161,19 +162,22 @@ export default {
           customRender: (t, r, index) => parseInt(index) + 1
         },
         {
-          title: '姓',
+          title: '简称',
           align: 'center',
-          dataIndex: 'surname',
+          dataIndex: 'internalCode',
+          sorter: true
         },
         {
           title: '名',
           align: 'center',
           dataIndex: 'firstName',
+          sorter: true
         },
         {
-          title: '简称',
+          title: '姓',
           align: 'center',
-          dataIndex: 'internalCode',
+          dataIndex: 'surname',
+          sorter: true
         },
         {
           title: '发票实体',
@@ -220,7 +224,8 @@ export default {
         {
           title: '国家',
           align: 'center',
-          dataIndex: 'country',
+          sorter: true,
+          dataIndex: 'country_dictText'
         },
         {
           title: '货币',
@@ -246,6 +251,16 @@ export default {
           title: '账户余额',
           align: 'center',
           dataIndex: 'balance',
+        },
+        {
+          title: 'IOSS号码',
+          align: 'center',
+          dataIndex: 'iossNumber',
+        },
+        {
+          title: 'VAT代缴比例',
+          align: 'center',
+          dataIndex: 'vatPercentage',
         },
         {
           title: '操作',
@@ -300,12 +315,14 @@ export default {
       fieldList.push({type: 'string', value: 'additionalAddress', text: '备用地址', dictCode: ''})
       fieldList.push({type: 'string', value: 'postcode', text: '邮编', dictCode: ''})
       fieldList.push({type: 'string', value: 'city', text: '城市', dictCode: ''})
-      fieldList.push({type: 'string', value: 'country', text: '国家', dictCode: ''})
+      fieldList.push({type:'sel_search',value:'country',text:'国家',dictTable:'country', dictText:'name_en', dictCode:'id'})
       fieldList.push({type: 'string', value: 'currency', text: '货币', dictCode: ''})
       fieldList.push({type: 'BigDecimal', value: 'shippingDiscount', text: '运费折扣', dictCode: ''})
       fieldList.push({type: 'string', value: 'companyIdType', text: '公司识别码类型', dictCode: ''})
       fieldList.push({type: 'string', value: 'companyIdValue', text: '公司识别码数值', dictCode: ''})
       fieldList.push({type: 'BigDecimal', value: 'balance', text: '账户余额', dictCode: ''})
+      fieldList.push({type:'string',value:'iossNumber',text:'IOSS号码',dictCode:''})
+      fieldList.push({type:'BigDecimal',value:'vatPercentage',text:'VAT代缴比例',dictCode:''})
       this.superFieldList = fieldList
     }
   }

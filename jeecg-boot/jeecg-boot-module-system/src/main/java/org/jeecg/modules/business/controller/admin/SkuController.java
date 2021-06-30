@@ -1,70 +1,64 @@
 package org.jeecg.modules.business.controller.admin;
 
-import java.io.UnsupportedEncodingException;
-import java.io.IOException;
-import java.net.URLDecoder;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.shiro.SecurityUtils;
+import org.jeecg.common.api.vo.Result;
+import org.jeecg.common.aspect.annotation.AutoLog;
+import org.jeecg.common.system.query.QueryGenerator;
+import org.jeecg.common.system.vo.LoginUser;
+import org.jeecg.common.util.oConvertUtils;
+import org.jeecg.modules.business.entity.ShippingDiscount;
+import org.jeecg.modules.business.entity.Sku;
+import org.jeecg.modules.business.entity.SkuDeclaredValue;
+import org.jeecg.modules.business.entity.SkuPrice;
+import org.jeecg.modules.business.service.IShippingDiscountService;
+import org.jeecg.modules.business.service.ISkuPriceService;
+import org.jeecg.modules.business.service.ISkuService;
+import org.jeecg.modules.business.service.ISkuDeclaredValueService;
+import org.jeecg.modules.business.vo.SkuPage;
 import org.jeecg.modules.business.vo.StockUpdate;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
 import org.jeecgframework.poi.excel.entity.ExportParams;
 import org.jeecgframework.poi.excel.entity.ImportParams;
 import org.jeecgframework.poi.excel.view.JeecgEntityExcelView;
-import org.jeecg.common.system.vo.LoginUser;
-import org.apache.shiro.SecurityUtils;
-import org.jeecg.common.api.vo.Result;
-import org.jeecg.common.system.query.QueryGenerator;
-import org.jeecg.common.util.oConvertUtils;
-import org.jeecg.modules.business.entity.SkuPrice;
-import org.jeecg.modules.business.entity.ShippingDiscount;
-import org.jeecg.modules.business.entity.Sku;
-import org.jeecg.modules.business.vo.SkuPage;
-import org.jeecg.modules.business.service.ISkuService;
-import org.jeecg.modules.business.service.ISkuPriceService;
-import org.jeecg.modules.business.service.IShippingDiscountService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import lombok.extern.slf4j.Slf4j;
-import com.alibaba.fastjson.JSON;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import org.jeecg.common.aspect.annotation.AutoLog;
+import org.springframework.web.servlet.ModelAndView;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @Description: SKU表
  * @Author: jeecg-boot
- * @Date: 2021-04-03
- * @Version: V1.0
+ * @Date: 2021-06-28
+ * @Version: V1.1
  */
 @Api(tags = "SKU表")
 @RestController
 @RequestMapping("/business/sku")
 @Slf4j
 public class SkuController {
-    private final ISkuService skuService;
-    private final ISkuPriceService skuPriceService;
-    private final IShippingDiscountService shippingDiscountService;
-
     @Autowired
-    public SkuController(ISkuService skuService,
-                         ISkuPriceService skuPriceService,
-                         IShippingDiscountService shippingDiscountService) {
-        this.skuService = skuService;
-        this.skuPriceService = skuPriceService;
-        this.shippingDiscountService = shippingDiscountService;
-    }
+    private ISkuService skuService;
+    @Autowired
+    private ISkuPriceService skuPriceService;
+    @Autowired
+    private IShippingDiscountService shippingDiscountService;
+    @Autowired
+    private ISkuDeclaredValueService skuDeclaredValueService;
 
     /**
      * 分页列表查询
@@ -100,7 +94,7 @@ public class SkuController {
     public Result<?> add(@RequestBody SkuPage skuPage) {
         Sku sku = new Sku();
         BeanUtils.copyProperties(skuPage, sku);
-        skuService.saveMain(sku, skuPage.getSkuPriceList(), skuPage.getShippingDiscountList());
+        skuService.saveMain(sku, skuPage.getSkuPriceList(), skuPage.getShippingDiscountList(), skuPage.getSkuDeclaredValueList());
         return Result.OK("添加成功！");
     }
 
@@ -120,7 +114,7 @@ public class SkuController {
         if (skuEntity == null) {
             return Result.error("未找到对应数据");
         }
-        skuService.updateMain(sku, skuPage.getSkuPriceList(), skuPage.getShippingDiscountList());
+        skuService.updateMain(sku, skuPage.getSkuPriceList(), skuPage.getShippingDiscountList(), skuPage.getSkuDeclaredValueList());
         return Result.OK("编辑成功!");
     }
 
@@ -205,6 +199,23 @@ public class SkuController {
     }
 
     /**
+     * 通过id查询
+     *
+     * @param id
+     * @return
+     */
+    @AutoLog(value = "SKU申报价格-通过主表ID查询")
+    @ApiOperation(value = "SKU申报价格-通过主表ID查询", notes = "SKU申报价格-通过主表ID查询")
+    @GetMapping(value = "/querySkuDeclaredValueByMainId")
+    public Result<?> querySkuDeclaredValueListByMainId(@RequestParam(name = "id", required = true) String id) {
+        List<SkuDeclaredValue> skuDeclaredValueList = skuDeclaredValueService.selectByMainId(id);
+        IPage<SkuDeclaredValue> page = new Page<>();
+        page.setRecords(skuDeclaredValueList);
+        page.setTotal(skuDeclaredValueList.size());
+        return Result.OK(page);
+    }
+
+    /**
      * 导出excel
      *
      * @param request
@@ -237,6 +248,8 @@ public class SkuController {
             vo.setSkuPriceList(skuPriceList);
             List<ShippingDiscount> shippingDiscountList = shippingDiscountService.selectByMainId(main.getId());
             vo.setShippingDiscountList(shippingDiscountList);
+            List<SkuDeclaredValue> skuDeclaredValueList = skuDeclaredValueService.selectByMainId(main.getId());
+            vo.setSkuDeclaredValueList(skuDeclaredValueList);
             pageList.add(vo);
         }
 
@@ -271,7 +284,7 @@ public class SkuController {
                 for (SkuPage page : list) {
                     Sku po = new Sku();
                     BeanUtils.copyProperties(page, po);
-                    skuService.saveMain(po, page.getSkuPriceList(), page.getShippingDiscountList());
+                    skuService.saveMain(po, page.getSkuPriceList(), page.getShippingDiscountList(), page.getSkuDeclaredValueList());
                 }
                 return Result.OK("文件导入成功！数据行数:" + list.size());
             } catch (Exception e) {

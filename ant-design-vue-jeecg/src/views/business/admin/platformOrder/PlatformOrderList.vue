@@ -132,6 +132,7 @@
   import { JeecgListMixin } from '@/mixins/JeecgListMixin'
   import PlatformOrderModal from './modules/PlatformOrderModal'
   import PlatformOrderContentSubTable from './subTables/PlatformOrderContentSubTable'
+  import {filterMultiDictText} from '@/components/dict/JDictSelectUtil'
   import '@/assets/less/TableExpand.less'
 
   export default {
@@ -174,6 +175,11 @@
             dataIndex: 'platformOrderNumber',
           },
           {
+            title: 'ERP内订单ID',
+            align: 'center',
+            dataIndex: 'erpOrderId',
+          },
+          {
             title: '物流跟踪号',
             align: 'center',
             dataIndex: 'trackingNumber',
@@ -214,9 +220,19 @@
             dataIndex: 'shippingInvoiceNumber_dictText'
           },
           {
-            title: '状态',
+            title: '采购状态',
             align: 'center',
-            dataIndex: 'status_dictText',
+            dataIndex: 'status',
+          },
+          {
+            title: '合并订单目标订单ID',
+            align: 'center',
+            dataIndex: 'target',
+          },
+          {
+            title: 'ERP中状态',
+            align: 'center',
+            dataIndex: 'erpStatus',
           },
           {
             title: '操作',
@@ -264,15 +280,18 @@
         fieldList.push({type:'sel_search',value:'logisticChannelName',text:'物流渠道',dictTable:'logistic_channel', dictText:'zh_name', dictCode:'zh_name'})
         fieldList.push({type:'string',value:'platformOrderId',text:'平台订单号码',dictCode:''})
         fieldList.push({type:'string',value:'platformOrderNumber',text:'平台订单交易号',dictCode:''})
+        fieldList.push({type:'string',value:'erpOrderId',text:'ERP内订单ID',dictCode:''})
         fieldList.push({type:'string',value:'trackingNumber',text:'物流跟踪号',dictCode:''})
         fieldList.push({type:'date',value:'orderTime',text:'订单交易时间'})
         fieldList.push({type:'date',value:'shippingTime',text:'订单发货时间'})
-        fieldList.push({type:'string',value:'recepient',text:'订单收件人',dictCode:''})
+        fieldList.push({type:'string',value:'recipient',text:'订单收件人',dictCode:''})
         fieldList.push({type:'string',value:'country',text:'订单收件人国家',dictCode:''})
         fieldList.push({type:'string',value:'postcode',text:'订单收件人邮编',dictCode:''})
         fieldList.push({type:'BigDecimal',value:'fretFee',text:'物流挂号费',dictCode:''})
         fieldList.push({type:'sel_search',value:'shippingInvoiceNumber',text:'物流发票号',dictTable:'shipping_invoice', dictText:'invoice_number', dictCode:'id'})
-        fieldList.push({type:'sel_search',value:'status',text:'状态',dictTable:'sku_status', dictText:'status_text', dictCode:'status_code'})
+        fieldList.push({type:'string',value:'status',text:'采购状态',dictCode:''})
+        fieldList.push({type:'string',value:'target',text:'合并订单目标订单ID',dictCode:''})
+        fieldList.push({type:'string',value:'erpStatus',text:'ERP中状态',dictCode:''})
         this.superFieldList = fieldList
       }
     }

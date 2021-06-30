@@ -18,8 +18,8 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * @Description: 客户
  * @Author: jeecg-boot
- * @Date:   2021-04-02
- * @Version: V1.0
+ * @Date:   2021-06-29
+ * @Version: V1.1
  */
 @Data
 @ApiModel(value="clientPage对象", description="客户")
@@ -32,7 +32,7 @@ public class ClientPage {
 	@ApiModelProperty(value = "创建人")
     private java.lang.String createBy;
 	/**创建日期*/
-	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(timezone = "GMT+2",pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
 	@ApiModelProperty(value = "创建日期")
     private java.util.Date createTime;
@@ -40,7 +40,7 @@ public class ClientPage {
 	@ApiModelProperty(value = "更新人")
     private java.lang.String updateBy;
 	/**更新日期*/
-	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(timezone = "GMT+2",pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
 	@ApiModelProperty(value = "更新日期")
     private java.util.Date updateTime;
@@ -89,7 +89,8 @@ public class ClientPage {
 	@ApiModelProperty(value = "城市")
     private java.lang.String city;
 	/**国家*/
-	@Excel(name = "国家", width = 15)
+	@Excel(name = "国家", width = 15, dictTable = "country", dicText = "name_en", dicCode = "id")
+    @Dict(dictTable = "country", dicText = "name_en", dicCode = "id")
 	@ApiModelProperty(value = "国家")
     private java.lang.String country;
 	/**货币*/
@@ -112,7 +113,15 @@ public class ClientPage {
 	@Excel(name = "账户余额", width = 15)
 	@ApiModelProperty(value = "账户余额")
     private java.math.BigDecimal balance;
-	
+	/**IOSS号码*/
+	@Excel(name = "IOSS号码", width = 15)
+	@ApiModelProperty(value = "IOSS号码")
+    private java.lang.String iossNumber;
+	/**VAT代缴比例*/
+	@Excel(name = "VAT代缴比例", width = 15)
+	@ApiModelProperty(value = "VAT代缴比例")
+    private java.math.BigDecimal vatPercentage;
+
 	@ExcelCollection(name="店铺")
 	@ApiModelProperty(value = "店铺")
 	private List<Shop> shopList;

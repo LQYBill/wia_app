@@ -11,7 +11,7 @@
             v-model="form.country">
 
           <a-select-option :value="item.code" v-for="item in countries" :key="item.code">
-            {{ item.code + "-" + item.zh_name + "-" + item.en_name }}
+            {{ item.code + "-" + item.nameZh + "-" + item.nameEn }}
           </a-select-option>
         </a-select>
       </a-form-model-item>

@@ -4,44 +4,15 @@
     <div class="table-page-search-wrapper">
       <a-form layout="inline" @keyup.enter.native="searchQuery">
         <a-row :gutter="24">
-          <a-col :xl="6" :lg="7" :md="8" :sm="24">
-            <a-form-item label="product name">
-              <a-input placeholder="请输入product name" v-model="queryParam.name"></a-input>
-            </a-form-item>
-          </a-col>
-          <a-col :xl="10" :lg="11" :md="12" :sm="24">
-            <a-form-item label="create time">
-              <j-date :show-time="true" date-format="YYYY-MM-DD HH:mm:ss" placeholder="请选择开始时间" class="query-group-cust" v-model="queryParam.createTime_begin"></j-date>
-              <span class="query-group-split-cust"></span>
-              <j-date :show-time="true" date-format="YYYY-MM-DD HH:mm:ss" placeholder="请选择结束时间" class="query-group-cust" v-model="queryParam.createTime_end"></j-date>
-            </a-form-item>
-          </a-col>
-          <template v-if="toggleSearchStatus">
-            <a-col :xl="6" :lg="7" :md="8" :sm="24">
-              <a-form-item label="status">
-                <a-input placeholder="请输入status" v-model="queryParam.status"></a-input>
-              </a-form-item>
-            </a-col>
-          </template>
-          <a-col :xl="6" :lg="7" :md="8" :sm="24">
-            <span style="float: left;overflow: hidden;" class="table-page-search-submitButtons">
-              <a-button type="primary" @click="searchQuery" icon="search">查询</a-button>
-              <a-button type="primary" @click="searchReset" icon="reload" style="margin-left: 8px">重置</a-button>
-              <a @click="handleToggleSearch" style="margin-left: 8px">
-                {{ toggleSearchStatus ? '收起' : '展开' }}
-                <a-icon :type="toggleSearchStatus ? 'up' : 'down'"/>
-              </a>
-            </span>
-          </a-col>
         </a-row>
       </a-form>
     </div>
     <!-- 查询区域-END -->
-    
+
     <!-- 操作按钮区域 -->
     <div class="table-operator">
       <a-button @click="handleAdd" type="primary" icon="plus">新增</a-button>
-      <a-button type="primary" icon="download" @click="handleExportXls('Request Order')">导出</a-button>
+      <a-button type="primary" icon="download" @click="handleExportXls('汇率表')">导出</a-button>
       <a-upload name="file" :showUploadList="false" :multiple="false" :headers="tokenHeader" :action="importExcelUrl" @change="handleImportExcel">
         <a-button type="primary" icon="import">导入</a-button>
       </a-upload>
@@ -65,15 +36,15 @@
       <a-table
         ref="table"
         size="middle"
+        :scroll="{x:true}"
         bordered
         rowKey="id"
-        class="j-table-force-nowrap"
-        :scroll="{x:true}"
         :columns="columns"
         :dataSource="dataSource"
         :pagination="ipagination"
         :loading="loading"
         :rowSelection="{selectedRowKeys: selectedRowKeys, onChange: onSelectChange}"
+        class="j-table-force-nowrap"
         @change="handleTableChange">
 
         <template slot="htmlSlot" slot-scope="text">
@@ -118,25 +89,27 @@
       </a-table>
     </div>
 
-    <request-order-modal ref="modalForm" @ok="modalFormOk"/>
+    <exchange-rates-modal ref="modalForm" @ok="modalFormOk"></exchange-rates-modal>
   </a-card>
 </template>
 
 <script>
 
-  import { JeecgListMixin } from '@/mixins/JeecgListMixin'
-  import RequestOrderModal from './modules/RequestOrderModal'
   import '@/assets/less/TableExpand.less'
+  import { mixinDevice } from '@/utils/mixin'
+  import { JeecgListMixin } from '@/mixins/JeecgListMixin'
+  import ExchangeRatesModal from './modules/ExchangeRatesModal'
+  import {filterMultiDictText} from '@/components/dict/JDictSelectUtil'
 
   export default {
-    name: "RequestOrderList",
-    mixins:[JeecgListMixin],
+    name: 'ExchangeRatesList',
+    mixins:[JeecgListMixin, mixinDevice],
     components: {
-      RequestOrderModal
+      ExchangeRatesModal
     },
     data () {
       return {
-        description: 'Request Order管理页面',
+        description: '汇率表管理页面',
         // 表头
         columns: [
           {
@@ -150,29 +123,32 @@
             }
           },
           {
-            title:'product name',
+            title:'汇率对代码',
             align:"center",
-            dataIndex: 'name'
+            dataIndex: 'code'
           },
           {
-            title:'create time',
+            title:'初始币种',
             align:"center",
-            dataIndex: 'createTime'
+            dataIndex: 'originalCurrency_dictText'
           },
           {
-            title:'status',
+            title:'目标币种',
             align:"center",
-            dataIndex: 'status'
+            dataIndex: 'targetCurrency_dictText'
           },
           {
-            title:'quantity',
+            title:'汇率(1初始币种=？目标币种)',
             align:"center",
-            dataIndex: 'quantity'
+            dataIndex: 'rate'
           },
           {
-            title:'destination country',
+            title:'生效时间',
             align:"center",
-            dataIndex: 'destination_dictText'
+            dataIndex: 'effectiveDate',
+            customRender:function (text) {
+              return !text?"":(text.length>10?text.substr(0,10):text)
+            }
           },
           {
             title: '操作',
@@ -180,15 +156,15 @@
             align:"center",
             fixed:"right",
             width:147,
-            scopedSlots: { customRender: 'action' },
+            scopedSlots: { customRender: 'action' }
           }
         ],
         url: {
-          list: "/order/requestOrder/list",
-          delete: "/order/requestOrder/delete",
-          deleteBatch: "/order/requestOrder/deleteBatch",
-          exportXlsUrl: "/order/requestOrder/exportXls",
-          importExcelUrl: "order/requestOrder/importExcel",
+          list: "/exchange_rates/exchangeRates/list",
+          delete: "/exchange_rates/exchangeRates/delete",
+          deleteBatch: "/exchange_rates/exchangeRates/deleteBatch",
+          exportXlsUrl: "/exchange_rates/exchangeRates/exportXls",
+          importExcelUrl: "exchange_rates/exchangeRates/importExcel",
           
         },
         dictOptions:{},
@@ -196,35 +172,23 @@
       }
     },
     created() {
-      this.getSuperFieldList();
+    this.getSuperFieldList();
     },
     computed: {
       importExcelUrl: function(){
         return `${window._CONFIG['domainURL']}/${this.url.importExcelUrl}`;
-      }
+      },
     },
     methods: {
       initDictConfig(){
       },
       getSuperFieldList(){
         let fieldList=[];
-         fieldList.push({type:'string',value:'name',text:'product name',dictCode:''})
-         fieldList.push({type:'string',value:'createBy',text:'client name',dictCode:''})
-         fieldList.push({type:'datetime',value:'createTime',text:'create time'})
-         fieldList.push({type:'int',value:'status',text:'status',dictCode:''})
-         fieldList.push({type:'string',value:'url1',text:'url 1',dictCode:''})
-         fieldList.push({type:'string',value:'url2',text:'url 2',dictCode:''})
-         fieldList.push({type:'string',value:'url3',text:'url 3',dictCode:''})
-         fieldList.push({type:'string',value:'image',text:'image',dictCode:''})
-         fieldList.push({type:'Text',value:'description',text:'description',dictCode:''})
-         fieldList.push({type:'int',value:'quantity',text:'quantity',dictCode:''})
-         fieldList.push({type:'double',value:'unitPrice',text:'unit price',dictCode:''})
-         fieldList.push({type:'double',value:'unitShipfee',text:'unit shipfee',dictCode:''})
-         fieldList.push({type:'list_multi',value:'destination',text:'destination country',dictTable:'', dictText:'', dictCode:''})
-         fieldList.push({type:'Text',value:'comment',text:'comment',dictCode:''})
-         fieldList.push({type:'string',value:'file1',text:'file 1',dictCode:''})
-         fieldList.push({type:'string',value:'file2',text:'file 2',dictCode:''})
-         fieldList.push({type:'string',value:'file3',text:'file 3',dictCode:''})
+        fieldList.push({type:'string',value:'code',text:'汇率对代码',dictCode:''})
+        fieldList.push({type:'string',value:'originalCurrency',text:'初始币种',dictCode:'currency,zh_name,code'})
+        fieldList.push({type:'string',value:'targetCurrency',text:'目标币种',dictCode:'currency,zh_name,code'})
+        fieldList.push({type:'BigDecimal',value:'rate',text:'汇率(1初始币种=？目标币种)',dictCode:''})
+        fieldList.push({type:'date',value:'effectiveDate',text:'生效时间'})
         this.superFieldList = fieldList
       }
     }

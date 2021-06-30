@@ -2,14 +2,8 @@ package org.jeecg.modules.business.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.jeecg.modules.business.entity.Client;
-import org.jeecg.modules.business.entity.ShippingDiscount;
-import org.jeecg.modules.business.entity.Sku;
-import org.jeecg.modules.business.entity.SkuPrice;
-import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
-import org.jeecg.modules.business.mapper.ShippingDiscountMapper;
-import org.jeecg.modules.business.mapper.SkuMapper;
-import org.jeecg.modules.business.mapper.SkuPriceMapper;
+import org.jeecg.modules.business.entity.*;
+import org.jeecg.modules.business.mapper.*;
 import org.jeecg.modules.business.service.IClientService;
 import org.jeecg.modules.business.service.ISkuService;
 import org.jeecg.modules.business.vo.SkuQuantity;
@@ -26,29 +20,28 @@ import java.util.stream.Collectors;
 /**
  * @Description: SKU表
  * @Author: jeecg-boot
- * @Date: 2021-04-01
- * @Version: V1.0
+ * @Date: 2021-06-28
+ * @Version: V1.1
  */
 @Service
 public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuService {
 
     @Autowired
     private SkuMapper skuMapper;
-
     @Autowired
     private SkuPriceMapper skuPriceMapper;
     @Autowired
     private ShippingDiscountMapper shippingDiscountMapper;
-
+    @Autowired
+    private SkuDeclaredValueMapper skuDeclaredValueMapper;
     @Autowired
     private IClientService clientService;
-
     @Autowired
     private PlatformOrderContentMapper platformOrderContentMapper;
 
     @Override
     @Transactional
-    public void saveMain(Sku sku, List<SkuPrice> skuPriceList, List<ShippingDiscount> shippingDiscountList) {
+    public void saveMain(Sku sku, List<SkuPrice> skuPriceList, List<ShippingDiscount> shippingDiscountList, List<SkuDeclaredValue> skuDeclaredValueList) {
         skuMapper.insert(sku);
         if (skuPriceList != null && skuPriceList.size() > 0) {
             for (SkuPrice entity : skuPriceList) {
@@ -64,16 +57,24 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
                 shippingDiscountMapper.insert(entity);
             }
         }
+        if (skuDeclaredValueList != null && skuDeclaredValueList.size() > 0) {
+            for (SkuDeclaredValue entity : skuDeclaredValueList) {
+                //外键设置
+                entity.setSkuId(sku.getId());
+                skuDeclaredValueMapper.insert(entity);
+            }
+        }
     }
 
     @Override
     @Transactional
-    public void updateMain(Sku sku, List<SkuPrice> skuPriceList, List<ShippingDiscount> shippingDiscountList) {
+    public void updateMain(Sku sku, List<SkuPrice> skuPriceList, List<ShippingDiscount> shippingDiscountList, List<SkuDeclaredValue> skuDeclaredValueList) {
         skuMapper.updateById(sku);
 
         //1.先删除子表数据
         skuPriceMapper.deleteByMainId(sku.getId());
         shippingDiscountMapper.deleteByMainId(sku.getId());
+        skuDeclaredValueMapper.deleteByMainId(sku.getId());
 
         //2.子表数据重新插入
         if (skuPriceList != null && skuPriceList.size() > 0) {
@@ -90,6 +91,13 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
                 shippingDiscountMapper.insert(entity);
             }
         }
+        if (skuDeclaredValueList != null && skuDeclaredValueList.size() > 0) {
+            for (SkuDeclaredValue entity : skuDeclaredValueList) {
+                //外键设置
+                entity.setSkuId(sku.getId());
+                skuDeclaredValueMapper.insert(entity);
+            }
+        }
     }
 
     @Override
@@ -97,6 +105,7 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
     public void delMain(String id) {
         skuPriceMapper.deleteByMainId(id);
         shippingDiscountMapper.deleteByMainId(id);
+        skuDeclaredValueMapper.deleteByMainId(id);
         skuMapper.deleteById(id);
     }
 
@@ -106,6 +115,7 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
         for (Serializable id : idList) {
             skuPriceMapper.deleteByMainId(id.toString());
             shippingDiscountMapper.deleteByMainId(id.toString());
+            skuDeclaredValueMapper.deleteByMainId(id.toString());
             skuMapper.deleteById(id);
         }
     }

@@ -19,8 +19,8 @@ import java.util.Objects;
 /**
  * @Description: 平台订单内容
  * @Author: jeecg-boot
- * @Date: 2021-04-08
- * @Version: V1.0
+ * @Date: 2021-06-29
+ * @Version: V1.1
  */
 @ApiModel(value = "platform_order对象", description = "平台订单表")
 @Data
@@ -97,12 +97,24 @@ public class PlatformOrderContent implements Serializable {
     @ApiModelProperty(value = "服务总费用")
     private java.math.BigDecimal serviceFee;
     /**
-     * sku状态
+     * 增值税
+     */
+    @Excel(name = "增值税", width = 15)
+    @ApiModelProperty(value = "增值税")
+    private java.math.BigDecimal vat;
+    /**
+     * SKU采购状态
      */
     @ApiModelProperty(value = "SKU 状态")
-    @Excel(name = "SKU 状态", width = 15, dictTable = "sku_status", dicText = "status_text", dicCode = "status_code")
+    @Excel(name = "SKU采购状态", width = 15, dictTable = "sku_status", dicText = "status_text", dicCode = "status_code")
     @Dict(dictTable = "sku_status", dicText = "status_text", dicCode = "status_code")
     private Integer status;
+    /**
+     * ERP中状态
+     */
+    @Excel(name = "ERP中状态", width = 15)
+    @ApiModelProperty(value = "ERP中状态")
+    private java.lang.String erpStatus;
 
     @Override
     public boolean equals(Object o) {
@@ -118,6 +130,9 @@ public class PlatformOrderContent implements Serializable {
     }
 
     public BigDecimal getTotalFee() {
-        return serviceFee.add(shippingFee).add(purchaseFee);
+        return serviceFee
+                .add(shippingFee)
+                .add(vat)
+                .add(purchaseFee == null ? BigDecimal.ZERO : purchaseFee);
     }
 }

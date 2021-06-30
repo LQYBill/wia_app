@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.jeecg.modules.business.mapper.SkuDeclaredValueMapper">
+
+    <delete id="deleteByMainId" parameterType="java.lang.String">
+        DELETE
+        FROM sku_declared_value
+        WHERE sku_id = #{mainId}    </delete>
+
+    <select id="selectByMainId" parameterType="java.lang.String"
+            resultType="org.jeecg.modules.business.entity.SkuDeclaredValue">
+        SELECT *
+        FROM sku_declared_value
+        WHERE sku_id = #{mainId}    </select>
+
+    <select id="getDeclaredValueForDate" resultType="java.math.BigDecimal">
+        SELECT sdv.declared_value
+        FROM sku_declared_value sdv
+                 JOIN sku s ON sdv.sku_id = s.id
+        WHERE sku_id = #{skuId}
+          AND effective_date &lt;= #{date}
+        ORDER BY effective_date DESC
+        LIMIT 1    </select>
+</mapper>

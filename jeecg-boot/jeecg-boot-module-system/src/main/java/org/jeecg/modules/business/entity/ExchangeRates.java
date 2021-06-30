@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
 import org.jeecg.common.aspect.annotation.Dict;
 import org.jeecgframework.poi.excel.annotation.Excel;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -14,15 +16,17 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.io.Serializable;
 
 /**
- * @Description: SKU表
+ * @Description: 汇率表
  * @Author: jeecg-boot
- * @Date: 2021-05-08
+ * @Date: 2021-06-26
  * @Version: V1.0
  */
-@ApiModel(value = "sku对象", description = "SKU表")
 @Data
-@TableName("sku")
-public class Sku implements Serializable {
+@TableName("exchange_rates")
+@Accessors(chain = true)
+@EqualsAndHashCode(callSuper = false)
+@ApiModel(value = "exchange_rates对象", description = "汇率表")
+public class ExchangeRates implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
@@ -56,34 +60,37 @@ public class Sku implements Serializable {
     @ApiModelProperty(value = "更新日期")
     private java.util.Date updateTime;
     /**
-     * 商品ID
+     * 汇率对代码
      */
-    @Excel(name = "商品ID", width = 15, dictTable = "product", dicText = "code", dicCode = "id")
-    @Dict(dictTable = "product", dicText = "code", dicCode = "id")
-    @ApiModelProperty(value = "商品ID")
-    private java.lang.String productId;
+    @Excel(name = "汇率对代码", width = 15)
+    @ApiModelProperty(value = "汇率对代码")
+    private java.lang.String code;
     /**
-     * ERP中商品代码
+     * 初始币种
      */
-    @Excel(name = "ERP中商品代码", width = 15)
-    @ApiModelProperty(value = "ERP中商品代码")
-    private java.lang.String erpCode;
+    @Excel(name = "初始币种", width = 15, dictTable = "currency", dicText = "zh_name", dicCode = "code")
+    @Dict(dictTable = "currency", dicText = "zh_name", dicCode = "code")
+    @ApiModelProperty(value = "初始币种")
+    private java.lang.String originalCurrency;
     /**
-     * 库存数量
+     * 目标币种
      */
-    @Excel(name = "库存数量", width = 15)
-    @ApiModelProperty(value = "库存数量")
-    private java.lang.Integer availableAmount;
+    @Excel(name = "目标币种", width = 15, dictTable = "currency", dicText = "zh_name", dicCode = "code")
+    @Dict(dictTable = "currency", dicText = "zh_name", dicCode = "code")
+    @ApiModelProperty(value = "目标币种")
+    private java.lang.String targetCurrency;
     /**
-     * 在途数量
+     * 汇率(1初始币种=？目标币种)
      */
-    @Excel(name = "在途数量", width = 15)
-    @ApiModelProperty(value = "在途数量")
-    private java.lang.Integer purchasingAmount;
+    @Excel(name = "汇率(1初始币种=？目标币种)", width = 15)
+    @ApiModelProperty(value = "汇率(1初始币种=？目标币种)")
+    private java.math.BigDecimal rate;
     /**
-     * 图片链接
+     * 生效时间
      */
-    @Excel(name = "图片链接", width = 15)
-    @ApiModelProperty(value = "图片链接")
-    private java.lang.String imageSource;
+    @Excel(name = "生效时间", width = 15, format = "yyyy-MM-dd")
+    @JsonFormat(timezone = "GMT+2", pattern = "yyyy-MM-dd")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    @ApiModelProperty(value = "生效时间")
+    private java.util.Date effectiveDate;
 }

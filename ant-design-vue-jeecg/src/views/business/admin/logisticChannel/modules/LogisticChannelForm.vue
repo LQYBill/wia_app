@@ -90,7 +90,7 @@
             useVolumetricWeight:0,
         },
         // 新增时子表默认添加几行空数据
-        addDefaultRowNum: 1,
+        addDefaultRowNum: 0,
         validatorRules: {
            zhName: [
               { required: true, message: '请输入中文名称!'},

@@ -37,22 +37,25 @@ public class PlatformOrderMabangServiceImpl implements IPlatformOrderMabangServi
     public void saveOrderFromMabang(List<Order> orders) {
         List<OrderItem> allItems = new ArrayList<>();
         for (Order order : orders) {
+            order.resolveStatus();
             order.getOrderItems().forEach(item -> {
                 item.setPlatformOrderId(order.getId());
+                item.setErpStatus(order.getStatus());
             });
             allItems.addAll(order.getOrderItems());
         }
         try{
             if (orders.size() != 0) {
+                log.trace("{} orders to be inserted/updated.", orders.size());
                 platformOrderMabangMapper.insertOrdersFromMabang(orders);
             }
             if (allItems.size() != 0) {
-                platformOrderMabangMapper.insertOrderItemsFromMabang(allItems); }
-        }catch (RuntimeException e){
-            log.error(e.getLocalizedMessage());
+                platformOrderMabangMapper.insertOrderItemsFromMabang(allItems);
+                log.trace("{} order items to be inserted/updated.", allItems.size());
+            }
+        } catch (RuntimeException e){
             log.error(e.getLocalizedMessage());
         }
-
     }
 
     @Override
