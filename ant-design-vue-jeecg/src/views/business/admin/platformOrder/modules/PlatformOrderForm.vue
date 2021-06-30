@@ -25,6 +25,11 @@
             </a-form-model-item>
           </a-col>
           <a-col :xs="24" :sm="12">
+            <a-form-model-item label="ERP内订单ID" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="erpOrderId">
+              <a-input v-model="model.erpOrderId" placeholder="请输入ERP内订单ID" ></a-input>
+            </a-form-model-item>
+          </a-col>
+          <a-col :xs="24" :sm="12">
             <a-form-model-item label="物流跟踪号" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="trackingNumber">
               <a-input v-model="model.trackingNumber" placeholder="请输入物流跟踪号" ></a-input>
             </a-form-model-item>
@@ -40,8 +45,8 @@
             </a-form-model-item>
           </a-col>
           <a-col :xs="24" :sm="12">
-            <a-form-model-item label="订单收件人" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="recepient">
-              <a-input v-model="model.recepient" placeholder="请输入订单收件人" ></a-input>
+            <a-form-model-item label="订单收件人" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="recipient">
+              <a-input v-model="model.recipient" placeholder="请输入订单收件人" ></a-input>
             </a-form-model-item>
           </a-col>
           <a-col :xs="24" :sm="12">
@@ -65,8 +70,18 @@
             </a-form-model-item>
           </a-col>
           <a-col :xs="24" :sm="12">
-            <a-form-model-item label="状态" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="status">
-              <j-search-select-tag v-model="model.status" dict="sku_status,status_text,status_code" />
+            <a-form-model-item label="采购状态" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="status">
+              <a-input v-model="model.status" placeholder="请输入采购状态" ></a-input>
+            </a-form-model-item>
+          </a-col>
+          <a-col :xs="24" :sm="12">
+            <a-form-model-item label="合并订单目标订单ID" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="target">
+              <a-input v-model="model.target" placeholder="请输入合并订单目标订单ID" ></a-input>
+            </a-form-model-item>
+          </a-col>
+          <a-col :xs="24" :sm="12">
+            <a-form-model-item label="ERP中状态" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="erpStatus">
+              <a-input v-model="model.erpStatus" placeholder="请输入ERP中状态" ></a-input>
             </a-form-model-item>
           </a-col>
         </a-row>
@@ -123,6 +138,27 @@
         model:{
         },
         validatorRules: {
+           shopId: [
+              { required: true, message: '请输入店铺ID!'},
+           ],
+           platformOrderId: [
+              { required: true, message: '请输入平台订单号码!'},
+           ],
+           platformOrderNumber: [
+              { required: true, message: '请输入平台订单交易号!'},
+           ],
+           orderTime: [
+              { required: true, message: '请输入订单交易时间!'},
+           ],
+           recipient: [
+              { required: true, message: '请输入订单收件人!'},
+           ],
+           country: [
+              { required: true, message: '请输入订单收件人国家!'},
+           ],
+           postcode: [
+              { required: true, message: '请输入订单收件人邮编!'},
+           ],
         },
         // 新增时子表默认添加几行空数据
         addDefaultRowNum: 1,
@@ -185,10 +221,25 @@
               defaultValue:'',
             },
             {
-              title: 'SKU 状态',
+              title: '增值税',
+              key: 'vat',
+              type: FormTypes.input,
+              width:"200px",
+              placeholder: '请输入${title}',
+              defaultValue:'',
+            },
+            {
+              title: 'SKU采购状态',
               key: 'status',
-              type: FormTypes.sel_search,
-              dictCode:"sku_status,status_text,status_code",
+              type: FormTypes.input,
+              width:"200px",
+              placeholder: '请输入${title}',
+              defaultValue:'',
+            },
+            {
+              title: 'ERP中状态',
+              key: 'erpStatus',
+              type: FormTypes.input,
               width:"200px",
               placeholder: '请输入${title}',
               defaultValue:'',
@@ -196,10 +247,10 @@
           ]
         },
         url: {
-          add: "/business/platformOrder/add",
-          edit: "/business/platformOrder/edit",
+          add: "/po/platformOrder/add",
+          edit: "/po/platformOrder/edit",
           platformOrderContent: {
-            list: '/business/platformOrder/queryPlatformOrderContentByMainId'
+            list: '/po/platformOrder/queryPlatformOrderContentByMainId'
           },
         }
       }

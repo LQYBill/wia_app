@@ -17,8 +17,8 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * @Description: 平台订单表
  * @Author: jeecg-boot
- * @Date:   2021-04-08
- * @Version: V1.0
+ * @Date:   2021-06-29
+ * @Version: V1.1
  */
 @Data
 @ApiModel(value="platform_orderPage对象", description="平台订单表")
@@ -61,6 +61,10 @@ public class PlatformOrderPage {
 	@Excel(name = "平台订单交易号", width = 15)
 	@ApiModelProperty(value = "平台订单交易号")
     private String platformOrderNumber;
+	/**ERP内订单ID*/
+	@Excel(name = "ERP内订单ID", width = 15)
+	@ApiModelProperty(value = "ERP内订单ID")
+    private String erpOrderId;
 	/**物流跟踪号*/
 	@Excel(name = "物流跟踪号", width = 15)
 	@ApiModelProperty(value = "物流跟踪号")
@@ -98,11 +102,18 @@ public class PlatformOrderPage {
     @Dict(dictTable = "shipping_invoice", dicText = "invoice_number", dicCode = "id")
 	@ApiModelProperty(value = "物流发票号")
     private String shippingInvoiceNumber;
-	/**状态*/
-	@Excel(name = "状态", width = 15, dictTable = "sku_status", dicText = "status_text", dicCode = "status_code")
-	@Dict(dictTable = "sku_status", dicText = "status_text", dicCode = "status_code")
-	@ApiModelProperty(value = "状态")
-    private Integer status;
+	/**采购状态*/
+	@Excel(name = "采购状态", width = 15)
+	@ApiModelProperty(value = "采购状态")
+	private String status;
+	/**合并订单目标订单ID*/
+	@Excel(name = "合并订单目标订单ID", width = 15)
+	@ApiModelProperty(value = "合并订单目标订单ID")
+	private String target;
+	/**ERP中状态*/
+	@Excel(name = "ERP中状态", width = 15)
+	@ApiModelProperty(value = "ERP中状态")
+	private String erpStatus;
 	
 	@ExcelCollection(name="平台订单内容")
 	@ApiModelProperty(value = "平台订单内容")
