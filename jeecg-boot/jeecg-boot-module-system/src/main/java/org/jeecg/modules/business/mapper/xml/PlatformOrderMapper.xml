@@ -146,6 +146,7 @@
     <select id="findPreviousInvoice" resultType="java.lang.String">
         SELECT shipping_invoice_number
         FROM platform_order
+        WHERE shipping_invoice_number IS NOT NULL
         ORDER BY shipping_invoice_number DESC
         LIMIT 1
     </select>

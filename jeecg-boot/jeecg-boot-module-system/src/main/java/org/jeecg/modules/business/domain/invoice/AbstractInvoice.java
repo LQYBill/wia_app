@@ -2,6 +2,7 @@ package org.jeecg.modules.business.domain.invoice;
 
 import cn.hutool.poi.excel.ExcelUtil;
 import cn.hutool.poi.excel.ExcelWriter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.jeecg.modules.business.entity.Client;
@@ -12,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 public abstract class AbstractInvoice<E, F, G, H, I> {
     protected final Client targetClient;
 
@@ -129,7 +131,7 @@ public abstract class AbstractInvoice<E, F, G, H, I> {
         for (int i = 0; i < data.size(); i++) {
             lineNum = i + FIRST_ROW;
             rowValue = data.get(i);
-
+            log.info("Writing line {} with data {}", lineNum, rowValue);
             configCell("C", lineNum, String.format("%06d", i + 1), factory.leftSideStyle());
             configCell("D", lineNum, rowValue.getCol1(), factory.leftSideStyle());
             configCell("E", lineNum, rowValue.getCol2(), factory.rightSideStyle());

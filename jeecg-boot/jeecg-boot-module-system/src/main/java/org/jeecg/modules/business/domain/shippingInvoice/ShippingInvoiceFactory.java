@@ -101,14 +101,20 @@ public class ShippingInvoiceFactory {
         );
         // find orders and their contents of the invoice
         Map<PlatformOrder, List<PlatformOrderContent>> uninvoicedOrderToContent = platformOrderService.findUninvoicedOrders(shopIds, begin, end);
+        log.info("Orders to be invoiced: {}", uninvoicedOrderToContent);
         if (uninvoicedOrderToContent == null) {
             throw new UserException("None platform order in the selected period!");
         }
         Client client = clientMapper.selectById(customerId);
         String invoiceCode = generateInvoiceCode();
+        log.info("New invoice code: {}", invoiceCode);
         // find logistic channel price for each order based on its content
         for (PlatformOrder uninvoicedOrder : uninvoicedOrderToContent.keySet()) {
             List<PlatformOrderContent> contents = uninvoicedOrderToContent.get(uninvoicedOrder);
+            if (contents.size() == 0) {
+                throw new UserException("Order: {} doesn't have content", uninvoicedOrder.getPlatformOrderId());
+            }
+            log.info("Searching price for {} of order {}", contents, uninvoicedOrder);
             Map<String, Integer> contentMap = new HashMap<>();
             for (PlatformOrderContent content : contents) {
                 contentMap.put(content.getSkuId(), content.getQuantity());

@@ -13,6 +13,7 @@ public class InvoiceStyleFactory {
     private CellStyle leftSideStyle;
     private CellStyle rightSideStyle;
     private CellStyle otherStyle;
+    private CellStyle subjectStyle;
 
     public InvoiceStyleFactory(Workbook workbook) {
         this.workbook = workbook;
@@ -76,20 +77,20 @@ public class InvoiceStyleFactory {
 
     public CellStyle subjectStyle(){
         // border
-        rightSideStyle = workbook.createCellStyle();
-        rightSideStyle.setBorderBottom(BorderStyle.THIN);
-        rightSideStyle.setBorderLeft(BorderStyle.THIN);
-        rightSideStyle.setBorderRight(BorderStyle.THIN);
-        rightSideStyle.setBorderTop(BorderStyle.THIN);
-        rightSideStyle.setAlignment(HorizontalAlignment.LEFT);
-        rightSideStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        subjectStyle = workbook.createCellStyle();
+        subjectStyle.setBorderBottom(BorderStyle.THIN);
+        subjectStyle.setBorderLeft(BorderStyle.THIN);
+        subjectStyle.setBorderRight(BorderStyle.THIN);
+        subjectStyle.setBorderTop(BorderStyle.THIN);
+        subjectStyle.setAlignment(HorizontalAlignment.LEFT);
+        subjectStyle.setVerticalAlignment(VerticalAlignment.CENTER);
         // font
         Font font = workbook.createFont();
         font.setFontName("Arial");
         font.setFontHeightInPoints((short) 11);
         font.setBold(true);
-        rightSideStyle.setFont(font);
-        return rightSideStyle;
+        subjectStyle.setFont(font);
+        return subjectStyle;
     }
 
     public CellStyle otherStyle() {
