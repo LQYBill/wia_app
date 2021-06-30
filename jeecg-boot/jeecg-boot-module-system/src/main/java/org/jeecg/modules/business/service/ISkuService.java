@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.jeecg.modules.business.entity.ShippingDiscount;
 import org.jeecg.modules.business.entity.Sku;
+import org.jeecg.modules.business.entity.SkuDeclaredValue;
 import org.jeecg.modules.business.entity.SkuPrice;
 import org.jeecg.modules.business.vo.SkuQuantity;
 import org.jeecg.modules.business.vo.StockUpdate;
@@ -16,8 +17,8 @@ import java.util.List;
 /**
  * @Description: SKU表
  * @Author: jeecg-boot
- * @Date: 2021-04-01
- * @Version: V1.0
+ * @Date: 2021-06-28
+ * @Version: V1.1
  */
 public interface ISkuService extends IService<Sku> {
 
@@ -26,12 +27,12 @@ public interface ISkuService extends IService<Sku> {
     /**
      * 添加一对多
      */
-    void saveMain(Sku sku, List<SkuPrice> skuPriceList, List<ShippingDiscount> shippingDiscountList);
+    public void saveMain(Sku sku,List<SkuPrice> skuPriceList,List<ShippingDiscount> shippingDiscountList,List<SkuDeclaredValue> skuDeclaredValueList) ;
 
     /**
      * 修改一对多
      */
-    void updateMain(Sku sku, List<SkuPrice> skuPriceList, List<ShippingDiscount> shippingDiscountList);
+    public void updateMain(Sku sku,List<SkuPrice> skuPriceList,List<ShippingDiscount> shippingDiscountList,List<SkuDeclaredValue> skuDeclaredValueList);
 
     /**
      * 删除一对多

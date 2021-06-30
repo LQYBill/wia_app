@@ -39,7 +39,7 @@ public class Sku implements Serializable {
     /**
      * 创建日期
      */
-    @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(timezone = "GMT+2", pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @ApiModelProperty(value = "创建日期")
     private java.util.Date createTime;
@@ -51,7 +51,7 @@ public class Sku implements Serializable {
     /**
      * 更新日期
      */
-    @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(timezone = "GMT+2", pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @ApiModelProperty(value = "更新日期")
     private java.util.Date updateTime;
@@ -59,7 +59,7 @@ public class Sku implements Serializable {
      * 商品ID
      */
     @Excel(name = "商品ID", width = 15, dictTable = "product", dicText = "code", dicCode = "id")
-    @Dict(dictTable = "product", dicText = "en_name", dicCode = "id")
+    @Dict(dictTable = "product", dicText = "code", dicCode = "id")
     @ApiModelProperty(value = "商品ID")
     private java.lang.String productId;
     /**
