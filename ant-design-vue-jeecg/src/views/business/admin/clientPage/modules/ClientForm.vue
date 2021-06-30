@@ -61,7 +61,7 @@
           </a-col>
           <a-col :xs="24" :sm="12">
             <a-form-model-item label="国家" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="country">
-              <a-input v-model="model.country" placeholder="请输入国家" ></a-input>
+              <j-search-select-tag v-model="model.country" dict="country,name_en,id" />
             </a-form-model-item>
           </a-col>
           <a-col :xs="24" :sm="12">
@@ -87,6 +87,16 @@
           <a-col :xs="24" :sm="12">
             <a-form-model-item label="账户余额" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="balance">
               <a-input-number v-model="model.balance" placeholder="请输入账户余额" style="width: 100%" />
+            </a-form-model-item>
+          </a-col>
+          <a-col :xs="24" :sm="12">
+            <a-form-model-item label="IOSS号码" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="iossNumber">
+              <a-input v-model="model.iossNumber" placeholder="请输入IOSS号码" ></a-input>
+            </a-form-model-item>
+          </a-col>
+          <a-col :xs="24" :sm="12">
+            <a-form-model-item label="VAT代缴比例" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="vatPercentage">
+              <a-input-number v-model="model.vatPercentage" placeholder="请输入VAT代缴比例" style="width: 100%" />
             </a-form-model-item>
           </a-col>
         </a-row>
@@ -163,6 +173,9 @@
            ],
            internalCode: [
               { required: true, message: '请输入简称!'},
+           ],
+           vatPercentage: [
+              { required: true, message: '请输入VAT代缴比例!'},
            ],
         },
         // 新增时子表默认添加几行空数据
