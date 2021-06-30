@@ -26,11 +26,11 @@ public class OrderListRequestTest {
                 .setStartDate(start)
                 .setEndDate(end);
 
-        OrderListRequest request = new OrderListRequest(body);
-        int count = 0;
+        OrderListRawStream rawStream = new OrderListRawStream(body);
+        OrderListStream stream = new OrderListStream(rawStream);
         List<Order> orders = new ArrayList<>();
-        while (request.hasNext()) {
-            orders.add(request.next());
+        while (stream.hasNext()) {
+            orders.add(stream.next());
         }
 
         System.out.println(orders.size());
@@ -49,10 +49,11 @@ public class OrderListRequestTest {
                 .setDatetimeType(DateType.PAID)
                 .setStartDate(start)
                 .setEndDate(end);
-        OrderListRequest request = new OrderListRequest(body);
+        OrderListRawStream rawStream = new OrderListRawStream(body);
+        OrderListStream stream = new OrderListStream(rawStream);
         List<Order> paidOrders = new ArrayList<>();
-        while (request.hasNext()) {
-            paidOrders.add(request.next());
+        while (stream.hasNext()) {
+            paidOrders.add(stream.next());
         }
 
         OrderListRequestBody bodyForUpdate = new OrderListRequestBody();
@@ -60,10 +61,11 @@ public class OrderListRequestTest {
                 .setDatetimeType(DateType.UPDATE)
                 .setStartDate(start)
                 .setEndDate(end);
-        OrderListRequest requestForUpdate = new OrderListRequest(bodyForUpdate);
+        OrderListRawStream updateRawStream = new OrderListRawStream(bodyForUpdate);
+        OrderListStream updateStream = new OrderListStream(updateRawStream);
         List<Order> updateOrders = new ArrayList<>();
-        while (requestForUpdate.hasNext()) {
-            updateOrders.add(requestForUpdate.next());
+        while (updateStream.hasNext()) {
+            updateOrders.add(updateStream.next());
         }
         System.out.println("paid size: " + paidOrders.size());
         System.out.println("update size: " + updateOrders.size());
@@ -79,10 +81,11 @@ public class OrderListRequestTest {
                 .setDatetimeType(DateType.UPDATE)
                 .setStartDate(start)
                 .setEndDate(end);
-        OrderListRequest requestForUpdate = new OrderListRequest(bodyForUpdate);
+        OrderListRawStream updateRawStream = new OrderListRawStream(bodyForUpdate);
+        OrderListStream updateStream = new OrderListStream(updateRawStream);
         List<Order> updateOrders = new ArrayList<>();
-        while (requestForUpdate.hasNext()) {
-            updateOrders.add(requestForUpdate.next());
+        while (updateStream.hasNext()) {
+            updateOrders.add(updateStream.next());
         }
         List<Order> unionOrder = updateOrders.stream().filter(Order::isUnion).collect(Collectors.toList());
 
@@ -107,8 +110,9 @@ public class OrderListRequestTest {
                 .setDatetimeType(DateType.UPDATE)
                 .setStartDate(start)
                 .setEndDate(end);
-        OrderListRequest requestForUpdate = new OrderListRequest(bodyForUpdate);
-        List<Order> unionOrder = requestForUpdate.getAll().stream().filter(Order::isUnion).collect(Collectors.toList());
+        OrderListRawStream updateRawStream = new OrderListRawStream(bodyForUpdate);
+        OrderListStream updateStream = new OrderListStream(updateRawStream);
+        List<Order> unionOrder = updateStream.all().stream().filter(Order::isUnion).collect(Collectors.toList());
 
 
         OrderListRequestBody bodyOfOrder = new OrderListRequestBody();
@@ -116,18 +120,18 @@ public class OrderListRequestTest {
                 .setDatetimeType(DateType.UPDATE)
                 .setStartDate(start)
                 .setEndDate(end);
-        OrderListRequest orderListRequest = new OrderListRequest(bodyOfOrder);
-        List<Order> obsoletedOrders = orderListRequest.getAll();
+        OrderListRawStream orderRawStream = new OrderListRawStream(bodyOfOrder);
+        OrderListStream orderStream = new OrderListStream(orderRawStream);
+        List<Order> obsoletedOrders = orderStream.all();
 
-        for(Order o:obsoletedOrders ){
+        for (Order o : obsoletedOrders) {
             System.out.printf("%s %s\n", o.getPlatformOrderId(), o.getStatus());
         }
-        System.out.println("Obsoleted size:"+obsoletedOrders.size());
-        for(Order o:unionOrder ){
+        System.out.println("Obsoleted size:" + obsoletedOrders.size());
+        for (Order o : unionOrder) {
             System.out.println(o);
         }
-        System.out.println("union size:"+unionOrder.size());
-
+        System.out.println("union size:" + unionOrder.size());
 
 
     }

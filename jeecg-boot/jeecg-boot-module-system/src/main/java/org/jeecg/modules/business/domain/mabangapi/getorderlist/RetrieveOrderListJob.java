@@ -1,5 +1,6 @@
 package org.jeecg.modules.business.domain.mabangapi.getorderlist;
 
+import com.alibaba.fastjson.JSONArray;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -64,14 +67,22 @@ public class RetrieveOrderListJob implements Job {
                 .setEndDate(end)
                 .setStatus(OrderStatus.AllUnshipped);
         OrderListRawStream rawStream = new OrderListRawStream(body);
-        OrderListStream stream = new OrderListStream(rawStream);
-        List<Order> newlyPaidOrders = stream.all();
-        log.info("newly paid order size: {}", newlyPaidOrders.size());
+        List<JSONArray> rawData = rawStream.all().stream()
+                .map(OrderListResponse::getData)
+                .collect(Collectors.toList());
 
-        uploadToRemote(newlyPaidOrders, new Date().toString());
-
+        DateFormat format = new SimpleDateFormat("yyyy-MM-dd=hh:mm:ss");
+        Date now = new Date();
+        for (int i = 0; i < rawData.size(); i++) {
+            String name = format.format(now) + "-" + i;
+            JSONArray data = rawData.get(i);
+            /* copy to remote */
+            uploadToRemote(data, name);
+            List<Order> orders = data.toJavaList(Order.class);
+            /* save to DB */
+            platformOrderMabangService.saveOrderFromMabang(orders);
+        }
         // update in DB
-        platformOrderMabangService.saveOrderFromMabang(newlyPaidOrders);
     }
 
     /**
@@ -122,12 +133,13 @@ public class RetrieveOrderListJob implements Job {
     }
 
 
-    private void uploadToRemote(List<Order> orders, String name) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        String json = mapper.writeValueAsString(orders);
-        Path out = Files.createTempFile("data", "json");
+    /**
+     * Save each elements as a individual file, push them to remote bucket.
+     */
+    private void uploadToRemote(JSONArray rawData, String name) throws IOException {
+        Path out = Files.createTempFile(name, "json");
         FileWriter writer = new FileWriter(out.toFile());
-        writer.write(json);
+        writer.write(rawData.toJSONString());
         writer.close();
         RemoteFileSystem fs = new RemoteFileSystem("test");
         fs.cp(name, out.toFile());
