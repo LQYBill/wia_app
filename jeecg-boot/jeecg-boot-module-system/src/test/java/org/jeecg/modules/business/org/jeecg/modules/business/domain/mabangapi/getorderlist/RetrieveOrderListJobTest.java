@@ -6,6 +6,8 @@ import org.jeecg.modules.business.service.impl.PlatformOrderMabangServiceImpl;
 import org.junit.Before;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+
 import static org.mockito.Mockito.*;
 
 
@@ -15,7 +17,7 @@ public class RetrieveOrderListJobTest {
 
 
     @Test
-    void updateNewOrderTest() throws OrderListRequestErrorException {
+    void updateNewOrderTest() throws OrderListRequestErrorException, IOException {
 
         RetrieveOrderListJob job = new RetrieveOrderListJob();
         job.setPlatformOrderMabangService(fakeService);

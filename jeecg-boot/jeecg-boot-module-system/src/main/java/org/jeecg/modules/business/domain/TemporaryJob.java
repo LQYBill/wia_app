@@ -22,14 +22,14 @@ public class TemporaryJob implements Job {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-            List<Order> res = all28DaysOrdersOfStatus(OrderStatus.AllNonUnshipped);
-            platformOrderMabangService.saveOrderFromMabang(res);
+        List<Order> res = all28DaysOrdersOfStatus(OrderStatus.AllNonUnshipped);
+        platformOrderMabangService.saveOrderFromMabang(res);
 
-            res = all28DaysOrdersOfStatus(OrderStatus.Completed);
-            platformOrderMabangService.saveOrderFromMabang(res);
+        res = all28DaysOrdersOfStatus(OrderStatus.Completed);
+        platformOrderMabangService.saveOrderFromMabang(res);
 
-            res = all28DaysOrdersOfStatus(OrderStatus.Pending);
-            platformOrderMabangService.saveOrderFromMabang(res);
+        res = all28DaysOrdersOfStatus(OrderStatus.Pending);
+        platformOrderMabangService.saveOrderFromMabang(res);
     }
 
     public List<Order> all28DaysOrdersOfStatus(OrderStatus status) {
@@ -39,8 +39,9 @@ public class TemporaryJob implements Job {
         try {
             for (int i = 0; i < 1; i++) {
                 OrderListRequestBody body = OrderListRequestBodys.allOrderOfPaidDateOfStatus(start, end, status);
-                OrderListRequest request = new OrderListRequest(body);
-                res.addAll(request.getAll());
+                OrderListRawStream rawStream = new OrderListRawStream(body);
+                OrderListStream stream = new OrderListStream(rawStream);
+                res.addAll(stream.all());
 
                 end = end.minusDays(1);
                 start = start.minusDays(1);

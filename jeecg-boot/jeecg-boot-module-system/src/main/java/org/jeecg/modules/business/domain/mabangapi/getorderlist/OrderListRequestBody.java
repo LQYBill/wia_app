@@ -36,7 +36,7 @@ public class OrderListRequestBody {
         return json;
     }
 
-    void goNextPage() {
+    void nextPage() {
         setPage(this.page + 1);
     }
 

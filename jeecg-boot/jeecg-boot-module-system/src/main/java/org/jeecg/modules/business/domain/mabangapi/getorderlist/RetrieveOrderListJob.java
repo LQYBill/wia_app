@@ -1,6 +1,5 @@
 package org.jeecg.modules.business.domain.mabangapi.getorderlist;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -23,8 +22,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static java.io.File.createTempFile;
 
 @Slf4j
 public class RetrieveOrderListJob implements Job {
@@ -66,11 +63,12 @@ public class RetrieveOrderListJob implements Job {
                 .setStartDate(begin)
                 .setEndDate(end)
                 .setStatus(OrderStatus.AllUnshipped);
-        OrderListRequest request = new OrderListRequest(body);
-        List<Order> newlyPaidOrders = request.getAll();
+        OrderListRawStream rawStream = new OrderListRawStream(body);
+        OrderListStream stream = new OrderListStream(rawStream);
+        List<Order> newlyPaidOrders = stream.all();
         log.info("newly paid order size: {}", newlyPaidOrders.size());
 
-        uploadToRemote(newlyPaidOrders,new Date().toString());
+        uploadToRemote(newlyPaidOrders, new Date().toString());
 
         // update in DB
         platformOrderMabangService.saveOrderFromMabang(newlyPaidOrders);
@@ -91,8 +89,11 @@ public class RetrieveOrderListJob implements Job {
                 .setEndDate(end)
                 .setDatetimeType(DateType.UPDATE)
                 .setStatus(OrderStatus.Pending);
-        OrderListRequest updatedOrderRequest = new OrderListRequest(updatedOrderBody);
-        List<Order> updatedOrders = updatedOrderRequest.getAll();
+
+        OrderListRawStream rawStream = new OrderListRawStream(updatedOrderBody);
+        OrderListStream stream = new OrderListStream(rawStream);
+        List<Order> updatedOrders = stream.all();
+
         log.debug("Size of updated order:{}", updatedOrders.size());
 
         // filter orders that are merged
@@ -121,33 +122,10 @@ public class RetrieveOrderListJob implements Job {
     }
 
 
-    /**
-     * Search merge sources of target order from mabang API.
-     *
-     * @param target target order
-     * @return source orders of the target order
-     */
-    private static List<Order> searchMergeSources(Order target) throws OrderListRequestErrorException {
-        // search period: target order paid time - now
-        LocalDateTime end = LocalDateTime.now();
-        LocalDateTime begin = end.minus(EXECUTION_DURATION);
-        // send request
-        OrderListRequestBody obsoletedOrderRequestBody = new OrderListRequestBody();
-        obsoletedOrderRequestBody.setStatus(OrderStatus.Obsolete)
-                .setDatetimeType(DateType.UPDATE)
-                .setStartDate(begin)
-                .setEndDate(end);
-        OrderListRequest requestForObsoletedOrder = new OrderListRequest(obsoletedOrderRequestBody);
-        // filter results and return them
-        return requestForObsoletedOrder.getAll().stream()
-                .filter(target::isSource)
-                .collect(Collectors.toList());
-    }
-
     private void uploadToRemote(List<Order> orders, String name) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         String json = mapper.writeValueAsString(orders);
-        Path out =Files.createTempFile("data", "json");
+        Path out = Files.createTempFile("data", "json");
         FileWriter writer = new FileWriter(out.toFile());
         writer.write(json);
         writer.close();

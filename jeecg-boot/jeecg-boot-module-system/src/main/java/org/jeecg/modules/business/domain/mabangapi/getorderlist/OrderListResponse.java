@@ -25,10 +25,13 @@ public class OrderListResponse {
      */
     private final JSONArray data;
 
-    OrderListResponse(int pageCount, int dataCount, JSONArray data) {
+    private final JSONObject rawData;
+
+    OrderListResponse(int pageCount, int dataCount, JSONArray data, JSONObject rawData) {
         this.pageCount = pageCount;
         this.dataCount = dataCount;
         this.data = data;
+        this.rawData = rawData;
     }
 
     /**
@@ -39,7 +42,7 @@ public class OrderListResponse {
      * @return Instance
      * @throws OrderListRequestErrorException if response code represents error.
      */
-    public static OrderListResponse parse(JSONObject json) throws  OrderListRequestErrorException{
+    public static OrderListResponse parse(JSONObject json) throws OrderListRequestErrorException {
         String code = json.getString("code");
         if (code.equals(ERROR_CODE))
             throw new OrderListRequestErrorException(json.getString("message"));
@@ -47,7 +50,7 @@ public class OrderListResponse {
         int dataCount = Integer.parseInt(json.getString("dataCount"));
         JSONArray data = json.getJSONArray("data");
         log.info("New response, page size {}, data size {}", pageCount, dataCount);
-        return new OrderListResponse(pageCount, dataCount, data);
+        return new OrderListResponse(pageCount, dataCount, data, json);
     }
 
     public int getTotalPage() {
@@ -58,7 +61,11 @@ public class OrderListResponse {
         return data;
     }
 
-    public int getDataCount(){
+    public JSONObject getRawDate() {
+        return rawData;
+    }
+
+    public int getDataCount() {
         return dataCount;
     }
 
