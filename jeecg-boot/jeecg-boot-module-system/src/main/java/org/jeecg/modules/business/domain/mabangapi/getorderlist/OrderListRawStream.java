@@ -22,10 +22,21 @@ public class OrderListRawStream implements DataStream<OrderListResponse> {
 
     private Boolean hasNext;
 
+    private boolean began;
+
     public OrderListRawStream(OrderListRequestBody firstBody) {
         this.toSend = firstBody;
         this.currentResponse = null;
         this.hasNext = null;
+        began = false;
+    }
+
+    @Override
+    public OrderListResponse begin() {
+        log.debug("Begin the first request");
+        this.currentResponse = sendRequest(toSend);
+        began = true;
+        return currentResponse;
     }
 
     /**
@@ -35,11 +46,8 @@ public class OrderListRawStream implements DataStream<OrderListResponse> {
      */
     @Override
     public boolean hasNext() throws OrderListRequestErrorException {
-        // if never sent request, true
-        if (currentResponse == null) {
-            log.debug("current response is null, has next");
-            this.hasNext = true;
-            return true;
+        if(!began){
+            throw new IllegalStateException("Calling hasNext before begin");
         }
         // still has page left, true
         if (toSend.getPage() <= currentResponse.getTotalPage()) {

@@ -39,6 +39,20 @@ public class OrderListStream implements DataStream<Order> {
     }
 
     @Override
+    public Order begin() {
+        OrderListResponse response = rawStream.begin();
+        if (response == null) {
+            return null;
+        }
+        if (response.getDataCount() == 0) {
+            return null;
+        }
+        orders = response.getData().toJavaList(Order.class);
+        index = 1;
+        return orders.get(0);
+    }
+
+    @Override
     public boolean hasNext() {
         // the first time
         if (this.orders == null && rawStream.hasNext()) {
