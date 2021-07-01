@@ -44,18 +44,19 @@ public class OrderListStream implements NetworkDataStream<Order> {
     @Override
     public Order attempt() {
         began = true;
+        log.info("Attempting for the first request");
         OrderListResponse response = rawStream.attempt();
         if (response == null) {
+            log.info("No response");
             return null;
         }
         if (response.getDataCount() == 0) {
+            log.info("Response with empty data");
             return null;
         }
         orders = response.getData().toJavaList(Order.class);
         index = 1;
-
-        empty = false;
-
+        log.info("Returned the first element");
         return orders.get(0);
     }
 
