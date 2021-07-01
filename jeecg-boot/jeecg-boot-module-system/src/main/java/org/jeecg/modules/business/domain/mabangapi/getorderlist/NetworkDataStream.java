@@ -13,13 +13,13 @@ import java.util.List;
  *
  * @param <E> type of the data.
  */
-public interface DataStream<E> {
+public interface NetworkDataStream<E> {
     /**
      * Start the first query and return the data if it is available.
      *
      * @return the if there are data to read, otherwise null.
      */
-    E begin();
+    E attempt();
 
     /**
      * To see whether there are still data available.
@@ -44,7 +44,7 @@ public interface DataStream<E> {
      * @return all data in a list, in case of empty data, "Collections.emptyList()" will be returned.
      */
     default List<E> all() {
-        E firstElement = begin();
+        E firstElement = attempt();
         if (firstElement == null) {
             return Collections.emptyList();
         }

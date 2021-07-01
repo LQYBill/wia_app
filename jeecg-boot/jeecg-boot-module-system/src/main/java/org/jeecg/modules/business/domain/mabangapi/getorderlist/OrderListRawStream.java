@@ -10,7 +10,7 @@ import static org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderList
  * This stream control reception of the response of the mabang order list API
  */
 @Slf4j
-public class OrderListRawStream implements DataStream<OrderListResponse> {
+public class OrderListRawStream implements NetworkDataStream<OrderListResponse> {
     /**
      * Instance's current request.
      */
@@ -32,7 +32,7 @@ public class OrderListRawStream implements DataStream<OrderListResponse> {
     }
 
     @Override
-    public OrderListResponse begin() {
+    public OrderListResponse attempt() {
         log.info("Begin the first request");
         this.currentResponse = sendRequest(toSend);
         began = true;

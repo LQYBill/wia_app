@@ -9,9 +9,9 @@ import java.util.NoSuchElementException;
  * This class provide stream of order.
  */
 @Slf4j
-public class OrderListStream implements DataStream<Order> {
+public class OrderListStream implements NetworkDataStream<Order> {
 
-    private final DataStream<OrderListResponse> rawStream;
+    private final NetworkDataStream<OrderListResponse> rawStream;
 
     private List<Order> orders;
 
@@ -32,7 +32,7 @@ public class OrderListStream implements DataStream<Order> {
     private boolean empty;
 
 
-    public OrderListStream(DataStream<OrderListResponse> rawStream) {
+    public OrderListStream(NetworkDataStream<OrderListResponse> rawStream) {
         this.rawStream = rawStream;
         orders = null;
         this.index = 0;
@@ -42,9 +42,9 @@ public class OrderListStream implements DataStream<Order> {
     }
 
     @Override
-    public Order begin() {
+    public Order attempt() {
         began = true;
-        OrderListResponse response = rawStream.begin();
+        OrderListResponse response = rawStream.attempt();
         if (response == null) {
             return null;
         }
