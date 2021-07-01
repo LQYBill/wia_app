@@ -22,6 +22,8 @@ public class OrderListStream implements DataStream<Order> {
      */
     private Boolean hasNext;
 
+    private boolean began;
+
     /**
      * Flag of current data is already empty,
      * either currentOrders is null or currentIndex arrives at the end.
@@ -36,10 +38,12 @@ public class OrderListStream implements DataStream<Order> {
         this.index = 0;
         this.hasNext = null;
         this.empty = true;
+        this.began = false;
     }
 
     @Override
     public Order begin() {
+        began = true;
         OrderListResponse response = rawStream.begin();
         if (response == null) {
             return null;
@@ -49,16 +53,17 @@ public class OrderListStream implements DataStream<Order> {
         }
         orders = response.getData().toJavaList(Order.class);
         index = 1;
+
+        empty = false;
+
         return orders.get(0);
     }
 
     @Override
     public boolean hasNext() {
         // the first time
-        if (this.orders == null && rawStream.hasNext()) {
-            this.empty = true;
-            this.hasNext = true;
-            return true;
+        if (!began) {
+            throw new IllegalStateException("Calling hasNext before begin");
         }
 
         // Current data is not yet empty

@@ -33,7 +33,7 @@ public class OrderListRawStream implements DataStream<OrderListResponse> {
 
     @Override
     public OrderListResponse begin() {
-        log.debug("Begin the first request");
+        log.info("Begin the first request");
         this.currentResponse = sendRequest(toSend);
         began = true;
         return currentResponse;
@@ -46,17 +46,17 @@ public class OrderListRawStream implements DataStream<OrderListResponse> {
      */
     @Override
     public boolean hasNext() throws OrderListRequestErrorException {
-        if(!began){
+        if (!began) {
             throw new IllegalStateException("Calling hasNext before begin");
         }
         // still has page left, true
         if (toSend.getPage() <= currentResponse.getTotalPage()) {
-            log.debug("page: {}/{}, has next", toSend.getPage(), currentResponse.getTotalPage());
+            log.info("page: {}/{}, has next", toSend.getPage(), currentResponse.getTotalPage());
             this.hasNext = true;
             return true;
         }
         // no page left, false
-        log.debug("No page left, end");
+        log.info("No page left, end");
         this.hasNext = false;
         return false;
     }
@@ -76,7 +76,7 @@ public class OrderListRawStream implements DataStream<OrderListResponse> {
         if (!this.hasNext)
             throw new NoSuchElementException();
 
-        log.debug("Sending request for page {}.", toSend.getPage());
+        log.info("Sending request for page {}.", toSend.getPage());
         this.currentResponse = sendRequest(toSend);
         toSend.nextPage();
         this.hasNext = null;
