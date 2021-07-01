@@ -43,13 +43,14 @@ public class OrderListResponse {
      * @throws OrderListRequestErrorException if response code represents error.
      */
     public static OrderListResponse parse(JSONObject json) throws OrderListRequestErrorException {
+        log.debug("Constructing a response by json.");
         String code = json.getString("code");
         if (code.equals(ERROR_CODE))
             throw new OrderListRequestErrorException(json.getString("message"));
         int pageCount = Integer.parseInt(json.getString("pageCount"));
         int dataCount = Integer.parseInt(json.getString("dataCount"));
         JSONArray data = json.getJSONArray("data");
-        log.info("New response, page size {}, data size {}", pageCount, dataCount);
+        log.info("Constructed response: data contained {}, total page {}, total data {}", data.size(), pageCount, dataCount);
         return new OrderListResponse(pageCount, dataCount, data, json);
     }
 
@@ -72,9 +73,8 @@ public class OrderListResponse {
     @Override
     public String toString() {
         return "OrderListResponse{" +
-                ", pageCount=" + pageCount +
+                "pageCount=" + pageCount +
                 ", dataCount=" + dataCount +
-                ", data=" + data +
                 '}';
     }
 }

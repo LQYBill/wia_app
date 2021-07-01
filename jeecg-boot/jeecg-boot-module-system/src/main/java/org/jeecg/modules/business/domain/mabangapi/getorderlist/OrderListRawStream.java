@@ -20,9 +20,12 @@ public class OrderListRawStream implements DataStream<OrderListResponse> {
      */
     private OrderListResponse currentResponse;
 
+    private Boolean hasNext;
+
     public OrderListRawStream(OrderListRequestBody firstBody) {
         this.toSend = firstBody;
         this.currentResponse = null;
+        this.hasNext = null;
     }
 
     /**
@@ -34,15 +37,19 @@ public class OrderListRawStream implements DataStream<OrderListResponse> {
     public boolean hasNext() throws OrderListRequestErrorException {
         // if never sent request, true
         if (currentResponse == null) {
-            log.trace("Current response is null");
+            log.debug("current response is null, has next");
+            this.hasNext = true;
             return true;
         }
         // still has page left, true
         if (toSend.getPage() <= currentResponse.getTotalPage()) {
-            log.trace("page: {}/{}, ", toSend.getPage(), currentResponse.getTotalPage());
+            log.debug("page: {}/{}, has next", toSend.getPage(), currentResponse.getTotalPage());
+            this.hasNext = true;
             return true;
         }
         // no page left, false
+        log.debug("No page left, end");
+        this.hasNext = false;
         return false;
     }
 
@@ -55,10 +62,16 @@ public class OrderListRawStream implements DataStream<OrderListResponse> {
      */
     @Override
     public OrderListResponse next() throws OrderListRequestErrorException {
-        if (!hasNext())
+        if (this.hasNext == null) {
+            throw new IllegalStateException("Calling next before hasNext.");
+        }
+        if (!this.hasNext)
             throw new NoSuchElementException();
+
+        log.debug("Sending request for page {}.", toSend.getPage());
         this.currentResponse = sendRequest(toSend);
         toSend.nextPage();
+        this.hasNext = null;
         return this.currentResponse;
     }
 }
