@@ -20,14 +20,11 @@ public class OrderListRawStream implements NetworkDataStream<OrderListResponse> 
      */
     private OrderListResponse currentResponse;
 
-    private Boolean hasNext;
-
     private boolean began;
 
     public OrderListRawStream(OrderListRequestBody firstBody) {
         this.toSend = firstBody;
         this.currentResponse = null;
-        this.hasNext = null;
         began = false;
     }
 
@@ -36,6 +33,7 @@ public class OrderListRawStream implements NetworkDataStream<OrderListResponse> 
         log.info("Begin the first request");
         this.currentResponse = sendRequest(toSend);
         began = true;
+        toSend.nextPage();
         return currentResponse;
     }
 
@@ -52,12 +50,10 @@ public class OrderListRawStream implements NetworkDataStream<OrderListResponse> 
         // still has page left, true
         if (toSend.getPage() <= currentResponse.getTotalPage()) {
             log.info("page: {}/{}, has next", toSend.getPage(), currentResponse.getTotalPage());
-            this.hasNext = true;
             return true;
         }
         // no page left, false
         log.info("No page left, end");
-        this.hasNext = false;
         return false;
     }
 
@@ -70,16 +66,12 @@ public class OrderListRawStream implements NetworkDataStream<OrderListResponse> 
      */
     @Override
     public OrderListResponse next() throws OrderListRequestErrorException {
-        if (this.hasNext == null) {
-            throw new IllegalStateException("Calling next before hasNext.");
-        }
-        if (!this.hasNext)
+        if (!hasNext())
             throw new NoSuchElementException();
 
         log.info("Sending request for page {}.", toSend.getPage());
         this.currentResponse = sendRequest(toSend);
         toSend.nextPage();
-        this.hasNext = null;
         return this.currentResponse;
     }
 }

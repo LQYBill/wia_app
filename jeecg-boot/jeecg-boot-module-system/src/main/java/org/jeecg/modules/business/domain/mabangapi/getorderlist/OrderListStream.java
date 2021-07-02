@@ -17,11 +17,6 @@ public class OrderListStream implements NetworkDataStream<Order> {
 
     private int index;
 
-    /**
-     * Flag of next data existence, use enveloped type to enable null value.
-     */
-    private Boolean hasNext;
-
     private boolean began;
 
     /**
@@ -36,7 +31,6 @@ public class OrderListStream implements NetworkDataStream<Order> {
         this.rawStream = rawStream;
         orders = null;
         this.index = 0;
-        this.hasNext = null;
         this.empty = true;
         this.began = false;
     }
@@ -57,6 +51,7 @@ public class OrderListStream implements NetworkDataStream<Order> {
         orders = response.getData().toJavaList(Order.class);
         index = 1;
         log.info("Returned the first element");
+        empty = index >= orders.size();
         return orders.get(0);
     }
 
@@ -70,7 +65,6 @@ public class OrderListStream implements NetworkDataStream<Order> {
         // Current data is not yet empty
         if (index < orders.size()) {
             log.debug("Current order list is not empty yet");
-            this.hasNext = true;
             return true;
         }
 
@@ -80,23 +74,18 @@ public class OrderListStream implements NetworkDataStream<Order> {
         // and raw stream is empty too.
         if (!rawStream.hasNext()) {
             log.debug("and source stream is empty too, hasNext: false");
-            this.hasNext = false;
             return false;
         }
         // but raw stream not empty.
         else {
             log.debug("but source stream still has data, hasNext: true");
-            this.hasNext = true;
             return true;
         }
     }
 
     @Override
     public Order next() {
-        if (hasNext == null) {
-            throw new IllegalStateException("Calling next before hasNext!");
-        }
-        if (!hasNext) {
+        if (!hasNext()) {
             throw new NoSuchElementException("Stream is empty!");
         }
         if (empty) {
@@ -107,7 +96,6 @@ public class OrderListStream implements NetworkDataStream<Order> {
         log.debug("Return data at {}", index);
         Order res = orders.get(index);
         index++;
-        hasNext = null;
         return res;
     }
 }

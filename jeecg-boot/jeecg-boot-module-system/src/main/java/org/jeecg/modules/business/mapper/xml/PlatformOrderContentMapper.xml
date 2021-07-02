@@ -7,6 +7,23 @@
         DELETE
         FROM platform_order_content
         WHERE platform_order_id = #{mainId}    </delete>
+    <delete id="batchDeleteByID">
+        <if test="IDs.size != 0">
+            DELETE FROM platform_order_content
+            WHERE id IN
+            <foreach
+                    collection="IDs"
+                    separator=","
+                    item="item"
+                    index="index"
+                    open="("
+                    close=")"
+            >
+                #{item}
+            </foreach>
+        </if>
+
+    </delete>
 
     <select id="selectByMainId" parameterType="java.lang.String"
             resultType="org.jeecg.modules.business.entity.PlatformOrderContent">

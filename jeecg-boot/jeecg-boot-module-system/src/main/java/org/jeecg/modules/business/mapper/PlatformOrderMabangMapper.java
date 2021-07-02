@@ -7,6 +7,7 @@ import org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderItem;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -56,6 +57,30 @@ public interface PlatformOrderMabangMapper extends BaseMapper<PlatformOrder> {
     String findIdByErpCode(String platformOrderNumber);
 
     String findIdByErpId(String erpId);
+
+    /**
+     * Search orders that exist in DB.
+     *
+     * @param orderIDs platform order ID of the orders
+     * @return image between platform order id and order entity with items as null
+     */
+    List<Order> searchExistence(@Param("orders") Collection<String> orderIDs);
+
+    /**
+     * Delete butch of order contents by their main id.
+     *
+     * @param mainIDs main identifiants of content to delete
+     * @return number of row effected.
+     */
+    int batchDeleteByMainID(@Param("mainIDs") List<String> mainIDs);
+
+    /**
+     * Update these orders in DB.
+     *
+     * @param orders orders to be updated
+     * @return number of lines affected
+     */
+    int batchUpdate(@Param("orders") List<Order> orders);
 
 
 }
