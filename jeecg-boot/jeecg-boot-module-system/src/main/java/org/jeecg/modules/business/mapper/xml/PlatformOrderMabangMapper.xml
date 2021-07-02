@@ -32,13 +32,6 @@
         </foreach>
     </update>
 
-    <update id="batchUpdate">
-        <foreach collection="orders" open="" close="" separator=";"
-
-        UPDATE platform_order
-        SET id =
-
-    </update>
 
     <delete id="batchDeleteByMainID">
         DELETE
@@ -80,35 +73,27 @@
         tracking_number, order_time, shipping_time, recipient,
         country, postcode, erp_status)
         VALUES
-        <if test="orders != null">
-            <foreach collection="orders" separator="," open="" close="" item="order" index="index">
-                (
-                #{order.id},
-                'mabang api',
-                NOW(),
-                'mabang api',
-                NOW(),
-                shopErpToId(#{order.shopErpCode}),
-                #{order.logisticChannelName},
-                #{order.platformOrderId},
-                #{order.platformOrderNumber},
-                #{order.erpOrderId},
-                #{order.trackingNumber},
-                #{order.orderTime},
-                #{order.shippingTime},
-                #{order.recipient},
-                #{order.country},
-                #{order.postcode},
-                #{order.status}
-                )
-            </foreach>
-            update_by = 'mabang api',
-            update_time = NOW(),
-            logistic_channel_name = values(logistic_channel_name),
-            tracking_number = values(tracking_number),
-            shipping_time = values(shipping_time),
-            erp_status = values(erp_status)
-        </if>
+        <foreach collection="orders" separator="," open="" close="" item="order" index="index">
+            (
+            #{order.id},
+            'mabang api',
+            NOW(),
+            'mabang api',
+            NOW(),
+            shopErpToId(#{order.shopErpCode}),
+            #{order.logisticChannelName},
+            #{order.platformOrderId},
+            #{order.platformOrderNumber},
+            #{order.erpOrderId},
+            #{order.trackingNumber},
+            #{order.orderTime},
+            #{order.shippingTime},
+            #{order.recipient},
+            #{order.country},
+            #{order.postcode},
+            #{order.status}
+            )
+        </foreach>
     </insert>
 
     <insert id="insertOrderItemsFromMabang">
@@ -125,10 +110,6 @@
             skuErpToId(#{item.erpCode}), #{item.quantity}, #{item.erpStatus}
             )
         </foreach>
-        update_by = 'mabang api',
-        update_time = NOW(),
-        sku_id = values(sku_id),
-        erp_status = values(erp_status)
     </insert>
 
 </mapper>

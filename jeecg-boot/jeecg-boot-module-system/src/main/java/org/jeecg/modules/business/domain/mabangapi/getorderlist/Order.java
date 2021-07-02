@@ -2,11 +2,13 @@ package org.jeecg.modules.business.domain.mabangapi.getorderlist;
 
 import com.alibaba.fastjson.annotation.JSONField;
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.incrementer.DefaultIdentifierGenerator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
-import com.baomidou.mybatisplus.core.incrementer.DefaultIdentifierGenerator;
 
 import java.util.List;
 import java.util.Objects;
@@ -18,6 +20,7 @@ import java.util.Objects;
  * This is a domain object.
  */
 @Data
+@TableName("platform_order")
 public class Order {
     /**
      * Primary key
@@ -94,10 +97,11 @@ public class Order {
     private String isNewOrder;
 
     @JSONField(name = "orderItem")
+    @TableField(exist = false)
     private List<OrderItem> orderItems;
 
     public void setTrackingNumber(String trackingNumber) {
-        if (trackingNumber.length() == 0) {
+        if (trackingNumber != null && trackingNumber.length() == 0) {
             this.trackingNumber = null;
         } else
             this.trackingNumber = trackingNumber;
@@ -128,7 +132,7 @@ public class Order {
     }
 
     public void setShippingTime(String shippingTime) {
-        if (shippingTime.length() == 0) {
+        if (shippingTime != null && shippingTime.length() == 0) {
             this.shippingTime = null;
         } else
             this.shippingTime = shippingTime;

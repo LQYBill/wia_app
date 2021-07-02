@@ -14,7 +14,7 @@ import java.util.List;
  * Responsible for all mabang platform order persistance operation
  */
 @Repository
-public interface PlatformOrderMabangMapper extends BaseMapper<PlatformOrder> {
+public interface PlatformOrderMabangMapper extends BaseMapper<Order> {
 
     /**
      * Update order in a merge operation.
@@ -73,14 +73,6 @@ public interface PlatformOrderMabangMapper extends BaseMapper<PlatformOrder> {
      * @return number of row effected.
      */
     int batchDeleteByMainID(@Param("mainIDs") List<String> mainIDs);
-
-    /**
-     * Update these orders in DB.
-     *
-     * @param orders orders to be updated
-     * @return number of lines affected
-     */
-    int batchUpdate(@Param("orders") List<Order> orders);
 
 
 }

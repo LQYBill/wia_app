@@ -1,5 +1,6 @@
 package org.jeecg.modules.business.service.impl;
 
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.jeecg.modules.business.domain.mabangapi.getorderlist.Order;
 import org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderItem;
@@ -26,7 +27,7 @@ import static java.util.stream.Collectors.toList;
  */
 @Service
 @Slf4j
-public class PlatformOrderMabangServiceImpl implements IPlatformOrderMabangService {
+public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMabangMapper, Order> implements IPlatformOrderMabangService {
 
     private final PlatformOrderMabangMapper platformOrderMabangMapper;
 
@@ -38,6 +39,9 @@ public class PlatformOrderMabangServiceImpl implements IPlatformOrderMabangServi
     @Override
     @Transactional
     public void saveOrderFromMabang(List<Order> orders) {
+        if(orders.isEmpty()){
+            return;
+        }
         // find orders that already existe in DB
         List<String> allPlatformOrderId = orders.stream()
                 .map(Order::getPlatformOrderId)
@@ -70,7 +74,7 @@ public class PlatformOrderMabangServiceImpl implements IPlatformOrderMabangServi
         try {
             if (newOrders.size() != 0) {
                 log.trace("{} orders to be inserted/updated.", orders.size());
-                platformOrderMabangMapper.insertOrdersFromMabang(orders);
+                platformOrderMabangMapper.insertOrdersFromMabang(newOrders);
             }
             if (allNewItems.size() != 0) {
                 platformOrderMabangMapper.insertOrderItemsFromMabang(allNewItems);
@@ -85,7 +89,7 @@ public class PlatformOrderMabangServiceImpl implements IPlatformOrderMabangServi
         try {
             if (oldOrders.size() != 0) {
                 log.trace("{} orders to be inserted/updated.", oldOrders.size());
-                platformOrderMabangMapper.batchUpdate(oldOrders);
+                updateBatchById(oldOrders);
                 platformOrderMabangMapper.batchDeleteByMainID(oldOrders.stream().map(Order::getId).collect(toList()));
             }
             if (allNewItemsOfOldItems.size() != 0) {

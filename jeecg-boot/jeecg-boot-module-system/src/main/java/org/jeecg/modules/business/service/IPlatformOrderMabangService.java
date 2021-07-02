@@ -1,5 +1,6 @@
 package org.jeecg.modules.business.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import org.jeecg.modules.business.domain.mabangapi.getorderlist.Order;
 import org.springframework.stereotype.Service;
 
@@ -10,7 +11,7 @@ import java.util.List;
  * Services related to operations on {@code Order} entity
  */
 @Service
-public interface IPlatformOrderMabangService {
+public interface IPlatformOrderMabangService extends IService<Order> {
     /**
      * Save orders to DB from mabang api.
      *
