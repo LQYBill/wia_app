@@ -89,8 +89,8 @@ public class ClientPage {
 	@ApiModelProperty(value = "城市")
     private java.lang.String city;
 	/**国家*/
-	@Excel(name = "国家", width = 15, dictTable = "country", dicText = "name_en", dicCode = "id")
-    @Dict(dictTable = "country", dicText = "name_en", dicCode = "id")
+ 	@Excel(name = "国家", width = 15, dictTable = "country", dicText = "name_en", dicCode = "name_en")
+    @Dict(dictTable = "country", dicText = "name_en", dicCode = "name_en")
 	@ApiModelProperty(value = "国家")
     private java.lang.String country;
 	/**货币*/

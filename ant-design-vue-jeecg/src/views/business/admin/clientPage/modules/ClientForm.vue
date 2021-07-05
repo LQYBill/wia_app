@@ -179,7 +179,7 @@
            ],
         },
         // 新增时子表默认添加几行空数据
-        addDefaultRowNum: 1,
+         addDefaultRowNum: 0,
         refKeys: ['shop', 'clientSku', ],
         tableKeys:['shop', 'clientSku', ],
         activeKey: 'shop',
