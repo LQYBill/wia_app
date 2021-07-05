@@ -109,7 +109,7 @@
         FROM platform_order_content poc
         WHERE poc.platform_order_id
         IN
-        <foreach collection="mainIDs" item="item" index="index" separator="," close="(" open=")">
+        <foreach collection="mainIDs" item="item" index="index" separator="," close=")" open="(">
             #{item}
         </foreach>
 

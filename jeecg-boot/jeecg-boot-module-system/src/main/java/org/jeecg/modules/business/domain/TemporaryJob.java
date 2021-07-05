@@ -30,6 +30,7 @@ public class TemporaryJob implements Job {
 
         List<Order> res3 = all28DaysOrdersOfStatus(OrderStatus.Pending);
         platformOrderMabangService.saveOrderFromMabang(res3);
+        log.info("Temporary job finished");
     }
 
     public List<Order> all28DaysOrdersOfStatus(OrderStatus status) {
@@ -37,6 +38,7 @@ public class TemporaryJob implements Job {
         LocalDateTime start = end.minusDays(1);
         List<Order> res = new ArrayList<>();
         try {
+            // TODO change duration to 28
             for (int i = 0; i < 1; i++) {
                 OrderListRequestBody body = OrderListRequestBodys.allOrderOfPaidDateOfStatus(start, end, status);
                 OrderListRawStream rawStream = new OrderListRawStream(body);
