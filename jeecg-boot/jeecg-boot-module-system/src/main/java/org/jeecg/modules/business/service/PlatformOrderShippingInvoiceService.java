@@ -91,7 +91,7 @@ public class PlatformOrderShippingInvoiceService {
             src = Paths.get(INVOICE_TEMPLATE_EU);
         }
         // Writes invoice content to a new excel file
-        String filename = invoice.code() + ".xlsx";
+         String filename = "Invoice N°" + invoice.code() + " (" + invoice.client().getInvoiceEntity() + ").xlsx";
         Path out = Paths.get(DIR, filename);
         if (!Files.exists(out, LinkOption.NOFOLLOW_LINKS)) {
             Files.copy(src, out);
