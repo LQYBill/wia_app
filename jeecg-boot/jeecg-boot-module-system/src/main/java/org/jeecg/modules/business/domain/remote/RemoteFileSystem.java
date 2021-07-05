@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -121,6 +122,14 @@ public class RemoteFileSystem {
     public static List<String> ls() {
         ListObjectsV2Result result = s3.listObjectsV2(BUCKET_NAME);
         return result.getObjectSummaries().stream().map(S3ObjectSummary::getKey).collect(Collectors.toList());
+    }
+
+    public List<String> ls(String dir) {
+        Pattern pattern = Pattern.compile(dir);
+        return ls().stream()
+                .filter(path -> pattern.matcher(path).find())
+                .map(path -> path.replaceAll(dir, ""))
+                .collect(Collectors.toList());
     }
 
     private String collapse(String key) {

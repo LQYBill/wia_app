@@ -77,9 +77,8 @@ public class RetrieveOrderListJob implements Job {
             JSONArray data = rawData.get(i);
             /* copy to remote */
             uploadToRemote(data, name);
-            List<Order> orders = data.toJavaList(Order.class);
             /* save to DB */
-            platformOrderMabangService.saveOrderFromMabang(orders);
+            platformOrderMabangService.saveOrderFromMabang(data, name);
         }
         // update in DB
     }
@@ -136,11 +135,6 @@ public class RetrieveOrderListJob implements Job {
      * Save each elements as a individual file, push them to remote bucket.
      */
     private void uploadToRemote(JSONArray rawData, String name) throws IOException {
-        Path out = Files.createTempFile(name, "json");
-        FileWriter writer = new FileWriter(out.toFile());
-        writer.write(rawData.toJSONString());
-        writer.close();
-        RemoteFileSystem fs = new RemoteFileSystem("test");
-        fs.cp(name, out.toFile());
+
     }
 }

@@ -15,7 +15,7 @@ public interface IPlatformOrderMabangService extends IService<Order> {
     /**
      * Save orders to DB from mabang api.
      *
-     * @param orders the orders to save.
+     * @param orders orders to save.
      */
     void saveOrderFromMabang(List<Order> orders);
 
@@ -24,7 +24,7 @@ public interface IPlatformOrderMabangService extends IService<Order> {
      * <p>
      * This function updates both correspondant platform order and its content.
      *
-     * @param mergedOrder order as merge target
+     * @param mergedOrder      order as merge target
      * @param sourceOrderErpId erp IDs of source orders that are merged
      */
     void updateMergedOrderFromMabang(Order mergedOrder, Collection<String> sourceOrderErpId);
