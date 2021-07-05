@@ -33,6 +33,7 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
         super(targetClient, code, subject);
         this.ordersToContent = ordersToContent;
         this.exchangeRate = exchangeRate;
+        totalAmount = BigDecimal.ZERO;
     }
 
     /**

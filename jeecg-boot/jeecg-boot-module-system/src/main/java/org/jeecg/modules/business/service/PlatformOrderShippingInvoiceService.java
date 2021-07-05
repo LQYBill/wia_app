@@ -13,6 +13,7 @@ import org.jeecg.modules.business.vo.ShippingInvoiceParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -69,6 +70,7 @@ public class PlatformOrderShippingInvoiceService {
      *                        pattern: "yyyy-MM-dd"
      * @throws IOException    exception related to invoice file IO.
      */
+    @Transactional
     public String makeInvoice(ShippingInvoiceParam param) throws UserException, ParseException, IOException {
         // Creates factory
         ShippingInvoiceFactory factory = new ShippingInvoiceFactory(
