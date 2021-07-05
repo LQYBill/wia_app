@@ -13,6 +13,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Date;
 import java.util.Objects;
 
@@ -133,6 +134,7 @@ public class PlatformOrderContent implements Serializable {
         return serviceFee
                 .add(shippingFee)
                 .add(vat)
-                .add(purchaseFee == null ? BigDecimal.ZERO : purchaseFee);
+                .add(purchaseFee == null ? BigDecimal.ZERO : purchaseFee)
+                .setScale(2, RoundingMode.UP);
     }
 }

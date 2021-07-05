@@ -8,6 +8,8 @@ import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +19,7 @@ import java.util.stream.Collectors;
  * This class represent the invoice file needed in business process, since the generation of this file
  * need complex data, instance of class can only be created by it's factory.
  */
-public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Object, String> {
+public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Object, BigDecimal> {
     private final Map<PlatformOrder, List<PlatformOrderContent>> ordersToContent;
 
     private final BigDecimal exchangeRate;
@@ -39,7 +41,7 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
      * @return a list of generated row
      */
     @Override
-    protected List<Row<String, Object, Integer, Object, String>> tableData() {
+    protected List<Row<String, Object, Integer, Object, BigDecimal>> tableData() {
         Map<String, List<PlatformOrder>> countryPackageMap = ordersToContent.keySet().stream()
                 .collect(
                         Collectors.groupingBy(PlatformOrder::getCountry)
@@ -48,7 +50,7 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
                 .stream()
                 .collect(Collectors.toMap(entry -> entry.getKey().getPlatformOrderId(), Map.Entry::getValue));
 
-        List<Row<String, Object, Integer, Object, String>> rows = new ArrayList<>();
+        List<Row<String, Object, Integer, Object, BigDecimal>> rows = new ArrayList<>();
 
         for (Map.Entry<String, List<PlatformOrder>> entry : countryPackageMap.entrySet()) {
             String country = entry.getKey();
@@ -64,12 +66,12 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
             BigDecimal countryFretFees = orders.stream()
                     .map(PlatformOrder::getFretFee)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-            Row<String, Object, Integer, Object, String> row = new Row<>(
+            Row<String, Object, Integer, Object, BigDecimal> row = new Row<>(
                     String.format("Total cost for %s", country),
                     null,
                     orders.size(),
                     null,
-                    String.format("%.2f", countryOtherFees.add(countryFretFees))
+                    countryOtherFees.add(countryFretFees)
             );
             rows.add(row);
         }

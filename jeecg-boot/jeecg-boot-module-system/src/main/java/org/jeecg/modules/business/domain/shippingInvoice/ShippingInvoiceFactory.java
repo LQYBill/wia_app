@@ -19,11 +19,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -45,6 +43,11 @@ public class ShippingInvoiceFactory {
     private final CountryService countryService;
 
     private final SimpleDateFormat SUBJECT_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+
+    private final List<String> EU_COUNTRY_LIST = Arrays.asList("Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus",
+            "Czech", "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Ireland", "Italy",
+            "Latvia", "Lithuania", "Luxembourg", "Malta", "Netherlands", "Poland", "Portugal", "Romania", "Slovakia",
+            "Slovenia", "Spain", "Sweden");
 
     private LoadingCache<Pair<String, Date>, BigDecimal> declaredValueCache = CacheBuilder.newBuilder()
             .maximumSize(1000)
@@ -165,16 +168,19 @@ public class ShippingInvoiceFactory {
             for (PlatformOrderContent content : contents) {
                 content.setShippingFee(price.calculateShippingPrice(contentWeight));
                 content.setServiceFee(price.getAdditionalCost());
-                BigDecimal vat;
-                try {
-                    vat = declaredValueCache.get(Pair.of(content.getSkuId(), uninvoicedOrder.getShippingTime()))
-                            .multiply(BigDecimal.valueOf(content.getQuantity()))
-                            .multiply(client.getVatPercentage());
-                } catch (ExecutionException e) {
-                    String msg = "Error while retrieving declared value of SKU " + content.getSkuId() + " of order "
-                            + content.getPlatformOrderId();
-                    log.error(e.getMessage());
-                    throw new UserException(msg);
+                BigDecimal vat = BigDecimal.ZERO;
+                if (EU_COUNTRY_LIST.contains(uninvoicedOrder.getCountry())) {
+                    try {
+                        vat = declaredValueCache.get(Pair.of(content.getSkuId(), uninvoicedOrder.getShippingTime()))
+                                .multiply(BigDecimal.valueOf(content.getQuantity()))
+                                .multiply(client.getVatPercentage())
+                                .setScale(2, RoundingMode.UP);
+                    } catch (ExecutionException e) {
+                        String msg = "Error while retrieving declared value of SKU " + content.getSkuId() + " of order "
+                                + content.getPlatformOrderId();
+                        log.error(e.getMessage());
+                        throw new UserException(msg);
+                    }
                 }
                 content.setVat(vat);
             }

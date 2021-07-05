@@ -140,8 +140,9 @@ public class LogisticChannelPrice implements Serializable {
         /* (weight - minimum weight)/unit * UP + minimum weight price */
         return weight
                 .subtract(min)
-                .divide(BigDecimal.valueOf(calUnit), RoundingMode.HALF_DOWN)
+                 .divide(BigDecimal.valueOf(calUnit), RoundingMode.UP)
                 .multiply(calUnitPrice)
-                .add(minimumWeightPrice);
+                .add(minimumWeightPrice)
+                .setScale(2, RoundingMode.UP);
     }
 }
