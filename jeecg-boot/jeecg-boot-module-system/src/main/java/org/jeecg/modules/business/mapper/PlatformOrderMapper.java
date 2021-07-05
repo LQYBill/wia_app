@@ -90,4 +90,8 @@ public interface PlatformOrderMapper extends BaseMapper<PlatformOrder> {
      * @return previous code.
      */
     String findPreviousInvoice();
+
+    Date findEarliestUninvoicedPlatformOrder(List<String> shopIDs);
+
+    Date findLatestUninvoicedPlatformOrder(List<String> shopIDs);
 }

@@ -3,6 +3,7 @@ package org.jeecg.modules.business.service;
 import org.jeecg.modules.business.controller.UserException;
 import org.jeecg.modules.business.domain.shippingInvoice.ShippingInvoice;
 import org.jeecg.modules.business.domain.shippingInvoice.ShippingInvoiceFactory;
+import org.jeecg.modules.business.entity.ShippingInvoiceEntity;
 import org.jeecg.modules.business.mapper.ClientMapper;
 import org.jeecg.modules.business.mapper.LogisticChannelPriceMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
@@ -53,8 +54,8 @@ public class PlatformOrderShippingInvoiceService {
     private String DIR;
 
     public Period getValidePeriod(List<String> shopIDs) {
-        Date begin = shippingInvoiceMapper.findEarliestUninvoicedPlatformOrder(shopIDs);
-        Date end = shippingInvoiceMapper.findLatestUninvoicedPlatformOrder(shopIDs);
+        Date begin = platformOrderMapper.findEarliestUninvoicedPlatformOrder(shopIDs);
+        Date end = platformOrderMapper.findLatestUninvoicedPlatformOrder(shopIDs);
         return new Period(begin, end);
     }
 
@@ -97,6 +98,15 @@ public class PlatformOrderShippingInvoiceService {
             Files.copy(src, out);
             invoice.toExcelFile(out);
         }
+        // save to DB
+        ShippingInvoiceEntity shippingInvoiceEntity = ShippingInvoiceEntity.of(
+                invoice.code(),
+                invoice.totalAmount(),
+                invoice.reducedAmount(),
+                invoice.paidAmount()
+        );
+        shippingInvoiceMapper.save(shippingInvoiceEntity);
+
         return filename;
     }
 

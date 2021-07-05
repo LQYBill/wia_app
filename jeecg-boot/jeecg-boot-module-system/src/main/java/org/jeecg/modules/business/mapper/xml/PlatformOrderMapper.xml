@@ -151,4 +151,44 @@
         LIMIT 1
     </select>
 
+    <select id="findEarliestUninvoicedPlatformOrder" resultType="date">
+        SELECT shipping_time
+        FROM platform_order
+        WHERE shipping_invoice_number IS NULL
+        AND erp_status = 3
+        AND shop_id IN
+        <foreach
+                collection="shopIDs"
+                separator=","
+                open="("
+                close=")"
+                index="index"
+                item="item"
+        >
+            #{item}
+        </foreach>
+        ORDER BY shipping_time
+        LIMIT 1
+    </select>
+
+    <select id="findLatestUninvoicedPlatformOrder" resultType="date">
+        SELECT shipping_time
+        FROM platform_order
+        WHERE shipping_invoice_number IS NULL
+        AND erp_status = 3
+        AND shop_id IN
+        <foreach
+                collection="shopIDs"
+                separator=","
+                open="("
+                close=")"
+                index="index"
+                item="item"
+        >
+            #{item}
+        </foreach>
+        ORDER BY shipping_time DESC
+        LIMIT 1
+    </select>
+
 </mapper>

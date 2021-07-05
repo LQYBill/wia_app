@@ -89,7 +89,7 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
         try {
             if (oldOrders.size() != 0) {
                 log.trace("{} orders to be inserted/updated.", oldOrders.size());
-                updateBatchById(oldOrders);
+                platformOrderMabangMapper.batchUpdateById(oldOrders);
                 platformOrderMabangMapper.batchDeleteByMainID(oldOrders.stream().map(Order::getId).collect(toList()));
             }
             if (allNewItemsOfOldItems.size() != 0) {

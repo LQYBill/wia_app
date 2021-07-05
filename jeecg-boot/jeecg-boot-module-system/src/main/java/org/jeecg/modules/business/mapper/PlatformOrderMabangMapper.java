@@ -74,5 +74,5 @@ public interface PlatformOrderMabangMapper extends BaseMapper<Order> {
      */
     int batchDeleteByMainID(@Param("mainIDs") List<String> mainIDs);
 
-
+    int batchUpdateById(List<Order> orders);
 }
