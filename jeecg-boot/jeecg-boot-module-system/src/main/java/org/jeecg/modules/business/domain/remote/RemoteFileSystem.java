@@ -24,24 +24,20 @@ import java.util.stream.Collectors;
 public class RemoteFileSystem {
     private final static String BUCKET_NAME = "mabangerp-orders";
 
-    private final static String ACCESS_KEY = "AKIAVT3PM5UKZBDGFIPR";
-
-    private final static String SECRET_KEY = "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";
-
-    private final static AWSCredentials awsCredentials = new BasicAWSCredentials(ACCESS_KEY, SECRET_KEY);
-
-    private final static AmazonS3 s3 = AmazonS3ClientBuilder.standard()
-            .withRegion(Regions.EU_WEST_3)
-            .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
-            .build();
+    private final AmazonS3 s3;
 
     private final LinkedList<String> prefix;
 
     /**
      * Open a new terminal.
      */
-    public RemoteFileSystem() {
+    public RemoteFileSystem(AWSCredentials awsCredentials) {
         this.prefix = new LinkedList<>();
+
+        s3 = AmazonS3ClientBuilder.standard()
+                .withRegion(Regions.EU_WEST_3)
+                .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
+                .build();
     }
 
     /**
@@ -50,8 +46,8 @@ public class RemoteFileSystem {
      * @param first the path or the first part of the directory
      * @param more  additional path of the directory in case of existence
      */
-    public RemoteFileSystem(String first, String... more) {
-        this();
+    public RemoteFileSystem(AWSCredentials awsCredentials, String first, String... more) {
+        this(awsCredentials);
         prefix.add(first);
         prefix.addAll(Arrays.asList(more.clone()));
     }

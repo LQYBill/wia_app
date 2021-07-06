@@ -192,6 +192,16 @@ jeecg:
     webapp: D://opt//webapp
   shiro:
     excludeUrls: /test/jeecgDemo/demo3,/test/jeecgDemo/redisDemo/**,/category/**,/visual/**,/map/**,/jmreport/bigscreen2/**
+
+  # Amazon S3
+  s3:
+    key:
+      access: AKIAVT3PM5UKZBDGFIPR
+      secret: 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
+
+    upload:
+      prefix: test
+
   #阿里云oss存储配置
   oss:
     endpoint: oss-cn-beijing.aliyuncs.com
