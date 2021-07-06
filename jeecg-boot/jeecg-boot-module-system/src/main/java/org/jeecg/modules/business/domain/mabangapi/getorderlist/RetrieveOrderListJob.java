@@ -1,6 +1,7 @@
 package org.jeecg.modules.business.domain.mabangapi.getorderlist;
 
 import com.alibaba.fastjson.JSONArray;
+import com.amazonaws.auth.BasicAWSCredentials;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jeecg.modules.business.domain.remote.RemoteFileSystem;
@@ -11,7 +12,7 @@ import org.quartz.JobExecutionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.io.FileWriter;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,29 +34,37 @@ public class RetrieveOrderListJob implements Job {
     @Setter
     private IPlatformOrderMabangService platformOrderMabangService;
 
-    private final static Duration EXECUTION_DURATION = Duration.ofMinutes(30);
+    private final static Duration EXECUTION_DURATION = Duration.ofMinutes(300);
 
     @Value("${jeecg.s3.upload.prefix}")
     private String dir;
 
+    @Value("${jeecg.s3.key.access}")
+    private String ACCESS_KEY;
+
+    @Value("${jeecg.s3.key.secret}")
+    private String SECRET_KEY;
+
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
         try {
+            log.info("Looking for new orders");
             updateNewOrder();
         } catch (OrderListRequestErrorException | IOException e) {
             throw new RuntimeException(e);
         }
 
-        try {
-            updateMergedOrder();
-        } catch (OrderListRequestErrorException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            log.info("Looking for merged orders");
+//            updateMergedOrder();
+//        } catch (OrderListRequestErrorException e) {
+//            throw new RuntimeException(e);
+//        }
 
     }
 
     /**
-     * Retrieve newly paid order.
+     * Retrieve newly paid order from Mabang, upload them to remote.
      * Duration is specified by {@code EXECUTION_DURATION}
      */
     public void updateNewOrder() throws OrderListRequestErrorException, IOException {
@@ -70,21 +79,33 @@ public class RetrieveOrderListJob implements Job {
                 .setEndDate(end)
                 .setStatus(OrderStatus.AllUnshipped);
         OrderListRawStream rawStream = new OrderListRawStream(body);
-        List<JSONArray> rawData = rawStream.all().stream()
+        // get data in json array format
+        List<OrderListResponse> rawStreamAll = rawStream.all();
+        log.info(rawStreamAll.toString());
+        List<JSONArray> rawData = rawStreamAll.stream()
                 .map(OrderListResponse::getData)
                 .collect(Collectors.toList());
-
+        log.info("Raw data {}", rawData);
+        /* For each array, we will save them as an individual file to remote */
+        // Create temporary file to contain data.
+        Path out = Files.createTempFile("json", "json");
+        // Establish connexion with remote
+        BasicAWSCredentials credentials = new BasicAWSCredentials(ACCESS_KEY, SECRET_KEY);
+        RemoteFileSystem fileSystem = new RemoteFileSystem(credentials, dir);
+        // uploading file prefix format
         DateFormat format = new SimpleDateFormat("yyyy-MM-dd=hh:mm:ss");
         Date now = new Date();
         for (int i = 0; i < rawData.size(); i++) {
-            String name = format.format(now) + "-" + i;
+            // concatenate remote file name
+            String name = format.format(now) + "-" + i + ".json";
+            log.info("Coping file {}", name);
             JSONArray data = rawData.get(i);
-            /* copy to remote */
-            uploadToRemote(data, name);
-            /* save to DB */
-           // platformOrderMabangService.saveOrderFromMabang(data, name);
+            /* Overwrite the local temporary file at each time */
+            BufferedWriter writer = Files.newBufferedWriter(out);
+            writer.write(data.toJSONString());
+            writer.close();
+            fileSystem.cp(name, out.toFile());
         }
-        // update in DB
     }
 
     /**
@@ -121,10 +142,10 @@ public class RetrieveOrderListJob implements Job {
                         Collectors.toMap(
                                 Function.identity(),
                                 o -> o.getOrderItems().stream()
-                                        .filter(
-                                                item -> !item.getOriginOrderId().equals(o.getErpOrderId())
-                                        )
                                         .map(OrderItem::getOriginOrderId)
+                                        .filter(
+                                                originOrderId -> !originOrderId.equals(o.getErpOrderId())
+                                        )
                                         .collect(Collectors.toSet())
 
                         )
@@ -132,13 +153,5 @@ public class RetrieveOrderListJob implements Job {
 
         // update in DB
         mergedOrderToSourceOrdersErpId.forEach(platformOrderMabangService::updateMergedOrderFromMabang);
-    }
-
-
-    /**
-     * Save each elements as a individual file, push them to remote bucket.
-     */
-    private void uploadToRemote(JSONArray rawData, String name) throws IOException {
-
     }
 }

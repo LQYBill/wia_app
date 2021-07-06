@@ -32,6 +32,9 @@ public class OrderListRawStream implements NetworkDataStream<OrderListResponse> 
     public OrderListResponse attempt() {
         log.info("Begin the first request");
         this.currentResponse = sendRequest(toSend);
+        if (currentResponse.getDataCount() == 0) {
+            return null;
+        }
         began = true;
         toSend.nextPage();
         return currentResponse;
