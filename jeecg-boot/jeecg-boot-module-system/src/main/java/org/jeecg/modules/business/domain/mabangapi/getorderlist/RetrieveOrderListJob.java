@@ -9,6 +9,7 @@ import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -33,6 +34,9 @@ public class RetrieveOrderListJob implements Job {
     private IPlatformOrderMabangService platformOrderMabangService;
 
     private final static Duration EXECUTION_DURATION = Duration.ofMinutes(30);
+
+    @Value("${jeecg.s3.upload.prefix}")
+    private String dir;
 
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
@@ -78,7 +82,7 @@ public class RetrieveOrderListJob implements Job {
             /* copy to remote */
             uploadToRemote(data, name);
             /* save to DB */
-            platformOrderMabangService.saveOrderFromMabang(data, name);
+           // platformOrderMabangService.saveOrderFromMabang(data, name);
         }
         // update in DB
     }
