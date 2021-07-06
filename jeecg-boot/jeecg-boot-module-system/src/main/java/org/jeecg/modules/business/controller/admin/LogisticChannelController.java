@@ -295,6 +295,7 @@ public class LogisticChannelController {
         List<Country> countries = logisticChannelPriceService.getAllCountry()
                 .stream()
                 .map(countryService::findByCode)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         return Result.OK(countries);
     }
