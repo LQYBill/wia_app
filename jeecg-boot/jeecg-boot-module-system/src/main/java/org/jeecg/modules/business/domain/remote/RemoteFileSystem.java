@@ -114,14 +114,14 @@ public class RemoteFileSystem {
      *
      * @return list of content of current dir
      */
-    public List<String> ls() {
+    public List<String> ls(String prefix) {
         List<String> allKey = s3.listObjectsV2(BUCKET_NAME)
                 .getObjectSummaries().stream()
                 .map(S3ObjectSummary::getKey)
                 .collect(Collectors.toList());
         log.debug("All key: {}", allKey);
 
-        String dir = collapse("");
+        String dir = collapse(prefix);
         Pattern pattern = Pattern.compile(dir);
 
         log.debug("pattern: " + pattern);
@@ -143,6 +143,11 @@ public class RemoteFileSystem {
 
         return res;
     }
+
+    public List<String> ls() {
+        return this.ls("");
+    }
+
 
     /**
      * Download a file in the current directory to a local file.
