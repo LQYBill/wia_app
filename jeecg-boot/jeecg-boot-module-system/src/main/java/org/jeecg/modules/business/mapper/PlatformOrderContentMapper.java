@@ -7,6 +7,7 @@ import org.jeecg.modules.business.entity.ClientPlatformOrderContent;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.vo.SkuDetail;
 import org.jeecg.modules.business.vo.SkuQuantity;
+import org.jeecg.modules.business.vo.SkuWeightDiscount;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -39,6 +40,5 @@ public interface PlatformOrderContentMapper extends BaseMapper<PlatformOrderCont
 
     List<SkuDetail> searchSkuDetail(List<String> skuIDs);
 
-
-    List<Map<String, Object>> searchWeightVolumes(@Param("skuIDs") List<String> skuIDs);
+    List<SkuWeightDiscount> getAllWeightsAndDiscounts();
 }

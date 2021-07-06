@@ -9,11 +9,11 @@ import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.mapper.LogisticChannelMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.service.IPlatformOrderContentService;
+import org.jeecg.modules.business.vo.SkuWeightDiscount;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,8 +28,13 @@ public class PlatformOrderContentServiceImpl extends ServiceImpl<PlatformOrderCo
     @Autowired
     private PlatformOrderContentMapper platformOrderContentMapper;
 
+    public List<SkuWeightDiscount> getAllSKUWeightsAndDiscounts() {
+        return platformOrderContentMapper.getAllWeightsAndDiscounts();
+    }
+
     @Override
-    public BigDecimal calculateWeight(String channelName, Map<String, Integer> contentMap) throws UserException {
+    public BigDecimal calculateWeight(String channelName, Map<String, Integer> contentMap,
+                                      Map<String, BigDecimal> skuRealWeights) throws UserException {
         QueryWrapper<LogisticChannel> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq(true, "zh_name", channelName);
 
@@ -39,37 +44,17 @@ public class PlatformOrderContentServiceImpl extends ServiceImpl<PlatformOrderCo
         }
 
         List<String> skuIDs = new ArrayList<>(contentMap.keySet());
-        log.info("sku to search");
-        log.info(skuIDs.toString());
-        List<Map<String, Object>> colToValue = platformOrderContentMapper.searchWeightVolumes(skuIDs);
-        log.info("cols");
-        log.info(colToValue.toString());
-
-        String attr = channel.getUseVolumetricWeight() == 1 ? "volume" : "height";
-
-        Map<String, Integer> idToWeightOrVolume = colToValue.stream()
-                .collect(
-                        Collectors.toMap(
-                                map -> (String) map.get("id"),
-                                map -> (Integer) (map.get(attr) == null ? 0 : map.get(attr))
-                        )
-                );
-
-        log.info(idToWeightOrVolume.toString());
+        log.info("skus : " + skuIDs);
 
         try {
-            int total = contentMap.entrySet().stream()
-                    .mapToInt(
+
+            BigDecimal total = contentMap.entrySet().stream()
+                    .map(
                             content ->
-                                    (content.getValue() * idToWeightOrVolume.get(content.getKey()))
-                    ).sum();
-
-            BigDecimal res = BigDecimal.valueOf(total);
-
-            if (channel.getUseVolumetricWeight() == 1) {
-                return res.divide(BigDecimal.valueOf(channel.getVolumetricWeightFactor()), RoundingMode.HALF_DOWN);
-            }
-            return res;
+                                    (skuRealWeights.get(content.getKey()).multiply(BigDecimal.valueOf(content.getValue())))
+                    ).reduce(BigDecimal.ZERO, BigDecimal::add);
+            log.info("total weight : " + total);
+            return total;
         } catch (NullPointerException e) {
             throw new UserException("Can not find weight for one sku in: " + contentMap);
         }
