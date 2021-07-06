@@ -127,8 +127,8 @@ public class Client implements Serializable {
     /**
      * 国家
      */
-    @Excel(name = "国家", width = 15, dictTable = "country", dicText = "name_en", dicCode = "id")
-    @Dict(dictTable = "country", dicText = "name_en", dicCode = "id")
+     @Excel(name = "国家", width = 15, dictTable = "country", dicText = "name_en", dicCode = "name_en")
+    @Dict(dictTable = "country", dicText = "name_en", dicCode = "name_en")
     @ApiModelProperty(value = "国家")
     private String country;
     /**
