@@ -2,25 +2,31 @@ package org.jeecg.modules.business.domain.remote;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.ListObjectsV2Result;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import lombok.extern.slf4j.Slf4j;
 
-import java.io.File;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
  * This class provide operations for manipulating Amazon S3 server by simulating terminal.
  * Not thread safe.
+ * Root path is "", not "/". Absolut path not working here.
  */
+@Slf4j
 public class RemoteFileSystem {
     private final static String BUCKET_NAME = "mabangerp-orders";
 
@@ -72,7 +78,7 @@ public class RemoteFileSystem {
     }
 
     /**
-     * Equivalent to "cd /"
+     * Equivalent to "cd /".
      */
     public void cdRoot() {
         prefix.clear();
@@ -84,17 +90,10 @@ public class RemoteFileSystem {
      * @param name filename
      * @param file the file to copy
      */
-    public void cp(String name, File file) {
-        s3.putObject(BUCKET_NAME, collapse(name), file);
-    }
-
-    /**
-     * Plural version cp.
-     *
-     * @param files files to copy
-     */
-    public void cp(Map<String, File> files) {
-        files.forEach(this::cp);
+    public void cp(String name, File file) throws FileNotFoundException {
+        ObjectMetadata meta = new ObjectMetadata();
+        meta.setContentEncoding("UTF-8");
+        s3.putObject(BUCKET_NAME, collapse(name), new FileInputStream(file), meta);
     }
 
     /**
@@ -111,24 +110,67 @@ public class RemoteFileSystem {
     }
 
     /**
-     * List all content of the file system.
+     * List all the names of file of the current dir.
      *
      * @return list of content of current dir
      */
-    public static List<String> ls() {
-        ListObjectsV2Result result = s3.listObjectsV2(BUCKET_NAME);
-        return result.getObjectSummaries().stream().map(S3ObjectSummary::getKey).collect(Collectors.toList());
+    public List<String> ls() {
+        List<String> allKey = s3.listObjectsV2(BUCKET_NAME)
+                .getObjectSummaries().stream()
+                .map(S3ObjectSummary::getKey)
+                .collect(Collectors.toList());
+        log.debug("All key: {}", allKey);
+
+        String dir = collapse("");
+        Pattern pattern = Pattern.compile(dir);
+
+        log.debug("pattern: " + pattern);
+
+        List<String> res = new ArrayList<>();
+        for (String key : allKey) {
+            log.debug("Checking: {}", key);
+            Matcher matcher = pattern.matcher(key);
+            if (matcher.find()) {
+                log.debug("{} matched!", key);
+                int begin = matcher.end();
+                String name = key.substring(begin);
+                if (!name.isEmpty()) {
+                    res.add(name);
+                    log.debug("add '{}' to result", name);
+                }
+            }
+        }
+
+        return res;
     }
 
-    public List<String> ls(String dir) {
-        Pattern pattern = Pattern.compile(dir);
-        return ls().stream()
-                .filter(path -> pattern.matcher(path).find())
-                .map(path -> path.replaceAll(dir, ""))
-                .collect(Collectors.toList());
+    /**
+     * Download a file in the current directory to a local file.
+     *
+     * @param name name of the file
+     * @param path path of the local file
+     */
+    public void wget(String name, Path path) throws IOException {
+        S3ObjectInputStream in = s3.getObject(BUCKET_NAME, collapse(name)).getObjectContent();
+        OutputStream out = Files.newOutputStream(path);
+
+        byte[] buf = new byte[1024];
+        int size;
+        while (true) {
+            size = in.read(buf);
+            if (size == -1) {
+                break;
+            }
+            out.write(buf, 0, size);
+        }
+        in.close();
+        out.close();
     }
 
     private String collapse(String key) {
+        if (prefix.isEmpty()) {
+            return key;
+        }
         return String.join("/", prefix) + "/" + key;
     }
 }
