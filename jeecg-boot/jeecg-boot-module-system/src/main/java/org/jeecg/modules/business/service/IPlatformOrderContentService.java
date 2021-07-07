@@ -3,8 +3,10 @@ package org.jeecg.modules.business.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.jeecg.modules.business.controller.UserException;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
+import org.jeecg.modules.business.vo.SkuWeightDiscount;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -19,8 +21,14 @@ public interface IPlatformOrderContentService extends IService<PlatformOrderCont
      * Calculate weight of a platform order
      *
      * @param contentMap Map of <SKU ID, Quantity>
+     * @param skuRealWeights All SKU's real weights
      * @return weight
      */
-    BigDecimal calculateWeight(String channelName, Map<String, Integer> contentMap) throws UserException;
+    BigDecimal calculateWeight(String channelName, Map<String, Integer> contentMap, Map<String, BigDecimal> skuRealWeights) throws UserException;
 
+    /**
+     * Retrieve all SKU weights and discounts
+     * @return
+     */
+    List<SkuWeightDiscount> getAllSKUWeightsAndDiscounts();
 }

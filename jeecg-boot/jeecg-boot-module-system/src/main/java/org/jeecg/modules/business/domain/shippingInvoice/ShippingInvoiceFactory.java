@@ -14,6 +14,7 @@ import org.jeecg.modules.business.service.CountryService;
 import org.jeecg.modules.business.service.IPlatformOrderContentService;
 import org.jeecg.modules.business.service.IPlatformOrderService;
 import org.jeecg.modules.business.service.ISkuDeclaredValueService;
+import org.jeecg.modules.business.vo.SkuWeightDiscount;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -108,6 +109,14 @@ public class ShippingInvoiceFactory {
         if (uninvoicedOrderToContent == null) {
             throw new UserException("None platform order in the selected period!");
         }
+        Map<String, BigDecimal> skuRealWeights = new HashMap<>();
+        for (SkuWeightDiscount skuWeightsAndDiscount : platformOrderContentService.getAllSKUWeightsAndDiscounts()) {
+            if (skuWeightsAndDiscount.getWeight() != null) {
+                skuRealWeights.put(skuWeightsAndDiscount.getSkuId(),
+                        skuWeightsAndDiscount.getDiscount().multiply(BigDecimal.valueOf(skuWeightsAndDiscount.getWeight())));
+            }
+        }
+
         Client client = clientMapper.selectById(customerId);
         String invoiceCode = generateInvoiceCode();
         log.info("New invoice code: {}", invoiceCode);
@@ -127,7 +136,8 @@ public class ShippingInvoiceFactory {
             // calculate weight of a order
             BigDecimal contentWeight = platformOrderContentService.calculateWeight(
                     uninvoicedOrder.getLogisticChannelName(),
-                    contentMap
+                    contentMap,
+                    skuRealWeights
             );
             /* Convert country name to country name */
 
@@ -165,18 +175,28 @@ public class ShippingInvoiceFactory {
             // update attributes of orders and theirs content
             uninvoicedOrder.setFretFee(price.getRegistrationFee());
             uninvoicedOrder.setShippingInvoiceNumber(invoiceCode);
+            BigDecimal totalShippingFee = price.calculateShippingPrice(contentWeight);
             for (PlatformOrderContent content : contents) {
-                content.setShippingFee(price.calculateShippingPrice(contentWeight));
+                String skuId = content.getSkuId();
+                BigDecimal realWeight = skuRealWeights.get(skuId);
+                // Each content will share the total shipping fee proportionally, because minimum price and unit price
+                // vary with total weight, so calculating each content's fee with its weight is just wrong
+                content.setShippingFee(realWeight.compareTo(BigDecimal.ZERO) == 0 ? BigDecimal.ZERO :
+                        totalShippingFee.multiply(BigDecimal.valueOf(content.getQuantity()))
+                                .multiply(realWeight)
+                                .divide(contentWeight, RoundingMode.UP)
+                                .setScale(2, RoundingMode.UP)
+                );
                 content.setServiceFee(price.getAdditionalCost());
                 BigDecimal vat = BigDecimal.ZERO;
                 if (EU_COUNTRY_LIST.contains(uninvoicedOrder.getCountry())) {
                     try {
-                        vat = declaredValueCache.get(Pair.of(content.getSkuId(), uninvoicedOrder.getShippingTime()))
+                        vat = declaredValueCache.get(Pair.of(skuId, uninvoicedOrder.getShippingTime()))
                                 .multiply(BigDecimal.valueOf(content.getQuantity()))
                                 .multiply(client.getVatPercentage())
                                 .setScale(2, RoundingMode.UP);
                     } catch (ExecutionException e) {
-                        String msg = "Error while retrieving declared value of SKU " + content.getSkuId() + " of order "
+                        String msg = "Error while retrieving declared value of SKU " + skuId + " of order "
                                 + content.getPlatformOrderId();
                         log.error(e.getMessage());
                         throw new UserException(msg);
