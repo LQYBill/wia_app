@@ -17,9 +17,10 @@ import org.jeecg.modules.business.entity.Sku;
 import org.jeecg.modules.business.entity.SkuDeclaredValue;
 import org.jeecg.modules.business.entity.SkuPrice;
 import org.jeecg.modules.business.service.IShippingDiscountService;
+import org.jeecg.modules.business.service.ISkuDeclaredValueService;
 import org.jeecg.modules.business.service.ISkuPriceService;
 import org.jeecg.modules.business.service.ISkuService;
-import org.jeecg.modules.business.service.ISkuDeclaredValueService;
+import org.jeecg.modules.business.vo.SkuName;
 import org.jeecg.modules.business.vo.SkuPage;
 import org.jeecg.modules.business.vo.StockUpdate;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
@@ -338,6 +339,15 @@ public class SkuController {
             }
         }
         return Result.OK("文件导入失败！");
+    }
+
+    @GetMapping("/all")
+    public Result<List<SkuName>> allSku() {
+        return Result.OK(
+                skuService.all().stream()
+                        .sorted(Comparator.comparing(SkuName::getErpCode))
+                        .collect(Collectors.toList())
+        );
     }
 
 }

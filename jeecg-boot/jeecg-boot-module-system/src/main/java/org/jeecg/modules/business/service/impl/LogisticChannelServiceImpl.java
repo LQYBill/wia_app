@@ -1,6 +1,7 @@
 package org.jeecg.modules.business.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.jeecg.modules.business.domain.logistic.CostTrialCalculation;
 import org.jeecg.modules.business.entity.LogisticChannel;
 import org.jeecg.modules.business.entity.LogisticChannelPrice;
 import org.jeecg.modules.business.mapper.LogisticChannelMapper;
@@ -12,9 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @Description: 物流渠道
@@ -80,5 +80,31 @@ public class LogisticChannelServiceImpl extends ServiceImpl<LogisticChannelMappe
     @Override
     public LogisticChannelPrice findLogisticsChannelPrice(String channelName, Date date, int trueWeight, String country) {
         return logisticChannelPriceMapper.findBy(channelName, new java.util.Date(), BigDecimal.valueOf(trueWeight), country);
+    }
+
+    @Override
+    public List<CostTrialCalculation> logisticChannelTrial(int weight, int volume, String country) {
+        List<LogisticChannel> channels = list();
+
+        return channels.stream()
+                .map(c -> {
+                    String channelName = c.getZhName();
+                    boolean useVolumetricWeight = c.getUseVolumetricWeight() == 1;
+                    int trueWeight;
+                    if (useVolumetricWeight) {
+                        trueWeight = Math.max(weight, volume / c.getVolumetricWeightFactor());
+                    } else {
+                        trueWeight = weight;
+                    }
+                    LogisticChannelPrice price = findLogisticsChannelPrice(channelName, new Date(), trueWeight, country);
+                    if (price != null) {
+                        return new CostTrialCalculation(price, trueWeight, channelName);
+                    } else {
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .sorted(Comparator.comparing(CostTrialCalculation::getTotalCost))
+                .collect(Collectors.toList());
     }
 }

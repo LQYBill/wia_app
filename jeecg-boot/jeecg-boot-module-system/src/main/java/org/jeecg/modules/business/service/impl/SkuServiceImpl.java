@@ -6,6 +6,7 @@ import org.jeecg.modules.business.entity.*;
 import org.jeecg.modules.business.mapper.*;
 import org.jeecg.modules.business.service.IClientService;
 import org.jeecg.modules.business.service.ISkuService;
+import org.jeecg.modules.business.vo.SkuName;
 import org.jeecg.modules.business.vo.SkuQuantity;
 import org.jeecg.modules.business.vo.StockUpdate;
 import org.jeecg.modules.business.vo.inventory.InventoryRecord;
@@ -38,6 +39,10 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
     private IClientService clientService;
     @Autowired
     private PlatformOrderContentMapper platformOrderContentMapper;
+    @Autowired
+    private SkuMeasureMapper skuMeasureMapper;
+    @Autowired
+    private SkuProductNameMapper skuProductNameMapper;
 
     @Override
     @Transactional
@@ -174,5 +179,15 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
     @Transactional
     public void batchUpdateStock(List<StockUpdate> list) {
         skuMapper.batchUpdateStock(list);
+    }
+
+    @Override
+    public List<SkuMeasure> measureSku(List<String> skuIds) {
+        return skuMeasureMapper.selectBatchIds(skuIds);
+    }
+
+    @Override
+    public List<SkuName> all() {
+        return skuProductNameMapper.selectList(null);
     }
 }

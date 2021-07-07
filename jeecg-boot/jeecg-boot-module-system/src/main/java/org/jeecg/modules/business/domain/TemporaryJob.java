@@ -23,13 +23,13 @@ public class TemporaryJob implements Job {
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         List<Order> res = all28DaysOrdersOfStatus(OrderStatus.AllNonUnshipped);
-        platformOrderMabangService.saveOrderFromMabang(res, );
+        platformOrderMabangService.saveOrderFromMabang(res);
 
         List<Order> res2 = all28DaysOrdersOfStatus(OrderStatus.Completed);
-        platformOrderMabangService.saveOrderFromMabang(res2, );
+        platformOrderMabangService.saveOrderFromMabang(res2);
 
         List<Order> res3 = all28DaysOrdersOfStatus(OrderStatus.Pending);
-        platformOrderMabangService.saveOrderFromMabang(res3, );
+        platformOrderMabangService.saveOrderFromMabang(res3);
         log.info("Temporary job finished");
     }
 

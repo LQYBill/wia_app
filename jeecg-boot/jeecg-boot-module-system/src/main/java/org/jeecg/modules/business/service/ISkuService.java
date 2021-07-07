@@ -6,6 +6,8 @@ import org.jeecg.modules.business.entity.ShippingDiscount;
 import org.jeecg.modules.business.entity.Sku;
 import org.jeecg.modules.business.entity.SkuDeclaredValue;
 import org.jeecg.modules.business.entity.SkuPrice;
+import org.jeecg.modules.business.entity.SkuMeasure;
+import org.jeecg.modules.business.vo.SkuName;
 import org.jeecg.modules.business.vo.SkuQuantity;
 import org.jeecg.modules.business.vo.StockUpdate;
 import org.jeecg.modules.business.vo.inventory.InventoryRecord;
@@ -68,4 +70,9 @@ public interface ISkuService extends IService<Sku> {
      * @param list List of stock update
      */
     void batchUpdateStock(List<StockUpdate> list);
+
+
+    List<SkuMeasure> measureSku(List<String> skuIds);
+
+    List<SkuName> all();
 }

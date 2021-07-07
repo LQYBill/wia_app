@@ -16,9 +16,11 @@ import org.jeecg.modules.business.domain.logistic.CostTrialCalculation;
 import org.jeecg.modules.business.entity.Country;
 import org.jeecg.modules.business.entity.LogisticChannel;
 import org.jeecg.modules.business.entity.LogisticChannelPrice;
+import org.jeecg.modules.business.entity.SkuMeasure;
 import org.jeecg.modules.business.service.CountryService;
 import org.jeecg.modules.business.service.ILogisticChannelPriceService;
 import org.jeecg.modules.business.service.ILogisticChannelService;
+import org.jeecg.modules.business.service.ISkuService;
 import org.jeecg.modules.business.vo.LogisticChannelPage;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
@@ -52,12 +54,14 @@ public class LogisticChannelController {
     private final ILogisticChannelService logisticChannelService;
     private final ILogisticChannelPriceService logisticChannelPriceService;
     private final CountryService countryService;
+    private final ISkuService skuService;
 
     @Autowired
-    public LogisticChannelController(ILogisticChannelService logisticChannelService, ILogisticChannelPriceService logisticChannelPriceService, CountryService countryService) {
+    public LogisticChannelController(ILogisticChannelService logisticChannelService, ILogisticChannelPriceService logisticChannelPriceService, CountryService countryService, ISkuService skuService) {
         this.logisticChannelService = logisticChannelService;
         this.logisticChannelPriceService = logisticChannelPriceService;
         this.countryService = countryService;
+        this.skuService = skuService;
     }
 
     /**
@@ -260,32 +264,52 @@ public class LogisticChannelController {
         return Result.OK("文件导入失败！");
     }
 
+
     @GetMapping(value = "/find")
     public Result<List<CostTrialCalculation>> findPrices(@RequestParam(name = "country") String country,
                                                          @RequestParam(name = "weight") int weight,
                                                          @RequestParam(name = "volume", defaultValue = "1") int volume) {
-        List<LogisticChannel> channels = logisticChannelService.list();
 
-        List<CostTrialCalculation> calculations = channels.stream()
-                .map(c -> {
-                    String channelName = c.getZhName();
-                    boolean useVolumetricWeight = c.getUseVolumetricWeight() == 1;
-                    int trueWeight;
-                    if (useVolumetricWeight) {
-                        trueWeight = Math.max(weight, volume / c.getVolumetricWeightFactor());
-                    } else {
-                        trueWeight = weight;
-                    }
-                    LogisticChannelPrice price = logisticChannelService.findLogisticsChannelPrice(channelName, new Date(), trueWeight, country);
-                    if (price != null) {
-                        return new CostTrialCalculation(price, trueWeight, channelName);
-                    } else {
-                        return null;
-                    }
-                })
-                .filter(Objects::nonNull)
-                .sorted(Comparator.comparing(CostTrialCalculation::getTotalCost))
-                .collect(Collectors.toList());
+        List<CostTrialCalculation> calculations = logisticChannelService.logisticChannelTrial(weight, volume, country);
+        return Result.OK(calculations);
+    }
+
+
+    /**
+     * API for trial calculation of shipping cost.
+     * Destination country and the skus to be shipped are needed.
+     *
+     * @param country destination country code
+     * @param skuList id of sku joined by ','
+     * @return
+     */
+    @GetMapping(value = "/findBySku")
+    public Result<?> findPricesBySku(
+            @RequestParam(name = "country") String country,
+            @RequestParam(name = "skuList") String skuList) {
+
+        String data = String.format("Request for trial calculation for country: %s and sku: [%s]", country, skuList);
+        log.info(data);
+        List<String> skuIds = Arrays.asList(skuList.split(","));
+
+        List<SkuMeasure> measures = skuService.measureSku(skuIds);
+        if (measures.size() < skuIds.size()) {
+            // TODO 2021-7-7 error handle in case of lack of measure data of certain
+        }
+
+
+
+        int totalWeight = measures.stream().mapToInt(SkuMeasure::getWeight).sum();
+
+        int totalVolume = measures.stream().mapToInt(SkuMeasure::getVolume).sum();
+
+        List<CostTrialCalculation> calculations =
+                logisticChannelService.logisticChannelTrial(
+                        totalWeight,
+                        totalVolume,
+                        country
+                );
+
         return Result.OK(calculations);
     }
 

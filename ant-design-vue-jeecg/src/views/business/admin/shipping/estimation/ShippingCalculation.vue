@@ -1,14 +1,15 @@
 <template>
   <a-card :bordered="false">
+    <!-- sku by measure-->
     <a-form-model ref="searchForm" :model="form" :rules="rules" layout="inline">
       <a-form-model-item label="目的地" prop="country">
         <a-select
-            show-search
-            placeholder="输入国家选择"
-            option-filter-prop="children"
-            :filter-option="filterOption"
-            style="width:200px"
-            v-model="form.country">
+          show-search
+          placeholder="输入国家选择"
+          option-filter-prop="children"
+          :filter-option="filterOption"
+          style="width:200px"
+          v-model="form.country">
 
           <a-select-option :value="item.code" v-for="item in countries" :key="item.code">
             {{ item.code + "-" + item.nameZh + "-" + item.nameEn }}
@@ -42,7 +43,49 @@
         </a-button>
       </a-form-model-item>
     </a-form-model>
+    <a-divider/>
+    <!--  search by sku  -->
+    <a-form-model ref="searchFormBySku" :model="formForSku" :rules="rulesForSku" layout="inline">
+      <!-- select country -->
+      <a-form-model-item label="目的地" prop="country">
+        <a-select
+          show-search
+          placeholder="输入国家选择"
+          option-filter-prop="children"
+          :filter-option="filterOption"
+          style="width:200px"
+          v-model="formForSku.country"
+        >
+          <a-select-option :value="item.code" v-for="item in countries" :key="item.code">
+            {{ item.code + "-" + item.nameZh + "-" + item.nameEn }}
+          </a-select-option>
+        </a-select>
+      </a-form-model-item>
+      <!-- select country     -->
+      <a-form-model-item label="sku" prop="sku">
+        <a-select
+          show-search
+          mode="multiple"
+          placeholder="输入sku选择"
+          option-filter-prop="children"
+          :filter-option="filterOption"
+          style="width:500px"
+          v-model="formForSku.sku">
+          <a-select-option :value="item.id" v-for="item in skus" :key="item.id">
+            {{ item["erpCode"] + "-" + item.zhName }}
+          </a-select-option>
+        </a-select>
+      </a-form-model-item>
 
+      <a-form-model-item>
+        <a-button type="primary" htmlType="submit" @click="handleSkuSubmit">
+          搜索
+        </a-button>
+      </a-form-model-item>
+
+    </a-form-model>
+    <a-divider/>
+    <!--  data display table  -->
     <a-table :columns="columns" :data-source="priceList" rowKey="logisticsChannelName" bordered>
     </a-table>
 
@@ -119,6 +162,7 @@ export default {
       priceList: [],
       columns: columns,
       countries: undefined,
+      skus: undefined,
       form: {
         country: undefined,
         weight: undefined,
@@ -126,14 +170,25 @@ export default {
         width: null,
         height: null,
       },
+      formForSku: {
+        country: undefined,
+        sku: []
+      },
       rules: {
         country: [{required: true, message: '请选择国家', trigger: 'change'}],
         weight: [{required: true, message: '请输入重量', trigger: 'blur'}],
       },
+      rulesForSku: {
+        country: [{required: true, message: '请选择国家', trigger: 'change'}],
+        sku: [{required: true, message: '请选择SKU', trigger: 'change'}],
+      },
       url: {
         countries: "/business/logisticChannel/countries",
-        shipSelect: "/business/logisticChannel/find"
+        skus: "/business/sku/all",
+        shipSelect: "/business/logisticChannel/find",
+        shipSelectBySku: "/business/logisticChannel/findBySku"
       },
+      skuresult: "123"
 
     }
   },
@@ -142,6 +197,11 @@ export default {
     getAction(this.url.countries).then(res => {
       this.countries = res.result
     })
+    getAction(this.url.skus).then(res => {
+      this.skus = res.result
+      console.log(this.skus[0])
+    })
+
   },
 
   methods: {
@@ -151,27 +211,47 @@ export default {
     handleSubmit() {
       let self = this
       this.$refs.searchForm.validate(
-          (valid) => {
-            if (valid) {
-              let requestParam = {
-                country: self.form.country,
-                weight: self.form.weight,
-                volume: self.form.long * self.form.width * self.form.height
-              }
-              getAction(self.url.shipSelect, requestParam)
-                  .then(res => {
-                    self.priceList = res.result
-                    console.log(res.result)
-                  })
+        (valid) => {
+          if (valid) {
+            let requestParam = {
+              country: self.form.country,
+              weight: self.form.weight,
+              volume: self.form.long * self.form.width * self.form.height
             }
+            getAction(self.url.shipSelect, requestParam)
+              .then(res => {
+                self.priceList = res.result
+                console.log(res.result)
+              })
           }
+        }
+      )
+    },
+    handleSkuSubmit() {
+      let self = this
+      this.$refs.searchFormBySku.validate(
+        (valid) => {
+          if (valid) {
+            const requestParam = {
+              country: self.formForSku.country,
+              skuList: self.formForSku.sku.join(","),
+            }
+            console.log("Sending request with param")
+            console.log(requestParam)
+            getAction(self.url.shipSelectBySku, requestParam)
+              .then(res => {
+                self.priceList = res.result
+                console.log(res.result)
+              })
+          }
+        }
       )
     },
     filterOption(input, option) {
       return (
-          option.componentOptions.children[0].text.toLowerCase().indexOf(input.toLowerCase()) >= 0
+        option.componentOptions.children[0].text.toLowerCase().indexOf(input.toLowerCase()) >= 0
       );
-    },
+    }
   }
 
 }
