@@ -182,7 +182,7 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
     }
 
     @Override
-    public List<SkuMeasure> measureSku(List<String> skuIds) {
+    public List<SkuMeasure> measureSku(Collection<String> skuIds) {
         return skuMeasureMapper.selectBatchIds(skuIds);
     }
 

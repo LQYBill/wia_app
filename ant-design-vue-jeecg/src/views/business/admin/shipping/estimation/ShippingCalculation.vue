@@ -1,5 +1,5 @@
 <template>
-  <a-card :bordered="false">
+  <a-card :bordered="false" :loading="pageDisable">
     <!-- sku by measure-->
     <a-form-model ref="searchForm" :model="form" :rules="rules" layout="inline">
       <a-form-model-item label="目的地" prop="country">
@@ -61,21 +61,47 @@
           </a-select-option>
         </a-select>
       </a-form-model-item>
-      <!-- select country     -->
+
+      <!-- select sku  -->
       <a-form-model-item label="sku" prop="sku">
         <a-select
           show-search
-          mode="multiple"
           placeholder="输入sku选择"
           option-filter-prop="children"
           :filter-option="filterOption"
           style="width:500px"
           v-model="formForSku.sku">
-          <a-select-option :value="item.id" v-for="item in skus" :key="item.id">
+          <a-select-option v-for="(item,index) in skus" :key="index" :value="index">
             {{ item["erpCode"] + "-" + item.zhName }}
           </a-select-option>
         </a-select>
       </a-form-model-item>
+
+      <a-form-item>
+        <a-input-number id="inputNumber" v-model="quantity" :min="1"/>
+        当前值：{{ quantity }}
+      </a-form-item>
+
+      <a-form-model-item>
+        <a-button type="primary" @click="handleAdd">
+          增加
+        </a-button>
+      </a-form-model-item>
+
+      <br/>
+
+      <a-form-model-item label="已选中">
+        <a-tag
+          v-for="(item,index) in formForSku.selectedSkuList"
+          :key="index"
+          :closable="true"
+          @close="() => handleClose(index)"
+          color="cyan"
+        >
+          {{ item.quantity + ' X ' + item.sku.zhName + item.sku.erpCode }}
+        </a-tag>
+      </a-form-model-item>
+
 
       <a-form-model-item>
         <a-button type="primary" htmlType="submit" @click="handleSkuSubmit">
@@ -93,7 +119,7 @@
 </template>
 
 <script>
-import {getAction} from "@/api/manage";
+import {getAction, postAction} from "@/api/manage";
 import {FormModel} from 'ant-design-vue';
 import Vue from "vue";
 
@@ -172,7 +198,8 @@ export default {
       },
       formForSku: {
         country: undefined,
-        sku: []
+        sku: undefined,
+        selectedSkuList: []
       },
       rules: {
         country: [{required: true, message: '请选择国家', trigger: 'change'}],
@@ -188,18 +215,20 @@ export default {
         shipSelect: "/business/logisticChannel/find",
         shipSelectBySku: "/business/logisticChannel/findBySku"
       },
-      skuresult: "123"
-
+      pageDisable: true,
+      quantity: 1
     }
   },
 
   created() {
-    getAction(this.url.countries).then(res => {
-      this.countries = res.result
-    })
+    getAction(this.url.countries)
+      .then(res => {
+        this.countries = res.result
+        this.pageDisable = false
+      })
     getAction(this.url.skus).then(res => {
+      console.log(res)
       this.skus = res.result
-      console.log(this.skus[0])
     })
 
   },
@@ -227,18 +256,46 @@ export default {
         }
       )
     },
+
+    handleAdd() {
+      console.log("Click on add")
+      console.log(this.formForSku.sku, "quantity", this.quantity)
+      // exit in case of null or undefined
+      if (this.formForSku.sku === undefined) {
+        return
+      }
+      let i = this.formForSku.sku
+      let data = this.skus
+      this.formForSku.selectedSkuList.push({
+        sku: data[i],
+        quantity: this.quantity
+      })
+      console.log("Selected sku:", this.formForSku.selectedSkuList)
+    },
+
+    handleClose(index) {
+      console.log("Deleting index", index)
+      delete this.formForSku.selectedSkuList[index]
+      console.log("after delete Selected sku:", this.formForSku.selectedSkuList)
+    },
+
     handleSkuSubmit() {
+      console.log("click on submit")
       let self = this
       this.$refs.searchFormBySku.validate(
         (valid) => {
           if (valid) {
             const requestParam = {
               country: self.formForSku.country,
-              skuList: self.formForSku.sku.join(","),
+              skuList: self.formForSku.selectedSkuList.map(
+                (item) => ({
+                  ID: item.sku.id,
+                  quantity: item.quantity
+                })),
             }
             console.log("Sending request with param")
             console.log(requestParam)
-            getAction(self.url.shipSelectBySku, requestParam)
+            postAction(self.url.shipSelectBySku, requestParam)
               .then(res => {
                 self.priceList = res.result
                 console.log(res.result)

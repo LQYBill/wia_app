@@ -21,6 +21,9 @@ public class LogisticChannelPriceServiceImpl extends ServiceImpl<LogisticChannel
 	
 	@Autowired
 	private LogisticChannelPriceMapper logisticChannelPriceMapper;
+
+	@Autowired
+	private CountryNameMapper countryNameMapper;
 	
 	@Override
 	public List<LogisticChannelPrice> selectByMainId(String mainId) {

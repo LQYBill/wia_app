@@ -13,7 +13,6 @@ import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.common.util.oConvertUtils;
 import org.jeecg.modules.business.domain.logistic.CostTrialCalculation;
-import org.jeecg.modules.business.entity.Country;
 import org.jeecg.modules.business.entity.LogisticChannel;
 import org.jeecg.modules.business.entity.LogisticChannelPrice;
 import org.jeecg.modules.business.entity.SkuMeasure;
@@ -21,6 +20,7 @@ import org.jeecg.modules.business.service.CountryService;
 import org.jeecg.modules.business.service.ILogisticChannelPriceService;
 import org.jeecg.modules.business.service.ILogisticChannelService;
 import org.jeecg.modules.business.service.ISkuService;
+import org.jeecg.modules.business.vo.CountryName;
 import org.jeecg.modules.business.vo.LogisticChannelPage;
 import org.jeecg.modules.business.vo.SkuQuantity;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
@@ -295,9 +295,9 @@ public class LogisticChannelController {
         );
 
         // get ids of all sku to run trial
-        List<String> skuIds = param.getSkuQuantities().stream()
+        Set<String> skuIds = param.getSkuQuantities().stream()
                 .map(SkuQuantity::getID)
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
 
         // get map between id and measure
         Map<String, SkuMeasure> idToMeasure = skuService.measureSku(skuIds)
@@ -313,6 +313,7 @@ public class LogisticChannelController {
             // TODO 2021-7-7 error handle in case of lack of measure data of certain
         }
         // calculate total weight and volume
+        // iterate on sku quantity list, thus enable duplication of sku
         int totalWeight = 0, totalVolume = 0;
         for (SkuQuantity skuQuantity : param.getSkuQuantities()) {
             String skuId = skuQuantity.getID();

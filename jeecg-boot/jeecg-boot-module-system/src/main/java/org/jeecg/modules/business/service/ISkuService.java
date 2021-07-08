@@ -72,7 +72,7 @@ public interface ISkuService extends IService<Sku> {
     void batchUpdateStock(List<StockUpdate> list);
 
 
-    List<SkuMeasure> measureSku(List<String> skuIds);
+    List<SkuMeasure> measureSku(Collection<String> skuIds);
 
     List<SkuName> all();
 }

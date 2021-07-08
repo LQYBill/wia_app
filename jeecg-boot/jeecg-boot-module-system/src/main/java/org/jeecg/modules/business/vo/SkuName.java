@@ -10,4 +10,11 @@ public class SkuName {
     private final String erpCode;
     private final String zhName;
     private final String enName;
+
+    public String getErpCode() {
+        if (erpCode == null) {
+            return "no erp code";
+        }
+        return erpCode;
+    }
 }
