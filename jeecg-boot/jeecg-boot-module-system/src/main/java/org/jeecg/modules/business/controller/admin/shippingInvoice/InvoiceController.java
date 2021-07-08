@@ -7,6 +7,7 @@ import org.jeecg.modules.business.controller.UserException;
 import org.jeecg.modules.business.entity.Shop;
 import org.jeecg.modules.business.service.IShopService;
 import org.jeecg.modules.business.service.PlatformOrderShippingInvoiceService;
+import org.jeecg.modules.business.vo.FactureDetail;
 import org.jeecg.modules.business.vo.Period;
 import org.jeecg.modules.business.vo.ShippingInvoiceParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,6 +81,12 @@ public class InvoiceController {
             log.error(e.getMessage());
             return new byte[0];
         }
+    }
+
+    @GetMapping(value = "/invoiceDetail")
+    public byte[] invoiceDetail(@RequestParam("invoiceNumber") String invoiceNumber) throws IOException {
+        List<FactureDetail> res = shippingInvoiceService.getInvoiceDetail(invoiceNumber);
+        return shippingInvoiceService.ExportToExcel(res);
     }
 
 

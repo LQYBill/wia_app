@@ -1,0 +1,60 @@
+package org.jeecg.modules.business.vo;
+
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
+
+import java.math.BigDecimal;
+import java.util.Date;
+
+@Data
+@TableName("detail_de_facture")
+public class FactureDetail {
+    @TableField("Boutique")
+    private final String boutique;
+
+    @TableField("`N° de Mabang`")
+    private final String mabangNum;
+
+    @TableField("`N° de commande`")
+    private final String commandeNum;
+
+    @TableField("`N° de suivi`")
+    private final String suiviNum;
+
+    @TableField("`Date de commande`")
+    private final Date commandeDate;
+
+    @TableField("`Date d'expédition`")
+    private final Date expeditionDate;
+
+    @TableField("`Nom de client`")
+    private final String clientName;
+
+    @TableField("`Pays`")
+    private final String country;
+
+    @TableField("`Code postal`")
+    private final String postalCode;
+
+    @TableField("`SKU`")
+    private final String sku;
+
+    @TableField("`Nom produits`")
+    private final String productName;
+
+    @TableField("`Quantité`")
+    private final String quantity;
+
+    @TableField("`Frais de FRET`")
+    private final BigDecimal fretFee;
+
+    @TableField("`Frais de livraison`")
+    private final BigDecimal livraisonFee;
+
+    @TableField("`TVA`")
+    private final BigDecimal TVA;
+
+    @TableField("`N° de facture`")
+    private final String factureNum;
+}

@@ -1,13 +1,13 @@
 package org.jeecg.modules.business.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.jeecg.modules.business.controller.UserException;
+import org.jeecg.modules.business.domain.excel.SheetManager;
 import org.jeecg.modules.business.domain.shippingInvoice.ShippingInvoice;
 import org.jeecg.modules.business.domain.shippingInvoice.ShippingInvoiceFactory;
 import org.jeecg.modules.business.entity.ShippingInvoiceEntity;
-import org.jeecg.modules.business.mapper.ClientMapper;
-import org.jeecg.modules.business.mapper.LogisticChannelPriceMapper;
-import org.jeecg.modules.business.mapper.PlatformOrderMapper;
-import org.jeecg.modules.business.mapper.ShippingInvoiceMapper;
+import org.jeecg.modules.business.mapper.*;
+import org.jeecg.modules.business.vo.FactureDetail;
 import org.jeecg.modules.business.vo.Period;
 import org.jeecg.modules.business.vo.ShippingInvoiceParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +41,9 @@ public class PlatformOrderShippingInvoiceService {
     ISkuDeclaredValueService skuDeclaredValueService;
 
     @Autowired
+    FactureDetailMapper factureDetailMapper;
+
+    @Autowired
     IPlatformOrderService platformOrderService;
     @Autowired
     CountryService countryService;
@@ -52,7 +55,29 @@ public class PlatformOrderShippingInvoiceService {
     private String INVOICE_TEMPLATE_US;
 
     @Value("${jeecg.path.shippingInvoiceDir}")
-    private String DIR;
+    private String INVOICE_DIR;
+
+    @Value("${jeecg.path.shippingInvoiceDetailDir}")
+    private String INVOICE_DETAIL_DIR;
+
+    private final static String[] titles = {
+            "Boutique",
+            "N° de Mabang",
+            "N° de commande",
+            "N° de suivi",
+            "Date de commande",
+            "Date d'expédition",
+            "Nom de client",
+            "Pays",
+            "Code postal",
+            "SKU",
+            "Nom produits",
+            "Quantité",
+            "Frais de FRET",
+            "Frais de livraison",
+            "TVA",
+            "N° de facture"
+    };
 
     public Period getValidePeriod(List<String> shopIDs) {
         Date begin = platformOrderMapper.findEarliestUninvoicedPlatformOrder(shopIDs);
@@ -94,8 +119,8 @@ public class PlatformOrderShippingInvoiceService {
             src = Paths.get(INVOICE_TEMPLATE_EU);
         }
         // Writes invoice content to a new excel file
-         String filename = "Invoice N°" + invoice.code() + " (" + invoice.client().getInvoiceEntity() + ").xlsx";
-        Path out = Paths.get(DIR, filename);
+        String filename = "Invoice N°" + invoice.code() + " (" + invoice.client().getInvoiceEntity() + ").xlsx";
+        Path out = Paths.get(INVOICE_DIR, filename);
         if (!Files.exists(out, LinkOption.NOFOLLOW_LINKS)) {
             Files.copy(src, out);
             invoice.toExcelFile(out);
@@ -120,7 +145,71 @@ public class PlatformOrderShippingInvoiceService {
      * @throws IOException error when reading file
      */
     public byte[] getInvoiceBinary(String filename) throws IOException {
-        Path out = Paths.get(DIR, filename);
+        Path out = Paths.get(INVOICE_DIR, filename);
         return Files.readAllBytes(out);
+    }
+
+    public List<FactureDetail> getInvoiceDetail(String invoiceNumber) {
+
+        QueryWrapper<FactureDetail> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("`N° de facture`", invoiceNumber);
+
+        return factureDetailMapper.selectList(queryWrapper);
+    }
+
+    public byte[] ExportToExcel(List<FactureDetail> details) throws IOException {
+        SheetManager sheetManager = SheetManager.createXLSX();
+        for (String title : titles) {
+            sheetManager.write(title);
+            sheetManager.nextCol();
+        }
+        sheetManager.moveCol(0);
+        sheetManager.nextRow();
+
+        for (FactureDetail detail : details) {
+            sheetManager.write(detail.getBoutique());
+            sheetManager.nextCol();
+            sheetManager.write(detail.getMabangNum());
+            sheetManager.nextCol();
+            sheetManager.write(detail.getCommandeNum());
+            sheetManager.nextCol();
+            sheetManager.write(detail.getSuiviNum());
+            sheetManager.nextCol();
+            sheetManager.write(detail.getCommandeDate());
+            sheetManager.nextCol();
+            sheetManager.write(detail.getExpeditionDate());
+            sheetManager.nextCol();
+            sheetManager.write(detail.getClientName());
+            sheetManager.nextCol();
+            sheetManager.write(detail.getCountry());
+            sheetManager.nextCol();
+            sheetManager.write(detail.getPostalCode());
+            sheetManager.nextCol();
+            sheetManager.write(detail.getSku());
+            sheetManager.nextCol();
+            sheetManager.write(detail.getProductName());
+            sheetManager.nextCol();
+            sheetManager.write(detail.getQuantity());
+            sheetManager.nextCol();
+            sheetManager.write(detail.getFretFee());
+            sheetManager.nextCol();
+            sheetManager.write(detail.getLivraisonFee());
+            sheetManager.nextCol();
+            sheetManager.write(detail.getTVA());
+            sheetManager.nextCol();
+            sheetManager.write(detail.getFactureNum());
+            sheetManager.moveCol(0);
+            sheetManager.nextRow();
+        }
+
+        Path target = Paths.get(INVOICE_DETAIL_DIR, "test");
+        int i = 2;
+        while (Files.exists(target)) {
+            target = Paths.get(INVOICE_DETAIL_DIR, "_" + i);
+            i++;
+        }
+        Files.createFile(target);
+        sheetManager.export(target);
+        return Files.readAllBytes(target);
     }
 }

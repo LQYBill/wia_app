@@ -187,6 +187,7 @@ jeecg:
     shippingTemplatePath_US: C:\Users\Matth\Documents\travail\WIA\templates\Shipping_Template_US.xlsx
     # where to store generated file
     shippingInvoiceDir: C:\Users\Matth\Documents\travail\WIA\invoice\shipping
+    shippingInvoiceDetailDir: C:\Users\Matth\Documents\travail\WIA\invoice\shippingDetail
 
     #webapp文件路径
     webapp: D://opt//webapp
