@@ -16,5 +16,5 @@ public interface ILogisticChannelPriceService extends IService<LogisticChannelPr
 
 	public List<LogisticChannelPrice> selectByMainId(String mainId);
 
-    List<String> getAllCountry();
+    List<CountryName> getAllCountry();
 }

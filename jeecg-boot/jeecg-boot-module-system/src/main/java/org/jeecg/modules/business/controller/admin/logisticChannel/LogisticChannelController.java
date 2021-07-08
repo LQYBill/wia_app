@@ -335,12 +335,8 @@ public class LogisticChannelController {
 
 
     @GetMapping(value = "/countries")
-    public Result<List<Country>> countryList() {
-        List<Country> countries = logisticChannelPriceService.getAllCountry()
-                .stream()
-                .map(countryService::findByCode)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+    public Result<List<CountryName>> countryList() {
+        List<CountryName> countries = logisticChannelPriceService.getAllCountry();
         return Result.OK(countries);
     }
 }
