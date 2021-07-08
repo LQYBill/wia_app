@@ -9,6 +9,7 @@ import org.jeecg.modules.business.controller.UserException;
 import org.jeecg.modules.business.domain.codeGeneration.ShippingInvoiceCodeRule;
 import org.jeecg.modules.business.entity.*;
 import org.jeecg.modules.business.mapper.ClientMapper;
+import org.jeecg.modules.business.mapper.ExchangeRatesMapper;
 import org.jeecg.modules.business.mapper.LogisticChannelPriceMapper;
 import org.jeecg.modules.business.service.CountryService;
 import org.jeecg.modules.business.service.IPlatformOrderContentService;
@@ -43,6 +44,8 @@ public class ShippingInvoiceFactory {
 
     private final CountryService countryService;
 
+    private final ExchangeRatesMapper exchangeRatesMapper;
+
     private final SimpleDateFormat SUBJECT_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
     private final List<String> EU_COUNTRY_LIST = Arrays.asList("Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus",
@@ -66,7 +69,8 @@ public class ShippingInvoiceFactory {
                                   LogisticChannelPriceMapper logisticChannelPriceMapper,
                                   IPlatformOrderContentService platformOrderContentService,
                                   ISkuDeclaredValueService skuDeclaredValueService,
-                                  CountryService countryService) {
+                                  CountryService countryService,
+                                  ExchangeRatesMapper exchangeRatesMapper) {
 
         this.platformOrderService = platformOrderService;
         this.clientMapper = clientMapper;
@@ -74,6 +78,7 @@ public class ShippingInvoiceFactory {
         this.platformOrderContentService = platformOrderContentService;
         this.skuDeclaredValueService = skuDeclaredValueService;
         this.countryService = countryService;
+        this.exchangeRatesMapper = exchangeRatesMapper;
     }
 
     /**
@@ -188,12 +193,13 @@ public class ShippingInvoiceFactory {
                                 .setScale(2, RoundingMode.UP)
                 );
                 content.setServiceFee(price.getAdditionalCost());
+                BigDecimal clientVatPercentage = client.getVatPercentage();
                 BigDecimal vat = BigDecimal.ZERO;
-                if (EU_COUNTRY_LIST.contains(uninvoicedOrder.getCountry())) {
+                if (clientVatPercentage.compareTo(BigDecimal.ZERO) > 0 && EU_COUNTRY_LIST.contains(uninvoicedOrder.getCountry())) {
                     try {
                         vat = declaredValueCache.get(Pair.of(skuId, uninvoicedOrder.getShippingTime()))
                                 .multiply(BigDecimal.valueOf(content.getQuantity()))
-                                .multiply(client.getVatPercentage())
+                                .multiply(clientVatPercentage)
                                 .setScale(2, RoundingMode.UP);
                     } catch (ExecutionException e) {
                         String msg = "Error while retrieving declared value of SKU " + skuId + " of order "
@@ -211,7 +217,8 @@ public class ShippingInvoiceFactory {
                 SUBJECT_FORMAT.format(begin),
                 SUBJECT_FORMAT.format(end)
         );
-        ShippingInvoice invoice = new ShippingInvoice(client, invoiceCode, subject, uninvoicedOrderToContent, BigDecimal.valueOf(1));
+        BigDecimal eurToUsd = exchangeRatesMapper.getLatestExchangeRate("EUR", "USD");
+        ShippingInvoice invoice = new ShippingInvoice(client, invoiceCode, subject, uninvoicedOrderToContent, eurToUsd);
         // update them to DB after invoiced
         platformOrderService.updateBatchById(uninvoicedOrderToContent.keySet());
         platformOrderContentService.updateBatchById(uninvoicedOrderToContent.values()

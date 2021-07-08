@@ -4,10 +4,7 @@ import org.jeecg.modules.business.controller.UserException;
 import org.jeecg.modules.business.domain.shippingInvoice.ShippingInvoice;
 import org.jeecg.modules.business.domain.shippingInvoice.ShippingInvoiceFactory;
 import org.jeecg.modules.business.entity.ShippingInvoiceEntity;
-import org.jeecg.modules.business.mapper.ClientMapper;
-import org.jeecg.modules.business.mapper.LogisticChannelPriceMapper;
-import org.jeecg.modules.business.mapper.PlatformOrderMapper;
-import org.jeecg.modules.business.mapper.ShippingInvoiceMapper;
+import org.jeecg.modules.business.mapper.*;
 import org.jeecg.modules.business.vo.Period;
 import org.jeecg.modules.business.vo.ShippingInvoiceParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,11 +36,12 @@ public class PlatformOrderShippingInvoiceService {
     IPlatformOrderContentService platformOrderContentService;
     @Autowired
     ISkuDeclaredValueService skuDeclaredValueService;
-
     @Autowired
     IPlatformOrderService platformOrderService;
     @Autowired
     CountryService countryService;
+    @Autowired
+    ExchangeRatesMapper exchangeRatesMapper;
 
     @Value("${jeecg.path.shippingTemplatePath_EU}")
     private String INVOICE_TEMPLATE_EU;
@@ -79,7 +77,8 @@ public class PlatformOrderShippingInvoiceService {
                 logisticChannelPriceMapper,
                 platformOrderContentService,
                 skuDeclaredValueService,
-                countryService);
+                countryService,
+                exchangeRatesMapper);
         // Creates invoice by factory
         ShippingInvoice invoice = factory.createInvoice(param.clientID(),
                 param.shopIDs(),

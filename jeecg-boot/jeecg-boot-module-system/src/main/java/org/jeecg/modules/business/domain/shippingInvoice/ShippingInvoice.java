@@ -77,7 +77,7 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
                     countryFees.add(countryFretFees)
             );
             rows.add(row);
-            totalAmount = totalAmount.add(countryFees);
+            totalAmount = totalAmount.add(countryFees).add(countryFretFees);
         }
         return rows;
     }
@@ -108,7 +108,7 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
     protected void fillTable(InvoiceStyleFactory factory) {
         super.fillTable(factory);
         if (targetClient.getCurrency().equals("USD")) {
-            String formula = "=H42*" + exchangeRate.toString();
+            String formula = "H42 *" + exchangeRate;
             writer.getCell(DOLLAR_LOCATION).setCellFormula(formula);
         }
     }
