@@ -8,6 +8,7 @@ import org.jeecg.modules.business.domain.shippingInvoice.ShippingInvoiceFactory;
 import org.jeecg.modules.business.entity.ShippingInvoiceEntity;
 import org.jeecg.modules.business.mapper.*;
 import org.jeecg.modules.business.vo.FactureDetail;
+import org.jeecg.modules.business.vo.InvoiceMetaData;
 import org.jeecg.modules.business.vo.Period;
 import org.jeecg.modules.business.vo.ShippingInvoiceParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -96,7 +97,7 @@ public class PlatformOrderShippingInvoiceService {
      * @throws IOException    exception related to invoice file IO.
      */
     @Transactional
-    public String makeInvoice(ShippingInvoiceParam param) throws UserException, ParseException, IOException {
+    public InvoiceMetaData makeInvoice(ShippingInvoiceParam param) throws UserException, ParseException, IOException {
         // Creates factory
         ShippingInvoiceFactory factory = new ShippingInvoiceFactory(
                 platformOrderService,
@@ -133,8 +134,7 @@ public class PlatformOrderShippingInvoiceService {
                 invoice.paidAmount()
         );
         shippingInvoiceMapper.save(shippingInvoiceEntity);
-
-        return filename;
+        return new InvoiceMetaData(filename, invoice.code());
     }
 
     /**

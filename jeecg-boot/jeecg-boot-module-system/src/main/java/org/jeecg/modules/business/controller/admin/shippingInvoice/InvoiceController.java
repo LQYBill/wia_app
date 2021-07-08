@@ -8,6 +8,7 @@ import org.jeecg.modules.business.entity.Shop;
 import org.jeecg.modules.business.service.IShopService;
 import org.jeecg.modules.business.service.PlatformOrderShippingInvoiceService;
 import org.jeecg.modules.business.vo.FactureDetail;
+import org.jeecg.modules.business.vo.InvoiceMetaData;
 import org.jeecg.modules.business.vo.Period;
 import org.jeecg.modules.business.vo.ShippingInvoiceParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,8 +57,8 @@ public class InvoiceController {
     @PostMapping(value = "/make")
     public Result<?> makeInvoice(@RequestBody ShippingInvoiceParam param) {
         try {
-            String filename = shippingInvoiceService.makeInvoice(param);
-            return Result.OK(filename);
+            InvoiceMetaData metaData = shippingInvoiceService.makeInvoice(param);
+            return Result.OK(metaData);
         } catch (UserException e) {
             return Result.error(e.getMessage());
         } catch (IOException | ParseException e) {

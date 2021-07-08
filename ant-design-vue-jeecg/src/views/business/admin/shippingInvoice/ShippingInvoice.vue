@@ -289,10 +289,12 @@ export default {
             if (!res.success) {
               self.$message.error(res.message, 10)
             } else {
-              this.downloadInvoice(res.result).then(
+              let filename = res.result.filename
+              let code = res.result.invoiceCode
+              this.downloadInvoice(filename).then(
                 this.$message.info("Download succeed.")
               )
-              this.onClickTestButton("2021-07-2008")
+              this.onClickTestButton(code)
 
             }
           }
@@ -317,7 +319,7 @@ export default {
       }
       getFile(this.url.invoiceDetail, param).then(
         res => {
-          let now = moment().format("yyyyMMdd")
+          let now = moment().format("yyyyMMDD")
           let name = "Détail_calcul_de_facture_" + this.client.internalCode + "_" + now + ".xlsx"
           saveAs(res, name)
         }
