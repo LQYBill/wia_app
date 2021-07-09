@@ -9,8 +9,8 @@ import org.jeecg.modules.business.vo.SkuQuantity;
 import org.jeecg.modules.business.vo.SkuWeightDiscount;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @Description: 平台订单内容
@@ -40,4 +40,10 @@ public interface PlatformOrderContentMapper extends BaseMapper<PlatformOrderCont
     List<SkuDetail> searchSkuDetail(List<String> skuIDs);
 
     List<SkuWeightDiscount> getAllWeightsAndDiscounts();
+
+    List<PlatformOrderContent> findUninvoicedOrderContents(
+            @Param("shopIDs") List<String> shopIds,
+            @Param("begin") Date begin,
+            @Param("end") Date end
+    );
 }

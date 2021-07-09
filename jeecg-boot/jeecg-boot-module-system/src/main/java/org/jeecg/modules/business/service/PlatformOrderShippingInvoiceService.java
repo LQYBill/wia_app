@@ -159,7 +159,7 @@ public class PlatformOrderShippingInvoiceService {
         return factureDetailMapper.selectList(queryWrapper);
     }
 
-    public byte[] ExportToExcel(List<FactureDetail> details) throws IOException {
+    public byte[] exportToExcel(List<FactureDetail> details, String invoiceNumber) throws IOException {
         SheetManager sheetManager = SheetManager.createXLSX();
         for (String title : titles) {
             sheetManager.write(title);
@@ -204,10 +204,10 @@ public class PlatformOrderShippingInvoiceService {
             sheetManager.nextRow();
         }
 
-        Path target = Paths.get(INVOICE_DETAIL_DIR, "test");
+        Path target = Paths.get(INVOICE_DETAIL_DIR, "Détail_calcul_de_facture_" + invoiceNumber + ".xlsx");
         int i = 2;
         while (Files.exists(target)) {
-            target = Paths.get(INVOICE_DETAIL_DIR, "_" + i);
+            target = Paths.get(INVOICE_DETAIL_DIR, "Détail_calcul_de_facture_" + invoiceNumber + "_" + i + ".xlsx");
             i++;
         }
         Files.createFile(target);

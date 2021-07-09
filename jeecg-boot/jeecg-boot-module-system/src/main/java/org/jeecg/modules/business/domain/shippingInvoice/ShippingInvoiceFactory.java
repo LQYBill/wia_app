@@ -16,6 +16,7 @@ import org.jeecg.modules.business.service.IPlatformOrderContentService;
 import org.jeecg.modules.business.service.IPlatformOrderService;
 import org.jeecg.modules.business.service.ISkuDeclaredValueService;
 import org.jeecg.modules.business.vo.SkuWeightDiscount;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -137,7 +138,6 @@ public class ShippingInvoiceFactory {
                 contentMap.put(content.getSkuId(), content.getQuantity());
             }
 
-            LogisticChannelPrice price;
             // calculate weight of a order
             BigDecimal contentWeight = platformOrderContentService.calculateWeight(
                     uninvoicedOrder.getLogisticChannelName(),
@@ -146,41 +146,25 @@ public class ShippingInvoiceFactory {
             );
             /* Convert country name to country name */
 
-            try {
-                /* Find channel price */
-                Country country = countryService.findByEnName(uninvoicedOrder.getCountry());
-
-                price = logisticChannelPriceMapper.findBy(
-                        uninvoicedOrder.getLogisticChannelName(),
-                        uninvoicedOrder.getShippingTime(),
-                        contentWeight,
-                        country.getCode()
-                );
-                if (price == null) {
-                    String format = "Can not find propre channel price for" +
-                            "package Serial No: %s, delivered at %s, " +
-                            "weight: %s, channel name: %s, destination: %s";
-                    String msg = String.format(
-                            format,
-                            uninvoicedOrder.getPlatformOrderId(),
-                            uninvoicedOrder.getShippingTime(),
-                            contentWeight,
-                            uninvoicedOrder.getLogisticChannelName(),
-                            uninvoicedOrder.getCountry()
-                    );
-                    log.error(msg);
-                    throw new UserException(msg);
-                }
-            } catch (IncorrectResultSizeDataAccessException e) {
-                String msg = "Found more than 1 channel price for package Order No: " + uninvoicedOrder.getPlatformOrderNumber()
-                        + ", delivered at " + uninvoicedOrder.getShippingTime().toString();
-                log.error(msg);
-                throw new UserException(msg);
-            }
+            LogisticChannelPrice price = findAppropriatePrice(uninvoicedOrder, contentWeight);
             // update attributes of orders and theirs content
             uninvoicedOrder.setFretFee(price.getRegistrationFee());
             uninvoicedOrder.setShippingInvoiceNumber(invoiceCode);
             BigDecimal totalShippingFee = price.calculateShippingPrice(contentWeight);
+            BigDecimal clientVatPercentage = client.getVatPercentage();
+            Map<PlatformOrderContent, BigDecimal> contentDeclaredValueMap = new HashMap<>();
+            BigDecimal totalDeclaredValue = calculateTotalDeclaredValue(uninvoicedOrder, contents, contentDeclaredValueMap);
+            BigDecimal totalVAT = BigDecimal.ZERO;
+            boolean vatApplicable = clientVatPercentage.compareTo(BigDecimal.ZERO) > 0
+                    && EU_COUNTRY_LIST.contains(uninvoicedOrder.getCountry());
+            // In case where VAT is applicable, and the transport line has a minimum declared value (MDV) per PACKAGE
+            // We need to first calculate the total declared value and compare it to the MDV
+            // If the total declared value is below the MDV, then the VAT should be calculated with the MDV and
+            // then proportionally applied to each content
+            BigDecimal minimumDeclaredValue = price.getMinimumDeclaredValue();
+            if (vatApplicable && minimumDeclaredValue != null) {
+                totalVAT = calculateTotalVat(totalDeclaredValue, clientVatPercentage, minimumDeclaredValue);
+            }
             for (PlatformOrderContent content : contents) {
                 String skuId = content.getSkuId();
                 BigDecimal realWeight = skuRealWeights.get(skuId);
@@ -192,20 +176,22 @@ public class ShippingInvoiceFactory {
                                 .divide(contentWeight, RoundingMode.UP)
                                 .setScale(2, RoundingMode.UP)
                 );
+                // todo fix service fees
                 content.setServiceFee(price.getAdditionalCost());
-                BigDecimal clientVatPercentage = client.getVatPercentage();
                 BigDecimal vat = BigDecimal.ZERO;
-                if (clientVatPercentage.compareTo(BigDecimal.ZERO) > 0 && EU_COUNTRY_LIST.contains(uninvoicedOrder.getCountry())) {
-                    try {
-                        vat = declaredValueCache.get(Pair.of(skuId, uninvoicedOrder.getShippingTime()))
-                                .multiply(BigDecimal.valueOf(content.getQuantity()))
+                if (vatApplicable) {
+                    BigDecimal contentDeclaredValue = contentDeclaredValueMap.get(content);
+                    // Total VAT greater than 0 means total declared value is less than minimum declared value
+                    // VAT of content must be re-adjusted proportionally
+                    if (totalVAT.compareTo(BigDecimal.ZERO) > 0) {
+                        log.info("VAT re-adjusted for SKU : {} of order {}", content.getSkuId(), uninvoicedOrder.getId());
+                        vat = totalVAT.multiply(contentDeclaredValue)
+                                .divide(totalDeclaredValue, RoundingMode.UP)
+                                .setScale(2, RoundingMode.UP);
+                    } else {
+                        vat = contentDeclaredValue
                                 .multiply(clientVatPercentage)
                                 .setScale(2, RoundingMode.UP);
-                    } catch (ExecutionException e) {
-                        String msg = "Error while retrieving declared value of SKU " + skuId + " of order "
-                                + content.getPlatformOrderId();
-                        log.error(e.getMessage());
-                        throw new UserException(msg);
                     }
                 }
                 content.setVat(vat);
@@ -226,6 +212,74 @@ public class ShippingInvoiceFactory {
                 .flatMap(List::stream)
                 .collect(Collectors.toList()));
         return invoice;
+    }
+
+    private BigDecimal calculateTotalVat(BigDecimal totalDeclaredValue, BigDecimal clientVatPercentage,
+                                         BigDecimal minimumDeclaredValue) {
+        BigDecimal totalVAT = BigDecimal.ZERO;
+        if (totalDeclaredValue.compareTo(minimumDeclaredValue) < 0) {
+            totalVAT = minimumDeclaredValue.multiply(clientVatPercentage)
+                    .setScale(2, RoundingMode.UP);
+        }
+        return totalVAT;
+    }
+
+    private BigDecimal calculateTotalDeclaredValue(PlatformOrder order, List<PlatformOrderContent> contents,
+                                                   Map<PlatformOrderContent, BigDecimal> contentDeclaredValueMap) throws UserException {
+        BigDecimal totalDeclaredValue = BigDecimal.ZERO;
+        for (PlatformOrderContent content : contents) {
+            String skuId = content.getSkuId();
+            BigDecimal declaredValueForSKU;
+            try {
+                declaredValueForSKU = declaredValueCache.get(Pair.of(skuId, order.getShippingTime()));
+            } catch (ExecutionException e) {
+                String msg = "Error while retrieving declared value of SKU " + skuId + " of order "
+                        + content.getPlatformOrderId();
+                log.error(e.getMessage());
+                throw new UserException(msg);
+            }
+            BigDecimal contentDeclaredValue = declaredValueForSKU.multiply(BigDecimal.valueOf(content.getQuantity()));
+            contentDeclaredValueMap.put(content, contentDeclaredValue);
+            totalDeclaredValue = totalDeclaredValue.add(contentDeclaredValue);
+        }
+        return totalDeclaredValue;
+    }
+
+    @NotNull
+    private LogisticChannelPrice findAppropriatePrice(PlatformOrder uninvoicedOrder, BigDecimal contentWeight) throws UserException {
+        LogisticChannelPrice price;
+        try {
+            /* Find channel price */
+            Country country = countryService.findByEnName(uninvoicedOrder.getCountry());
+
+            price = logisticChannelPriceMapper.findBy(
+                    uninvoicedOrder.getLogisticChannelName(),
+                    uninvoicedOrder.getShippingTime(),
+                    contentWeight,
+                    country.getCode()
+            );
+            if (price == null) {
+                String format = "Can not find propre channel price for" +
+                        "package Serial No: %s, delivered at %s, " +
+                        "weight: %s, channel name: %s, destination: %s";
+                String msg = String.format(
+                        format,
+                        uninvoicedOrder.getPlatformOrderId(),
+                        uninvoicedOrder.getShippingTime(),
+                        contentWeight,
+                        uninvoicedOrder.getLogisticChannelName(),
+                        uninvoicedOrder.getCountry()
+                );
+                log.error(msg);
+                throw new UserException(msg);
+            }
+        } catch (IncorrectResultSizeDataAccessException e) {
+            String msg = "Found more than 1 channel price for package Order No: " + uninvoicedOrder.getPlatformOrderNumber()
+                    + ", delivered at " + uninvoicedOrder.getShippingTime().toString();
+            log.error(msg);
+            throw new UserException(msg);
+        }
+        return price;
     }
 
     /**
