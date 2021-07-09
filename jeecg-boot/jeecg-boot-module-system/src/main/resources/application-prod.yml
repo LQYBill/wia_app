@@ -194,7 +194,7 @@ jeecg:
     # CDG location
     CGS: /wia/files/WIASourcingCGCVF_mai.pdf
     #webapp文件路径
-    webapp: /wia/webapp
+    webapp: /wia_app
   shiro:
     excludeUrls: /test/jeecgDemo/demo3,/test/jeecgDemo/redisDemo/**,/category/**,/visual/**,/map/**,/jmreport/bigscreen2/**
 
