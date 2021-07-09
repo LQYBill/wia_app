@@ -189,6 +189,7 @@ jeecg:
     shippingTemplatePath_US: /wia/files/Shipping_Invoice_Template_US.xlsx
     # where to store generated file
     shippingInvoiceDir: /wia/invoices/shipping
+    shippingInvoiceDetailDir: /wia/invoices/shippingDetail
 
     # CDG location
     CGS: /wia/files/WIASourcingCGCVF_mai.pdf
