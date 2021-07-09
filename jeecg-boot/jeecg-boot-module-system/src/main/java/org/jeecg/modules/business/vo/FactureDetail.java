@@ -3,6 +3,7 @@ package org.jeecg.modules.business.vo;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -23,10 +24,12 @@ public class FactureDetail {
     private final String suiviNum;
 
     @TableField("`Date de commande`")
-    private final Date commandeDate;
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private final String commandeDate;
 
     @TableField("`Date d'expédition`")
-    private final Date expeditionDate;
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private final String expeditionDate;
 
     @TableField("`Nom de client`")
     private final String clientName;
