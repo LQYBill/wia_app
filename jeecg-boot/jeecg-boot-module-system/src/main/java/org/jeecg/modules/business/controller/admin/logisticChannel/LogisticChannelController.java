@@ -1,4 +1,4 @@
-package org.jeecg.modules.business.controller.admin;
+package org.jeecg.modules.business.controller.admin.logisticChannel;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -13,7 +13,6 @@ import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.common.util.oConvertUtils;
 import org.jeecg.modules.business.domain.logistic.CostTrialCalculation;
-import org.jeecg.modules.business.entity.Country;
 import org.jeecg.modules.business.entity.LogisticChannel;
 import org.jeecg.modules.business.entity.LogisticChannelPrice;
 import org.jeecg.modules.business.entity.SkuMeasure;
@@ -21,7 +20,9 @@ import org.jeecg.modules.business.service.CountryService;
 import org.jeecg.modules.business.service.ILogisticChannelPriceService;
 import org.jeecg.modules.business.service.ILogisticChannelService;
 import org.jeecg.modules.business.service.ISkuService;
+import org.jeecg.modules.business.vo.CountryName;
 import org.jeecg.modules.business.vo.LogisticChannelPage;
+import org.jeecg.modules.business.vo.SkuQuantity;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
 import org.jeecgframework.poi.excel.entity.ExportParams;
@@ -38,6 +39,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -279,35 +281,54 @@ public class LogisticChannelController {
      * API for trial calculation of shipping cost.
      * Destination country and the skus to be shipped are needed.
      *
-     * @param country destination country code
-     * @param skuList id of sku joined by ','
-     * @return
+     * @param param trial param
+     * @return list of propre price
      */
-    @GetMapping(value = "/findBySku")
-    public Result<?> findPricesBySku(
-            @RequestParam(name = "country") String country,
-            @RequestParam(name = "skuList") String skuList) {
+    @PostMapping(value = "/findBySku")
+    public Result<?> findPricesBySku(@RequestBody TrialCalcReqParam param) {
+        log.info(
+                String.format(
+                        "Request for trial calculation for country: %s and sku: %s",
+                        param.getCountryCode(),
+                        param.getSkuQuantities()
+                )
+        );
 
-        String data = String.format("Request for trial calculation for country: %s and sku: [%s]", country, skuList);
-        log.info(data);
-        List<String> skuIds = Arrays.asList(skuList.split(","));
+        // get ids of all sku to run trial
+        Set<String> skuIds = param.getSkuQuantities().stream()
+                .map(SkuQuantity::getID)
+                .collect(Collectors.toSet());
 
-        List<SkuMeasure> measures = skuService.measureSku(skuIds);
-        if (measures.size() < skuIds.size()) {
+        // get map between id and measure
+        Map<String, SkuMeasure> idToMeasure = skuService.measureSku(skuIds)
+                .stream()
+                .collect(
+                        Collectors.toMap(
+                                SkuMeasure::getId,
+                                Function.identity()
+                        )
+                );
+
+        if (idToMeasure.size() < skuIds.size()) {
             // TODO 2021-7-7 error handle in case of lack of measure data of certain
         }
+        // calculate total weight and volume
+        // iterate on sku quantity list, thus enable duplication of sku
+        int totalWeight = 0, totalVolume = 0;
+        for (SkuQuantity skuQuantity : param.getSkuQuantities()) {
+            String skuId = skuQuantity.getID();
+            int quantity = skuQuantity.getQuantity();
+            SkuMeasure measure = idToMeasure.get(skuId);
+            totalWeight += quantity * measure.getWeight();
+            totalVolume += quantity * measure.getVolume();
+        }
 
-
-
-        int totalWeight = measures.stream().mapToInt(SkuMeasure::getWeight).sum();
-
-        int totalVolume = measures.stream().mapToInt(SkuMeasure::getVolume).sum();
-
+        // search propre channel price according to weight, volume and destination country
         List<CostTrialCalculation> calculations =
                 logisticChannelService.logisticChannelTrial(
                         totalWeight,
                         totalVolume,
-                        country
+                        param.getCountryCode()
                 );
 
         return Result.OK(calculations);
@@ -315,12 +336,8 @@ public class LogisticChannelController {
 
 
     @GetMapping(value = "/countries")
-    public Result<List<Country>> countryList() {
-        List<Country> countries = logisticChannelPriceService.getAllCountry()
-                .stream()
-                .map(countryService::findByCode)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+    public Result<List<CountryName>> countryList() {
+        List<CountryName> countries = logisticChannelPriceService.getAllCountry();
         return Result.OK(countries);
     }
 }

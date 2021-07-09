@@ -24,7 +24,7 @@
                 <a-select-option
                   v-for="(item, index) in customerList"
                   :key="index"
-                  :value="item.value"
+                  :value="index"
                 >
                   {{ item.text }}
                 </a-select-option>
@@ -122,6 +122,7 @@ export default {
        */
       shopIDs: [],
       customerId: "",
+      selectedClient: null,
       startDate: null,
       endDate: null,
       selectedStartDate: "",
@@ -131,20 +132,19 @@ export default {
         getValidPeriod: "/shippingInvoice/period",
         getShopsByCustomerId: "/shippingInvoice/shopsByClient",
         makeInvoice: "/shippingInvoice/make",
-        downloadInvoice: "/shippingInvoice/download"
+        downloadInvoice: "/shippingInvoice/download",
+        invoiceDetail: "/shippingInvoice/invoiceDetail"
       },
       buttonLoading: false,
       shopDisable: true,
-      dataDisable: true
+      dataDisable: true,
     }
   },
   created() {
     this.loadClientList();
   },
 
-  computed: {
-
-  }
+  computed: {}
 
   ,
   methods: {
@@ -160,15 +160,17 @@ export default {
             self.customerList = res.result.map(customer => ({
               text: `${customer.firstName} ${customer.surname}`,
               value: customer.id,
+              client: customer
             }));
           }
         })
     },
 
-    handleClientChange(value) {
-      console.log(`selected ${value}`);
-      this.customerId = value;
-      this.loadShopList(value)
+    handleClientChange(index) {
+      console.log(`selected ${index}`);
+      this.customerId = this.customerList[index].client.id;
+      this.client = this.customerList[index].client
+      this.loadShopList(this.customerId)
         .then(
           () =>
             this.shopDisable = false
@@ -258,7 +260,7 @@ export default {
       this.selectedEndDate = dateString[1]
     },
 
-    datePickerDefaultValue(){
+    datePickerDefaultValue() {
       return [this.startDate, this.endDate]
     },
 
@@ -287,9 +289,13 @@ export default {
             if (!res.success) {
               self.$message.error(res.message, 10)
             } else {
-              this.downloadInvoice(res.result).then(
+              let filename = res.result.filename
+              let code = res.result.invoiceCode
+              this.downloadInvoice(filename).then(
                 this.$message.info("Download succeed.")
               )
+              this.onClickTestButton(code)
+
             }
           }
         )
@@ -305,6 +311,19 @@ export default {
         }).then(() => {
           this.loadAvailableDate()
         })
+    },
+
+    onClickTestButton(invoiceNumber) {
+      const param = {
+        invoiceNumber: invoiceNumber
+      }
+      getFile(this.url.invoiceDetail, param).then(
+        res => {
+          let now = moment().format("yyyyMMDD")
+          let name = "Détail_calcul_de_facture_" + this.client.internalCode + "_" + now + ".xlsx"
+          saveAs(res, name)
+        }
+      )
     }
   }
 }
