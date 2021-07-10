@@ -64,15 +64,23 @@ public interface PlatformOrderMabangMapper extends BaseMapper<Order> {
      * @param orderIDs platform order ID of the orders
      * @return image between platform order id and order entity with items as null
      */
-    List<Order> searchExistence(@Param("orders") Collection<String> orderIDs);
+    List<PlatformOrder> searchExistence(@Param("orders") Collection<String> orderIDs);
 
     /**
-     * Delete butch of order contents by their main id.
+     * Delete bunch of order contents by their main id.
      *
-     * @param mainIDs main identifiants of content to delete
+     * @param mainIDs main identifiers of content to delete
      * @return number of row effected.
      */
     int batchDeleteByMainID(@Param("mainIDs") List<String> mainIDs);
 
     int batchUpdateById(@Param("orders") List<Order> orders);
+
+    /**
+     * Batch update erp status of order contents
+     *
+     * @param orderIDs   Order IDs
+     * @param statusCode Status code
+     */
+    void batchUpdateErpStatusByMainId(@Param("orderIDs") List<String> orderIDs, @Param("statusCode") String statusCode);
 }

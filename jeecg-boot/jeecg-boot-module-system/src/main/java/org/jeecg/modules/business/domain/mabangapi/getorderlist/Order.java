@@ -30,7 +30,7 @@ public class Order {
     private String id = String.valueOf(new DefaultIdentifierGenerator().nextId(this));
 
     /**
-     * Shop name is correspondant the shop erp code in our data base
+     * Shop name is correspondent the shop erp code in our data base
      */
     @JSONField(name = "shopName")
     private String shopErpCode;

@@ -91,7 +91,7 @@
             when #{item.id} then #{item.postcode}
         </foreach>
         end,
-        status = case id
+        erp_status = case id
         <foreach collection="orders" separator=" " open="" close="" index="index" item="item">
             when #{item.id} then #{item.status}
         </foreach>
@@ -127,7 +127,7 @@
         FROM platform_order
         WHERE erp_order_id = #{1}
     </select>
-    <select id="searchExistence" resultType="org.jeecg.modules.business.domain.mabangapi.getorderlist.Order">
+    <select id="searchExistence" resultType="org.jeecg.modules.business.entity.PlatformOrder">
         SELECT *
         FROM platform_order
         WHERE platform_order_id
@@ -183,4 +183,12 @@
         </foreach>
     </insert>
 
+    <update id="batchUpdateErpStatusByMainId">
+        UPDATE platform_order_content
+        SET erp_status = #{statusCode}
+        WHERE platform_order_id IN
+        <foreach collection="orderIDs" separator="," open="(" close=")" index="index" item="orderId">
+            #{orderId}
+        </foreach>
+    </update>
 </mapper>
