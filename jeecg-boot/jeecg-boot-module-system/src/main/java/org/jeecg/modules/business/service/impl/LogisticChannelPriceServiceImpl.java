@@ -3,8 +3,10 @@ package org.jeecg.modules.business.service.impl;
 import org.jeecg.modules.business.entity.LogisticChannelPrice;
 import org.jeecg.modules.business.mapper.CountryNameMapper;
 import org.jeecg.modules.business.mapper.LogisticChannelPriceMapper;
+import org.jeecg.modules.business.mapper.PopularCountryMapper;
 import org.jeecg.modules.business.service.ILogisticChannelPriceService;
 import org.jeecg.modules.business.vo.CountryName;
+import org.jeecg.modules.business.vo.PopularCountry;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -24,6 +26,9 @@ public class LogisticChannelPriceServiceImpl extends ServiceImpl<LogisticChannel
 
 	@Autowired
 	private CountryNameMapper countryNameMapper;
+
+	@Autowired
+	private PopularCountryMapper popularCountryMapper;
 	
 	@Override
 	public List<LogisticChannelPrice> selectByMainId(String mainId) {
@@ -33,5 +38,10 @@ public class LogisticChannelPriceServiceImpl extends ServiceImpl<LogisticChannel
 	@Override
 	public List<CountryName> getAllCountry() {
 		return countryNameMapper.selectList(null);
+	}
+
+	@Override
+	public List<PopularCountry> getPopularCountryList() {
+		return popularCountryMapper.selectList(null);
 	}
 }

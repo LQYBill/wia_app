@@ -130,4 +130,8 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
         platformOrderMabangMapper.updateMergedOrder(targetID, sourceIDs);
         platformOrderMabangMapper.updateMergedOrderItems(targetID, sourceIDs);
     }
+
+    private void updateExistedOrders(List<Order> orders){
+
+    }
 }

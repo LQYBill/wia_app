@@ -132,6 +132,7 @@ spring:
       datasource:
         master:
           url: jdbc:mysql://wiaapp.ciqt44diqhhk.eu-west-3.rds.amazonaws.com/wia_app?characterEncoding=UTF-8&useUnicode=true&useSSL=false&tinyInt1isBit=false&allowPublicKeyRetrieval=true
+          # url: jdbc:mysql://158.101.160.59/wia_app?characterEncoding=UTF-8&useUnicode=true&useSSL=false&tinyInt1isBit=false&allowPublicKeyRetrieval=true
           username: admin
           password: WIASourcing2021
           driver-class-name: com.mysql.cj.jdbc.Driver

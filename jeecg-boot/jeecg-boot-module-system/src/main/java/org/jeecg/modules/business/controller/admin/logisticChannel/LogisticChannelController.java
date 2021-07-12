@@ -22,6 +22,7 @@ import org.jeecg.modules.business.service.ILogisticChannelService;
 import org.jeecg.modules.business.service.ISkuService;
 import org.jeecg.modules.business.vo.CountryName;
 import org.jeecg.modules.business.vo.LogisticChannelPage;
+import org.jeecg.modules.business.vo.PopularCountry;
 import org.jeecg.modules.business.vo.SkuQuantity;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
@@ -285,7 +286,7 @@ public class LogisticChannelController {
      * @return list of propre price
      */
     @PostMapping(value = "/findBySku")
-    public Result<?> findPricesBySku(@RequestBody TrialCalcReqParam param) {
+    public Result<List<CostTrialCalculation>> findPricesBySku(@RequestBody TrialCalcReqParam param) {
         log.info(
                 String.format(
                         "Request for trial calculation for country: %s and sku: %s",
@@ -334,10 +335,35 @@ public class LogisticChannelController {
         return Result.OK(calculations);
     }
 
+    @PostMapping(value = "/findByCountriesAndSku")
+    public Result<List<CostTrialCalculation>> findPricesBySkuAndCountries(
+            @RequestBody TrialCalcCountriesAndSku param) {
+        List<CostTrialCalculation> res = param.getCountryCodes().stream()
+                .map(code -> new TrialCalcReqParam(code, param.getSkuQuantities()))
+                .map(this::findPricesBySku)
+                .map(Result::getResult)
+                .reduce(
+                        new ArrayList<>(),
+                        (identity, list) -> {
+                            identity.addAll(list);
+                            return identity;
+                        }
+                );
+
+        return Result.OK(res);
+
+    }
+
 
     @GetMapping(value = "/countries")
     public Result<List<CountryName>> countryList() {
         List<CountryName> countries = logisticChannelPriceService.getAllCountry();
+        return Result.OK(countries);
+    }
+
+    @GetMapping(value = "/popularCountries")
+    public Result<List<PopularCountry>> popularCountry() {
+        List<PopularCountry> countries = logisticChannelPriceService.getPopularCountryList();
         return Result.OK(countries);
     }
 }

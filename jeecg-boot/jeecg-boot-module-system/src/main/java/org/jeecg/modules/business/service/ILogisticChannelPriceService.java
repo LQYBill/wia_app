@@ -3,6 +3,7 @@ package org.jeecg.modules.business.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.jeecg.modules.business.entity.LogisticChannelPrice;
 import org.jeecg.modules.business.vo.CountryName;
+import org.jeecg.modules.business.vo.PopularCountry;
 
 import java.util.List;
 
@@ -17,4 +18,6 @@ public interface ILogisticChannelPriceService extends IService<LogisticChannelPr
     public List<LogisticChannelPrice> selectByMainId(String mainId);
 
     List<CountryName> getAllCountry();
+
+    List<PopularCountry> getPopularCountryList();
 }

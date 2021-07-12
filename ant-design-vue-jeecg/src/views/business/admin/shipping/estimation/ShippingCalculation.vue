@@ -1,6 +1,6 @@
 <template>
-  <a-card :bordered="false" :loading="pageDisable">
-    <!-- sku by measure-->
+  <a-card :bordered="false" :loading="!pageReady">
+    <!-- search by sku's measure-->
     <a-form-model ref="searchForm" :model="form" :rules="rules" layout="inline">
       <a-form-model-item label="目的地" prop="country">
         <a-select
@@ -38,28 +38,47 @@
         <a-input v-model="form.height" style="width:50px"/>
       </a-form-model-item>
       <a-form-model-item>
-        <a-button type="primary" htmlType="submit" @click="handleSubmit">
+        <a-button type="primary" htmlType="submit" @click="sendReqForSearchBySize">
           搜索
         </a-button>
       </a-form-model-item>
     </a-form-model>
     <a-divider/>
-    <!--  search by sku  -->
-    <a-form-model ref="searchFormBySku" :model="formForSku" :rules="rulesForSku" layout="inline">
-      <!-- select country -->
+    <!--  search by countries and sku  -->
+    <a-form-model ref="searchFormBySku" :model="skuAndCountryForm" layout="horizontal">
+      <!-- select countries -->
       <a-form-model-item label="目的地" prop="country">
-        <a-select
-          show-search
-          placeholder="输入国家选择"
-          option-filter-prop="children"
-          :filter-option="filterOption"
-          style="width:200px"
-          v-model="formForSku.country"
-        >
-          <a-select-option :value="item.code" v-for="item in countries" :key="item.code">
-            {{ item.code + "-" + item.nameZh + "-" + item.nameEn }}
-          </a-select-option>
-        </a-select>
+        <div>
+          <a-space>
+            <a-select class="select-country"
+                      show-search
+                      placeholder="输入国家选择"
+                      option-filter-prop="children"
+                      :filter-option="filterOption"
+                      style="width:200px"
+                      v-model="skuAndCountryForm.country.selectedKey"
+            >
+              <a-select-option :value="item.code" v-for="item in skuAndCountryForm.country.sortedCandidates"
+                               :key="item.code">
+                {{ item.code + "-" + item.name_zh + "-" + item.name_en }}
+              </a-select-option>
+            </a-select>
+
+            <a-button @click="addSelectedCountry">Add</a-button>
+          </a-space>
+
+          <div class="country-pool">
+            <a-tag
+              v-for="item in skuAndCountryForm.country.sortedPool"
+              :key="item.code"
+              :closable="true"
+              @close="() => deleteSelectedCountry(item.code)"
+              color="cyan"
+            >
+              {{ item["name_en"] }} - {{ item["name_zh"] }} - {{ item["code"] }}
+            </a-tag>
+          </div>
+        </div>
       </a-form-model-item>
 
       <!-- select sku  -->
@@ -70,41 +89,39 @@
           option-filter-prop="children"
           :filter-option="filterOption"
           style="width:500px"
-          v-model="formForSku.sku">
-          <a-select-option v-for="(item,index) in skus" :key="index" :value="index">
+          v-model="skuAndCountryForm.sku.selectedKey">
+          <a-select-option v-for="item in skuAndCountryForm.sku.candidates" :key="item.id" :value="item.id">
             {{ item["erpCode"] + "-" + item.zhName }}
           </a-select-option>
         </a-select>
       </a-form-model-item>
 
-      <a-form-item>
-        <a-input-number id="inputNumber" v-model="quantity" :min="1"/>
-        当前值：{{ quantity }}
-      </a-form-item>
-
       <a-form-model-item>
-        <a-button type="primary" @click="handleAdd">
-          增加
+        <a-button type="primary" @click="addSelectedSku">
+          Add
         </a-button>
       </a-form-model-item>
 
       <br/>
-
       <a-form-model-item label="已选中">
-        <a-tag
-          v-for="(item,index) in formForSku.selectedSkuList"
-          :key="index"
-          :closable="true"
-          @close="() => handleClose(index)"
-          color="cyan"
-        >
-          {{ item.quantity + ' X ' + item.sku.zhName + item.sku.erpCode }}
-        </a-tag>
+        <template v-for="item of skuAndCountryForm.sku.pool">
+          <a-tag
+            :key="item.id"
+            :closable="true"
+            @close="() => deleteSelectedSku(item.id)"
+            color="cyan"
+          >
+            {{ item.zhName + "-" + item.erpCode }}
+          </a-tag>
+          <a-input-number :value=" skuAndCountryForm.sku.poolKeyToQuantity.get(item.id)"
+                          @change="(quantity)=>updateSkuPoolQuantity(item.id, quantity)">
+
+          </a-input-number>
+        </template>
       </a-form-model-item>
 
-
       <a-form-model-item>
-        <a-button type="primary" htmlType="submit" @click="handleSkuSubmit">
+        <a-button type="primary" htmlType="submit" @click="sendReqByCountriesAndSkus">
           搜索
         </a-button>
       </a-form-model-item>
@@ -115,6 +132,8 @@
     <a-table :columns="columns" :data-source="priceList" rowKey="logisticsChannelName" bordered>
     </a-table>
 
+    <a-button @click="onClickTestButton">test button</a-button>
+
   </a-card>
 </template>
 
@@ -122,6 +141,7 @@
 import {getAction, postAction} from "@/api/manage";
 import {FormModel} from 'ant-design-vue';
 import Vue from "vue";
+import {CandidatePool} from "@comp/CandidatePool";
 
 Vue.use(FormModel)
 const columns = [
@@ -188,7 +208,6 @@ export default {
       priceList: [],
       columns: columns,
       countries: undefined,
-      skus: undefined,
       form: {
         country: undefined,
         weight: undefined,
@@ -196,48 +215,89 @@ export default {
         width: null,
         height: null,
       },
-      formForSku: {
-        country: undefined,
-        sku: undefined,
-        selectedSkuList: []
+      skuAndCountryForm: {
+        country: {
+          selectedKey: undefined,
+          candidatePool: undefined,
+          sortedCandidates: [],
+          sortedPool: []
+        },
+        sku: {
+          // map between id and object
+          allSku: new Map(),
+          selectedKey: undefined,
+          candidatePool: undefined,
+          candidates: [],
+          pool: [],
+          poolKeyToQuantity: new Map()
+        }
       },
       rules: {
         country: [{required: true, message: '请选择国家', trigger: 'change'}],
         weight: [{required: true, message: '请输入重量', trigger: 'blur'}],
       },
-      rulesForSku: {
-        country: [{required: true, message: '请选择国家', trigger: 'change'}],
-        sku: [{required: true, message: '请选择SKU', trigger: 'change'}],
-      },
       url: {
         countries: "/business/logisticChannel/countries",
+        popularCountries: "/business/logisticChannel/popularCountries",
         skus: "/business/sku/all",
         shipSelect: "/business/logisticChannel/find",
-        shipSelectBySku: "/business/logisticChannel/findBySku"
+        shipSelectBySku: "/business/logisticChannel/findBySku",
+        shipSelectByCountriesAndSku: "/business/logisticChannel/findByCountriesAndSku"
       },
-      pageDisable: true,
-      quantity: 1
+      countryReady: false,
+      skuReady: false,
+      popularCountryReady: false,
     }
   },
 
   created() {
+    // load country list
     getAction(this.url.countries)
       .then(res => {
         this.countries = res.result
-        this.pageDisable = false
+        this.countryReady = true
       })
-    getAction(this.url.skus).then(res => {
-      console.log(res)
-      this.skus = res.result
-    })
-
+    // load sku list
+    getAction(this.url.skus)
+      .then(res => {
+        res.result.forEach(item => {
+          this.skuAndCountryForm.sku.allSku.set(item['id'], item)
+        })
+        this.skuAndCountryForm.sku.candidatePool = new CandidatePool(res.result, (item) => item.id)
+        this.updateSkuCandidateAndPool()
+        this.skuReady = true
+      })
+    // load country list sorted by its popularity, different API than the first country list
+    getAction(this.url.popularCountries)
+      .then(res => {
+          console.log(res)
+          let allPopularCountriesList = res.result
+          // convert to map between code and country object
+          this.skuAndCountryForm.country.candidatePool = new CandidatePool(
+            allPopularCountriesList,
+            (country) => country.code
+          )
+          // add the most popular country to selected key
+          this.skuAndCountryForm.country.candidatePool.addAll(
+            allPopularCountriesList.splice(0, 5).map(item => item.code)
+          )
+          this.updateSelectedSortedCountryList()
+          this.updateUnselectedSortedCountryList()
+          this.popularCountryReady = true
+        }
+      )
   },
 
+  computed: {
+    pageReady() {
+      return this.skuReady && this.countryReady && this.popularCountryReady
+    }
+  },
+
+
   methods: {
-    getCountries() {
-      getAction(self.url.shipSelect, self.form)
-    },
-    handleSubmit() {
+    /********************** search by size ***********************/
+    sendReqForSearchBySize() {
       let self = this
       this.$refs.searchForm.validate(
         (valid) => {
@@ -256,46 +316,114 @@ export default {
         }
       )
     },
+    /************************** search by multiple countries and skus ***************************/
+    /************************** Country Part ***********************************/
+    updateSelectedSortedCountryList() {
+      let form = this.skuAndCountryForm
+      const l = Array.from(form.country.candidatePool.getPool())
+      l.sort((a, b) => (a.quantity - b.quantity))
+      l.reverse()
+      this.skuAndCountryForm.country.sortedPool = l
+      console.log("selected country after update", l)
+    },
 
-    handleAdd() {
-      console.log("Click on add")
-      console.log(this.formForSku.sku, "quantity", this.quantity)
+    updateUnselectedSortedCountryList() {
+      let form = this.skuAndCountryForm
+      const l = Array.from(form.country.candidatePool.getCandidates())
+      l.sort((a, b) => (a.quantity - b.quantity))
+      l.reverse()
+      this.skuAndCountryForm.country.sortedCandidates = l
+      console.log("unselected country after update", l)
+    },
+
+    addSelectedCountry() {
+      let key = this.skuAndCountryForm.country.selectedKey
+      this.skuAndCountryForm.country.candidatePool.add(key)
+      this.updateSelectedSortedCountryList()
+      this.updateUnselectedSortedCountryList()
+      this.skuAndCountryForm.country.selectedKey = undefined
+    },
+
+    deleteSelectedCountry(key) {
+      this.skuAndCountryForm.country.candidatePool.remove(key)
+      this.updateSelectedSortedCountryList()
+      this.updateUnselectedSortedCountryList()
+    },
+    /************************** SKU Part ***********************************/
+    addSelectedSku() {
+      let form = this.skuAndCountryForm.sku
+      let key = form.selectedKey
+      console.log("Adding a sku", key)
       // exit in case of null or undefined
-      if (this.formForSku.sku === undefined) {
+      if (key === undefined) {
         return
       }
-      let i = this.formForSku.sku
-      let data = this.skus
-      this.formForSku.selectedSkuList.push({
-        sku: data[i],
-        quantity: this.quantity
-      })
-      console.log("Selected sku:", this.formForSku.selectedSkuList)
+      form.candidatePool.add(key)
+      // update quantity
+      form.poolKeyToQuantity.set(key, 1)
+      this.updateSkuCandidateAndPool()
+      form.selectedKey = undefined
     },
 
-    handleClose(index) {
-      console.log("Deleting index", index)
-      delete this.formForSku.selectedSkuList[index]
-      console.log("after delete Selected sku:", this.formForSku.selectedSkuList)
+    deleteSelectedSku(key) {
+      console.log("Deleting index", key)
+      let form = this.skuAndCountryForm.sku
+      form.candidatePool.remove(key)
+      // update quantity
+      form.poolKeyToQuantity.delete(key)
+      this.updateSkuCandidateAndPool()
     },
 
-    handleSkuSubmit() {
+    /**
+     * Update data source that used by sku selection widget to refresh UI,
+     * sorted by sku's ERP code
+     */
+    updateSkuCandidateAndPool() {
+      let sortByERP = (a, b) => a['erpCode'] - b['erpCode']
+      let form = this.skuAndCountryForm.sku
+      form.candidates = Array.from(form.candidatePool.getCandidates()).sort(sortByERP)
+      form.pool = Array.from(form.candidatePool.getPool()).sort(sortByERP)
+    },
+
+    updateSkuPoolQuantity(key, quantity) {
+      console.log({key, quantity})
+      let form = this.skuAndCountryForm.sku
+      form.poolKeyToQuantity.set(key, quantity)
+      let backup = form.pool
+      form.pool = null
+      form.pool = backup
+      console.log(this.skuAndCountryForm.sku.poolKeyToQuantity)
+    },
+
+    /**
+     * Send request to remote API
+     */
+    sendReqByCountriesAndSkus() {
       console.log("click on submit")
       let self = this
+      let form = this.skuAndCountryForm
       this.$refs.searchFormBySku.validate(
         (valid) => {
           if (valid) {
             const requestParam = {
-              country: self.formForSku.country,
-              skuList: self.formForSku.selectedSkuList.map(
-                (item) => ({
-                  ID: item.sku.id,
-                  quantity: item.quantity
+              countries: form.country.sortedPool.map(country => country.code),
+              skuQuantities: form.sku.pool.map(
+                (sku) => ({
+                  ID: sku.id,
+                  quantity: form.sku.poolKeyToQuantity.get(sku.id)
                 })),
+            }
+            if (requestParam.countries.length === 0) {
+              this.$message.warn("Please select destination country")
+              return
+            }
+            if (requestParam.skuQuantities.length === 0) {
+              this.$message.warn("Please select sku")
+              return;
             }
             console.log("Sending request with param")
             console.log(requestParam)
-            postAction(self.url.shipSelectBySku, requestParam)
+            postAction(self.url.shipSelectByCountriesAndSku, requestParam)
               .then(res => {
                 self.priceList = res.result
                 console.log(res.result)
@@ -308,6 +436,9 @@ export default {
       return (
         option.componentOptions.children[0].text.toLowerCase().indexOf(input.toLowerCase()) >= 0
       );
+    },
+    onClickTestButton() {
+      this.test_data = "click on test button"
     }
   }
 
@@ -316,4 +447,13 @@ export default {
 
 <style scoped>
 
+.country-pool {
+  border: solid darkgray 2px;
+  border-radius: 5px;
+  width: 500px;
+}
+
+.select-country {
+  display: inline-block;
+}
 </style>
