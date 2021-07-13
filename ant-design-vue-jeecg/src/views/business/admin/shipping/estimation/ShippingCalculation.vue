@@ -38,14 +38,14 @@
         <a-input v-model="form.height" style="width:50px"/>
       </a-form-model-item>
       <a-form-model-item>
-        <a-button type="primary" htmlType="submit" @click="sendReqForSearchBySize">
+        <a-button type="primary" htmlType="submit" @click="sendReqForSearchBySize" :loading="submitButtonLoading">
           搜索
         </a-button>
       </a-form-model-item>
     </a-form-model>
     <a-divider/>
     <!--  search by countries and sku  -->
-    <a-form-model ref="searchFormBySku" :model="skuAndCountryForm" layout="horizontal">
+    <a-form-model ref="searchFormBySku" :model="skuAndCountryForm" layout="inline">
       <!-- select countries -->
       <a-form-model-item label="目的地" prop="country">
         <div>
@@ -67,7 +67,7 @@
             <a-button @click="addSelectedCountry">Add</a-button>
           </a-space>
 
-          <div class="country-pool">
+          <div class="pool">
             <a-tag
               v-for="item in skuAndCountryForm.country.sortedPool"
               :key="item.code"
@@ -83,45 +83,50 @@
 
       <!-- select sku  -->
       <a-form-model-item label="sku" prop="sku">
-        <a-select
-          show-search
-          placeholder="输入sku选择"
-          option-filter-prop="children"
-          :filter-option="filterOption"
-          style="width:500px"
-          v-model="skuAndCountryForm.sku.selectedKey">
-          <a-select-option v-for="item in skuAndCountryForm.sku.candidates" :key="item.id" :value="item.id">
-            {{ item["erpCode"] + "-" + item.zhName }}
-          </a-select-option>
-        </a-select>
+        <a-space>
+          <a-select
+            show-search
+            placeholder="输入sku选择"
+            option-filter-prop="children"
+            :filter-option="filterOption"
+            style="width:300px"
+            v-model="skuAndCountryForm.sku.selectedKey">
+            <a-select-option v-for="item in skuAndCountryForm.sku.candidates" :key="item.id" :value="item.id">
+              {{ item["erpCode"] + "-" + item.zhName }}
+            </a-select-option>
+          </a-select>
+
+          <a-button @click="addSelectedSku">
+            Add
+          </a-button>
+        </a-space>
+
+        <div class="pool" style="width: 400px">
+          <div v-for="item of skuAndCountryForm.sku.pool" :key="item.id" style="display: block">
+            <a-tag
+              :closable="true"
+              @close="() => deleteSelectedSku(item.id)"
+              color="orange"
+            >
+              {{ item.zhName + "-" + item.erpCode }}
+            </a-tag>
+            <a-input-number :value=" skuAndCountryForm.sku.poolKeyToQuantity.get(item.id)"
+                            :min="1"
+                            @change="(quantity)=>updateSkuPoolQuantity(item.id, quantity)">
+
+            </a-input-number>
+          </div>
+        </div>
+
       </a-form-model-item>
 
       <a-form-model-item>
-        <a-button type="primary" @click="addSelectedSku">
-          Add
-        </a-button>
-      </a-form-model-item>
-
-      <br/>
-      <a-form-model-item label="已选中">
-        <template v-for="item of skuAndCountryForm.sku.pool">
-          <a-tag
-            :key="item.id"
-            :closable="true"
-            @close="() => deleteSelectedSku(item.id)"
-            color="cyan"
-          >
-            {{ item.zhName + "-" + item.erpCode }}
-          </a-tag>
-          <a-input-number :value=" skuAndCountryForm.sku.poolKeyToQuantity.get(item.id)"
-                          @change="(quantity)=>updateSkuPoolQuantity(item.id, quantity)">
-
-          </a-input-number>
-        </template>
-      </a-form-model-item>
-
-      <a-form-model-item>
-        <a-button type="primary" htmlType="submit" @click="sendReqByCountriesAndSkus">
+        <a-button
+          type="primary"
+          htmlType="submit"
+          @click="sendReqByCountriesAndSkus"
+          :loading="submitButtonLoading"
+        >
           搜索
         </a-button>
       </a-form-model-item>
@@ -132,6 +137,7 @@
     <a-table :columns="columns"
              :data-source="priceList"
              :rowKey="(record)=>record['countryCode'] + record['logisticsChannelName']"
+             :loading="dataTableLoading"
              bordered>
     </a-table>
 
@@ -257,6 +263,8 @@ export default {
       countryReady: false,
       skuReady: false,
       popularCountryReady: false,
+      submitButtonLoading: false,
+      dataTableLoading: false
     }
   },
 
@@ -317,10 +325,14 @@ export default {
               weight: self.form.weight,
               volume: self.form.long * self.form.width * self.form.height
             }
+            this.dataTableLoading = true
+            this.submitButtonLoading = true
             getAction(self.url.shipSelect, requestParam)
               .then(res => {
                 self.priceList = res.result
                 console.log(res.result)
+                this.dataTableLoading = false
+                this.submitButtonLoading = false
               })
           }
         }
@@ -415,6 +427,8 @@ export default {
       this.$refs.searchFormBySku.validate(
         (valid) => {
           if (valid) {
+            this.dataTableLoading = true
+            this.submitButtonLoading = true
             const requestParam = {
               countries: form.country.sortedPool.map(country => country.code),
               skuQuantities: form.sku.pool.map(
@@ -437,6 +451,8 @@ export default {
               .then(res => {
                 self.priceList = res.result
                 console.log(res.result)
+                this.dataTableLoading = false
+                this.submitButtonLoading = false
               })
           }
         }
@@ -457,10 +473,11 @@ export default {
 
 <style scoped>
 
-.country-pool {
+.pool {
   border: solid darkgray 2px;
   border-radius: 5px;
   width: 500px;
+  min-height: 80px;
 }
 
 .select-country {
