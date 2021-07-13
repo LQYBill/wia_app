@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.incrementer.DefaultIdentifierGenerator;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -27,7 +28,7 @@ public class Order {
      */
     @JSONField(deserialize = false)
     @TableId(type = IdType.ASSIGN_ID)
-    private String id = String.valueOf(new DefaultIdentifierGenerator().nextId(this));
+    private String id = IdWorker.getIdStr();
 
     /**
      * Shop name is correspondent the shop erp code in our data base
