@@ -87,7 +87,7 @@ public class InvoiceController {
     @GetMapping(value = "/invoiceDetail")
     public byte[] invoiceDetail(@RequestParam("invoiceNumber") String invoiceNumber) throws IOException {
         List<FactureDetail> res = shippingInvoiceService.getInvoiceDetail(invoiceNumber);
-        return shippingInvoiceService.ExportToExcel(res);
+        return shippingInvoiceService.exportToExcel(res, invoiceNumber);
     }
 
 

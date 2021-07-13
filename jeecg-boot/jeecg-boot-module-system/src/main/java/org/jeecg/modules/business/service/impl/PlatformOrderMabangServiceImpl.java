@@ -1,10 +1,11 @@
 package org.jeecg.modules.business.service.impl;
 
-import com.alibaba.fastjson.JSONArray;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.jeecg.modules.business.domain.mabangapi.getorderlist.Order;
 import org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderItem;
+import org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderStatus;
+import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.mapper.PlatformOrderMabangMapper;
 import org.jeecg.modules.business.service.IPlatformOrderMabangService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,32 +41,40 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
     @Override
     @Transactional
     public void saveOrderFromMabang(List<Order> orders) {
-        if(orders.isEmpty()){
+        if (orders.isEmpty()) {
             return;
         }
-        // find orders that already existe in DB
+        // find orders that already exist in DB
         List<String> allPlatformOrderId = orders.stream()
                 .map(Order::getPlatformOrderId)
                 .collect(toList());
-        List<Order> existedOrders = platformOrderMabangMapper.searchExistence(allPlatformOrderId);
+        List<PlatformOrder> existingOrders = platformOrderMabangMapper.searchExistence(allPlatformOrderId);
 
-        Map<String, Order> platformOrderIDToExistOrders = existedOrders.stream()
+        Map<String, PlatformOrder> platformOrderIDToExistOrders = existingOrders.stream()
                 .collect(
                         Collectors.toMap(
-                                Order::getPlatformOrderId, Function.identity()
+                                PlatformOrder::getPlatformOrderId, Function.identity()
                         )
                 );
 
         ArrayList<Order> newOrders = new ArrayList<>();
         ArrayList<Order> oldOrders = new ArrayList<>();
-        for (Order order : orders) {
-            Order db = platformOrderIDToExistOrders.get(order.getPlatformOrderId());
-            if (db == null) {
-                newOrders.add(order);
+        ArrayList<Order> ordersFromShippedToCompleted = new ArrayList<>();
+        for (Order retrievedOrder : orders) {
+            PlatformOrder orderInDatabase = platformOrderIDToExistOrders.get(retrievedOrder.getPlatformOrderId());
+            if (orderInDatabase == null) {
+                newOrders.add(retrievedOrder);
             } else {
-                // for old orders get their id, update their attributes
-                order.setId(db.getId());
-                oldOrders.add(order);
+                // For orders that pass from Shipped to Completed, we must NOT delete then re-insert their contents
+                // Because we would lose all calculated fees (shipping, vat, service)
+                if (orderInDatabase.getErpStatus().equals(OrderStatus.Shipped.getCode())
+                        && retrievedOrder.getStatus().equals(OrderStatus.Completed.getCode())) {
+                    ordersFromShippedToCompleted.add(retrievedOrder);
+                } else {
+                    // for old orders get their id, update their attributes
+                    retrievedOrder.setId(orderInDatabase.getId());
+                    oldOrders.add(retrievedOrder);
+                }
             }
         }
         orders.clear();
@@ -74,34 +83,40 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
         List<OrderItem> allNewItems = prepareItems(newOrders);
         try {
             if (newOrders.size() != 0) {
-                log.trace("{} orders to be inserted/updated.", orders.size());
+                log.info("{} orders to be inserted/updated.", newOrders.size());
                 platformOrderMabangMapper.insertOrdersFromMabang(newOrders);
             }
             if (allNewItems.size() != 0) {
                 platformOrderMabangMapper.insertOrderItemsFromMabang(allNewItems);
-                log.trace("{} order items to be inserted/updated.", allNewItems.size());
+                log.info("{} order items to be inserted/updated.", allNewItems.size());
             }
         } catch (RuntimeException e) {
             log.error(e.getLocalizedMessage());
         }
 
-        /* for old orders, update them selfs and delete and reinsert their content. */
+        // for old orders, update themselves and delete and reinsert their content.
         List<OrderItem> allNewItemsOfOldItems = prepareItems(oldOrders);
         try {
             if (oldOrders.size() != 0) {
-                log.trace("{} orders to be inserted/updated.", oldOrders.size());
+                log.info("{} orders to be inserted/updated.", oldOrders.size());
                 platformOrderMabangMapper.batchUpdateById(oldOrders);
                 platformOrderMabangMapper.batchDeleteByMainID(oldOrders.stream().map(Order::getId).collect(toList()));
             }
+            if (ordersFromShippedToCompleted.size() != 0) {
+                log.info("{} orders to be updated from Shipped to Completed.", ordersFromShippedToCompleted.size());
+                platformOrderMabangMapper.batchUpdateById(ordersFromShippedToCompleted);
+                log.info("Contents of {} orders to be updated from Shipped to Completed.", ordersFromShippedToCompleted.size());
+                platformOrderMabangMapper.batchUpdateErpStatusByMainId(
+                        ordersFromShippedToCompleted.stream().map(Order::getId).collect(toList()),
+                        OrderStatus.Completed.getCode());
+            }
             if (allNewItemsOfOldItems.size() != 0) {
+                log.info("{} order items to be inserted/updated.", allNewItemsOfOldItems.size());
                 platformOrderMabangMapper.insertOrderItemsFromMabang(allNewItemsOfOldItems);
-                log.trace("{} order items to be inserted/updated.", allNewItemsOfOldItems.size());
             }
         } catch (RuntimeException e) {
             log.error(e.getLocalizedMessage());
         }
-
-
     }
 
     private List<OrderItem> prepareItems(ArrayList<Order> oldOrders) {

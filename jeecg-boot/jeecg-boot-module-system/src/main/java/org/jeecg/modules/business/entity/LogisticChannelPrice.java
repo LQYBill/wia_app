@@ -18,8 +18,8 @@ import java.util.Date;
 /**
  * @Description: 物流渠道价格
  * @Author: jeecg-boot
- * @Date: 2021-04-03
- * @Version: V1.0
+ * @Date: 2021-07-08
+ * @Version: V1.1
  */
 @ApiModel(value = "logistic_channel对象", description = "物流渠道")
 @Data
@@ -41,7 +41,7 @@ public class LogisticChannelPrice implements Serializable {
     /**
      * 创建日期
      */
-    @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(timezone = "GMT+2", pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @ApiModelProperty(value = "创建日期")
     private Date createTime;
@@ -53,7 +53,7 @@ public class LogisticChannelPrice implements Serializable {
     /**
      * 更新日期
      */
-    @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(timezone = "GMT+2", pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @ApiModelProperty(value = "更新日期")
     private Date updateTime;
@@ -66,7 +66,7 @@ public class LogisticChannelPrice implements Serializable {
      * 生效日期
      */
     @Excel(name = "生效日期", width = 15, format = "yyyy-MM-dd")
-    @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd")
+    @JsonFormat(timezone = "GMT+2", pattern = "yyyy-MM-dd")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     @ApiModelProperty(value = "生效日期")
     private Date effectiveDate;
@@ -124,7 +124,12 @@ public class LogisticChannelPrice implements Serializable {
     @Excel(name = "挂号费", width = 15)
     @ApiModelProperty(value = "挂号费")
     private java.math.BigDecimal registrationFee;
-
+    /**
+     * 包裹最低申报值
+     */
+    @Excel(name = "包裹最低申报值", width = 15)
+    @ApiModelProperty(value = "包裹最低申报值")
+    private java.math.BigDecimal minimumDeclaredValue;
     /**
      * Calculate shipping price based on weight.
      *

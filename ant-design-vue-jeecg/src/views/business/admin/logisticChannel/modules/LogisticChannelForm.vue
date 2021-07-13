@@ -209,6 +209,14 @@
               defaultValue:'',
               validateRules: [{ required: true, message: '${title}不能为空' }],
             },
+            {
+              title: '包裹最低申报值',
+              key: 'minimumDeclaredValue',
+              type: FormTypes.inputNumber,
+              width:"200px",
+              placeholder: '请输入${title}',
+              defaultValue:'',
+            },
           ]
         },
         url: {
