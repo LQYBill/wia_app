@@ -20,4 +20,13 @@ public enum OrderStatus {
     public String getCode() {
         return String.valueOf(code);
     }
+
+    public static OrderStatus fromCode(Integer code) {
+        for (OrderStatus orderStatus : OrderStatus.values()) {
+            if (orderStatus.code == code) {
+                return orderStatus;
+            }
+        }
+        return null;
+    }
 }
