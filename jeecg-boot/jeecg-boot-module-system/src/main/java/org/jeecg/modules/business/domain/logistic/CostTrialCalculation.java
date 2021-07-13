@@ -14,6 +14,8 @@ import java.util.Date;
 @Data
 public class CostTrialCalculation {
 
+    private final String countryCode;
+
     private final String logisticsChannelName;
 
     @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd")
@@ -28,8 +30,9 @@ public class CostTrialCalculation {
     private final double additionalCost;
 
 
-    private CostTrialCalculation(String logisticsChannelName, double unitPrice, double shippingCost,
+    private CostTrialCalculation(String countryCode, String logisticsChannelName, double unitPrice, double shippingCost,
                                  double registrationCost, double additionalCost, Date effectiveDate) {
+        this.countryCode = countryCode;
         this.logisticsChannelName = logisticsChannelName;
         this.unitPrice = unitPrice;
         this.shippingCost = format(shippingCost);
@@ -39,7 +42,7 @@ public class CostTrialCalculation {
     }
 
     public CostTrialCalculation(LogisticChannelPrice price, int weight, String logisticsChannelName) {
-        this(logisticsChannelName, price.getCalUnitPrice().doubleValue(), price.calculateShippingPrice(BigDecimal.valueOf(weight)).doubleValue(),
+        this(price.getEffectiveCountry(), logisticsChannelName, price.getCalUnitPrice().doubleValue(), price.calculateShippingPrice(BigDecimal.valueOf(weight)).doubleValue(),
                 price.getRegistrationFee().doubleValue(), price.getAdditionalCost().doubleValue(), price.getEffectiveDate());
     }
 

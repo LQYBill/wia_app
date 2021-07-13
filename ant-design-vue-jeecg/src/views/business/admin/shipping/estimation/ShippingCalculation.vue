@@ -129,10 +129,12 @@
     </a-form-model>
     <a-divider/>
     <!--  data display table  -->
-    <a-table :columns="columns" :data-source="priceList" rowKey="logisticsChannelName" bordered>
+    <a-table :columns="columns"
+             :data-source="priceList"
+             :rowKey="(record)=>record['countryCode'] + record['logisticsChannelName']"
+             bordered>
     </a-table>
 
-    <a-button @click="onClickTestButton">test button</a-button>
 
   </a-card>
 </template>
@@ -146,11 +148,19 @@ import {CandidatePool} from "@comp/CandidatePool";
 Vue.use(FormModel)
 const columns = [
   {
+    title: "国家",
+    align: "center",
+    dataIndex: "countryCode",
+    width: 80,
+    sorter: (a, b) => a['countryCode'].localeCompare(b['countryCode'])
+  },
+  {
     title: "渠道名称",
     align: "center",
     dataIndex: "logisticsChannelName",
     width: 180,
-  }, {
+  },
+  {
     title: "运费",
     children: [
       {
