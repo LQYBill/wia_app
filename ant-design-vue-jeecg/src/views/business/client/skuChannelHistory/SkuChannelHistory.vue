@@ -5,17 +5,17 @@
         show-search
         placeholder="Select a Sku"
         option-filter-prop="children"
-        style="width: 200px"
+        style="width: 800px"
         :filter-option="filterOption"
         @change="handleSelectChange"
         :loading="!res.sku.ready"
       >
-        <a-select-option v-for="item in res.sku.data" :value="item.id" :key="item.id">
-          {{ `${item.erpCode}` }}
+        <a-select-option v-for="item in res.sku.data" :value="item.skuId" :key="item.skuId">
+          {{ `${item.erpCode} - ${item.enName} - ${item.zhName}` }}
         </a-select-option>
       </a-select>
 
-      <a-button @click="sendReqForChannelHistory">Search</a-button>
+      <a-button @click="sendReqForChannelHistory" :loading="table.loading">Search</a-button>
     </a-space>
     <a-divider></a-divider>
 
@@ -23,8 +23,19 @@
       :columns="table.column"
       :data-source="table.data"
       :loading="table.loading"
-      rowKey="rowIndex"
+      rowKey="i"
     >
+      <div slot="rich_number" slot-scope="value, record">
+        <span v-if="value > 0" style="color: red">+{{ value }}</span>
+        <span v-else-if="value < 0" style="color: green">{{ value }}</span>
+        <span v-else style="color: grey">0</span>
+      </div>
+
+      <div slot="rich_percentage" slot-scope="value, record">
+        <span v-if="value > 0" style="color: red">+{{ value }}%</span>
+        <span v-else-if="value < 0" style="color: green">{{ value }}%</span>
+        <span v-else style="color: grey">0</span>
+      </div>
 
     </a-table>
 
@@ -41,7 +52,7 @@ export default {
   data: function () {
     return {
       url: {
-        skuList: "/business/sku/all",
+        skuList: "/business/sku/client/userSku",
         skuHistory: "/business/sku/client/channelHistory"
       },
       selectedSkuId: undefined,
@@ -55,10 +66,9 @@ export default {
         column: [
           {
             title: '#',
-            key: 'rowIndex',
+            dataIndex: 'i',
             width: 60,
             align: 'center',
-            customRender: (t, r, index) => parseInt(index) + 1
           }, {
             title: 'Channel',
             dataIndex: 'channel',
@@ -104,11 +114,13 @@ export default {
             dataIndex: 'diff',
             width: 60,
             align: 'center',
+            scopedSlots: {customRender: 'rich_number'},
           }, {
             title: 'Percentage',
             dataIndex: 'diff_per',
             width: 60,
             align: 'center',
+            scopedSlots: {customRender: 'rich_percentage'},
           },
         ],
         data: [],
@@ -142,32 +154,49 @@ export default {
 
     handleSelectChange(value) {
       this.selectedSkuId = value
+      console.log(this.selectedSkuId)
     },
 
     sendReqForChannelHistory() {
-      const param = {
-        skuId: "123"
+      if (this.selectedSkuId === undefined) {
+        this.$message.warn("Please select a sku !")
+        return
       }
+      const param = {
+        skuId: this.selectedSkuId
+      }
+
       this.table.loading = true
+
       getAction(this.url.skuHistory, param)
         .then(res => {
           this.table.loading = false
-          let remote_data = res.result
-          this.table.data = remote_data.map(this.transformRow)
+          this.selectedSkuId = undefined
+          if(res.success){
+            let remote_data = res.result
+            let data = []
+            for (let i = 0; i < remote_data.length; i++) {
+              data.push(this.transformRow(remote_data[i], i))
+            }
+            this.table.data = data
+          }else {
+            this.$message.warning(res.message)
+          }
 
         })
     },
 
-    transformRow(row) {
+    transformRow(row, i) {
       let now = row['now']
       let old = row['previous']
 
       let channel = `${row['englishChannelName']}-${row["chineseChannelName"]}`
       let country = `${row['englishCountryName']}-${row['chineseCountryName']}`
 
-      let diff = now['shippingFee'] - old['shippingFee']
-      let diff_per = diff / old['shippingFee']
+      let diff = (now['shippingFee'] - old['shippingFee']).toFixed(2)
+      let diff_per = (diff / old['shippingFee']).toFixed(2) * 100
       return {
+        i: i,
         channel: channel,
         country: country,
         date: now['effectiveDate'],

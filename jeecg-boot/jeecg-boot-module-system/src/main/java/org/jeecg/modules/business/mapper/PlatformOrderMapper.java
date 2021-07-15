@@ -94,4 +94,11 @@ public interface PlatformOrderMapper extends BaseMapper<PlatformOrder> {
     Date findEarliestUninvoicedPlatformOrder(List<String> shopIDs);
 
     Date findLatestUninvoicedPlatformOrder(List<String> shopIDs);
+
+    /**
+     * Find all platform order containing a particular sku
+     * @param id ID of the sku
+     * @return list of the orders
+     */
+    List<PlatformOrder> findBySku(@Param("id") String id);
 }

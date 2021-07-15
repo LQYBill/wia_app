@@ -2,19 +2,20 @@ package org.jeecg.modules.business.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.apache.shiro.SecurityUtils;
+import org.jeecg.common.system.vo.LoginUser;
+import org.jeecg.modules.business.controller.UserException;
 import org.jeecg.modules.business.entity.*;
 import org.jeecg.modules.business.mapper.*;
-import org.jeecg.modules.business.service.IClientService;
-import org.jeecg.modules.business.service.ISkuService;
-import org.jeecg.modules.business.vo.SkuName;
-import org.jeecg.modules.business.vo.SkuQuantity;
-import org.jeecg.modules.business.vo.StockUpdate;
+import org.jeecg.modules.business.service.*;
+import org.jeecg.modules.business.vo.*;
 import org.jeecg.modules.business.vo.inventory.InventoryRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -43,6 +44,16 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
     private SkuMeasureMapper skuMeasureMapper;
     @Autowired
     private SkuProductNameMapper skuProductNameMapper;
+    @Autowired
+    private UserSkuMapper userSkuMapper;
+    @Autowired
+    private PlatformOrderMapper platformOrderMapper;
+    @Autowired
+    private ILogisticChannelPriceService logisticChannelPriceService;
+    @Autowired
+    private CountryService countryService;
+    @Autowired
+    private IPlatformOrderContentService platformOrderContentService;
 
     @Override
     @Transactional
@@ -189,5 +200,71 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
     @Override
     public List<SkuName> all() {
         return skuProductNameMapper.selectList(null);
+    }
+
+    @Override
+    public List<UserSku> findSkuForCurrentUser() {
+        LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+        String userId = sysUser.getId();
+        Map<String, Object> condition = new HashMap<>();
+        condition.put("user_id", userId);
+        return userSkuMapper.selectByMap(condition);
+    }
+
+    @Override
+    public List<SkuChannelHistory> findHistoryBySkuId(String skuId) throws UserException {
+        Map<String, BigDecimal> skuRealWeights = new HashMap<>();
+        for (SkuWeightDiscount skuWeightsAndDiscount : platformOrderContentService.getAllSKUWeightsAndDiscounts()) {
+            if (skuWeightsAndDiscount.getWeight() != null) {
+                skuRealWeights.put(skuWeightsAndDiscount.getSkuId(),
+                        skuWeightsAndDiscount.getDiscount().multiply(BigDecimal.valueOf(skuWeightsAndDiscount.getWeight())));
+            }
+        }
+        BigDecimal skuWeight = skuRealWeights.get(skuId);
+
+        // Find all orders containing this sku
+        List<PlatformOrder> all = platformOrderMapper.findBySku(skuId);
+
+        // group by channel name
+        Map<String, List<PlatformOrder>> channelNameToOrder = all.stream()
+                .collect(
+                        Collectors.groupingBy(
+                                PlatformOrder::getLogisticChannelName
+                        )
+                );
+
+        List<SkuChannelHistory> histories = new ArrayList<>();
+
+        // For each channel
+        for (Map.Entry<String, List<PlatformOrder>> entry : channelNameToOrder.entrySet()) {
+            String channelName = entry.getKey();
+            // Group by country
+            Map<String, List<PlatformOrder>> countryEnNameToOrder = entry.getValue().stream().collect(Collectors.groupingBy(PlatformOrder::getCountry));
+
+            // for each country
+            for (Map.Entry<String, List<PlatformOrder>> countryEntry : countryEnNameToOrder.entrySet()) {
+                String countryEnName = countryEntry.getKey();
+                List<PlatformOrder> orders = countryEntry.getValue();
+                if (orders.isEmpty()) {
+                } else if (orders.size() == 1) {
+                    PlatformOrder newestOrder = orders.get(0);
+                    LogisticChannelPrice price = logisticChannelPriceService.findPriceForPlatformOrder(newestOrder);
+                    SkuPriceHistory now = new SkuPriceHistory(skuId, price.getEffectiveDate(), price.getRegistrationFee(), price.getCalUnitPrice().multiply(skuWeight));
+                    SkuChannelHistory channelHistory = new SkuChannelHistory("", channelName, countryEnName, "", now, null);
+                    histories.add(channelHistory);
+                } else {
+                    PlatformOrder newOrder = orders.get(0);
+                    LogisticChannelPrice newPrice = logisticChannelPriceService.findPriceForPlatformOrder(newOrder);
+                    SkuPriceHistory newHistory = new SkuPriceHistory(skuId, newPrice.getEffectiveDate(), newPrice.getRegistrationFee(), newPrice.getCalUnitPrice().multiply(skuWeight));
+
+                    PlatformOrder oldOrder = orders.get(1);
+                    LogisticChannelPrice oldPrice = logisticChannelPriceService.findPriceForPlatformOrder(oldOrder);
+                    SkuPriceHistory oldHistory = new SkuPriceHistory(skuId, oldPrice.getEffectiveDate(), oldPrice.getRegistrationFee(), oldPrice.getCalUnitPrice().multiply(skuWeight));
+                    SkuChannelHistory channelHistory = new SkuChannelHistory("", channelName, countryEnName, "", newHistory, oldHistory);
+                    histories.add(channelHistory);
+                }
+            }
+        }
+        return histories;
     }
 }

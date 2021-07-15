@@ -1,47 +1,109 @@
 package org.jeecg.modules.business.service.impl;
 
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.jeecg.modules.business.controller.UserException;
 import org.jeecg.modules.business.entity.LogisticChannelPrice;
+import org.jeecg.modules.business.entity.PlatformOrder;
+import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.mapper.CountryNameMapper;
 import org.jeecg.modules.business.mapper.LogisticChannelPriceMapper;
+import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.mapper.PopularCountryMapper;
+import org.jeecg.modules.business.service.CountryService;
 import org.jeecg.modules.business.service.ILogisticChannelPriceService;
+import org.jeecg.modules.business.service.IPlatformOrderContentService;
 import org.jeecg.modules.business.vo.CountryName;
 import org.jeecg.modules.business.vo.PopularCountry;
-import org.springframework.stereotype.Service;
-import java.util.List;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.jeecg.modules.business.vo.SkuWeightDiscount;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @Description: 物流渠道价格
  * @Author: William
- * @Date:   2021-06-16
+ * @Date: 2021-06-16
  * @Version: V1.0
  */
 @Service
 public class LogisticChannelPriceServiceImpl extends ServiceImpl<LogisticChannelPriceMapper, LogisticChannelPrice> implements ILogisticChannelPriceService {
-	
-	@Autowired
-	private LogisticChannelPriceMapper logisticChannelPriceMapper;
 
-	@Autowired
-	private CountryNameMapper countryNameMapper;
+    @Autowired
+    private LogisticChannelPriceMapper logisticChannelPriceMapper;
 
-	@Autowired
-	private PopularCountryMapper popularCountryMapper;
-	
-	@Override
-	public List<LogisticChannelPrice> selectByMainId(String mainId) {
-		return logisticChannelPriceMapper.selectByMainId(mainId);
-	}
+    @Autowired
+    private CountryNameMapper countryNameMapper;
 
-	@Override
-	public List<CountryName> getAllCountry() {
-		return countryNameMapper.selectList(null);
-	}
+    @Autowired
+    private PopularCountryMapper popularCountryMapper;
 
-	@Override
-	public List<PopularCountry> getPopularCountryList() {
-		return popularCountryMapper.selectList(null);
-	}
+    @Autowired
+    private CountryService countryService;
+
+    @Autowired
+    private IPlatformOrderContentService platformOrderContentService;
+    @Autowired
+    private PlatformOrderContentMapper platformOrderContentMapper;
+
+    @Override
+    public List<LogisticChannelPrice> selectByMainId(String mainId) {
+        return logisticChannelPriceMapper.selectByMainId(mainId);
+    }
+
+    @Override
+    public List<CountryName> getAllCountry() {
+        return countryNameMapper.selectList(null);
+    }
+
+    @Override
+    public List<PopularCountry> getPopularCountryList() {
+        return popularCountryMapper.selectList(null);
+    }
+
+    @Override
+    public LogisticChannelPrice findPriceForPlatformOrder(PlatformOrder order) throws UserException {
+        Map<String, BigDecimal> skuRealWeights = new HashMap<>();
+        for (SkuWeightDiscount skuWeightsAndDiscount : platformOrderContentService.getAllSKUWeightsAndDiscounts()) {
+            if (skuWeightsAndDiscount.getWeight() != null) {
+                skuRealWeights.put(skuWeightsAndDiscount.getSkuId(),
+                        skuWeightsAndDiscount.getDiscount().multiply(BigDecimal.valueOf(skuWeightsAndDiscount.getWeight())));
+            }
+        }
+
+        List<PlatformOrderContent> contents = platformOrderContentMapper.selectByMainId(order.getId());
+        Map<String, Integer> contentMap = new HashMap<>();
+        for (PlatformOrderContent content : contents) {
+            contentMap.put(content.getSkuId(), content.getQuantity());
+        }
+
+        BigDecimal weight = platformOrderContentService.calculateWeight(
+                order.getLogisticChannelName(),
+                contentMap,
+                skuRealWeights
+        );
+
+
+        String countryCode = countryService.findByEnName(order.getCountry()).getCode();
+
+        LogisticChannelPrice price = logisticChannelPriceMapper.findBy(
+                order.getLogisticChannelName(),
+                order.getShippingTime(),
+                weight,
+                countryCode
+        );
+
+        if (price == null) {
+            throw new UserException("Can't find price for channel {}, shipped at {}, weight {}, country {}",
+                    order.getLogisticChannelName(),
+                    order.getShippingTime(),
+                    weight,
+                    countryCode
+            );
+        }
+        return price;
+    }
 }

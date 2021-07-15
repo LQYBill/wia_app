@@ -51,4 +51,5 @@ public interface ILogisticChannelService extends IService<LogisticChannel> {
 
 
     List<CostTrialCalculation> logisticChannelTrial(int weight, int volume, String country);
+
 }

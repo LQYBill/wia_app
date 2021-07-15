@@ -191,4 +191,31 @@
         LIMIT 1
     </select>
 
+
+    <select id="findBySku" resultType="org.jeecg.modules.business.entity.PlatformOrder">
+        SELECT id,
+               create_by,
+               create_time,
+               update_by,
+               update_time,
+               shop_id,
+               logistic_channel_name,
+               platform_order_id,
+               platform_order_number,
+               tracking_number,
+               order_time,
+               shipping_time,
+               recipient,
+               country,
+               postcode,
+               fret_fee,
+               shipping_invoice_number,
+               status,
+               target,
+               erp_order_id,
+               erp_status
+        FROM sku_platform_order
+        WHERE sku_id = #{id}
+    </select>
+
 </mapper>

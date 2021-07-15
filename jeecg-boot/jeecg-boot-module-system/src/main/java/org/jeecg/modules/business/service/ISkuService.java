@@ -2,14 +2,13 @@ package org.jeecg.modules.business.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.jeecg.modules.business.controller.UserException;
 import org.jeecg.modules.business.entity.ShippingDiscount;
 import org.jeecg.modules.business.entity.Sku;
 import org.jeecg.modules.business.entity.SkuDeclaredValue;
 import org.jeecg.modules.business.entity.SkuPrice;
 import org.jeecg.modules.business.entity.SkuMeasure;
-import org.jeecg.modules.business.vo.SkuName;
-import org.jeecg.modules.business.vo.SkuQuantity;
-import org.jeecg.modules.business.vo.StockUpdate;
+import org.jeecg.modules.business.vo.*;
 import org.jeecg.modules.business.vo.inventory.InventoryRecord;
 
 import java.io.Serializable;
@@ -75,4 +74,8 @@ public interface ISkuService extends IService<Sku> {
     List<SkuMeasure> measureSku(Collection<String> skuIds);
 
     List<SkuName> all();
+
+    List<UserSku> findSkuForCurrentUser();
+
+    List<SkuChannelHistory> findHistoryBySkuId(String skuId) throws UserException;
 }
