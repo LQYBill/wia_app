@@ -65,14 +65,16 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
             if (orderInDatabase == null) {
                 newOrders.add(retrievedOrder);
             } else {
+                // re-affect retrieved orders with ID in database
+                retrievedOrder.setId(orderInDatabase.getId());
                 // For orders that pass from Shipped to Completed, we must NOT delete then re-insert their contents
                 // Because we would lose all calculated fees (shipping, vat, service)
-                if (orderInDatabase.getErpStatus().equals(OrderStatus.Shipped.getCode())
-                        && retrievedOrder.getStatus().equals(OrderStatus.Completed.getCode())) {
-                    ordersFromShippedToCompleted.add(retrievedOrder);
+                if (retrievedOrder.getStatus().equals(OrderStatus.Completed.getCode())){
+                    if (orderInDatabase.getErpStatus().equals(OrderStatus.Shipped.getCode())) {
+                        ordersFromShippedToCompleted.add(retrievedOrder);
+                    }
                 } else {
                     // for old orders get their id, update their attributes
-                    retrievedOrder.setId(orderInDatabase.getId());
                     oldOrders.add(retrievedOrder);
                 }
             }
