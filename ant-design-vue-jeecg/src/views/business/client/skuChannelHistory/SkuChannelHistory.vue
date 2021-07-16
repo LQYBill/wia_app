@@ -172,14 +172,14 @@ export default {
         .then(res => {
           this.table.loading = false
           this.selectedSkuId = undefined
-          if(res.success){
+          if (res.success) {
             let remote_data = res.result
             let data = []
             for (let i = 0; i < remote_data.length; i++) {
               data.push(this.transformRow(remote_data[i], i))
             }
             this.table.data = data
-          }else {
+          } else {
             this.$message.warning(res.message)
           }
 
@@ -193,20 +193,36 @@ export default {
       let channel = `${row['englishChannelName']}-${row["chineseChannelName"]}`
       let country = `${row['englishCountryName']}-${row['chineseCountryName']}`
 
-      let diff = (now['shippingFee'] - old['shippingFee']).toFixed(2)
-      let diff_per = (diff / old['shippingFee']).toFixed(2) * 100
-      return {
-        i: i,
-        channel: channel,
-        country: country,
-        date: now['effectiveDate'],
-        r_cost: now['registrationFee'],
-        s_cost: now['shippingFee'],
-        previous_date: old['effectiveDate'],
-        p_r_cost: old['registrationFee'],
-        p_s_cost: old['shippingFee'],
-        diff: diff,
-        diff_per: diff_per
+      if (old == null) {
+        return {
+          i: i,
+          channel: channel,
+          country: country,
+          date: now['effectiveDate'],
+          r_cost: now['registrationFee'],
+          s_cost: now['shippingFee'],
+          previous_date: "N/A",
+          p_r_cost: "N/A",
+          p_s_cost: "N/A",
+          diff: "N/A",
+          diff_per: "N/A"
+        }
+      } else {
+        let diff = (now['shippingFee'] - old['shippingFee']).toFixed(2)
+        let diff_per = (diff / old['shippingFee']).toFixed(2) * 100
+        return {
+          i: i,
+          channel: channel,
+          country: country,
+          date: now['effectiveDate'],
+          r_cost: now['registrationFee'],
+          s_cost: now['shippingFee'],
+          previous_date: old['effectiveDate'],
+          p_r_cost: old['registrationFee'],
+          p_s_cost: old['shippingFee'],
+          diff: diff,
+          diff_per: diff_per
+        }
       }
     }
 
