@@ -5,13 +5,13 @@
         :activeKey="customActiveKey"
         :tabBarStyle="{ textAlign: 'center', borderBottom: 'unset' }"
         @change="handleTabClick">
-        <a-tab-pane key="tab1" tab="账号密码登录">
+        <a-tab-pane key="tab1" tab="登录 To be translated">
           <a-form-item>
             <a-input
               size="large"
               v-decorator="['username',validatorRules.username,{ validator: this.handleUsernameOrEmail }]"
               type="text"
-              placeholder="请输入帐户名">
+              placeholder="请输入帐户名To be translated">
               <a-icon slot="prefix" type="user" :style="{ color: 'rgba(0,0,0,.25)' }"/>
             </a-input>
           </a-form-item>
@@ -30,15 +30,15 @@
         </a-tab-pane>
       </a-tabs>
 
-      <a-form-item>
-        <a-checkbox v-decorator="['rememberMe', {initialValue: true, valuePropName: 'checked'}]">自动登录</a-checkbox>
-        <router-link :to="{ name: 'alteration'}" class="forge-password" style="float: right;">
-          忘记密码
-        </router-link>
-        <router-link :to="{ name: 'register'}" class="forge-password" style="float: right;margin-right: 10px">
-          注册账户
-        </router-link>
-      </a-form-item>
+<!--      <a-form-item>-->
+<!--        <a-checkbox v-decorator="['rememberMe', {initialValue: true, valuePropName: 'checked'}]">自动登录</a-checkbox>-->
+<!--        <router-link :to="{ name: 'alteration'}" class="forge-password" style="float: right;">-->
+<!--          忘记密码-->
+<!--        </router-link>-->
+<!--        <router-link :to="{ name: 'register'}" class="forge-password" style="float: right;margin-right: 10px">-->
+<!--          注册账户-->
+<!--        </router-link>-->
+<!--      </a-form-item>-->
 
       <a-form-item style="margin-top:24px">
         <a-button
@@ -48,7 +48,7 @@
           class="login-button"
           :loading="loginBtn"
           @click.stop.prevent="handleSubmit"
-          :disabled="loginBtn">确定
+          :disabled="loginBtn">确定To be translated
         </a-button>
       </a-form-item>
     </a-form>
@@ -103,10 +103,10 @@ export default {
         smsSendBtn: false,
       },
       validatorRules: {
-        username: {rules: [{required: true, message: '请输入用户名!'}, {validator: this.handleUsernameOrEmail}]},
-        password: {rules: [{required: true, message: '请输入密码!', validator: 'click'}]},
+        username: {rules: [{required: true, message: '请输入用户名!To be translated'}, {validator: this.handleUsernameOrEmail}]},
+        password: {rules: [{required: true, message: '请输入密码!To be translated', validator: 'click'}]},
         mobile: {rules: [{validator: this.validateMobile}]},
-        captcha: {rule: [{required: true, message: '请输入验证码!'}]},
+        captcha: {rule: [{required: true, message: '请输入验证码!To be translated'}]},
       },
       currentUsername: "",
       url: {

@@ -17,7 +17,7 @@
         :type="collapsed ? 'menu-unfold' : 'menu-fold'"
         @click="toggle"/>
 
-      <span v-if="device === 'desktop'">欢迎使用WIA App</span>
+      <span v-if="device === 'desktop'">欢迎使用WIA AppTo be translated</span>
       <span v-else>Jeecg-Boot</span>
 
       <user-menu :theme="theme"/>

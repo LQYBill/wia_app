@@ -11,7 +11,7 @@
         class="search-input"
         showSearch
         :showArrow="false"
-        placeholder="搜索菜单"
+        placeholder="Search"
         optionFilterProp="children"
         :filterOption="filterOption"
         :open="isMobile()?true:null"
@@ -35,36 +35,36 @@
     <a-dropdown>
       <span class="action action-full ant-dropdown-link user-dropdown-menu">
         <a-avatar class="avatar" size="small" :src="getAvatar()"/>
-        <span v-if="isDesktop()">欢迎您，{{ nickname() }}</span>
+        <span v-if="isDesktop()">Welcome, {{ nickname() }}</span>
       </span>
       <a-menu slot="overlay" class="user-dropdown-menu-wrapper">
         <a-menu-item key="0">
           <router-link :to="{ name: 'account-center' }">
             <a-icon type="user"/>
-            <span>个人中心</span>
+            <span>Personal Espace</span>
           </router-link>
         </a-menu-item>
         <a-menu-item key="1">
           <router-link :to="{ name: 'account-settings-base' }">
             <a-icon type="setting"/>
-            <span>账户设置</span>
+            <span>Account Setting</span>
           </router-link>
         </a-menu-item>
         <a-menu-item key="3"  @click="systemSetting">
            <a-icon type="tool"/>
-           <span>系统设置</span>
+           <span>System Setting</span>
         </a-menu-item>
         <a-menu-item key="4" @click="updatePassword">
           <a-icon type="setting"/>
-          <span>密码修改</span>
+          <span>Change Password</span>
         </a-menu-item>
         <a-menu-item key="5" @click="updateCurrentDepart">
           <a-icon type="cluster"/>
-          <span>切换部门</span>
+          <span>Switch Department</span>
         </a-menu-item>
         <a-menu-item key="6" @click="clearCache">
           <a-icon type="sync"/>
-          <span>清理缓存</span>
+          <span>Clear Cache</span>
         </a-menu-item>
        <!-- <a-menu-item key="2" disabled>
           <a-icon type="setting"/>
@@ -82,12 +82,12 @@
     <span class="action">
       <a class="logout_title" href="javascript:;" @click="handleLogout">
         <a-icon type="logout"/>
-        <span v-if="isDesktop()">&nbsp;退出登录</span>
+        <span v-if="isDesktop()">&nbsp;Login Out</span>
       </a>
     </span>
     <user-password ref="userPassword"></user-password>
-    <depart-select ref="departSelect" :closable="true" title="部门切换"></depart-select>
-    <setting-drawer ref="settingDrawer" :closable="true" title="系统设置"></setting-drawer>
+    <depart-select ref="departSelect" :closable="true" title="Switch Departement"></depart-select>
+    <setting-drawer ref="settingDrawer" :closable="true" title="System Setting"></setting-drawer>
   </div>
 </template>
 
