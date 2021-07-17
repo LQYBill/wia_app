@@ -212,7 +212,7 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
     }
 
     @Override
-    public List<SkuChannelHistory> findHistoryBySkuId(String skuId) throws UserException {
+    public List<SkuChannelHistory> findHistoryBySkuId(String skuId) {
         Map<String, BigDecimal> skuRealWeights = new HashMap<>();
         for (SkuWeightDiscount skuWeightsAndDiscount : platformOrderContentService.getAllSKUWeightsAndDiscounts()) {
             if (skuWeightsAndDiscount.getWeight() != null) {
@@ -248,18 +248,36 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
                 if (orders.isEmpty()) {
                 } else if (orders.size() == 1) {
                     PlatformOrder newestOrder = orders.get(0);
-                    LogisticChannelPrice price = logisticChannelPriceService.findPriceForPlatformOrder(newestOrder);
+                    LogisticChannelPrice price = null;
+                    try {
+                        price = logisticChannelPriceService.findPriceForPlatformOrder(newestOrder);
+                    } catch (UserException e) {
+                        continue;
+                    }
                     SkuPriceHistory now = new SkuPriceHistory(skuId, price.getEffectiveDate(), price.getRegistrationFee(), price.getCalUnitPrice().multiply(skuWeight));
                     SkuChannelHistory channelHistory = new SkuChannelHistory("", channelName, countryEnName, "", now, null);
                     histories.add(channelHistory);
                 } else {
+                    SkuPriceHistory newHistory;
                     PlatformOrder newOrder = orders.get(0);
-                    LogisticChannelPrice newPrice = logisticChannelPriceService.findPriceForPlatformOrder(newOrder);
-                    SkuPriceHistory newHistory = new SkuPriceHistory(skuId, newPrice.getEffectiveDate(), newPrice.getRegistrationFee(), newPrice.getCalUnitPrice().multiply(skuWeight));
+                    LogisticChannelPrice newPrice;
+                    try {
+                        newPrice = logisticChannelPriceService.findPriceForPlatformOrder(newOrder);
 
+                        newHistory = new SkuPriceHistory(skuId, newPrice.getEffectiveDate(), newPrice.getRegistrationFee(), newPrice.getCalUnitPrice().multiply(skuWeight));
+                    } catch (UserException ignored) {
+                        continue;
+                    }
+
+                    SkuPriceHistory oldHistory;
                     PlatformOrder oldOrder = orders.get(1);
-                    LogisticChannelPrice oldPrice = logisticChannelPriceService.findPriceForPlatformOrder(oldOrder);
-                    SkuPriceHistory oldHistory = new SkuPriceHistory(skuId, oldPrice.getEffectiveDate(), oldPrice.getRegistrationFee(), oldPrice.getCalUnitPrice().multiply(skuWeight));
+                    LogisticChannelPrice oldPrice = null;
+                    try {
+                        oldPrice = logisticChannelPriceService.findPriceForPlatformOrder(oldOrder);
+                        oldHistory = new SkuPriceHistory(skuId, oldPrice.getEffectiveDate(), oldPrice.getRegistrationFee(), oldPrice.getCalUnitPrice().multiply(skuWeight));
+                    } catch (UserException e) {
+                        oldHistory = null;
+                    }
                     SkuChannelHistory channelHistory = new SkuChannelHistory("", channelName, countryEnName, "", newHistory, oldHistory);
                     histories.add(channelHistory);
                 }
