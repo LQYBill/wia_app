@@ -37,4 +37,12 @@ public class ChangeOrderResponse extends Response {
     public String getOrderId() {
         return orderId;
     }
+
+    @Override
+    public String toString() {
+        return "ChangeOrderResponse{" +
+                "message='" + message + '\'' +
+                ", orderId='" + orderId + '\'' +
+                '}';
+    }
 }
