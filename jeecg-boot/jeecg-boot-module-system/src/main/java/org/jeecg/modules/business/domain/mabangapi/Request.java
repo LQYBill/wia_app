@@ -15,14 +15,10 @@ import java.util.Date;
 
 /**
  * This class contains some key information and necessary procedures
- * to send a request to mabang "get order list" API, for example: target URL,
+ * to send a request body to mabang API, for example: target URL,
  * correspondent HTTP method, procedure to generate authorization.
  * <p>
- * One can use static method {@code sendRequest} to send request with body,
- * and then get respective response. Or use instance of this class, see below.
- * <p>
- * Because data returned by target API is paginated. One can retrieve all data
- * by calling next and hasNext.
+ * Subclass should implement the send() method by specifying the real response class and constructing it.
  */
 @Slf4j
 public abstract class Request {
@@ -82,7 +78,7 @@ public abstract class Request {
      * @return json string
      */
     private static String generateJsonBodyString(RequestBody body) {
-        JSONObject param = body.parameters();
+        JSONObject param = new JSONObject(body.parameters());
         param.put("developerId", DEV_ID);
         param.put("timestamp", new Date().getTime() / 1000);
         param.put("action", body.action());

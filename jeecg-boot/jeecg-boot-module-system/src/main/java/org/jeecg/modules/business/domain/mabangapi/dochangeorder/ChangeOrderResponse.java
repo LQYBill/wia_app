@@ -1,0 +1,40 @@
+package org.jeecg.modules.business.domain.mabangapi.dochangeorder;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import org.jeecg.modules.business.domain.mabangapi.Response;
+
+public class ChangeOrderResponse extends Response {
+    private final String message;
+    /**
+     * Erp order number
+     */
+    private final String orderId;
+
+
+    private ChangeOrderResponse(Code status, String message, String orderId) {
+        super(status);
+        this.message = message;
+        this.orderId = orderId;
+    }
+
+    public static ChangeOrderResponse parse(String json) {
+        JSONObject jsonObject = JSON.parseObject(json);
+        String code = jsonObject.getString("code");
+        String message = jsonObject.getString("message");
+        if (code.equals("000")) {
+            String orderId = jsonObject.getString("orderId");
+            return new ChangeOrderResponse(Code.SUCCESS, message, orderId);
+        } else {
+            return new ChangeOrderResponse(Code.ERROR, message, null);
+        }
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public String getOrderId() {
+        return orderId;
+    }
+}

@@ -15,7 +15,7 @@ public abstract class Response {
 
     private final Code status;
 
-    public Response(Code status) {
+    protected Response(Code status) {
         this.status = status;
     }
 
