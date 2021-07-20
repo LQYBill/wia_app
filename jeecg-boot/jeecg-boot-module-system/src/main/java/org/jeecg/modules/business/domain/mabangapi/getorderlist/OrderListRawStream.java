@@ -4,8 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.NoSuchElementException;
 
-import static org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderListRequest.sendRequest;
-
 /**
  * This stream control reception of the response of the mabang order list API
  */
@@ -31,7 +29,9 @@ public class OrderListRawStream implements NetworkDataStream<OrderListResponse> 
     @Override
     public OrderListResponse attempt() {
         log.info("Begin the first request");
-        this.currentResponse = sendRequest(toSend);
+
+
+        this.currentResponse = new OrderListRequest(toSend).send();
         if (currentResponse.getDataCount() == 0) {
             return null;
         }
@@ -73,7 +73,7 @@ public class OrderListRawStream implements NetworkDataStream<OrderListResponse> 
             throw new NoSuchElementException();
 
         log.info("Sending request for page {}.", toSend.getPage());
-        this.currentResponse = sendRequest(toSend);
+        this.currentResponse = new OrderListRequest(toSend).send();
         toSend.nextPage();
         return this.currentResponse;
     }

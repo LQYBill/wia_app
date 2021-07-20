@@ -1,6 +1,7 @@
 package org.jeecg.modules.business.domain.mabangapi.getorderlist;
 
 import com.alibaba.fastjson.JSONObject;
+import org.jeecg.modules.business.domain.mabangapi.RequestBody;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -8,8 +9,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.function.Function;
 
-public class OrderListRequestBody {
-    private static final int DEV_ID = 100490;
+public class OrderListRequestBody implements RequestBody {
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private OrderStatus status;
@@ -20,11 +20,14 @@ public class OrderListRequestBody {
     private String canSend;
     private Integer page = 1;
 
-    JSONObject toJSON() {
+    @Override
+    public String action() {
+        return "get-order-list";
+    }
+
+    @Override
+    public JSONObject parameters() {
         JSONObject json = new JSONObject();
-        json.put("developerId", DEV_ID);
-        json.put("timestamp", new Date().getTime() / 1000);
-        json.put("action", "get-order-list");
         putNonNull(json, "status", status, OrderStatus::getCode);
         putNonNull(json, "platformOrderIds", platformOrderIds, (ids) -> String.join(",", ids));
         if(datetimeType != null){
