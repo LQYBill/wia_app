@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.core.incrementer.DefaultIdentifierGenerator;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
@@ -100,6 +99,9 @@ public class Order {
     @JSONField(name = "orderItem")
     @TableField(exist = false)
     private List<OrderItem> orderItems;
+
+    @JSONField(name = "phone1")
+    private String phone1;
 
     public void setTrackingNumber(String trackingNumber) {
         if (trackingNumber != null && trackingNumber.length() == 0) {
