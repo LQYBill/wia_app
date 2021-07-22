@@ -13,8 +13,17 @@
         </chart-card>
       </a-col>
     </a-row>
-    <a-row>
+    <a-row :gutter="24">
       <a-col :span="24">
+        <LogisticProfitTextCard/>
+      </a-col>
+    </a-row>
+    <a-row :gutter="24">
+      <a-col :span="12">
+        <InvoicedChart/>
+      </a-col>
+      <a-col :span="12">
+        <UninvoicedChart/>
       </a-col>
     </a-row>
   </div>
@@ -34,6 +43,9 @@ import HeadInfo from '@/components/tools/HeadInfo.vue'
 
 import Trend from '@/components/Trend'
 import {getLoginfo, getVisitInfo} from '@/api/api'
+import TextCard from "@views/dashboard/logistic/profit/TextCard";
+import InvoicedChart from "@views/dashboard/logistic/profit/InvoicedChart";
+import UninvoicedChart from "@views/dashboard/logistic/profit/UninvoicedChart";
 
 const rankList = []
 for (let i = 0; i < 7; i++) {
@@ -62,7 +74,10 @@ export default {
     Bar,
     Trend,
     LineChartMultid,
-    HeadInfo
+    HeadInfo,
+    LogisticProfitTextCard: TextCard,
+    InvoicedChart,
+    UninvoicedChart
   },
   data() {
     return {
