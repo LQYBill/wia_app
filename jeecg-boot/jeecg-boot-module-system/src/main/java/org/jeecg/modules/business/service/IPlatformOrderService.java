@@ -6,6 +6,7 @@ import org.jeecg.modules.business.entity.ClientPlatformOrderContent;
 import org.jeecg.modules.business.entity.OrderContentDetail;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
+import org.jeecg.modules.business.vo.PlatformOrderQuantity;
 import org.jeecg.modules.business.vo.SkuQuantity;
 import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage;
 import org.jeecg.modules.business.vo.clientPlatformOrder.PurchaseConfirmation;
@@ -85,4 +86,11 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
      */
     String findPreviousInvoice();
 
+    /**
+     * Find platform order quantity of each day for current login user.
+     * If he's client, only orders that belonged to him will be take into count, otherwise all orders will be included.
+     *
+     * @return platform order quantity of each day.
+     */
+    List<PlatformOrderQuantity> monthOrderNumber();
 }

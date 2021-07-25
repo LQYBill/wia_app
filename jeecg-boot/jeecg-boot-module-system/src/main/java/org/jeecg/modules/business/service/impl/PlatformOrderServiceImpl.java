@@ -11,6 +11,7 @@ import org.jeecg.modules.business.mapper.PlatformOrderMapper;
 import org.jeecg.modules.business.service.IClientService;
 import org.jeecg.modules.business.service.IPlatformOrderService;
 import org.jeecg.modules.business.service.IShippingFeesWaiverProductService;
+import org.jeecg.modules.business.vo.PlatformOrderQuantity;
 import org.jeecg.modules.business.vo.SkuQuantity;
 import org.jeecg.modules.business.vo.SkuShippingFeesWaiver;
 import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage;
@@ -23,8 +24,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.*;
@@ -267,4 +271,33 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
         return platformOrderMap.findPreviousInvoice();
     }
 
+    @Override
+    public List<PlatformOrderQuantity> monthOrderNumber() {
+        Client client = clientService.getCurrentClient();
+        List<PlatformOrder> orders = platformOrderMap.findByClient(client.getId());
+        if (orders.isEmpty())
+            return Collections.emptyList();
+
+        LocalDate now = LocalDate.now();
+
+        Predicate<PlatformOrder> sameYearAndMonthOrder = order -> {
+            LocalDate localDate = order.getOrderTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            return localDate.getYear() == now.getYear() && now.getMonth().equals(localDate.getMonth());
+        };
+
+        return orders.stream()
+                .filter(sameYearAndMonthOrder)
+                .collect(
+                        Collectors.groupingBy(
+                                (order) -> order.getOrderTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+                        )
+                )
+                .entrySet()
+                .stream()
+                .map(
+                        entry -> new PlatformOrderQuantity(entry.getKey(), entry.getValue().size())
+
+                )
+                .collect(toList());
+    }
 }

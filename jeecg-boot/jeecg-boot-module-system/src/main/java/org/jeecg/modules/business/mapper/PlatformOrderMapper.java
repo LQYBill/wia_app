@@ -4,14 +4,12 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
 import org.jeecg.modules.business.domain.mabangapi.getorderlist.Order;
 import org.jeecg.modules.business.entity.PlatformOrder;
-import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrderQuantity;
 import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @Description: 平台订单表
@@ -97,8 +95,17 @@ public interface PlatformOrderMapper extends BaseMapper<PlatformOrder> {
 
     /**
      * Find all platform order containing a particular sku
+     *
      * @param id ID of the sku
      * @return list of the orders
      */
     List<PlatformOrder> findBySku(@Param("id") String id);
+
+    /**
+     * Find platform orders by client. If ID is null, all platform order will be returned.
+     *
+     * @param id ID of client
+     * @return list of platform orders of the client
+     */
+    List<PlatformOrder> findByClient(@Param("id") String id);
 }

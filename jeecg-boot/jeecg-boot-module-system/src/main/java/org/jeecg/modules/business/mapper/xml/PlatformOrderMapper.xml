@@ -217,5 +217,13 @@
         FROM sku_platform_order
         WHERE sku_id = #{id}
     </select>
+    <select id="findByClient" resultType="org.jeecg.modules.business.entity.PlatformOrder">
+        SELECT *
+        FROM client_platform_order
+        <if test="id != null">
+            WHERE clientID = #{id}
+        </if>
+
+    </select>
 
 </mapper>

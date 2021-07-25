@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.jeecg.modules.business.vo.PlatformOrderQuantity;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
 import org.jeecgframework.poi.excel.entity.ExportParams;
@@ -260,5 +261,15 @@ public class PlatformOrderController {
             }
         }
         return Result.OK("文件导入失败！");
+    }
+
+    /**
+     *
+     * @return
+     */
+    @GetMapping("/monthOrderQuantity")
+    public Result<List<PlatformOrderQuantity>> monthOrderNumber(){
+        List<PlatformOrderQuantity> res = platformOrderService.monthOrderNumber();
+        return Result.OK(res);
     }
 }
