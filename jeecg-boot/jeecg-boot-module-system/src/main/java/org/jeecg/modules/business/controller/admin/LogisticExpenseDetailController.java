@@ -12,6 +12,7 @@ import org.jeecg.common.system.base.controller.JeecgController;
 import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.modules.business.entity.LogisticExpenseDetail;
 import org.jeecg.modules.business.service.ILogisticExpenseDetailService;
+import org.jeecg.modules.business.vo.LogisticExpenseProportion;
 import org.jeecg.modules.business.vo.dashboard.DailyLogisticProfit;
 import org.jeecg.modules.business.vo.dashboard.MonthlyLogisticProfit;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @Description: 物流开销明细
@@ -157,7 +159,7 @@ public class LogisticExpenseDetailController extends JeecgController<LogisticExp
         return super.importExcel(request, response, LogisticExpenseDetail.class);
     }
 
-    @GetMapping(value = "monthlyLogisticProfit")
+    @GetMapping(value = "/monthlyLogisticProfit")
     public Result<MonthlyLogisticProfit> monthlyLogisticProfit() {
         DailyLogisticProfit profit1 = new DailyLogisticProfit(
                 20,
@@ -183,6 +185,29 @@ public class LogisticExpenseDetailController extends JeecgController<LogisticExp
         );
 
         return Result.OK(monthlyProfit);
+    }
+
+    @GetMapping(value = "/expenseProportion")
+    public Result<List<LogisticExpenseProportion>> expenseProportion() {
+        LogisticExpenseProportion proportion1 = new LogisticExpenseProportion(
+                "11111",
+                "北极特快",
+                BigDecimal.valueOf(35.9)
+        );
+        LogisticExpenseProportion proportion2 = new LogisticExpenseProportion(
+                "22222",
+                "南极特快",
+                BigDecimal.valueOf(20.4)
+        );
+
+        LogisticExpenseProportion proportion3 = new LogisticExpenseProportion(
+                "33333",
+                "月球特快",
+                BigDecimal.valueOf(40)
+        );
+
+
+        return Result.OK(Arrays.asList(proportion1, proportion2, proportion3));
     }
 
 }
