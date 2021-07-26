@@ -26,6 +26,11 @@
         <UninvoicedChart/>
       </a-col>
     </a-row>
+    <a-row :gutter="24">
+      <a-col :span="12">
+        <ExpensePie/>
+      </a-col>
+    </a-row>
   </div>
 </template>
 
@@ -46,6 +51,7 @@ import {getLoginfo, getVisitInfo} from '@/api/api'
 import TextCard from "@views/dashboard/logistic/profit/TextCard";
 import InvoicedChart from "@views/dashboard/logistic/profit/InvoicedChart";
 import UninvoicedChart from "@views/dashboard/logistic/profit/UninvoicedChart";
+import ExpensePie from "@views/dashboard/logistic/expense/ExpensePie";
 
 const rankList = []
 for (let i = 0; i < 7; i++) {
@@ -64,6 +70,7 @@ for (let i = 0; i < 12; i += 1) {
 export default {
   name: "IndexChart",
   components: {
+    ExpensePie,
     ATooltip,
     ACol,
     ChartCard,
