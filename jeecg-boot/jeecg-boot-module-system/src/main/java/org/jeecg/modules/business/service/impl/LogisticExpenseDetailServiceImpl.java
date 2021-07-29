@@ -106,10 +106,10 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
             Arrays.fill(res, BigDecimal.ZERO);
             return res;
         }
-        List<String> ids = orders.stream().map(PlatformOrder::getPlatformOrderId).collect(Collectors.toList());
+        List<String> trackingNumbers = orders.stream().map(PlatformOrder::getTrackingNumber).collect(Collectors.toList());
 
-        Map<String, LogisticExpenseDetail> serialIdToExpense = logisticExpenseDetailMapper.findBy(ids).stream()
-                .collect(Collectors.toMap(LogisticExpenseDetail::getPlatformOrderSerialId, Function.identity()));
+        Map<String, LogisticExpenseDetail> trackingNumberToExpense = logisticExpenseDetailMapper.findBy(trackingNumbers).stream()
+                .collect(Collectors.toMap(LogisticExpenseDetail::getTrackingNumber, Function.identity()));
 
         // group by day of month
         Map<Integer, List<PlatformOrder>> dateToOrder = orders.stream()
@@ -132,8 +132,8 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
             } else {
                 // otherwise, it's sum of all orders of that day.
                 res[i] = ordersOfDay.stream()
-                        .map(PlatformOrder::getPlatformOrderId)
-                        .map(serialIdToExpense::get)
+                        .map(PlatformOrder::getTrackingNumber)
+                        .map(trackingNumberToExpense::get)
                         .filter(Objects::nonNull)
                         .map(LogisticExpenseDetail::getTotalFee)
                         .filter(number -> !number.equals(BigDecimal.ZERO))
@@ -159,9 +159,9 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
         Map<String, List<PlatformOrder>> ordersByCountry = orders.stream().collect(Collectors.groupingBy(classifier));
 
         Function<Map.Entry<String, List<PlatformOrder>>, LogisticExpenseProportion> ordersToExpense = (entry) -> {
-            List<String> serial_ids = entry.getValue().stream().map(PlatformOrder::getPlatformOrderId).collect(Collectors.toList());
+            List<String> trackingNumbers = entry.getValue().stream().map(PlatformOrder::getTrackingNumber).collect(Collectors.toList());
             BigDecimal expense = logisticExpenseDetailMapper
-                    .findBy(serial_ids)
+                    .findBy(trackingNumbers)
                     .stream()
                     .filter(Objects::nonNull)
                     .map(LogisticExpenseDetail::getTotalFee)

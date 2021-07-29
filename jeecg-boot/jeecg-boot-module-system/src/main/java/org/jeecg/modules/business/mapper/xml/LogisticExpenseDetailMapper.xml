@@ -6,8 +6,8 @@
     <select id="findBy" resultType="org.jeecg.modules.business.entity.LogisticExpenseDetail">
         SELECT *
         FROM logistic_expense_detail
-        WHERE platform_order_serial_id IN
-        <foreach collection="ids" separator="," item="v" index="i" close=")" open="(">
+        WHERE tracking_number IN
+        <foreach collection="trackingNumbers" separator="," item="v" index="i" close=")" open="(">
             #{v}
         </foreach>
     </select>

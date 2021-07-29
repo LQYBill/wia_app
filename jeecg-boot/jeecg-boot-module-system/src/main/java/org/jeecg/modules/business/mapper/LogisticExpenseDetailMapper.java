@@ -19,12 +19,12 @@ import java.util.List;
 public interface LogisticExpenseDetailMapper extends BaseMapper<LogisticExpenseDetail> {
 
     /**
-     * Find expense details that correponds to platform orders
+     * Find expense details that corresponds to platform orders
      *
-     * @param ids serial ids
+     * @param trackingNumbers tracking numbers of platform orders
      * @return list of expense details
      */
-    List<LogisticExpenseDetail> findBy(@Param("ids") Collection<String> ids);
+    List<LogisticExpenseDetail> findBy(@Param("trackingNumbers") Collection<String> trackingNumbers);
 
     List<BigDecimal> findExpenseByInvoiceCodes(@Param("codes") Collection<String> codes);
 
