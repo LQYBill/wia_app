@@ -108,4 +108,19 @@ public interface PlatformOrderMapper extends BaseMapper<PlatformOrder> {
      * @return list of platform orders of the client
      */
     List<PlatformOrder> findByClient(@Param("id") String id);
+
+
+    /**
+     * Find platform order by month country and channel
+     *
+     * @param month       1 - 12
+     * @param country     full country name for example: France, in case of null, all countries will be took into count
+     * @param channelName chinese channel name in case of null, all channels will be took into count
+     * @return plat form orders that fit
+     */
+    List<PlatformOrder> findByMonthCountryChannel(@Param("month") int month, @Param("country") String country, @Param("channelName") String channelName);
+
+    List<String> allCountries();
+
+    List<String> allChannels();
 }

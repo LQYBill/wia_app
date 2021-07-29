@@ -14,7 +14,7 @@
     },
     data() {
       return {
-        indexStyle:1
+
       }
     },
     created() {

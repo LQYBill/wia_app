@@ -13,7 +13,6 @@ import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.modules.business.entity.LogisticExpenseDetail;
 import org.jeecg.modules.business.service.ILogisticExpenseDetailService;
 import org.jeecg.modules.business.vo.LogisticExpenseProportion;
-import org.jeecg.modules.business.vo.dashboard.DailyLogisticProfit;
 import org.jeecg.modules.business.vo.dashboard.MonthlyLogisticProfit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -21,8 +20,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.Month;
 import java.util.Arrays;
 import java.util.List;
 
@@ -159,55 +157,48 @@ public class LogisticExpenseDetailController extends JeecgController<LogisticExp
         return super.importExcel(request, response, LogisticExpenseDetail.class);
     }
 
+    /**
+     * @param country full country name, in case of absence, all country will be took into count
+     * @param channel chinese channel name, in case of absence, all channel will be took into count
+     * @return
+     */
     @GetMapping(value = "/monthlyLogisticProfit")
-    public Result<MonthlyLogisticProfit> monthlyLogisticProfit() {
-        DailyLogisticProfit profit1 = new DailyLogisticProfit(
-                20,
-                15,
-                BigDecimal.valueOf(20.5),
-                BigDecimal.valueOf(20.5),
-                BigDecimal.valueOf(20.5),
-                BigDecimal.valueOf(20.5)
-        );
-        DailyLogisticProfit profit2 = new DailyLogisticProfit(
-                30,
-                25,
-                BigDecimal.valueOf(40),
-                BigDecimal.valueOf(27),
-                BigDecimal.valueOf(3.02),
-                BigDecimal.valueOf(1)
-        );
-
-        MonthlyLogisticProfit monthlyProfit = new MonthlyLogisticProfit(
-                LocalDate.now().getMonthValue(),
-                Arrays.asList(profit1, profit2),
-                BigDecimal.valueOf(7.8)
-        );
-
+    public Result<MonthlyLogisticProfit> monthlyLogisticProfit(
+            @RequestParam("month") int month,
+            @RequestParam(value = "country", required = false) String country,
+            @RequestParam(value = "channel", required = false) String channel
+    ) {
+        MonthlyLogisticProfit monthlyProfit =
+                logisticExpenseDetailService.calculateMonthlyLogisticProfit(
+                        Month.of(month),
+                        country,
+                        channel
+                );
         return Result.OK(monthlyProfit);
     }
 
-    @GetMapping(value = "/expenseProportion")
-    public Result<List<LogisticExpenseProportion>> expenseProportion() {
-        LogisticExpenseProportion proportion1 = new LogisticExpenseProportion(
-                "11111",
-                "北极特快",
-                BigDecimal.valueOf(35.9)
-        );
-        LogisticExpenseProportion proportion2 = new LogisticExpenseProportion(
-                "22222",
-                "南极特快",
-                BigDecimal.valueOf(20.4)
-        );
+    @GetMapping(value = "/expenseProportionByChannel")
+    public Result<List<LogisticExpenseProportion>> expenseProportionByChannel() {
 
-        LogisticExpenseProportion proportion3 = new LogisticExpenseProportion(
-                "33333",
-                "月球特快",
-                BigDecimal.valueOf(40)
-        );
+        List<LogisticExpenseProportion> res = logisticExpenseDetailService.calculateLogisticExpenseProportionByChannel();
 
+        return Result.OK(res);
+    }
 
-        return Result.OK(Arrays.asList(proportion1, proportion2, proportion3));
+    @GetMapping(value = "/expenseProportionByCountry")
+    public Result<List<LogisticExpenseProportion>> expenseProportionByCountry() {
+        List<LogisticExpenseProportion> res = logisticExpenseDetailService.calculateLogisticExpenseProportionByCountry();
+        return Result.OK(res);
+    }
+
+    @GetMapping(value = "/allCountry")
+    public Result<List<String>> allCountry() {
+        return Result.OK(logisticExpenseDetailService.allCountries());
+    }
+
+    @GetMapping(value = "/allChannel")
+    public Result<List<String>> allChannel() {
+        return Result.OK(logisticExpenseDetailService.allChannels());
     }
 
 }

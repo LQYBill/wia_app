@@ -5,18 +5,18 @@ import lombok.Data;
 import java.math.BigDecimal;
 
 /**
- * Proportion of logistic expense per company
+ * Proportion of logistic expense by a certain condition
  */
 @Data
 public class LogisticExpenseProportion {
 
     /**
-     * ID of the company
+     * ID of the condition
      */
     private final String id;
 
     /**
-     * Name of the company
+     * Name of the condition
      */
     private final String name;
 

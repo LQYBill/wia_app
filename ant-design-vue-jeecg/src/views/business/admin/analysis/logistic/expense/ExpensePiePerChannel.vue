@@ -6,7 +6,7 @@
 
 <script>
 import {getAction} from "@api/manage";
-import Pie from '@/components/chart/Pie'
+import Pie from '@comp/chart/Pie'
 
 
 export default {
@@ -18,13 +18,13 @@ export default {
     return {
       model: {
         url: {
-          logisticExpenseProportion: "/business/logisticExpenseDetail/expenseProportion"
+          logisticExpenseProportion: "/business/logisticExpenseDetail/expenseProportionByChannel"
         },
         data: []
       },
       view: {
         ready: false,
-        title: "物流开销占比",
+        title: "物流开销占比（渠道）",
         height:300,
         chart: {
           dataSource: []

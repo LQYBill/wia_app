@@ -225,5 +225,25 @@
         </if>
 
     </select>
+    <select id="findByMonthCountryChannel" resultType="org.jeecg.modules.business.entity.PlatformOrder">
+        SELECT *
+        FROM platform_order po
+        WHERE DATE_FORMAT(po.order_time, '%c') = #{month}
+        <if test="country != null">
+            AND country = #{country}
+        </if>
+        <if test="channelName != null">
+            AND logistic_channel_name = #{channelName}
+        </if>
+    </select>
+    <select id="allChannels" resultType="java.lang.String">
+        SELECT DISTINCT logistic_channel_name
+        FROM wia_app.platform_order
+    </select>
+    <select id="allCountries" resultType="java.lang.String">
+        SELECT DISTINCT country
+        FROM wia_app.platform_order
+    </select>
+
 
 </mapper>
