@@ -8,16 +8,17 @@
               {{ i }}
             </a-select-option>
           </a-select>
-          <a-select :default-value="null" style="width: 120px" @change="onCountryChange">
-            <a-select-option value="e" v-for="e in view.select.countries" :key="e">
+          <a-select :default-value="view.select.country" style="width: 120px" @change="onCountryChange">
+            <a-select-option :value="e" v-for="e in view.select.countries" :key="e">
               {{ e }}
             </a-select-option>
           </a-select>
-          <a-select :default-value="null" style="width: 120px" @change="onChannelChange">
-            <a-select-option value="e" v-for="e in view.select.channels" :key="e">
+          <a-select :default-value="view.select.channel" style="width: 120px" @change="onChannelChange">
+            <a-select-option :value="e" v-for="e in view.select.channels" :key="e">
               {{ e }}
             </a-select-option>
           </a-select>
+          <a-button @click="reset">Reset</a-button>
           <a-divider/>
           <a-row>
             <a-col :span="3">
@@ -111,7 +112,9 @@ export default {
           months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
           channels: [],
           countries: [],
-          month: undefined
+          month: undefined,
+          channel:undefined,
+          country:undefined
         },
         text: {
           invoiced: {
@@ -186,30 +189,31 @@ export default {
   ,
   methods: {
     loadModel() {
-      return getAction(url.monthlyProfit, this.form)
+
+      let res1 = getAction(url.monthlyProfit, this.form)
         .then(
           res => {
             this.model.monthlyLogisticProfit = res['result']
           }
         )
-        .then(() => {
-            getAction(url.allCountry)
-              .then(
-                res => {
-                  this.model.select.countries = res['result']
-                }
-              )
+
+      let res2 = getAction(url.allCountry)
+        .then(
+          res => {
+            this.model.select.countries = res['result']
           }
         )
-        .then(() => {
-          getAction(url.allChannel)
-            .then(
-              res => {
-                this.model.select.channels = res['result']
-                this.model.ready = true
-              }
-            )
-        })
+
+      let res3 = getAction(url.allChannel)
+        .then(
+          res => {
+            this.model.select.channels = res['result']
+          }
+        )
+
+      return Promise.all([res1, res2, res3]).then(() => {
+        this.model.ready = true
+      })
     },
 
     prepareView() {
@@ -225,7 +229,7 @@ export default {
       target.realCost.EUR = sum(src.invoicedActualCosts)
       target.realCost.CNY = this.toCNY(target.realCost.EUR)
 
-      target.profit.value = target.amountDue.CNY - target.realCost.CNY
+      target.profit.value = (target.amountDue.CNY - target.realCost.CNY).toFixed(2)
       target.profit.rate = (target.profit.value / target.realCost.CNY * 100).toFixed(2)
 
       // uninvoiced part
@@ -253,7 +257,10 @@ export default {
         target.dataSource[0][j + 1 + ''] = this.toCNY(src.nonInvoicedActualCosts[j])
       }
 
+      // select
       this.view.select.month = this.form.month
+      this.view.select.countries = this.model.select.countries
+      this.view.select.channels = this.model.select.channels
 
       this.view.ready = true
     },
@@ -269,13 +276,14 @@ export default {
 
     onCountryChange(value) {
       this.form.country = value
+      this.view.select.country= value
       this.onMVChange()
 
     },
     onChannelChange(value) {
       this.form.channel = value
+      this.view.select.channel= value
       this.onMVChange()
-
     },
 
     reset() {
