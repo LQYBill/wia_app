@@ -3,10 +3,12 @@ package org.jeecg.modules.business.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
 import org.jeecg.modules.business.entity.LogisticExpenseDetail;
+import org.jeecg.modules.business.vo.PlatformOrderLogisticExpenseDetail;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -27,5 +29,7 @@ public interface LogisticExpenseDetailMapper extends BaseMapper<LogisticExpenseD
     List<LogisticExpenseDetail> findBy(@Param("trackingNumbers") Collection<String> trackingNumbers);
 
     List<BigDecimal> findExpenseByInvoiceCodes(@Param("codes") Collection<String> codes);
+
+    List<PlatformOrderLogisticExpenseDetail> findBetween(@Param("start") Date start, @Param("stop") Date stop);
 
 }

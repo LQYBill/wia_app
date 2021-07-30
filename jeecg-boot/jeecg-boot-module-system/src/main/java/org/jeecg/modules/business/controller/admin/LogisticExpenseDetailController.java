@@ -13,7 +13,7 @@ import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.modules.business.entity.LogisticExpenseDetail;
 import org.jeecg.modules.business.service.ILogisticExpenseDetailService;
 import org.jeecg.modules.business.vo.LogisticExpenseProportion;
-import org.jeecg.modules.business.vo.dashboard.MonthlyLogisticProfit;
+import org.jeecg.modules.business.vo.dashboard.PeriodLogisticProfit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.time.Month;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -163,14 +164,16 @@ public class LogisticExpenseDetailController extends JeecgController<LogisticExp
      * @return
      */
     @GetMapping(value = "/monthlyLogisticProfit")
-    public Result<MonthlyLogisticProfit> monthlyLogisticProfit(
-            @RequestParam("month") int month,
+    public Result<PeriodLogisticProfit> monthlyLogisticProfit(
+            @RequestParam("start") Date start,
+            @RequestParam("stop") Date stop,
             @RequestParam(value = "country", required = false) String country,
             @RequestParam(value = "channel", required = false) String channel
     ) {
-        MonthlyLogisticProfit monthlyProfit =
-                logisticExpenseDetailService.calculateMonthlyLogisticProfit(
-                        Month.of(month),
+        PeriodLogisticProfit monthlyProfit =
+                logisticExpenseDetailService.calculateLogisticProfitOf(
+                        start,
+                        stop,
                         country,
                         channel
                 );
@@ -178,16 +181,24 @@ public class LogisticExpenseDetailController extends JeecgController<LogisticExp
     }
 
     @GetMapping(value = "/expenseProportionByChannel")
-    public Result<List<LogisticExpenseProportion>> expenseProportionByChannel() {
+    public Result<List<LogisticExpenseProportion>> expenseProportionByChannel(
+            @RequestParam("start") Date start,
+            @RequestParam("stop") Date stop
+    ) {
 
-        List<LogisticExpenseProportion> res = logisticExpenseDetailService.calculateLogisticExpenseProportionByChannel();
+        List<LogisticExpenseProportion> res =
+                logisticExpenseDetailService.calculateLogisticExpenseProportionByChannel(start, stop);
 
         return Result.OK(res);
     }
 
     @GetMapping(value = "/expenseProportionByCountry")
-    public Result<List<LogisticExpenseProportion>> expenseProportionByCountry() {
-        List<LogisticExpenseProportion> res = logisticExpenseDetailService.calculateLogisticExpenseProportionByCountry();
+    public Result<List<LogisticExpenseProportion>> expenseProportionByCountry(
+            @RequestParam("start") Date start,
+            @RequestParam("stop") Date stop
+    ) {
+        List<LogisticExpenseProportion> res =
+                logisticExpenseDetailService.calculateLogisticExpenseProportionByCountry(start, stop);
         return Result.OK(res);
     }
 

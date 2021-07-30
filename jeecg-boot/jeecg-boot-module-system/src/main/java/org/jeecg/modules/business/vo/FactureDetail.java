@@ -6,7 +6,6 @@ import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.math.BigDecimal;
-import java.util.Date;
 
 @Data
 @TableName("detail_de_facture")
@@ -60,4 +59,10 @@ public class FactureDetail {
 
     @TableField("`N° de facture`")
     private final String factureNum;
+
+    public BigDecimal total() {
+        BigDecimal fret = fretFee == null ? BigDecimal.ZERO : fretFee;
+        BigDecimal shipping = livraisonFee == null ? BigDecimal.ZERO : livraisonFee;
+        return fret.add(shipping);
+    }
 }

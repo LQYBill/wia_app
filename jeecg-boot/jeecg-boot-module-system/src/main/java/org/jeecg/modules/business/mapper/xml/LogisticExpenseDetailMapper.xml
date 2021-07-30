@@ -18,6 +18,11 @@
         <foreach collection="codes" open="(" close=")" index="i" item="v" separator=",">
             #{v}
         </foreach>
+    </select>
 
+    <select id="findBetween" resultType="org.jeecg.modules.business.vo.PlatformOrderLogisticExpenseDetail">
+        SELECT *
+        FROM platform_order_logistic_expense_detail AS po
+        WHERE po.order_time >= #{start} AND #{stop} >= po.order_time
     </select>
 </mapper>

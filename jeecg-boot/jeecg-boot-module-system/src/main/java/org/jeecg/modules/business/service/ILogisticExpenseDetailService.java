@@ -3,9 +3,9 @@ package org.jeecg.modules.business.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.jeecg.modules.business.entity.LogisticExpenseDetail;
 import org.jeecg.modules.business.vo.LogisticExpenseProportion;
-import org.jeecg.modules.business.vo.dashboard.MonthlyLogisticProfit;
+import org.jeecg.modules.business.vo.dashboard.PeriodLogisticProfit;
 
-import java.time.Month;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -19,16 +19,15 @@ public interface ILogisticExpenseDetailService extends IService<LogisticExpenseD
     /**
      * Calculate monthly profit of a month.
      *
-     * @param month the month, begin from 1 to 12.
      * @param country full country name
      * @param channelName chinese channel name
      * @return logistic profit of the month
      */
-    MonthlyLogisticProfit calculateMonthlyLogisticProfit(Month month, String country, String channelName);
+    PeriodLogisticProfit calculateLogisticProfitOf(Date start, Date stop, String country, String channelName);
 
-    List<LogisticExpenseProportion> calculateLogisticExpenseProportionByChannel();
+    List<LogisticExpenseProportion> calculateLogisticExpenseProportionByChannel(Date start, Date stop);
 
-    List<LogisticExpenseProportion> calculateLogisticExpenseProportionByCountry();
+    List<LogisticExpenseProportion> calculateLogisticExpenseProportionByCountry(Date start, Date stop);
 
     List<String> allCountries();
 

@@ -3,17 +3,17 @@
     <a-row>
       <a-col :span="24">
         <a-card :loading="!model.ready" :bordered="false" title="物流利润" :style="{ marginTop: '24px' }">
-          <a-select :default-value="view.select.month" style="width: 120px" @change="onMonthChange">
+          <a-select :default-value="view.select.month+'月'" style="width: 120px" @change="onMonthChange">
             <a-select-option :value="i" v-for="i in view.select.months" :key="i">
-              {{ i }}
+              {{ i }}月
             </a-select-option>
           </a-select>
-          <a-select :default-value="view.select.country" style="width: 120px" @change="onCountryChange">
+          <a-select placeholder="选择月份" :default-value="view.select.country" style="width: 120px" @change="onCountryChange">
             <a-select-option :value="e" v-for="e in view.select.countries" :key="e">
               {{ e }}
             </a-select-option>
           </a-select>
-          <a-select :default-value="view.select.channel" style="width: 120px" @change="onChannelChange">
+          <a-select placeholder="选择渠道" :default-value="view.select.channel" style="width: 120px" @change="onChannelChange">
             <a-select-option :value="e" v-for="e in view.select.channels" :key="e">
               {{ e }}
             </a-select-option>
@@ -172,7 +172,8 @@ export default {
         ready: false
       },
       form: {
-        month: moment().month() + 1,
+        start:moment().startOf("month"),
+        stop:moment().endOf("month"),
         country: null,
         channel: null
       }
