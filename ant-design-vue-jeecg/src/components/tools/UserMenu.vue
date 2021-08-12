@@ -82,7 +82,7 @@
     <span class="action">
       <a class="logout_title" href="javascript:;" @click="handleLogout">
         <a-icon type="logout"/>
-        <span v-if="isDesktop()">&nbsp;Login Out</span>
+        <span v-if="isDesktop()">&nbsp;Logout</span>
       </a>
     </span>
     <user-password ref="userPassword"></user-password>

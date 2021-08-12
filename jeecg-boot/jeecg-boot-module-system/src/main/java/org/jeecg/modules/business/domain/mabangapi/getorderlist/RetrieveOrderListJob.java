@@ -98,7 +98,7 @@ public class RetrieveOrderListJob implements Job {
         for (int i = 0; i < rawData.size(); i++) {
             // concatenate remote file name
             String name = format.format(now) + "-" + i + ".json";
-            log.info("Coping file {}", name);
+            log.info("Copying file {}", name);
             JSONArray data = rawData.get(i);
             /* Overwrite the local temporary file at each time */
             BufferedWriter writer = Files.newBufferedWriter(out);

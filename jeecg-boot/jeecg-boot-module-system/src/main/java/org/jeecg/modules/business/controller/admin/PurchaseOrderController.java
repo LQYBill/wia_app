@@ -340,7 +340,7 @@ public class PurchaseOrderController {
     }
 
     /**
-     * @param purchaseID purchaseID
+     * @param invoiceCode invoiceCode
      */
     @RequestMapping(value = "/downloadInvoice", method = RequestMethod.GET)
     public byte[] downloadInvoiceFile(@RequestParam String invoiceCode) throws IOException, URISyntaxException {
