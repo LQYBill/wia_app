@@ -74,8 +74,11 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
                         ordersFromShippedToCompleted.add(retrievedOrder);
                     }
                 } else {
-                    // for old orders get their id, update their attributes
-                    oldOrders.add(retrievedOrder);
+                    // If order is shipped, don't update anything, wait until it becomes Completed then only update status
+                    if (!orderInDatabase.getErpStatus().equals(OrderStatus.Shipped.getCode())) {
+                        // for old orders get their id, update their attributes
+                        oldOrders.add(retrievedOrder);
+                    }
                 }
             }
         }
