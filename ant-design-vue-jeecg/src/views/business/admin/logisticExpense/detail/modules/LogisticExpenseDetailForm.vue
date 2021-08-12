@@ -75,12 +75,17 @@
           </a-col>
           <a-col :span="24">
             <a-form-model-item label="附加费用" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="additionnalFee">
-              <a-input-number v-model="model.additionnalFee" placeholder="请输入附加费用" style="width: 100%" />
+              <a-input-number v-model="model.additionalFee" placeholder="请输入附加费用" style="width: 100%" />
             </a-form-model-item>
           </a-col>
           <a-col :span="24">
             <a-form-model-item label="总费用" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="totalFee">
               <a-input-number v-model="model.totalFee" placeholder="请输入总费用" style="width: 100%" />
+            </a-form-model-item>
+          </a-col>
+          <a-col :span="24">
+            <a-form-model-item label="物流公司ID" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="logisticCompanyId">
+              <j-search-select-tag v-model="model.logisticCompanyId" dict="logistic_company,name,id"  />
             </a-form-model-item>
           </a-col>
         </a-row>

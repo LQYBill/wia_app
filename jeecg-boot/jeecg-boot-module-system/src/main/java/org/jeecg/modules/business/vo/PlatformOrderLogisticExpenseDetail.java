@@ -15,15 +15,11 @@ public class PlatformOrderLogisticExpenseDetail {
     private final String platformOrderNumber;
     private final Date orderTime;
     private final Date shippingTime;
-    private final String recipient;
     private final String country;
-    private final String postcode;
     private final BigDecimal fretFee;
+    private final BigDecimal shippingFee;
+    private final BigDecimal vatFee;
     private final String shippingInvoiceNumber;
-    private final String status;
-    private final String target;
-    private final String erp_order_id;
-    private final String erp_status;
     private final String logistic_expense_detail_id;
     private final String platform_order_serial_id;
     private final String virtual_tracking_number;

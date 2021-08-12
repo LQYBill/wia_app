@@ -16,6 +16,15 @@
       <a-upload name="file" :showUploadList="false" :multiple="false" :headers="tokenHeader" :action="importExcelUrl" @change="handleImportExcel">
         <a-button type="primary" icon="import">导入</a-button>
       </a-upload>
+      <a-upload name="file" :showUploadList="false" :multiple="false" :headers="tokenHeader" :action="import4px" @change="handleImportExcel">
+        <a-button type="primary"><img src="~@/assets/4px.svg" class="logo" alt="4px" width='30px'>导入递四方账单明细</a-button>
+      </a-upload>
+      <a-upload name="file" :showUploadList="false" :multiple="false" :headers="tokenHeader" :action="importYunExpress" @change="handleImportExcel">
+        <a-button type="primary"><img src="~@/assets/yunexpress.svg" class="logo" alt="yt" width='30px'>导入云途账单明细</a-button>
+      </a-upload>
+      <a-upload name="file" :showUploadList="false" :multiple="false" :headers="tokenHeader" :action="importMs" @change="handleImportExcel">
+        <a-button type="primary"><img src="~@/assets/miaoshen.png" class="logo" alt="ms" width='30px'>导入淼深账单明细</a-button>
+      </a-upload>
       <!-- 高级查询区域 -->
       <j-super-query :fieldList="superFieldList" ref="superQueryModal" @handleSuperQuery="handleSuperQuery"></j-super-query>
       <a-dropdown v-if="selectedRowKeys.length > 0">
@@ -194,12 +203,17 @@
           {
             title:'附加费用',
             align:"center",
-            dataIndex: 'additionnalFee'
+            dataIndex: 'additionalFee'
           },
           {
             title:'总费用',
             align:"center",
             dataIndex: 'totalFee'
+          },
+          {
+            title:'物流公司ID',
+            align:"center",
+            dataIndex: 'logisticCompanyId_dictText'
           },
           {
             title: '操作',
@@ -216,7 +230,9 @@
           deleteBatch: "/business/logisticExpenseDetail/deleteBatch",
           exportXlsUrl: "/business/logisticExpenseDetail/exportXls",
           importExcelUrl: "business/logisticExpenseDetail/importExcel",
-          
+          import4px: "business/logisticExpenseDetail/import4px",
+          importYunExpress: "business/logisticExpenseDetail/importYunExpress",
+          importMs: "business/logisticExpenseDetail/importMs",
         },
         dictOptions:{},
         superFieldList:[],
@@ -228,6 +244,15 @@
     computed: {
       importExcelUrl: function(){
         return `${window._CONFIG['domainURL']}/${this.url.importExcelUrl}`;
+      },
+      import4px: function(){
+        return `${window._CONFIG['domainURL']}/${this.url.import4px}`;
+      },
+      importYunExpress: function(){
+        return `${window._CONFIG['domainURL']}/${this.url.importYunExpress}`;
+      },
+      importMs: function(){
+        return `${window._CONFIG['domainURL']}/${this.url.importMs}`;
       },
     },
     methods: {
@@ -251,6 +276,7 @@
         fieldList.push({type:'BigDecimal',value:'vatServiceFee',text:'增值税服务费',dictCode:''})
         fieldList.push({type:'BigDecimal',value:'additionnalFee',text:'附加费用',dictCode:''})
         fieldList.push({type:'BigDecimal',value:'totalFee',text:'总费用',dictCode:''})
+        fieldList.push({type:'sel_search',value:'logisticCompanyId',text:'物流公司ID',dictTable:'logistic_company', dictText:'name', dictCode:'id'})
         this.superFieldList = fieldList
       }
     }
