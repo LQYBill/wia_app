@@ -112,5 +112,6 @@
         AND po.shipping_time >= #{begin}
         AND #{end} >= po.shipping_time
         AND po.shipping_invoice_number IS NULL
+        AND poc.erp_status = 3
     </select>
 </mapper>
