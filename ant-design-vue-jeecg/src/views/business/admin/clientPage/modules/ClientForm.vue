@@ -229,6 +229,15 @@
               placeholder: '请输入${title}',
               defaultValue:'',
             },
+            {
+              title: '订单服务费',
+              key: 'orderServiceFee',
+              type: FormTypes.input,
+              width:"200px",
+              placeholder: '请输入${title}',
+              defaultValue:'',
+              validateRules: [{ required: true, message: '${title}不能为空' }],
+            },
           ]
         },
         // 客户名下SKU

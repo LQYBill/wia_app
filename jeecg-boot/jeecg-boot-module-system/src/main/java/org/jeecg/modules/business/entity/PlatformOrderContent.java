@@ -130,11 +130,4 @@ public class PlatformOrderContent implements Serializable {
         return Objects.hash(id);
     }
 
-    public BigDecimal getTotalFee() {
-        return serviceFee
-                .add(shippingFee)
-                .add(vat)
-                .add(purchaseFee == null ? BigDecimal.ZERO : purchaseFee)
-                .setScale(2, RoundingMode.UP);
-    }
-}
+ }

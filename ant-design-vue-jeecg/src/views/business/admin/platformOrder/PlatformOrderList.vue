@@ -157,67 +157,86 @@
           {
             title: '店铺ID',
             align: 'center',
-            dataIndex: 'shopId_dictText'
+            dataIndex: 'shopId_dictText',
+            sorter: true
           },
           {
             title: '物流渠道',
             align: 'center',
-            dataIndex: 'logisticChannelName_dictText'
+            dataIndex: 'logisticChannelName_dictText',
+            sorter: true
           },
           {
             title: '平台订单号码',
             align: 'center',
             dataIndex: 'platformOrderId',
+            sorter: true
           },
           {
             title: '平台订单交易号',
             align: 'center',
             dataIndex: 'platformOrderNumber',
+            sorter: true
           },
           {
             title: 'ERP内订单ID',
             align: 'center',
             dataIndex: 'erpOrderId',
+            sorter: true
           },
           {
             title: '物流跟踪号',
             align: 'center',
             dataIndex: 'trackingNumber',
+            sorter: true
           },
           {
             title: '订单交易时间',
             align: 'center',
             dataIndex: 'orderTime',
+            sorter: true
           },
           {
             title: '订单发货时间',
             align: 'center',
             dataIndex: 'shippingTime',
+            sorter: true
           },
           {
             title: '订单收件人',
             align: 'center',
             dataIndex: 'recipient',
+            sorter: true
           },
           {
             title: '订单收件人国家',
             align: 'center',
             dataIndex: 'country',
+            sorter: true
           },
           {
             title: '订单收件人邮编',
             align: 'center',
             dataIndex: 'postcode',
+            sorter: true
           },
           {
             title: '物流挂号费',
             align: 'center',
             dataIndex: 'fretFee',
+            sorter: true
+          },
+          {
+            title: '订单服务费',
+            align: "center",
+            dataIndex: 'orderServiceFee',
+            sorter: true
           },
           {
             title: '物流发票号',
             align: 'center',
-            dataIndex: 'shippingInvoiceNumber_dictText'
+            dataIndex: 'shippingInvoiceNumber_dictText',
+            sorter: true
           },
           {
             title: '采购状态',
@@ -233,6 +252,7 @@
             title: 'ERP中状态',
             align: 'center',
             dataIndex: 'erpStatus',
+            sorter: true
           },
           {
             title: '操作',
@@ -288,6 +308,7 @@
         fieldList.push({type:'string',value:'country',text:'订单收件人国家',dictCode:''})
         fieldList.push({type:'string',value:'postcode',text:'订单收件人邮编',dictCode:''})
         fieldList.push({type:'BigDecimal',value:'fretFee',text:'物流挂号费',dictCode:''})
+        fieldList.push({type: 'BigDecimal', value: 'orderServiceFee', text: '订单服务费', dictCode: ''})
         fieldList.push({type:'sel_search',value:'shippingInvoiceNumber',text:'物流发票号',dictTable:'shipping_invoice', dictText:'invoice_number', dictCode:'id'})
         fieldList.push({type:'string',value:'status',text:'采购状态',dictCode:''})
         fieldList.push({type:'string',value:'target',text:'合并订单目标订单ID',dictCode:''})

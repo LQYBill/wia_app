@@ -64,6 +64,11 @@
               <a-input-number v-model="model.fretFee" placeholder="请输入物流挂号费" style="width: 100%" />
             </a-form-model-item>
           </a-col>
+          <a-col :span="24">
+            <a-form-model-item label="订单服务费" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="orderServiceFee">
+              <a-input-number v-model="model.orderServiceFee" placeholder="请输入订单服务费" style="width: 100%"/>
+            </a-form-model-item>
+          </a-col>
           <a-col :xs="24" :sm="12">
             <a-form-model-item label="物流发票号" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="shippingInvoiceNumber">
               <j-search-select-tag v-model="model.shippingInvoiceNumber" dict="shipping_invoice,invoice_number,id" />

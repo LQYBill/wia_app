@@ -54,15 +54,12 @@ public class FactureDetail {
     @TableField("`Frais de livraison`")
     private final BigDecimal livraisonFee;
 
+    @TableField("`Frais de service`")
+    private final BigDecimal serviceFee;
+
     @TableField("`TVA`")
     private final BigDecimal TVA;
 
     @TableField("`N° de facture`")
     private final String factureNum;
-
-    public BigDecimal total() {
-        BigDecimal fret = fretFee == null ? BigDecimal.ZERO : fretFee;
-        BigDecimal shipping = livraisonFee == null ? BigDecimal.ZERO : livraisonFee;
-        return fret.add(shipping);
-    }
 }

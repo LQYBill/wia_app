@@ -11,6 +11,7 @@ import org.jeecg.modules.business.entity.*;
 import org.jeecg.modules.business.mapper.ClientMapper;
 import org.jeecg.modules.business.mapper.ExchangeRatesMapper;
 import org.jeecg.modules.business.mapper.LogisticChannelPriceMapper;
+import org.jeecg.modules.business.mapper.ShopMapper;
 import org.jeecg.modules.business.service.CountryService;
 import org.jeecg.modules.business.service.IPlatformOrderContentService;
 import org.jeecg.modules.business.service.IPlatformOrderService;
@@ -36,6 +37,8 @@ public class ShippingInvoiceFactory {
     private final IPlatformOrderService platformOrderService;
 
     private final ClientMapper clientMapper;
+
+    private final ShopMapper shopMapper;
 
     private final LogisticChannelPriceMapper logisticChannelPriceMapper;
 
@@ -67,7 +70,7 @@ public class ShippingInvoiceFactory {
 
     public ShippingInvoiceFactory(IPlatformOrderService platformOrderService,
                                   ClientMapper clientMapper,
-                                  LogisticChannelPriceMapper logisticChannelPriceMapper,
+                                  ShopMapper shopMapper, LogisticChannelPriceMapper logisticChannelPriceMapper,
                                   IPlatformOrderContentService platformOrderContentService,
                                   ISkuDeclaredValueService skuDeclaredValueService,
                                   CountryService countryService,
@@ -75,6 +78,7 @@ public class ShippingInvoiceFactory {
 
         this.platformOrderService = platformOrderService;
         this.clientMapper = clientMapper;
+        this.shopMapper = shopMapper;
         this.logisticChannelPriceMapper = logisticChannelPriceMapper;
         this.platformOrderContentService = platformOrderContentService;
         this.skuDeclaredValueService = skuDeclaredValueService;
@@ -124,6 +128,9 @@ public class ShippingInvoiceFactory {
         }
 
         Client client = clientMapper.selectById(customerId);
+        List<Shop> shops = shopMapper.selectBatchIds(shopIds);
+        Map<String, BigDecimal> shopServiceFeeMap = new HashMap<>();
+        shops.forEach(shop -> shopServiceFeeMap.put(shop.getId(), shop.getOrderServiceFee()));
         String invoiceCode = generateInvoiceCode();
         log.info("New invoice code: {}", invoiceCode);
         // find logistic channel price for each order based on its content
@@ -138,7 +145,7 @@ public class ShippingInvoiceFactory {
                 contentMap.put(content.getSkuId(), content.getQuantity());
             }
 
-            // calculate weight of a order
+            // calculate weight of an order
             BigDecimal contentWeight = platformOrderContentService.calculateWeight(
                     uninvoicedOrder.getLogisticChannelName(),
                     contentMap,
@@ -149,6 +156,7 @@ public class ShippingInvoiceFactory {
             LogisticChannelPrice price = findAppropriatePrice(uninvoicedOrder, contentWeight);
             // update attributes of orders and theirs content
             uninvoicedOrder.setFretFee(price.getRegistrationFee());
+            uninvoicedOrder.setOrderServiceFee(shopServiceFeeMap.get(uninvoicedOrder.getShopId()));
             uninvoicedOrder.setShippingInvoiceNumber(invoiceCode);
             BigDecimal totalShippingFee = price.calculateShippingPrice(contentWeight);
             BigDecimal clientVatPercentage = client.getVatPercentage();

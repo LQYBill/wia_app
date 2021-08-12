@@ -35,6 +35,8 @@ public class PlatformOrderShippingInvoiceService {
     @Autowired
     ClientMapper clientMapper;
     @Autowired
+    ShopMapper shopMapper;
+    @Autowired
     LogisticChannelPriceMapper logisticChannelPriceMapper;
     @Autowired
     IPlatformOrderContentService platformOrderContentService;
@@ -77,6 +79,7 @@ public class PlatformOrderShippingInvoiceService {
             "Quantité",
             "Frais de FRET",
             "Frais de livraison",
+            "Frais de service",
             "TVA",
             "N° de facture"
     };
@@ -103,6 +106,7 @@ public class PlatformOrderShippingInvoiceService {
         ShippingInvoiceFactory factory = new ShippingInvoiceFactory(
                 platformOrderService,
                 clientMapper,
+                shopMapper,
                 logisticChannelPriceMapper,
                 platformOrderContentService,
                 skuDeclaredValueService,
@@ -196,6 +200,8 @@ public class PlatformOrderShippingInvoiceService {
             sheetManager.write(detail.getFretFee());
             sheetManager.nextCol();
             sheetManager.write(detail.getLivraisonFee());
+            sheetManager.nextCol();
+            sheetManager.write(detail.getServiceFee());
             sheetManager.nextCol();
             sheetManager.write(detail.getTVA());
             sheetManager.nextCol();

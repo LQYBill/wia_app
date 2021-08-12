@@ -18,8 +18,8 @@ import java.util.Date;
 /**
  * @Description: 平台订单表
  * @Author: jeecg-boot
- * @Date: 2021-06-29
- * @Version: V1.1
+ * @Date: 2021-08-10
+ * @Version: V1.2
  */
 @ApiModel(value = "platform_order对象", description = "平台订单表")
 @Data
@@ -147,6 +147,12 @@ public class PlatformOrder implements Serializable {
     @Excel(name = "物流挂号费", width = 15)
     @ApiModelProperty(value = "物流挂号费")
     private java.math.BigDecimal fretFee;
+    /**
+     * 订单服务费
+     */
+    @Excel(name = "订单服务费", width = 15)
+    @ApiModelProperty(value = "订单服务费")
+    private java.math.BigDecimal orderServiceFee;
     /**
      * 物流发票号
      */

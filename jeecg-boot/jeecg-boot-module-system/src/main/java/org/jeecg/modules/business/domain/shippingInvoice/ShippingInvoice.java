@@ -53,47 +53,76 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
 
         List<Row<String, Object, Integer, Object, BigDecimal>> rows = new ArrayList<>();
 
+        BigDecimal vatForEU = BigDecimal.ZERO;
+        BigDecimal serviceFees = BigDecimal.ZERO;
         for (Map.Entry<String, List<PlatformOrder>> entry : countryPackageMap.entrySet()) {
             String country = entry.getKey();
             List<PlatformOrder> orders = entry.getValue();
 
-            BigDecimal countryFees = orders.stream()
+            BigDecimal countryShippingFees = orders.stream()
                     .map(o ->
                             orderMap.get(o.getPlatformOrderId()).stream()
-                                    .map(PlatformOrderContent::getTotalFee)
+                                    .map(PlatformOrderContent::getShippingFee)
                                     .reduce(BigDecimal.ZERO, BigDecimal::add)
                     )
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
+            vatForEU = vatForEU.add(orders.stream()
+                    .map(o ->
+                            orderMap.get(o.getPlatformOrderId()).stream()
+                                    .map(PlatformOrderContent::getVat)
+                                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    )
+                    .reduce(BigDecimal.ZERO, BigDecimal::add));
             BigDecimal countryFretFees = orders.stream()
                     .map(PlatformOrder::getFretFee)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal countryServiceFees = orders.stream()
+                    .map(PlatformOrder::getOrderServiceFee)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            serviceFees = serviceFees.add(countryServiceFees);
             Row<String, Object, Integer, Object, BigDecimal> row = new Row<>(
-                    String.format("Total cost for %s", country),
+                    String.format("Total shipping cost for %s", country),
                     null,
                     orders.size(),
                     null,
-                    countryFees.add(countryFretFees)
+                    countryShippingFees.add(countryFretFees)
             );
             rows.add(row);
-            totalAmount = totalAmount.add(countryFees).add(countryFretFees);
+            totalAmount = totalAmount.add(countryShippingFees).add(countryFretFees).add(countryServiceFees);
         }
+        Row<String, Object, Integer, Object, BigDecimal> vatRow = new Row<>(
+                "Total VAT fee for EU",
+                null,
+                null,
+                null,
+                vatForEU
+        );
+        rows.add(vatRow);
+        Row<String, Object, Integer, Object, BigDecimal> serviceFeeRow = new Row<>(
+                "Total service fee",
+                null,
+                null,
+                null,
+                serviceFees
+        );
+        rows.add(serviceFeeRow);
+        totalAmount = totalAmount.add(vatForEU);
         return rows;
     }
 
 
-    public BigDecimal totalAmount(){
+    public BigDecimal totalAmount() {
         return totalAmount;
     }
 
-    public BigDecimal reducedAmount(){
+    public BigDecimal reducedAmount() {
         return BigDecimal.ZERO;
     }
 
-    public BigDecimal paidAmount(){
+    public BigDecimal paidAmount() {
         // function not implemented yet, temporarily zero
         return BigDecimal.ZERO;
     }
-
 
 
     /**

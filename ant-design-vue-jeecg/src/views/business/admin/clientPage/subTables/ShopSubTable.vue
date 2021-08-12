@@ -82,6 +82,11 @@
             align: 'center',
             dataIndex: 'shippingDiscount',
           },
+          {
+            title: '订单服务费',
+            align: 'center',
+            dataIndex: 'orderServiceFee',
+          },
         ],
         url: {
           listByMainId: '/client/client/queryShopByMainId',
