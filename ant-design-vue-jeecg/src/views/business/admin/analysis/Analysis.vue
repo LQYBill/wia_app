@@ -1,12 +1,12 @@
 <template>
   <div>
-    <LogisticProfitTextCard/>
+    <LogisticProfitTextCard @range="updateRange"/>
     <a-row :gutter="24">
       <a-col :span="12">
-        <ExpensePiePerChannel/>
+        <ExpensePiePerChannel :range="dateRange"/>
       </a-col>
       <a-col :span="12">
-        <ExpensePiePerCountry/>
+        <ExpensePiePerCountry :range="dateRange"/>
       </a-col>
 
     </a-row>
@@ -25,6 +25,16 @@ export default {
     LogisticProfitTextCard: TextCard,
     ExpensePiePerChannel,
     ExpensePiePerCountry
+  },
+  data: function() {
+    return {
+      dateRange: null
+    }
+  },
+  methods: {
+    updateRange(range) {
+      this.dateRange = range
+    }
   }
 }
 </script>

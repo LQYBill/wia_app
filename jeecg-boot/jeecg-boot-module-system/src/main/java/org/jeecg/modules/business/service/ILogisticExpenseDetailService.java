@@ -23,11 +23,11 @@ public interface ILogisticExpenseDetailService extends IService<LogisticExpenseD
      * @param channelName chinese channel name
      * @return logistic profit of the month
      */
-    PeriodLogisticProfit calculateLogisticProfitOf(Date start, Date stop, String country, String channelName);
+    PeriodLogisticProfit calculateLogisticProfitOf(Date startDate, Date endDate, String country, String channelName);
 
-    List<LogisticExpenseProportion> calculateLogisticExpenseProportionByChannel(Date start, Date stop);
+    List<LogisticExpenseProportion> calculateLogisticExpenseProportionByChannel(Date startDate, Date endDate, String country, String channelName);
 
-    List<LogisticExpenseProportion> calculateLogisticExpenseProportionByCountry(Date start, Date stop);
+    List<LogisticExpenseProportion> calculateLogisticExpenseProportionByCountry(Date startDate, Date endDate, String country, String channelName);
 
     List<String> allCountries();
 

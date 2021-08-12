@@ -1,85 +1,84 @@
 <template>
   <div>
     <a-row>
-      <a-col :span="24">
-        <a-card :loading="!model.ready" :bordered="false" title="物流利润" :style="{ marginTop: '24px' }">
-          <a-select :default-value="view.select.month+'月'" style="width: 120px" @change="onMonthChange">
-            <a-select-option :value="i" v-for="i in view.select.months" :key="i">
-              {{ i }}月
-            </a-select-option>
-          </a-select>
-          <a-select placeholder="选择月份" :default-value="view.select.country" style="width: 120px" @change="onCountryChange">
-            <a-select-option :value="e" v-for="e in view.select.countries" :key="e">
+      <a-col :span='24'>
+        <a-card :loading='!model.ready' :bordered='false' title='物流利润' :style="{ marginTop: '24px' }">
+          <a-range-picker :format='dateFormat' @change='onDateChange' :defaultValue='defaultRange()'
+                          :value='view.select.range' />
+          <a-select placeholder='选择国家' :default-value='view.select.country' style='width: 120px'
+                    @change='onCountryChange'>
+            <a-select-option :value='e' v-for='e in view.select.countries' :key='e'>
               {{ e }}
             </a-select-option>
           </a-select>
-          <a-select placeholder="选择渠道" :default-value="view.select.channel" style="width: 120px" @change="onChannelChange">
-            <a-select-option :value="e" v-for="e in view.select.channels" :key="e">
+          <a-select placeholder='选择渠道' :default-value='view.select.channel' style='width: 120px'
+                    @change='onChannelChange'>
+            <a-select-option :value='e' v-for='e in view.select.channels' :key='e'>
               {{ e }}
             </a-select-option>
           </a-select>
-          <a-button @click="reset">Reset</a-button>
-          <a-divider/>
+          <a-button @click='reset'>Reset</a-button>
+          <a-divider />
           <a-row>
-            <a-col :span="3">
-              <a-statistic title="本月开票" :value="view.text.invoiced.orderNumber" suffix="单"/>
+            <a-col :span='3'>
+              <a-statistic title='本月开票' :value='view.text.invoiced.orderNumber' suffix='单' />
             </a-col>
-            <a-col :span="3">
-              <a-statistic title="应收 (EUR)" :value="view.text.invoiced.amountDue.EUR" suffix="€"/>
+            <a-col :span='3'>
+              <a-statistic title='应收 (EUR)' :value='view.text.invoiced.amountDue.EUR' suffix='€' />
             </a-col>
-            <a-col :span="3">
-              <a-statistic title="应收 (CNY)" :value="view.text.invoiced.amountDue.CNY" suffix="¥"/>
+            <a-col :span='3'>
+              <a-statistic title='应收 (CNY)' :value='view.text.invoiced.amountDue.CNY' suffix='¥' />
             </a-col>
-            <a-col :span="3">
-              <a-statistic title="实际开销 (EUR)" :value="view.text.invoiced.realCost.EUR" suffix="€"/>
+            <a-col :span='3'>
+              <a-statistic title='实际开销 (EUR)' :value='view.text.invoiced.realCost.EUR' suffix='€' />
             </a-col>
-            <a-col :span="3">
-              <a-statistic title="实际开销 (CNY)" :value="view.text.invoiced.realCost.CNY" suffix="¥"/>
+            <a-col :span='3'>
+              <a-statistic title='实际开销 (CNY)' :value='view.text.invoiced.realCost.CNY' suffix='¥' />
             </a-col>
-            <a-col :span="3">
-              <a-statistic title="盈利" :value="view.text.invoiced.profit.value" suffix="¥"/>
+            <a-col :span='3'>
+              <a-statistic title='盈利' :value='view.text.invoiced.profit.value' suffix='¥' />
             </a-col>
-            <a-col :span="3">
-              <a-statistic title="利润率" :value="view.text.invoiced.profit.rate" suffix="%"/>
+            <a-col :span='3'>
+              <a-statistic title='利润率' :value='view.text.invoiced.profit.rate' suffix='%' />
             </a-col>
           </a-row>
-          <a-divider/>
+          <a-divider />
           <a-row>
-            <a-col :span="3">
-              <a-statistic title="未开票" :value="view.text.uninvoiced.orderNumber" suffix="单"/>
+            <a-col :span='3'>
+              <a-statistic title='未开票' :value='view.text.uninvoiced.orderNumber' suffix='单' />
             </a-col>
-            <a-col :span="3">
-              <a-statistic title="实际开销 (EUR)" :value="view.text.uninvoiced.readCost.EUR" suffix="€"/>
+            <a-col :span='3'>
+              <a-statistic title='实际开销 (EUR)' :value='view.text.uninvoiced.readCost.EUR' suffix='€' />
             </a-col>
-            <a-col :span="3">
-              <a-statistic title="实际开销 (CNY)" :value="view.text.uninvoiced.readCost.CNY" suffix="¥"/>
+            <a-col :span='3'>
+              <a-statistic title='实际开销 (CNY)' :value='view.text.uninvoiced.readCost.CNY' suffix='¥' />
             </a-col>
           </a-row>
-          <a-divider/>
+          <a-divider />
         </a-card>
       </a-col>
     </a-row>
-    <a-row :gutter="24">
-      <a-col :span="12">
-        <a-card :loading="!model.ready" :bordered="false" :title="view.chart.invoiced.title"
+    <a-row :gutter='24'>
+      <a-col :span='12'>
+        <a-card :loading='!model.ready' :bordered='false' :title='view.chart.invoiced.title'
                 :style="{ marginTop: '24px' }">
           <BarMultid
-            :title="view.chart.invoiced.title"
-            :data-source="view.chart.invoiced.dataSource"
-            :fields="view.chart.invoiced.fields"
-            :height="400"
+            :title='view.chart.invoiced.title'
+            :data-source='view.chart.invoiced.dataSource'
+            :fields='view.chart.invoiced.fields'
+            :height='400'
           >
           </BarMultid>
         </a-card>
       </a-col>
-      <a-col :span="12">
-        <a-card :loading="!model.ready" :bordered="false" :title="view.chart.uninvoiced.title"
+      <a-col :span='12'>
+        <a-card :loading='!model.ready' :bordered='false' :title='view.chart.uninvoiced.title'
                 :style="{ marginTop: '24px' }">
           <BarMultid
-            :title="view.chart.uninvoiced.title"
-            :data-source="view.chart.uninvoiced.dataSource"
-            :fields="view.chart.uninvoiced.fields"
-            :height="400"
+            :title='view.chart.uninvoiced.title'
+            :data-source='view.chart.uninvoiced.dataSource'
+            :fields='view.chart.uninvoiced.fields'
+            :height='400'
           >
           </BarMultid>
         </a-card>
@@ -89,32 +88,32 @@
 </template>
 
 <script>
-import BarMultid from "@comp/chart/BarMultid";
-import {getAction} from "@api/manage";
-import {sum} from "xe-utils/methods";
-import moment from "moment";
+import BarMultid from '@comp/chart/BarMultid'
+import { getAction } from '@api/manage'
+import { sum } from 'xe-utils/methods'
+import moment from 'moment'
 
 const url = {
-  monthlyProfit: "/business/logisticExpenseDetail/monthlyLogisticProfit",
-  allCountry: "/business/logisticExpenseDetail/allCountry",
-  allChannel: "/business/logisticExpenseDetail/allChannel",
+  monthlyProfit: '/business/logisticExpenseDetail/monthlyLogisticProfit',
+  allCountry: '/business/logisticExpenseDetail/allCountry',
+  allChannel: '/business/logisticExpenseDetail/allChannel'
 }
 
 export default {
-  name: "TextCard",
+  name: 'TextCard',
   components: {
     BarMultid
   },
   data() {
     return {
+      dateFormat: 'YYYY-MM-DD',
       view: {
         select: {
-          months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          range: null,
           channels: [],
           countries: [],
-          month: undefined,
-          channel:undefined,
-          country:undefined
+          channel: undefined,
+          country: undefined
         },
         text: {
           invoiced: {
@@ -143,12 +142,12 @@ export default {
         },
         chart: {
           invoiced: {
-            title: "每日开销与应收物流费用",
+            title: '每日开销与应收物流费用',
             fields: [],
             dataSource: []
           },
           uninvoiced: {
-            title: "未开票订单实际开销",
+            title: '未开票订单实际开销',
             fields: [],
             dataSource: []
           }
@@ -163,17 +162,17 @@ export default {
           invoicedAmountDue: [],
           invoicedActualCosts: [],
           nonInvoicedActualCosts: [],
-          exchangeRate: undefined,
+          exchangeRate: undefined
         },
         select: {
           countries: [],
-          channels: [],
+          channels: []
         },
         ready: false
       },
       form: {
-        start:moment().startOf("month"),
-        stop:moment().endOf("month"),
+        startDate: moment().startOf('month').format('YYYY-MM-DD'),
+        endDate: moment().endOf('day').format('YYYY-MM-DD'),
         country: null,
         channel: null
       }
@@ -190,7 +189,6 @@ export default {
   ,
   methods: {
     loadModel() {
-
       let res1 = getAction(url.monthlyProfit, this.form)
         .then(
           res => {
@@ -216,7 +214,9 @@ export default {
         this.model.ready = true
       })
     },
-
+    defaultRange() {
+      return [this.form.startDate, this.form.endDate]
+    },
     prepareView() {
       let src = this.model.monthlyLogisticProfit
       let target = this.view.text.invoiced
@@ -239,27 +239,29 @@ export default {
       target.readCost.EUR = sum(src.nonInvoicedActualCosts)
       target.readCost.CNY = this.toCNY(target.readCost.EUR)
 
-      let today = moment().date()
+      let numberOfDays = moment(this.form.endDate).diff(moment(this.form.startDate), 'days') + 1
 
       // invoiced chart
       target = this.view.chart.invoiced
-      target.fields = Array.from({length: today}, (v, i) => i + 1 + '')
-      target.dataSource = [{type: '应收物流费用(CNY)'}, {type: '实际开销 (CNY)'}]
-      for (let j = 0; j < today; j++) {
-        target.dataSource[0][j + 1 + ''] = this.toCNY(src.invoicedAmountDue[j])
-        target.dataSource[1][j + 1 + ''] = this.toCNY(src.invoicedActualCosts[j])
+      target.fields = Array.from({ length: numberOfDays }, (v, i) => i + 1 + '')
+      target.dataSource = [{ type: '应收物流费用(CNY)' }, { type: '实际开销 (CNY)' }]
+      for (let j = 0; j < numberOfDays; j++) {
+        let date = moment(this.form.startDate).add(j, 'd').format(this.dateFormat)
+        target.dataSource[0][j + 1 + ''] = this.toCNY(src.invoicedAmountDue[date] || 0)
+        target.dataSource[1][j + 1 + ''] = this.toCNY(src.invoicedActualCosts[date] || 0)
       }
 
       // uninvoiced chart
       target = this.view.chart.uninvoiced
-      target.fields = Array.from({length: today}, (v, i) => i + 1 + '')
-      target.dataSource = [{type: '实际开销 (CNY)'}]
-      for (let j = 0; j < today; j++) {
-        target.dataSource[0][j + 1 + ''] = this.toCNY(src.nonInvoicedActualCosts[j])
+      target.fields = Array.from({ length: numberOfDays }, (v, i) => i + 1 + '')
+      target.dataSource = [{ type: '实际开销 (CNY)' }]
+      for (let j = 0; j < numberOfDays; j++) {
+        let date = moment(this.form.startDate).add(j, 'd').format(this.dateFormat)
+        target.dataSource[0][j + 1 + ''] = this.toCNY(src.nonInvoicedActualCosts[date] || 0)
       }
 
       // select
-      this.view.select.month = this.form.month
+      this.view.select.range = [this.form.startDate, this.form.endDate]
       this.view.select.countries = this.model.select.countries
       this.view.select.channels = this.model.select.channels
 
@@ -267,29 +269,29 @@ export default {
     },
 
     toCNY(EUR) {
-      return (EUR * this.model.monthlyLogisticProfit.exchangeRate).toFixed(2)
+      return Number((EUR * this.model.monthlyLogisticProfit.exchangeRate).toFixed(2))
     },
-
-    onMonthChange(value) {
-      this.form.month = value
+    onDateChange(dates, dateStrings) {
+      this.form.startDate = dateStrings[0]
+      this.form.endDate = dateStrings[1]
+      this.view.select.range = dates
       this.onMVChange()
     },
-
     onCountryChange(value) {
       this.form.country = value
-      this.view.select.country= value
+      this.view.select.country = value
       this.onMVChange()
-
     },
     onChannelChange(value) {
       this.form.channel = value
-      this.view.select.channel= value
+      this.view.select.channel = value
       this.onMVChange()
     },
 
     reset() {
       this.form = {
-        month: moment().month(),
+        startDate: moment().startOf('month').format('YYYY-MM-DD'),
+        endDate: moment().endOf('day').format('YYYY-MM-DD'),
         country: null,
         channel: null
       }
@@ -299,6 +301,7 @@ export default {
     onMVChange() {
       this.view.ready = false
       this.model.ready = false
+      this.$emit("range", [this.form.startDate, this.form.endDate])
       this.loadModel().then(this.prepareView)
     }
   }

@@ -14,6 +14,18 @@ export default {
   components: {
     Pie
   },
+  props: {
+    range: {
+      type: Array
+    }
+  },
+  watch: {
+    range: function() {
+      this.param.startDate = this.range[0]
+      this.param.endDate = this.range[1]
+      this.loadModel().then(this.prepareView)
+    }
+  },
   data: function () {
     return {
       model: {
@@ -29,7 +41,10 @@ export default {
         chart: {
           dataSource: []
         },
-
+      },
+      param: {
+        startDate: null,
+        endDate: null
       }
     }
   },
@@ -40,15 +55,13 @@ export default {
 
   methods: {
     loadModel() {
-      const param = {}
-      return getAction(this.model.url.logisticExpenseProportion, param)
+      return getAction(this.model.url.logisticExpenseProportion, this.param)
         .then(
           res => {
             this.model.data = res['result']
           }
         )
     },
-
     prepareView() {
       this.view.ready = true
       this.view.chart.dataSource = this.model.data.map(

@@ -30,6 +30,7 @@ public interface LogisticExpenseDetailMapper extends BaseMapper<LogisticExpenseD
 
     List<BigDecimal> findExpenseByInvoiceCodes(@Param("codes") Collection<String> codes);
 
-    List<PlatformOrderLogisticExpenseDetail> findBetween(@Param("start") Date start, @Param("stop") Date stop);
+    List<PlatformOrderLogisticExpenseDetail> findBetween(@Param("start") Date start, @Param("end") Date stop,
+                                                         @Param("country") String country, @Param("channelName") String channelName);
 
 }

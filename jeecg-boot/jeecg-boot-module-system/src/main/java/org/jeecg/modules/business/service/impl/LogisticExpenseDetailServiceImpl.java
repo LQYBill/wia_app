@@ -1,15 +1,11 @@
 package org.jeecg.modules.business.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.sun.istack.internal.NotNull;
+import com.sun.istack.NotNull;
 import org.jeecg.modules.business.entity.LogisticExpenseDetail;
-import org.jeecg.modules.business.entity.PlatformOrder;
-import org.jeecg.modules.business.mapper.FactureDetailMapper;
 import org.jeecg.modules.business.mapper.LogisticExpenseDetailMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
 import org.jeecg.modules.business.service.ILogisticExpenseDetailService;
-import org.jeecg.modules.business.vo.FactureDetail;
 import org.jeecg.modules.business.vo.LogisticExpenseProportion;
 import org.jeecg.modules.business.vo.PlatformOrderLogisticExpenseDetail;
 import org.jeecg.modules.business.vo.dashboard.PeriodLogisticProfit;
@@ -23,6 +19,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @Description: 物流开销明细
@@ -39,13 +36,10 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
     @Autowired
     private LogisticExpenseDetailMapper logisticExpenseDetailMapper;
 
-    private FactureDetailMapper factureDetailMapper;
-
-
     @Override
-    public PeriodLogisticProfit calculateLogisticProfitOf(Date start, Date stop, String country, String channelName) {
+    public PeriodLogisticProfit calculateLogisticProfitOf(Date startDate, Date endDate, String country, String channelName) {
 
-        List<PlatformOrderLogisticExpenseDetail> allOrders = logisticExpenseDetailMapper.findBetween(start, stop);
+        List<PlatformOrderLogisticExpenseDetail> allOrders = logisticExpenseDetailMapper.findBetween(startDate, endDate, country, channelName);
 
         Predicate<PlatformOrderLogisticExpenseDetail> nonInvoiced = order -> order.getShippingInvoiceNumber() == null;
         Predicate<PlatformOrderLogisticExpenseDetail> invoiced = nonInvoiced.negate();
@@ -68,41 +62,37 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
                 amountDue,
                 invoicedActualCost,
                 nonInvoicedActualCost,
-                BigDecimal.valueOf(7.8)
+                BigDecimal.valueOf(7.6)
         );
     }
 
     private Map<LocalDate, BigDecimal> calculateAmountDueByDate(List<PlatformOrderLogisticExpenseDetail> invoicedOrders) {
-        Set<String> invoiceCodes = invoicedOrders.stream().map(PlatformOrderLogisticExpenseDetail::getShippingInvoiceNumber).collect(Collectors.toSet());
+        if (invoicedOrders.isEmpty()) {
+            return Collections.emptyMap();
+        }
 
-        QueryWrapper<FactureDetail> queryWrapper = new QueryWrapper<>();
-        queryWrapper.in("`N° de facture`", invoiceCodes);
-        List<FactureDetail> factureDetails = factureDetailMapper.selectList(queryWrapper);
-        Map<String, FactureDetail> invoiceCodeToFactureDetail = factureDetails.stream()
-                .collect(Collectors.toMap(
-                        FactureDetail::getFactureNum,
-                        Function.identity()
+        // group by day of month
+        Map<LocalDate, List<PlatformOrderLogisticExpenseDetail>> dateToOrders = invoicedOrders.stream()
+                .collect(
+                        Collectors.groupingBy(
+                                order -> order.getShippingTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
                         )
                 );
 
-        Map<LocalDate, List<PlatformOrderLogisticExpenseDetail>> ordersByDate = invoicedOrders.stream().collect(Collectors.groupingBy(
-                e -> e.getOrderTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
-                )
+
+        Map<LocalDate, BigDecimal> dateToActualCost = new HashMap<>();
+
+        dateToOrders.forEach(
+                (date, ordersByDate) -> {
+                    BigDecimal totalDue = ordersByDate.stream()
+                            .flatMap(d -> Stream.of(d.getFretFee(), d.getShippingFee(), d.getVatFee()))
+                            .filter(Objects::nonNull)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    dateToActualCost.put(date, totalDue);
+                }
         );
 
-        Map<LocalDate, BigDecimal> res = new HashMap<>();
-
-        ordersByDate.forEach(
-                (date, orders) -> {
-                    BigDecimal amount = orders.stream()
-                            .map(
-                                    o -> {
-                                        return invoiceCodeToFactureDetail.get(o.getShippingInvoiceNumber()).total();
-                                    }
-                            ).reduce(BigDecimal.ZERO, BigDecimal::add);
-                    res.put(date, amount);
-                });
-        return res;
+        return dateToActualCost;
     }
 
     private Map<LocalDate, BigDecimal> calculateActualCostByDay(List<PlatformOrderLogisticExpenseDetail> orders) {
@@ -114,7 +104,7 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
         Map<LocalDate, List<PlatformOrderLogisticExpenseDetail>> dateToOrders = orders.stream()
                 .collect(
                         Collectors.groupingBy(
-                                order -> order.getOrderTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+                                order -> order.getShippingTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
                         )
                 );
 
@@ -135,22 +125,24 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
     }
 
     @Override
-    public List<LogisticExpenseProportion> calculateLogisticExpenseProportionByChannel(Date start, Date stop) {
-        return expenseBy(start, stop, PlatformOrderLogisticExpenseDetail::getLogisticChannelName);
+    public List<LogisticExpenseProportion> calculateLogisticExpenseProportionByChannel(Date startDate, Date endDate, String country, String channelName) {
+        return expenseBy(startDate, endDate, country, channelName, PlatformOrderLogisticExpenseDetail::getLogisticChannelName);
     }
 
     @Override
-    public List<LogisticExpenseProportion> calculateLogisticExpenseProportionByCountry(Date start, Date stop) {
-        return expenseBy(start, stop, PlatformOrderLogisticExpenseDetail::getCountry);
+    public List<LogisticExpenseProportion> calculateLogisticExpenseProportionByCountry(Date startDate, Date endDate, String country, String channelName) {
+        return expenseBy(startDate, endDate, country, channelName, PlatformOrderLogisticExpenseDetail::getCountry);
     }
 
     private List<LogisticExpenseProportion> expenseBy(
-            Date start,
-            Date stop,
+            Date startDate,
+            Date endDate,
+            String country,
+            String channelName,
             @NotNull Function<PlatformOrderLogisticExpenseDetail, String> classifier
     ) {
         // find all orders of this month
-        List<PlatformOrderLogisticExpenseDetail> orders = logisticExpenseDetailMapper.findBetween(start, stop);
+        List<PlatformOrderLogisticExpenseDetail> orders = logisticExpenseDetailMapper.findBetween(startDate, endDate, country, channelName);
         // group them by the classifier
         Map<String, List<PlatformOrderLogisticExpenseDetail>> groupedOrdersExpenseDetail = orders.stream().collect(Collectors.groupingBy(classifier));
 
