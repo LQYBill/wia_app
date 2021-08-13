@@ -16,7 +16,7 @@ import org.jeecg.modules.business.service.CountryService;
 import org.jeecg.modules.business.service.IPlatformOrderContentService;
 import org.jeecg.modules.business.service.IPlatformOrderService;
 import org.jeecg.modules.business.service.ISkuDeclaredValueService;
-import org.jeecg.modules.business.vo.SkuWeightDiscount;
+import org.jeecg.modules.business.vo.SkuWeightDiscountServiceFees;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.stereotype.Component;
@@ -120,11 +120,13 @@ public class ShippingInvoiceFactory {
             throw new UserException("None platform order in the selected period!");
         }
         Map<String, BigDecimal> skuRealWeights = new HashMap<>();
-        for (SkuWeightDiscount skuWeightsAndDiscount : platformOrderContentService.getAllSKUWeightsAndDiscounts()) {
-            if (skuWeightsAndDiscount.getWeight() != null) {
-                skuRealWeights.put(skuWeightsAndDiscount.getSkuId(),
-                        skuWeightsAndDiscount.getDiscount().multiply(BigDecimal.valueOf(skuWeightsAndDiscount.getWeight())));
+        Map<String, BigDecimal> skuServiceFees = new HashMap<>();
+        for (SkuWeightDiscountServiceFees skuWeightDiscountServiceFees : platformOrderContentService.getAllSKUWeightsDiscountsServiceFees()) {
+            if (skuWeightDiscountServiceFees.getWeight() != null) {
+                skuRealWeights.put(skuWeightDiscountServiceFees.getSkuId(),
+                        skuWeightDiscountServiceFees.getDiscount().multiply(BigDecimal.valueOf(skuWeightDiscountServiceFees.getWeight())));
             }
+            skuServiceFees.put(skuWeightDiscountServiceFees.getSkuId(), skuWeightDiscountServiceFees.getServiceFees());
         }
 
         Client client = clientMapper.selectById(customerId);
@@ -184,8 +186,10 @@ public class ShippingInvoiceFactory {
                                 .divide(contentWeight, RoundingMode.UP)
                                 .setScale(2, RoundingMode.UP)
                 );
-                // todo fix service fees
-                content.setServiceFee(price.getAdditionalCost());
+                content.setServiceFee(skuServiceFees.get(skuId)
+                        .multiply(BigDecimal.valueOf(content.getQuantity()))
+                        .setScale(2, RoundingMode.UP)
+                );
                 BigDecimal vat = BigDecimal.ZERO;
                 if (vatApplicable) {
                     BigDecimal contentDeclaredValue = contentDeclaredValueMap.get(content);

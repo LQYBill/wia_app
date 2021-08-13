@@ -29,6 +29,16 @@
               <a-input v-model="model.imageSource" placeholder="请输入图片链接地址" ></a-input>
             </a-form-model-item>
           </a-col>
+          <a-col :span="12" >
+            <a-form-model-item label="运费折扣" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="shippingDiscount">
+              <a-input-number v-model="model.shippingDiscount" placeholder="请输入运费折扣" style="width: 100%" />
+            </a-form-model-item>
+          </a-col>
+          <a-col :span="12" >
+            <a-form-model-item label="服务费" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="serviceFee">
+              <a-input-number v-model="model.serviceFee" placeholder="请输入服务费" style="width: 100%" />
+            </a-form-model-item>
+          </a-col>
         </a-row>
       </a-form-model>
      </j-form-container>
@@ -107,9 +117,15 @@
         model:{
         },
         validatorRules: {
+          shippingDiscount: [
+            { required: true, message: '请输入运费折扣!'},
+          ],
+          serviceFee: [
+            { required: true, message: '请输入服务费!'},
+          ],
         },
         // 新增时子表默认添加几行空数据
-        addDefaultRowNum: 1,
+        addDefaultRowNum: 0,
         refKeys: ['skuPrice', 'shippingDiscount', 'skuDeclaredValue', ],
         tableKeys:['skuPrice', 'shippingDiscount', 'skuDeclaredValue', ],
         activeKey: 'skuPrice',

@@ -9,7 +9,7 @@ import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.mapper.LogisticChannelMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.service.IPlatformOrderContentService;
-import org.jeecg.modules.business.vo.SkuWeightDiscount;
+import org.jeecg.modules.business.vo.SkuWeightDiscountServiceFees;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +17,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -28,8 +27,8 @@ public class PlatformOrderContentServiceImpl extends ServiceImpl<PlatformOrderCo
     @Autowired
     private PlatformOrderContentMapper platformOrderContentMapper;
 
-    public List<SkuWeightDiscount> getAllSKUWeightsAndDiscounts() {
-        return platformOrderContentMapper.getAllWeightsAndDiscounts();
+    public List<SkuWeightDiscountServiceFees> getAllSKUWeightsDiscountsServiceFees() {
+        return platformOrderContentMapper.getAllWeightsDiscountsServiceFees();
     }
 
     @Override

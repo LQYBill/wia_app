@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.util.Objects;
 
 @Data
-public class SkuWeightDiscount {
+public class SkuWeightDiscountServiceFees {
 
     private final String skuId;
 
@@ -16,18 +16,21 @@ public class SkuWeightDiscount {
 
     private final BigDecimal discount;
 
-    public SkuWeightDiscount(String skuId, String erpCode, Integer weight, BigDecimal discount) {
+    private final BigDecimal serviceFees;
+
+    public SkuWeightDiscountServiceFees(String skuId, String erpCode, Integer weight, BigDecimal discount, BigDecimal serviceFee) {
         this.skuId = Objects.requireNonNull(skuId);
         this.erpCode = erpCode;
         this.weight = weight;
         this.discount = discount;
+        this.serviceFees = serviceFee;
     }
 
     @Override
     public String toString() {
         return String.format(
-                "ID: %s, ERP: %s, weight: %s, discount: %s",
-                skuId, erpCode, weight, discount
+                "ID: %s, ERP: %s, weight: %s, discount: %s, service fees: %s",
+                skuId, erpCode, weight, discount, serviceFees
         );
     }
 }

@@ -202,6 +202,16 @@
             scopedSlots: {customRender: 'imgSlot'}
           },
           {
+            title:'运费折扣',
+            align:"center",
+            dataIndex: 'shippingDiscount'
+          },
+          {
+            title:'服务费',
+            align:"center",
+            dataIndex: 'serviceFee'
+          },
+          {
             title: '操作',
             dataIndex: 'action',
             align: 'center',
@@ -252,6 +262,8 @@
         fieldList.push({type:'int',value:'availableAmount',text:'库存数量',dictCode:''})
         fieldList.push({type:'int',value:'purchasingAmount',text:'在途数量',dictCode:''})
         fieldList.push({type:'string',value:'imageSource',text:'图片链接',dictCode:''})
+        fieldList.push({type:'BigDecimal',value:'shippingDiscount',text:'运费折扣',dictCode:''})
+        fieldList.push({type:'BigDecimal',value:'serviceFee',text:'服务费',dictCode:''})
         this.superFieldList = fieldList
       }
     }

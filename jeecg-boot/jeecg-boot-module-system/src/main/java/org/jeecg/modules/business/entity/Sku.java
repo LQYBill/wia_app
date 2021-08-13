@@ -16,8 +16,8 @@ import java.io.Serializable;
 /**
  * @Description: SKU表
  * @Author: jeecg-boot
- * @Date: 2021-05-08
- * @Version: V1.0
+ * @Date: 2021-08-13
+ * @Version: V1.1
  */
 @ApiModel(value = "sku对象", description = "SKU表")
 @Data
@@ -86,4 +86,16 @@ public class Sku implements Serializable {
     @Excel(name = "图片链接", width = 15)
     @ApiModelProperty(value = "图片链接")
     private java.lang.String imageSource;
+    /**
+     * 运费折扣
+     */
+    @Excel(name = "运费折扣", width = 15)
+    @ApiModelProperty(value = "运费折扣")
+    private java.math.BigDecimal shippingDiscount;
+    /**
+     * 服务费
+     */
+    @Excel(name = "服务费", width = 15)
+    @ApiModelProperty(value = "服务费")
+    private java.math.BigDecimal serviceFee;
 }

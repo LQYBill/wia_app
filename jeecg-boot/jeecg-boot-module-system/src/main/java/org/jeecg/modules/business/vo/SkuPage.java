@@ -18,8 +18,8 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * @Description: SKU表
  * @Author: jeecg-boot
- * @Date: 2021-06-28
- * @Version: V1.1
+ * @Date: 2021-08-13
+ * @Version: V1.2
  */
 @Data
 @ApiModel(value = "skuPage对象", description = "SKU表")
@@ -85,6 +85,18 @@ public class SkuPage {
     @Excel(name = "图片链接", width = 15)
     @ApiModelProperty(value = "图片链接")
     private java.lang.String imageSource;
+    /**
+     * 运费折扣
+     */
+    @Excel(name = "运费折扣", width = 15)
+    @ApiModelProperty(value = "运费折扣")
+    private java.math.BigDecimal shippingDiscount;
+    /**
+     * 服务费
+     */
+    @Excel(name = "服务费", width = 15)
+    @ApiModelProperty(value = "服务费")
+    private java.math.BigDecimal serviceFee;
 
     @ExcelCollection(name = "SKU价格表")
     @ApiModelProperty(value = "SKU价格表")

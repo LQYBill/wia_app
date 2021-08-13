@@ -54,9 +54,9 @@
         WHERE sku_id IN
         <foreach collection="list" index="i" item="item" open="(" separator="," close=")">#{item}</foreach>
     </select>
-    <select id="getAllWeightsAndDiscounts" resultType="org.jeecg.modules.business.vo.SkuWeightDiscount">
+    <select id="getAllWeightsDiscountsServiceFees" resultType="org.jeecg.modules.business.vo.SkuWeightDiscountServiceFees">
         SELECT *
-        FROM sku_weight_discount
+        FROM sku_weight_discount_service_fees
     </select>
 
 

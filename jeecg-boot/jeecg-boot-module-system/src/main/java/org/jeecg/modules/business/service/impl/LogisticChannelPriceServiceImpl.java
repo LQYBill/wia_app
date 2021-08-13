@@ -14,7 +14,7 @@ import org.jeecg.modules.business.service.ILogisticChannelPriceService;
 import org.jeecg.modules.business.service.IPlatformOrderContentService;
 import org.jeecg.modules.business.vo.CountryName;
 import org.jeecg.modules.business.vo.PopularCountry;
-import org.jeecg.modules.business.vo.SkuWeightDiscount;
+import org.jeecg.modules.business.vo.SkuWeightDiscountServiceFees;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -67,10 +67,10 @@ public class LogisticChannelPriceServiceImpl extends ServiceImpl<LogisticChannel
     @Override
     public LogisticChannelPrice findPriceForPlatformOrder(PlatformOrder order) throws UserException {
         Map<String, BigDecimal> skuRealWeights = new HashMap<>();
-        for (SkuWeightDiscount skuWeightsAndDiscount : platformOrderContentService.getAllSKUWeightsAndDiscounts()) {
-            if (skuWeightsAndDiscount.getWeight() != null) {
-                skuRealWeights.put(skuWeightsAndDiscount.getSkuId(),
-                        skuWeightsAndDiscount.getDiscount().multiply(BigDecimal.valueOf(skuWeightsAndDiscount.getWeight())));
+        for (SkuWeightDiscountServiceFees skuWeightDiscountServiceFees : platformOrderContentService.getAllSKUWeightsDiscountsServiceFees()) {
+            if (skuWeightDiscountServiceFees.getWeight() != null) {
+                skuRealWeights.put(skuWeightDiscountServiceFees.getSkuId(),
+                        skuWeightDiscountServiceFees.getDiscount().multiply(BigDecimal.valueOf(skuWeightDiscountServiceFees.getWeight())));
             }
         }
 
