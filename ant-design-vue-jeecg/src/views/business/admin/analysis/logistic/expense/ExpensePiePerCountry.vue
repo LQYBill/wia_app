@@ -17,12 +17,30 @@ export default {
   props: {
     range: {
       type: Array
-    }
+    },
+    country: String,
+    channel: String
   },
   watch: {
     range: function() {
       this.param.startDate = this.range[0]
       this.param.endDate = this.range[1]
+      this.param.country = this.country
+      this.param.channel = this.channel
+      this.loadModel().then(this.prepareView)
+    },
+    country: function() {
+      this.param.startDate = this.range[0]
+      this.param.endDate = this.range[1]
+      this.param.country = this.country
+      this.param.channel = this.channel
+      this.loadModel().then(this.prepareView)
+    },
+    channel: function() {
+      this.param.startDate = this.range[0]
+      this.param.endDate = this.range[1]
+      this.param.country = this.country
+      this.param.channel = this.channel
       this.loadModel().then(this.prepareView)
     }
   },
@@ -44,7 +62,9 @@ export default {
       },
       param: {
         startDate: null,
-        endDate: null
+        endDate: null,
+        country: null,
+        channel: null
       }
     }
   },

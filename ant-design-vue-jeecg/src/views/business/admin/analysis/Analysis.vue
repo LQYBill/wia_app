@@ -1,12 +1,12 @@
 <template>
   <div>
-    <LogisticProfitTextCard @range="updateRange"/>
+    <LogisticProfitTextCard @range="updateRange" @country='updateCountry' @channel='updateChannel'/>
     <a-row :gutter="24">
       <a-col :span="12">
-        <ExpensePiePerChannel :range="dateRange"/>
+        <ExpensePiePerChannel :range="dateRange" :country="country" :channel="channel"/>
       </a-col>
       <a-col :span="12">
-        <ExpensePiePerCountry :range="dateRange"/>
+        <ExpensePiePerCountry :range="dateRange" :country="country" :channel="channel"/>
       </a-col>
 
     </a-row>
@@ -28,12 +28,20 @@ export default {
   },
   data: function() {
     return {
-      dateRange: null
+      dateRange: null,
+      country: null,
+      channel: null,
     }
   },
   methods: {
     updateRange(range) {
       this.dateRange = range
+    },
+    updateCountry(country) {
+      this.country = country
+    },
+    updateChannel(channel) {
+      this.channel = channel
     }
   }
 }
