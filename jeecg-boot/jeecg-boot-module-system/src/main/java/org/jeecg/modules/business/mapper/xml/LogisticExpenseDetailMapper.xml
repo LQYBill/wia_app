@@ -25,7 +25,11 @@
         FROM platform_order_logistic_expense_detail AS po
         WHERE shippingTime >= #{start}
           AND #{end} >= shippingTime
-          AND #{country}
-          AND #{channelName}
+        <if test="country != null">
+            AND country = #{country}
+        </if>
+        <if test="channelName != null">
+            AND logisticChannelName = #{channelName}
+        </if>
     </select>
 </mapper>
