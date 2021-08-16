@@ -286,7 +286,6 @@ public class LogisticExpenseDetailController extends JeecgController<LogisticExp
                 detail.setShippingFee(new BigDecimal(exceptionWrapper("运费", lineData)));
                 detail.setDiscount(new BigDecimal(exceptionWrapper("运费优惠金额", lineData)));
                 detail.setFuelSurcharge(new BigDecimal(exceptionWrapper("燃油附加费", lineData)));
-                detail.setAdditionalFee(new BigDecimal(exceptionWrapper("速递运费类", lineData)));
                 detail.setSecondDeliveryFee(new BigDecimal(exceptionWrapper("重派费", lineData)));
                 detail.setRegistrationFee(new BigDecimal(exceptionWrapper("挂号费", lineData)));
                 detail.setVat(new BigDecimal(exceptionWrapper("代收VAT税", lineData)));
