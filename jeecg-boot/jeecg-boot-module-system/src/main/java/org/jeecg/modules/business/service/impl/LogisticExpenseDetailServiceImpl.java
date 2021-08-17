@@ -37,7 +37,7 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
     private LogisticExpenseDetailMapper logisticExpenseDetailMapper;
 
     @Override
-    public PeriodLogisticProfit calculateLogisticProfitOf(Date startDate, Date endDate, String country, String channelName) {
+    public PeriodLogisticProfit calculateLogisticProfitOf(Date startDate, Date endDate, List<String> country, List<String> channelName) {
 
         List<PlatformOrderLogisticExpenseDetail> allOrders = logisticExpenseDetailMapper.findBetween(startDate, endDate, country, channelName);
 
@@ -125,20 +125,20 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
     }
 
     @Override
-    public List<LogisticExpenseProportion> calculateLogisticExpenseProportionByChannel(Date startDate, Date endDate, String country, String channelName) {
+    public List<LogisticExpenseProportion> calculateLogisticExpenseProportionByChannel(Date startDate, Date endDate, List<String> country, List<String> channelName) {
         return expenseBy(startDate, endDate, country, channelName, PlatformOrderLogisticExpenseDetail::getLogisticChannelName);
     }
 
     @Override
-    public List<LogisticExpenseProportion> calculateLogisticExpenseProportionByCountry(Date startDate, Date endDate, String country, String channelName) {
+    public List<LogisticExpenseProportion> calculateLogisticExpenseProportionByCountry(Date startDate, Date endDate, List<String> country, List<String> channelName) {
         return expenseBy(startDate, endDate, country, channelName, PlatformOrderLogisticExpenseDetail::getCountry);
     }
 
     private List<LogisticExpenseProportion> expenseBy(
             Date startDate,
             Date endDate,
-            String country,
-            String channelName,
+            List<String> country,
+            List<String> channelName,
             @NotNull Function<PlatformOrderLogisticExpenseDetail, String> classifier
     ) {
         // find all orders of this month

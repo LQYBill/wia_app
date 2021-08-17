@@ -6,13 +6,13 @@
           <a-range-picker :format='dateFormat' @change='onDateChange' :defaultValue='defaultRange()'
                           :value='view.select.range' />
           <a-select placeholder='选择国家' :default-value='view.select.country' style='width: 240px'
-                    @change='onCountryChange'>
+                    @change='onCountryChange' mode='multiple'>
             <a-select-option :value='e' v-for='e in view.select.countries' :key='e'>
               {{ e }}
             </a-select-option>
           </a-select>
           <a-select placeholder='选择渠道' :default-value='view.select.channel' style='width: 300px'
-                    @change='onChannelChange'>
+                    @change='onChannelChange' mode='multiple'>
             <a-select-option :value='e' v-for='e in view.select.channels' :key='e'>
               {{ e }}
             </a-select-option>

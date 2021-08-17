@@ -25,11 +25,17 @@
         FROM platform_order_logistic_expense_detail AS po
         WHERE shippingTime >= #{start}
           AND #{end} >= shippingTime
-        <if test="country != null">
-            AND country = #{country}
+        <if test="country != null and country.size != 0">
+            AND country IN
+            <foreach collection="country" separator="," item="v" index="i" close=")" open="(">
+                #{v}
+            </foreach>
         </if>
-        <if test="channelName != null">
-            AND logisticChannelName = #{channelName}
+        <if test="channelName != null and channelName.size != 0">
+            AND logisticChannelName IN
+            <foreach collection="channelName" separator="," item="v" index="i" close=")" open="(">
+                #{v}
+            </foreach>
         </if>
     </select>
 </mapper>

@@ -178,16 +178,16 @@ public class LogisticExpenseDetailController extends JeecgController<LogisticExp
     }
 
     /**
-     * @param country full country name, in case of absence, all country will be took into count
-     * @param channel chinese channel name, in case of absence, all channel will be took into count
+     * @param country full country name, in case of absence, all country will be taken into account
+     * @param channel chinese channel name, in case of absence, all channel will be taken into account
      * @return
      */
     @GetMapping(value = "/monthlyLogisticProfit")
     public Result<PeriodLogisticProfit> monthlyLogisticProfit(
             @RequestParam("startDate") @DateTimeFormat(pattern="YYYY-MM-dd") Date startDate,
             @RequestParam("endDate") @DateTimeFormat(pattern="YYYY-MM-dd") Date endDate,
-            @RequestParam(value = "country", required = false) String country,
-            @RequestParam(value = "channel", required = false) String channel
+            @RequestParam(value = "country[]", required = false) List<String> country,
+            @RequestParam(value = "channel[]", required = false) List<String> channel
     ) {
         PeriodLogisticProfit monthlyProfit =
                 logisticExpenseDetailService.calculateLogisticProfitOf(
@@ -203,8 +203,8 @@ public class LogisticExpenseDetailController extends JeecgController<LogisticExp
     public Result<List<LogisticExpenseProportion>> expenseProportionByChannel(
             @RequestParam("startDate") @DateTimeFormat(pattern="YYYY-MM-dd") Date startDate,
             @RequestParam("endDate") @DateTimeFormat(pattern="YYYY-MM-dd") Date endDate,
-            @RequestParam(value = "country", required = false) String country,
-            @RequestParam(value = "channel", required = false) String channel
+            @RequestParam(value = "country[]", required = false) List<String> country,
+            @RequestParam(value = "channel[]", required = false) List<String> channel
     ) {
 
         List<LogisticExpenseProportion> res =
@@ -217,8 +217,8 @@ public class LogisticExpenseDetailController extends JeecgController<LogisticExp
     public Result<List<LogisticExpenseProportion>> expenseProportionByCountry(
             @RequestParam("startDate") @DateTimeFormat(pattern="YYYY-MM-dd") Date startDate,
             @RequestParam("endDate") @DateTimeFormat(pattern="YYYY-MM-dd") Date endDate,
-            @RequestParam(value = "country", required = false) String country,
-            @RequestParam(value = "channel", required = false) String channel
+            @RequestParam(value = "country[]", required = false) List<String> country,
+            @RequestParam(value = "channel[]", required = false) List<String> channel
     ) {
         List<LogisticExpenseProportion> res =
                 logisticExpenseDetailService.calculateLogisticExpenseProportionByCountry(startDate, endDate, country, channel);

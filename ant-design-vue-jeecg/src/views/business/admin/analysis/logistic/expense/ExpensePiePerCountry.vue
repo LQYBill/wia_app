@@ -18,8 +18,12 @@ export default {
     range: {
       type: Array
     },
-    country: String,
-    channel: String
+    country: {
+      type: Array
+    },
+    channel: {
+      type: Array
+    }
   },
   watch: {
     range: function() {
