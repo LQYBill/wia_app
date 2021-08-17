@@ -29,23 +29,13 @@ export default {
     range: function() {
       this.param.startDate = this.range[0]
       this.param.endDate = this.range[1]
-      this.param.country = this.country
-      this.param.channel = this.channel
       this.loadModel().then(this.prepareView)
     },
     country: function() {
-      this.param.startDate = this.range[0]
-      this.param.endDate = this.range[1]
       this.param.country = this.country
-      this.param.channel = this.channel
-      this.loadModel().then(this.prepareView)
     },
     channel: function() {
-      this.param.startDate = this.range[0]
-      this.param.endDate = this.range[1]
-      this.param.country = this.country
       this.param.channel = this.channel
-      this.loadModel().then(this.prepareView)
     }
   },
   data: function () {
@@ -79,6 +69,7 @@ export default {
 
   methods: {
     loadModel() {
+      this.view.ready = false
       return getAction(this.model.url.logisticExpenseProportion, this.param)
         .then(
           res => {
@@ -87,13 +78,13 @@ export default {
         )
     },
     prepareView() {
-      this.view.ready = true
       this.view.chart.dataSource = this.model.data.map(
         element => ({
           item: element["name"],
           count: element["expense"]
         })
       )
+      this.view.ready = true
     }
   }
 

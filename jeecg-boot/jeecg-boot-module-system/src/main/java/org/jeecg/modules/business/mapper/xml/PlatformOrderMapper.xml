@@ -238,7 +238,7 @@
     </select>
     <select id="allChannels" resultType="java.lang.String">
         SELECT DISTINCT logistic_channel_name
-        FROM wia_app.platform_order
+        FROM wia_app.platform_order WHERE logistic_channel_name != '';
     </select>
     <select id="allCountries" resultType="java.lang.String">
         SELECT DISTINCT country

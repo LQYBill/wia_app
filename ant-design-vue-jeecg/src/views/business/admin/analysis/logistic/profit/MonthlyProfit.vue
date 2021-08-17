@@ -3,21 +3,24 @@
     <a-row>
       <a-col :span='24'>
         <a-card :loading='!model.ready' :bordered='false' title='物流利润' :style="{ marginTop: '24px' }">
-          <a-range-picker :format='dateFormat' @change='onDateChange' :defaultValue='defaultRange()'
-                          :value='view.select.range' />
-          <a-select placeholder='选择国家' :default-value='view.select.country' style='width: 240px'
-                    @change='onCountryChange' mode='multiple'>
-            <a-select-option :value='e' v-for='e in view.select.countries' :key='e'>
-              {{ e }}
-            </a-select-option>
-          </a-select>
-          <a-select placeholder='选择渠道' :default-value='view.select.channel' style='width: 300px'
-                    @change='onChannelChange' mode='multiple'>
-            <a-select-option :value='e' v-for='e in view.select.channels' :key='e'>
-              {{ e }}
-            </a-select-option>
-          </a-select>
-          <a-button @click='reset'>Reset</a-button>
+          <a-space>
+            <a-range-picker :format='dateFormat' @change='onDateChange' :defaultValue='defaultRange()'
+                            :value='view.select.range' />
+            <a-select placeholder='选择国家' :default-value='view.select.country' style='width: 240px'
+                      @change='onCountryChange' mode='multiple'>
+              <a-select-option :value='e' v-for='e in view.select.countries' :key='e'>
+                {{ e }}
+              </a-select-option>
+            </a-select>
+            <a-select placeholder='选择渠道' :default-value='view.select.channel' style='width: 300px'
+                      @change='onChannelChange' mode='multiple'>
+              <a-select-option :value='e' v-for='e in view.select.channels' :key='e'>
+                {{ e }}
+              </a-select-option>
+            </a-select>
+            <a-button type='primary' @click='apply'>Apply</a-button>
+            <a-button type='danger' @click='reset'>Reset</a-button>
+          </a-space>
           <a-divider />
           <a-row>
             <a-col :span='3'>
@@ -275,19 +278,18 @@ export default {
       this.form.startDate = dateStrings[0]
       this.form.endDate = dateStrings[1]
       this.view.select.range = dates
-      this.onMVChange()
     },
     onCountryChange(value) {
       this.form.country = value
       this.view.select.country = value
-      this.onMVChange()
     },
     onChannelChange(value) {
       this.form.channel = value
       this.view.select.channel = value
+    },
+    apply() {
       this.onMVChange()
     },
-
     reset() {
       this.form = {
         startDate: moment().startOf('month').format('YYYY-MM-DD'),
@@ -295,17 +297,17 @@ export default {
         country: null,
         channel: null
       }
-      this.view.select.country = null
-      this.view.select.channel = null
+      this.view.select.country = []
+      this.view.select.channel = []
       this.onMVChange()
     },
 
     onMVChange() {
       this.view.ready = false
       this.model.ready = false
-      this.$emit("range", [this.form.startDate, this.form.endDate])
-      this.$emit("country", this.form.country)
-      this.$emit("channel", this.form.channel)
+      this.$emit('range', [this.form.startDate, this.form.endDate])
+      this.$emit('country', this.form.country)
+      this.$emit('channel', this.form.channel)
       this.loadModel().then(this.prepareView)
     }
   }
