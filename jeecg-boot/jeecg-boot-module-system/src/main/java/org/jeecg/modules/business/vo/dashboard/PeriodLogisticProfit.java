@@ -26,14 +26,32 @@ public class PeriodLogisticProfit {
     /**
      * Index of elements is the date, begin from 0 to end of the month.
      */
+    @JSONField(name = "invoicedAmountDueWithoutVat")
+    private final Map<LocalDate, BigDecimal> invoicedAmountDueWithoutVat;
+
+    /**
+     * Index of elements is the date, begin from 0 to end of the month.
+     */
     @JSONField(name = "invoicedActualCosts")
     private final Map<LocalDate, BigDecimal> invoicedActualCosts;
 
     /**
      * Index of elements is the date, begin from 0 to end of the month.
      */
+    @JSONField(name = "invoicedActualCosts")
+    private final Map<LocalDate, BigDecimal> invoicedActualCostsWithoutVat;
+
+    /**
+     * Index of elements is the date, begin from 0 to end of the month.
+     */
     @JSONField(name = "nonInvoicedActualCosts")
     private final Map<LocalDate, BigDecimal> nonInvoicedActualCosts;
+
+    /**
+     * Index of elements is the date, begin from 0 to end of the month.
+     */
+    @JSONField(name = "nonInvoicedActualCosts")
+    private final Map<LocalDate, BigDecimal> nonInvoicedActualCostsWithoutVat;
 
     @JSONField(name = "exchangeRate")
     private final BigDecimal exchangeRate;

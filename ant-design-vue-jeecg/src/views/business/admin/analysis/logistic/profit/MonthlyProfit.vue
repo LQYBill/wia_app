@@ -18,6 +18,19 @@
                 {{ e }}
               </a-select-option>
             </a-select>
+            <a-select show-search placeholder='输入客户进行搜索' option-filter-prop='children' allowClear=true
+                      :filter-option='clientFilterOption' @change='handleClientChange' style='width: 240px'>
+              <a-select-option v-for='(item, index) in clientList' :key='index' :value='index'>
+                {{ item.text }}
+              </a-select-option>
+            </a-select>
+
+            <a-select mode='multiple' style='width: 300px' placeholder='不选默认所有店铺' @change='handleShopChange'
+              :allowClear=true v-model='shopIDs' :disabled='shopDisable'>
+              <a-select-option v-for='(item, index) in shopList' :value='item.value' :key='index'>
+                {{ item.text }}
+              </a-select-option>
+            </a-select>
             <a-button type='primary' @click='apply'>Apply</a-button>
             <a-button type='danger' @click='reset'>Reset</a-button>
           </a-space>
@@ -27,22 +40,51 @@
               <a-statistic title='本月开票' :value='view.text.invoiced.orderNumber' suffix='单' />
             </a-col>
             <a-col :span='3'>
-              <a-statistic title='应收 (EUR)' :value='view.text.invoiced.amountDue.EUR' suffix='€' />
+              <a-statistic title='应收(EUR)(含VAT)' :value='view.text.invoiced.amountDue.EUR' suffix='€' />
             </a-col>
             <a-col :span='3'>
-              <a-statistic title='应收 (CNY)' :value='view.text.invoiced.amountDue.CNY' suffix='¥' />
+              <a-statistic title='实际开销(EUR)(含VAT)' :value='view.text.invoiced.realCost.EUR' suffix='€' />
             </a-col>
             <a-col :span='3'>
-              <a-statistic title='实际开销 (EUR)' :value='view.text.invoiced.realCost.EUR' suffix='€' />
+              <a-statistic title='盈利(EUR)(含VAT)' :value='view.text.invoiced.profit.EUR' suffix='€' />
             </a-col>
             <a-col :span='3'>
-              <a-statistic title='实际开销 (CNY)' :value='view.text.invoiced.realCost.CNY' suffix='¥' />
+              <a-statistic title='应收(CNY)(含VAT)' :value='view.text.invoiced.amountDue.CNY' suffix='¥' />
             </a-col>
             <a-col :span='3'>
-              <a-statistic title='盈利' :value='view.text.invoiced.profit.value' suffix='¥' />
+              <a-statistic title='实际开销(CNY)(含VAT)' :value='view.text.invoiced.realCost.CNY' suffix='¥' />
             </a-col>
             <a-col :span='3'>
-              <a-statistic title='利润率' :value='view.text.invoiced.profit.rate' suffix='%' />
+              <a-statistic title='盈利(CNY)(含VAT)' :value='view.text.invoiced.profit.CNY' suffix='¥' />
+            </a-col>
+            <a-col :span='3'>
+              <a-statistic title='利润率(含VAT)' :value='view.text.invoiced.profit.rate' suffix='%' />
+            </a-col>
+          </a-row>
+          <a-divider />
+          <a-row>
+            <a-col :span='3'>
+            </a-col>
+            <a-col :span='3'>
+              <a-statistic title='应收 (EUR)(不含VAT)' :value='view.text.invoiced.amountDueWithoutVat.EUR' suffix='€' />
+            </a-col>
+            <a-col :span='3'>
+              <a-statistic title='实际开销(EUR)(不含VAT)' :value='view.text.invoiced.realCostWithoutVat.EUR' suffix='€' />
+            </a-col>
+            <a-col :span='3'>
+              <a-statistic title='盈利(EUR)(不含VAT)' :value='view.text.invoiced.profitWithoutVat.EUR' suffix='€' />
+            </a-col>
+            <a-col :span='3'>
+              <a-statistic title='应收 (CNY)(不含VAT)' :value='view.text.invoiced.amountDueWithoutVat.CNY' suffix='¥' />
+            </a-col>
+            <a-col :span='3'>
+              <a-statistic title='实际开销(CNY)(不含VAT)' :value='view.text.invoiced.realCostWithoutVat.CNY' suffix='¥' />
+            </a-col>
+            <a-col :span='3'>
+              <a-statistic title='盈利(CNY)(不含VAT)' :value='view.text.invoiced.profitWithoutVat.CNY' suffix='¥' />
+            </a-col>
+            <a-col :span='3'>
+              <a-statistic title='利润率(不含VAT)' :value='view.text.invoiced.profitWithoutVat.rate' suffix='%' />
             </a-col>
           </a-row>
           <a-divider />
@@ -51,10 +93,16 @@
               <a-statistic title='未开票' :value='view.text.uninvoiced.orderNumber' suffix='单' />
             </a-col>
             <a-col :span='3'>
-              <a-statistic title='实际开销 (EUR)' :value='view.text.uninvoiced.readCost.EUR' suffix='€' />
+              <a-statistic title='实际开销(EUR)(含VAT)' :value='view.text.uninvoiced.realCost.EUR' suffix='€' />
             </a-col>
             <a-col :span='3'>
-              <a-statistic title='实际开销 (CNY)' :value='view.text.uninvoiced.readCost.CNY' suffix='¥' />
+              <a-statistic title='实际开销(EUR)(不含VAT)' :value='view.text.uninvoiced.realCostWithoutVat.EUR' suffix='€' />
+            </a-col>
+            <a-col :span='3'>
+              <a-statistic title='实际开销(CNY)(含VAT)' :value='view.text.uninvoiced.realCost.CNY' suffix='¥' />
+            </a-col>
+            <a-col :span='3'>
+              <a-statistic title='实际开销(CNY)(不含VAT)' :value='view.text.uninvoiced.realCostWithoutVat.CNY' suffix='¥' />
             </a-col>
           </a-row>
           <a-divider />
@@ -97,6 +145,8 @@ import { sum } from 'xe-utils/methods'
 import moment from 'moment'
 
 const url = {
+  getClientList: "/client/client/all",
+  getShopsByCustomerId: "/shippingInvoice/shopsByClient",
   monthlyProfit: '/business/logisticExpenseDetail/monthlyLogisticProfit',
   allCountry: '/business/logisticExpenseDetail/allCountry',
   allChannel: '/business/logisticExpenseDetail/allChannel'
@@ -110,6 +160,12 @@ export default {
   data() {
     return {
       dateFormat: 'YYYY-MM-DD',
+      clientList: [],
+      shopList: [],
+      shopIDs: [],
+      customerId: "",
+      selectedClient: null,
+      shopDisable: true,
       view: {
         select: {
           range: null,
@@ -125,19 +181,36 @@ export default {
               EUR: undefined,
               CNY: undefined
             },
+            amountDueWithoutVat: {
+              EUR: undefined,
+              CNY: undefined
+            },
             realCost: {
               EUR: undefined,
               CNY: undefined
             },
+            realCostWithoutVat: {
+              EUR: undefined,
+              CNY: undefined
+            },
             profit: {
-              value: undefined,
+              EUR: undefined,
+              CNY: undefined,
+              rate: undefined
+            },
+            profitWithoutVat: {
+              EUR: undefined,
+              CNY: undefined,
               rate: undefined
             }
-
           },
           uninvoiced: {
             orderNumber: undefined,
-            readCost: {
+            realCost: {
+              EUR: undefined,
+              CNY: undefined
+            },
+            realCostWithoutVat: {
               EUR: undefined,
               CNY: undefined
             }
@@ -163,8 +236,11 @@ export default {
           uninvoicedOrderNumber: undefined,
           monthOfYear: undefined,
           invoicedAmountDue: [],
+          invoicedAmountDueWithoutVat: [],
           invoicedActualCosts: [],
+          invoicedActualCostsWithoutVat: [],
           nonInvoicedActualCosts: [],
+          nonInvoicedActualCostsWithoutVat: [],
           exchangeRate: undefined
         },
         select: {
@@ -182,6 +258,7 @@ export default {
     }
   },
   created() {
+    this.loadClientList();
     this.onMVChange()
   },
   computed: {
@@ -230,17 +307,30 @@ export default {
       target.amountDue.EUR = sum(src.invoicedAmountDue)
       target.amountDue.CNY = this.toCNY(target.amountDue.EUR)
 
-      target.realCost.EUR = sum(src.invoicedActualCosts)
-      target.realCost.CNY = this.toCNY(target.realCost.EUR)
+      target.amountDueWithoutVat.EUR = sum(src.invoicedAmountDueWithoutVat)
+      target.amountDueWithoutVat.CNY = this.toCNY(target.amountDueWithoutVat.EUR)
 
-      target.profit.value = (target.amountDue.CNY - target.realCost.CNY).toFixed(2)
-      target.profit.rate = (target.profit.value / target.realCost.CNY * 100).toFixed(2)
+      target.realCost.CNY = sum(src.invoicedActualCosts)
+      target.realCost.EUR = this.toEUR(target.realCost.CNY)
+
+      target.realCostWithoutVat.CNY = sum(src.invoicedActualCostsWithoutVat)
+      target.realCostWithoutVat.EUR = this.toEUR(target.realCostWithoutVat.CNY)
+
+      target.profit.EUR = (target.amountDue.EUR - target.realCost.EUR).toFixed(2)
+      target.profit.CNY = (target.amountDue.CNY - target.realCost.CNY).toFixed(2)
+      target.profit.rate = (target.profit.CNY / target.realCost.CNY * 100).toFixed(2)
+
+      target.profitWithoutVat.EUR = (target.amountDueWithoutVat.EUR - target.realCost.EUR).toFixed(2)
+      target.profitWithoutVat.CNY = (target.amountDueWithoutVat.CNY - target.realCost.CNY).toFixed(2)
+      target.profitWithoutVat.rate = (target.profitWithoutVat.CNY / target.realCost.CNY * 100).toFixed(2)
 
       // uninvoiced part
       target = this.view.text.uninvoiced
       target.orderNumber = src.uninvoicedOrderNumber
-      target.readCost.EUR = sum(src.nonInvoicedActualCosts)
-      target.readCost.CNY = this.toCNY(target.readCost.EUR)
+      target.realCost.CNY = sum(src.nonInvoicedActualCosts)
+      target.realCost.EUR = this.toEUR(target.realCost.CNY)
+      target.realCostWithoutVat.CNY = sum(src.nonInvoicedActualCostsWithoutVat)
+      target.realCostWithoutVat.EUR = this.toEUR(target.realCostWithoutVat.CNY)
 
       let numberOfDays = moment(this.form.endDate).diff(moment(this.form.startDate), 'days') + 1
 
@@ -251,7 +341,7 @@ export default {
       for (let j = 0; j < numberOfDays; j++) {
         let date = moment(this.form.startDate).add(j, 'd').format(this.dateFormat)
         target.dataSource[0][j + 1 + ''] = this.toCNY(src.invoicedAmountDue[date] || 0)
-        target.dataSource[1][j + 1 + ''] = this.toCNY(src.invoicedActualCosts[date] || 0)
+        target.dataSource[1][j + 1 + ''] = src.invoicedActualCosts[date] || 0
       }
 
       // uninvoiced chart
@@ -260,7 +350,7 @@ export default {
       target.dataSource = [{ type: '实际开销 (CNY)' }]
       for (let j = 0; j < numberOfDays; j++) {
         let date = moment(this.form.startDate).add(j, 'd').format(this.dateFormat)
-        target.dataSource[0][j + 1 + ''] = this.toCNY(src.nonInvoicedActualCosts[date] || 0)
+        target.dataSource[0][j + 1 + ''] = src.nonInvoicedActualCosts[date] || 0
       }
 
       // select
@@ -270,7 +360,9 @@ export default {
 
       this.view.ready = true
     },
-
+    toEUR(CNY) {
+      return Number((CNY / this.model.monthlyLogisticProfit.exchangeRate).toFixed(2))
+    },
     toCNY(EUR) {
       return Number((EUR * this.model.monthlyLogisticProfit.exchangeRate).toFixed(2))
     },
@@ -309,7 +401,70 @@ export default {
       this.$emit('country', this.form.country)
       this.$emit('channel', this.form.channel)
       this.loadModel().then(this.prepareView)
-    }
+    },
+    loadClientList() {
+      let self = this
+      getAction(url.getClientList)
+        .then(res => {
+          if (res.success) {
+            console.log(res)
+            self.clientList = res.result.map(customer => ({
+              text: `${customer.firstName} ${customer.surname}`,
+              value: customer.id,
+              client: customer
+            }));
+          }
+        })
+    },
+    handleClientChange(index) {
+      console.log(`selected ${index}`);
+      this.customerId = this.clientList[index].client.id;
+      this.client = this.clientList[index].client
+      this.loadShopList(this.customerId)
+        .then(
+          () =>
+            this.shopDisable = false
+        );
+      // clear selected shop IDs
+      this.shopIDs = []
+    },
+    clientFilterOption(input, option) {
+      return (
+        option.componentOptions.children[0]
+          .text.toLowerCase().indexOf(input.toLowerCase()) >= 0
+      );
+    },
+    loadShopList(clientID) {
+      let self = this
+      const param = {clientID: clientID}
+      return getAction(url.getShopsByCustomerId, param)
+        .then(res => {
+          if (res.success) {
+            if (res.result.length === 0) {
+              self.$message.warning("没有找到当前客户的相关店铺信息");
+            }
+            console.log(res.result)
+            self.shopList = res.result.map(
+              shop => ({
+                text: shop.erpCode,
+                value: shop.id,
+              })
+            );
+          } else {
+            self.$message.warning("Internal server error. Try later.");
+          }
+        })
+    },
+    handleShopChange(value) {
+      // value returned is array of shop
+      this.shopIDs = value
+      console.log(this.shopIDs)
+      if (this.shopIDs.length !== 0) {
+        this.loadAvailableDate()
+      } else {
+        this.dataDisable = true
+      }
+    },
   }
 }
 </script>

@@ -7,6 +7,7 @@ import java.util.Date;
 
 @Data
 public class PlatformOrderLogisticExpenseDetail {
+    private final String shopErpCode;
     private final String id;
     private final String trackingNumber;
     private final String shop_id;
@@ -28,7 +29,7 @@ public class PlatformOrderLogisticExpenseDetail {
     private final BigDecimal volumetric_weight;
     private final BigDecimal charging_weight;
     private final BigDecimal discount;
-    private final BigDecimal shipping_fee;
+    private final BigDecimal realShippingFee;
     private final BigDecimal fuel_surcharge;
     private final BigDecimal registration_fee;
     private final BigDecimal second_delivery_fee;

@@ -10,6 +10,7 @@ import org.jeecg.modules.business.vo.LogisticExpenseProportion;
 import org.jeecg.modules.business.vo.PlatformOrderLogisticExpenseDetail;
 import org.jeecg.modules.business.vo.dashboard.PeriodLogisticProfit;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -46,27 +47,46 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
 
         // actual cost of invoiced orders
         List<PlatformOrderLogisticExpenseDetail> invoicedOrders = allOrders.stream().filter(invoiced).collect(Collectors.toList());
-        Map<LocalDate, BigDecimal> invoicedActualCost = calculateActualCostByDay(invoicedOrders);
+        Map<LocalDate, Pair<BigDecimal, BigDecimal>> invoicedActualCost = calculateActualCostByDay(invoicedOrders);
+        Map<LocalDate, BigDecimal> invoicedActualCostWithVat = new HashMap<>();
+        Map<LocalDate, BigDecimal> invoicedActualCostWithoutVat = new HashMap<>();
+        invoicedActualCost.forEach((key, value) -> {
+            invoicedActualCostWithVat.put(key, value.getFirst());
+            invoicedActualCostWithoutVat.put(key, value.getSecond());
+        });
         // amount due of invoice
-        Map<LocalDate, BigDecimal> amountDue = calculateAmountDueByDate(invoicedOrders);
-
+        Map<LocalDate, Pair<BigDecimal, BigDecimal>> amountDue = calculateAmountDueByDate(invoicedOrders);
+        Map<LocalDate, BigDecimal> amountDueWithVat = new HashMap<>();
+        Map<LocalDate, BigDecimal> amountDueWithoutVat = new HashMap<>();
+        amountDue.forEach((key, value) -> {
+            amountDueWithVat.put(key, value.getFirst());
+            amountDueWithoutVat.put(key, value.getSecond());
+        });
 
         // actual cost of uninvoiced orders
         List<PlatformOrderLogisticExpenseDetail> nonInvoicedOrders = allOrders.stream().filter(nonInvoiced).collect(Collectors.toList());
-        Map<LocalDate, BigDecimal> nonInvoicedActualCost = calculateActualCostByDay(nonInvoicedOrders);
-
+        Map<LocalDate, Pair<BigDecimal, BigDecimal>> nonInvoicedActualCost = calculateActualCostByDay(nonInvoicedOrders);
+        Map<LocalDate, BigDecimal> nonInvoicedActualCostWithVat = new HashMap<>();
+        Map<LocalDate, BigDecimal> nonInvoicedActualCostWithoutVat = new HashMap<>();
+        nonInvoicedActualCost.forEach((key, value) -> {
+            nonInvoicedActualCostWithVat.put(key, value.getFirst());
+            nonInvoicedActualCostWithoutVat.put(key, value.getSecond());
+        });
 
         return new PeriodLogisticProfit(
                 invoicedOrders.size(),
                 nonInvoicedOrders.size(),
-                amountDue,
-                invoicedActualCost,
-                nonInvoicedActualCost,
+                amountDueWithVat,
+                amountDueWithoutVat,
+                invoicedActualCostWithVat,
+                invoicedActualCostWithoutVat,
+                nonInvoicedActualCostWithVat,
+                nonInvoicedActualCostWithoutVat,
                 BigDecimal.valueOf(7.6)
         );
     }
 
-    private Map<LocalDate, BigDecimal> calculateAmountDueByDate(List<PlatformOrderLogisticExpenseDetail> invoicedOrders) {
+    private Map<LocalDate, Pair<BigDecimal, BigDecimal>> calculateAmountDueByDate(List<PlatformOrderLogisticExpenseDetail> invoicedOrders) {
         if (invoicedOrders.isEmpty()) {
             return Collections.emptyMap();
         }
@@ -80,22 +100,26 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
                 );
 
 
-        Map<LocalDate, BigDecimal> dateToActualCost = new HashMap<>();
+        Map<LocalDate, Pair<BigDecimal, BigDecimal>> dateToAmountDue = new HashMap<>();
 
         dateToOrders.forEach(
                 (date, ordersByDate) -> {
-                    BigDecimal totalDue = ordersByDate.stream()
+                    BigDecimal dueWithVat = ordersByDate.stream()
                             .flatMap(d -> Stream.of(d.getFretFee(), d.getShippingFee(), d.getVatFee()))
                             .filter(Objects::nonNull)
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
-                    dateToActualCost.put(date, totalDue);
+                    BigDecimal dueWithoutVat = ordersByDate.stream()
+                            .flatMap(d -> Stream.of(d.getFretFee(), d.getShippingFee()))
+                            .filter(Objects::nonNull)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    dateToAmountDue.put(date, Pair.of(dueWithVat, dueWithoutVat));
                 }
         );
 
-        return dateToActualCost;
+        return dateToAmountDue;
     }
 
-    private Map<LocalDate, BigDecimal> calculateActualCostByDay(List<PlatformOrderLogisticExpenseDetail> orders) {
+    private Map<LocalDate, Pair<BigDecimal, BigDecimal>> calculateActualCostByDay(List<PlatformOrderLogisticExpenseDetail> orders) {
         if (orders.isEmpty()) {
             return Collections.emptyMap();
         }
@@ -109,15 +133,19 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
                 );
 
 
-        Map<LocalDate, BigDecimal> dateToActualCost = new HashMap<>();
+        Map<LocalDate, Pair<BigDecimal, BigDecimal>> dateToActualCost = new HashMap<>();
 
         dateToOrders.forEach(
                 (date, ordersByDate) -> {
-                    BigDecimal cost = ordersByDate.stream()
+                    BigDecimal costWithVat = ordersByDate.stream()
                             .map(PlatformOrderLogisticExpenseDetail::getTotal_fee)
                             .filter(Objects::nonNull)
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
-                    dateToActualCost.put(date, cost);
+                    BigDecimal vat = ordersByDate.stream()
+                            .flatMap(d -> Stream.of(d.getVat(), d.getVat_service_fee()))
+                            .filter(Objects::nonNull)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    dateToActualCost.put(date, Pair.of(costWithVat, costWithVat.subtract(vat)));
                 }
         );
 

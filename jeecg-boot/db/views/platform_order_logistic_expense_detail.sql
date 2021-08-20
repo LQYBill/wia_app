@@ -1,5 +1,6 @@
 CREATE OR REPLACE VIEW platform_order_logistic_expense_detail AS
-SELECT led.id,
+SELECT s.erp_code                 AS 'shopErpCode',
+       led.id,
        po.tracking_number         AS 'trackingNumber',
        po.shop_id,
        po.logistic_channel_name   AS 'logisticChannelName',
@@ -20,7 +21,7 @@ SELECT led.id,
        led.volumetric_weight,
        led.charging_weight,
        led.discount,
-       led.shipping_fee,
+       led.shipping_fee           AS 'realShippingFee',
        led.fuel_surcharge,
        led.registration_fee,
        led.second_delivery_fee,
@@ -31,5 +32,7 @@ SELECT led.id,
        led.additional_fee
 FROM logistic_expense_detail led
          JOIN platform_order po ON led.tracking_number = po.tracking_number
+         JOIN shop s ON po.shop_id = s.id
          JOIN platform_order_content poc ON po.id = poc.platform_order_id
-GROUP BY po.id;
+GROUP BY po.id, s.erp_code
+ORDER BY s.erp_code;
