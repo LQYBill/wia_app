@@ -25,6 +25,9 @@
       <a-upload name="file" :showUploadList="false" :multiple="false" :headers="tokenHeader" :action="importMs" @change="handleImportExcel">
         <a-button type="primary"><img src="~@/assets/miaoshen.png" class="logo" alt="ms" width='30px'>导入淼深账单明细</a-button>
       </a-upload>
+      <a-upload name="file" :showUploadList="false" :multiple="false" :headers="tokenHeader" :action="importCk1" @change="handleImportExcel">
+        <a-button type="primary"><img src="~@/assets/ck1.svg" class="logo" alt="ms" width='30px'>导入出口易账单明细</a-button>
+      </a-upload>
       <!-- 高级查询区域 -->
       <j-super-query :fieldList="superFieldList" ref="superQueryModal" @handleSuperQuery="handleSuperQuery"></j-super-query>
       <a-dropdown v-if="selectedRowKeys.length > 0">
@@ -233,6 +236,7 @@
           import4px: "business/logisticExpenseDetail/import4px",
           importYunExpress: "business/logisticExpenseDetail/importYunExpress",
           importMs: "business/logisticExpenseDetail/importMs",
+          importCk1: "business/logisticExpenseDetail/importCk1",
         },
         dictOptions:{},
         superFieldList:[],
@@ -253,6 +257,9 @@
       },
       importMs: function(){
         return `${window._CONFIG['domainURL']}/${this.url.importMs}`;
+      },
+      importCk1: function(){
+        return `${window._CONFIG['domainURL']}/${this.url.importCk1}`;
       },
     },
     methods: {

@@ -31,11 +31,14 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Month;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @Description: 物流开销明细
@@ -57,6 +60,8 @@ public class LogisticExpenseDetailController extends JeecgController<LogisticExp
     private static final int END_OF_DATA_YUN_EXPRESS_EMPTY_CASE_NUMBER = 26;
 
     private static final int SHEET_NUMBER_YUN_EXPRESS = 2;
+    private static final int SHEET_NUMBER_CK1 = 2;
+    private static final BigDecimal USD_RATE_CK1 = new BigDecimal("6.5");
 
     /**
      * 分页列表查询
@@ -184,8 +189,8 @@ public class LogisticExpenseDetailController extends JeecgController<LogisticExp
      */
     @GetMapping(value = "/monthlyLogisticProfit")
     public Result<PeriodLogisticProfit> monthlyLogisticProfit(
-            @RequestParam("startDate") @DateTimeFormat(pattern="YYYY-MM-dd") Date startDate,
-            @RequestParam("endDate") @DateTimeFormat(pattern="YYYY-MM-dd") Date endDate,
+            @RequestParam("startDate") @DateTimeFormat(pattern = "YYYY-MM-dd") Date startDate,
+            @RequestParam("endDate") @DateTimeFormat(pattern = "YYYY-MM-dd") Date endDate,
             @RequestParam(value = "country[]", required = false) List<String> country,
             @RequestParam(value = "channel[]", required = false) List<String> channel
     ) {
@@ -201,8 +206,8 @@ public class LogisticExpenseDetailController extends JeecgController<LogisticExp
 
     @GetMapping(value = "/expenseProportionByChannel")
     public Result<List<LogisticExpenseProportion>> expenseProportionByChannel(
-            @RequestParam("startDate") @DateTimeFormat(pattern="YYYY-MM-dd") Date startDate,
-            @RequestParam("endDate") @DateTimeFormat(pattern="YYYY-MM-dd") Date endDate,
+            @RequestParam("startDate") @DateTimeFormat(pattern = "YYYY-MM-dd") Date startDate,
+            @RequestParam("endDate") @DateTimeFormat(pattern = "YYYY-MM-dd") Date endDate,
             @RequestParam(value = "country[]", required = false) List<String> country,
             @RequestParam(value = "channel[]", required = false) List<String> channel
     ) {
@@ -215,8 +220,8 @@ public class LogisticExpenseDetailController extends JeecgController<LogisticExp
 
     @GetMapping(value = "/expenseProportionByCountry")
     public Result<List<LogisticExpenseProportion>> expenseProportionByCountry(
-            @RequestParam("startDate") @DateTimeFormat(pattern="YYYY-MM-dd") Date startDate,
-            @RequestParam("endDate") @DateTimeFormat(pattern="YYYY-MM-dd") Date endDate,
+            @RequestParam("startDate") @DateTimeFormat(pattern = "YYYY-MM-dd") Date startDate,
+            @RequestParam("endDate") @DateTimeFormat(pattern = "YYYY-MM-dd") Date endDate,
             @RequestParam(value = "country[]", required = false) List<String> country,
             @RequestParam(value = "channel[]", required = false) List<String> channel
     ) {
@@ -426,4 +431,82 @@ public class LogisticExpenseDetailController extends JeecgController<LogisticExp
         return Result.OK("文件导入失败！");
     }
 
+    /**
+     * 通过excel导入云途数据
+     *
+     * @param request
+     * @param response
+     * @return
+     */
+    @RequestMapping(value = "/importCk1", method = RequestMethod.POST)
+    public Result<?> importCk1(HttpServletRequest request, HttpServletResponse response) {
+        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+        Map<String, MultipartFile> fileMap = multipartRequest.getFileMap();
+        LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+        for (Map.Entry<String, MultipartFile> entity : fileMap.entrySet()) {
+            MultipartFile file = entity.getValue();// 获取上传文件对象
+
+            List<Map<String, Object>> allData;
+            try (
+                    InputStream in = file.getInputStream();
+                    ExcelReader reader = ExcelUtil.getReader(in, SHEET_NUMBER_CK1)
+            ) {
+                allData = reader.readAll();
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+                return Result.error("文件导入失败:" + e.getMessage());
+            } finally {
+                try {
+                    file.getInputStream().close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            List<LogisticExpenseDetail> detailList = new ArrayList<>();
+            for (Map<String, Object> lineData : allData) {
+                LogisticExpenseDetail detail = new LogisticExpenseDetail();
+                detail.setId(IdWorker.getIdStr(detail));
+                detail.setCreateBy(sysUser.getUsername());
+                detail.setCreateTime(new Date());
+                detail.setPlatformOrderSerialId(exceptionWrapper("参考号", lineData));
+                detail.setLogisticInternalNumber(exceptionWrapper("处理号", lineData));
+                detail.setTrackingNumber(exceptionWrapper("Tracking", lineData));
+                detail.setChargingWeight(new BigDecimal(exceptionWrapper("计费重g", lineData)).divide(BigDecimal.valueOf(1000), RoundingMode.UP));
+                detail.setShippingFee(new BigDecimal(exceptionWrapper("邮费/CNY", lineData)).negate());
+                detail.setFuelSurcharge(new BigDecimal(exceptionWrapper("燃油费/CNY", lineData)).negate());
+                detail.setAdditionalFee(new BigDecimal(exceptionWrapper("偏远地区费/CNY", lineData)).negate());
+                detail.setRegistrationFee(new BigDecimal(exceptionWrapper("处理费/挂号费/CNY", lineData)).negate());
+                // VAT is either calculated in CNY or USD, but mostly in USD
+                BigDecimal vatInUsd = new BigDecimal(exceptionWrapper("其他/USD", lineData)).negate();
+                BigDecimal totalInUsd = new BigDecimal(exceptionWrapper("总金额/USD", lineData)).negate();
+                detail.setTotalFee(new BigDecimal(exceptionWrapper("总金额/CNY", lineData)).negate());
+                if (vatInUsd.compareTo(BigDecimal.ZERO) == 0) {
+                    detail.setVat(new BigDecimal(exceptionWrapper("其他/CNY", lineData)).negate());
+                } else {
+                    detail.setVat(vatInUsd.multiply(USD_RATE_CK1));
+                    detail.setTotalFee(detail.getTotalFee().add(totalInUsd.multiply(USD_RATE_CK1)));
+                }
+                detail.setLogisticCompanyId("1419602178309611522");
+                detailList.add(detail);
+            }
+            Collection<LogisticExpenseDetail> mergedDetails = detailList.stream()
+                    .collect(Collectors.toMap(
+                            LogisticExpenseDetail::getPlatformOrderSerialId,
+                            Function.identity(),
+                            (detail, detail2) -> {
+                                detail.setShippingFee(detail.getShippingFee().add(detail2.getShippingFee()));
+                                detail.setFuelSurcharge(detail.getFuelSurcharge().add(detail2.getFuelSurcharge()));
+                                detail.setAdditionalFee(detail.getAdditionalFee().add(detail2.getAdditionalFee()));
+                                detail.setRegistrationFee(detail.getRegistrationFee().add(detail2.getRegistrationFee()));
+                                detail.setVat(detail.getVat().add(detail2.getVat()));
+                                detail.setTotalFee(detail.getTotalFee().add(detail2.getTotalFee()));
+                                return detail;
+                            }
+                    )).values();
+            logisticExpenseDetailService.saveBatch(mergedDetails);
+            return Result.OK("文件导入成功！数据行数:" + mergedDetails.size());
+        }
+        return Result.OK("文件导入失败！");
+    }
 }
