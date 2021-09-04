@@ -350,7 +350,8 @@ public class LogisticExpenseDetailController extends JeecgController<LogisticExp
                 detail.setId(IdWorker.getIdStr(detail));
                 detail.setCreateBy(sysUser.getUsername());
                 detail.setCreateTime(new Date());
-                if (lineData.values().stream().filter(Objects::isNull).count() == END_OF_DATA_YUN_EXPRESS_EMPTY_CASE_NUMBER) {
+                if (lineData.values().stream().filter(Objects::isNull).count() == END_OF_DATA_YUN_EXPRESS_EMPTY_CASE_NUMBER
+                || lineData.values().stream().filter(o -> (o instanceof String) && ((String)o).isEmpty()).count() >= END_OF_DATA_YUN_EXPRESS_EMPTY_CASE_NUMBER) {
                     // end of data
                     break;
                 }
@@ -366,7 +367,13 @@ public class LogisticExpenseDetailController extends JeecgController<LogisticExp
                 detail.setSecondDeliveryFee(new BigDecimal(exceptionWrapper("重派费", lineData)));
                 detail.setRegistrationFee(new BigDecimal(exceptionWrapper("挂号费", lineData)));
                 detail.setVat(new BigDecimal(exceptionWrapper("VAT增值税", lineData)));
-                detail.setVatServiceFee(new BigDecimal(exceptionWrapper("其他费用", lineData)));
+                BigDecimal vatServiceFee;
+                try {
+                    vatServiceFee = new BigDecimal(exceptionWrapper("手续费", lineData));
+                } catch (Exception e) {
+                    vatServiceFee = new BigDecimal(exceptionWrapper("其他费用", lineData));
+                }
+                detail.setVatServiceFee(vatServiceFee);
                 detail.setTotalFee(new BigDecimal(exceptionWrapper("总运费", lineData)));
                 detail.setLogisticCompanyId("1419602297851469825");
                 detailList.add(detail);
