@@ -14,6 +14,7 @@ import org.quartz.JobExecutionException;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -59,7 +60,7 @@ public class TemporaryJob implements Job {
             }
         }
 
-        LocalDateTime end = LocalDateTime.now();
+        LocalDateTime end = LocalDateTime.now(ZoneId.of(ZoneId.SHORT_IDS.get("CTT")));
         LocalDateTime start = end.minusDays(1);
         try {
             for (int i = 0; i < days; i++) {
