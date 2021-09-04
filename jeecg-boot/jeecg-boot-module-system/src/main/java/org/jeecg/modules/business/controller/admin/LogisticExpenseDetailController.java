@@ -432,7 +432,7 @@ public class LogisticExpenseDetailController extends JeecgController<LogisticExp
     }
 
     /**
-     * 通过excel导入云途数据
+     * 通过excel导入出口易数据
      *
      * @param request
      * @param response
@@ -506,6 +506,60 @@ public class LogisticExpenseDetailController extends JeecgController<LogisticExp
                     )).values();
             logisticExpenseDetailService.saveBatch(mergedDetails);
             return Result.OK("文件导入成功！数据行数:" + mergedDetails.size());
+        }
+        return Result.OK("文件导入失败！");
+    }
+
+    /**
+     * 通过excel导入安途数据
+     *
+     * @param request
+     * @param response
+     * @return
+     */
+    @RequestMapping(value = "/importAntu", method = RequestMethod.POST)
+    public Result<?> importAntu(HttpServletRequest request, HttpServletResponse response) {
+        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+        Map<String, MultipartFile> fileMap = multipartRequest.getFileMap();
+        LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+        for (Map.Entry<String, MultipartFile> entity : fileMap.entrySet()) {
+            MultipartFile file = entity.getValue();// 获取上传文件对象
+
+            List<Map<String, Object>> allData;
+            try (
+                    InputStream in = file.getInputStream();
+                    ExcelReader reader = ExcelUtil.getReader(in)
+            ) {
+                allData = reader.readAll();
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+                return Result.error("文件导入失败:" + e.getMessage());
+            } finally {
+                try {
+                    file.getInputStream().close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            List<LogisticExpenseDetail> detailList = new ArrayList<>();
+            for (Map<String, Object> lineData : allData) {
+                LogisticExpenseDetail detail = new LogisticExpenseDetail();
+                detail.setId(IdWorker.getIdStr(detail));
+                detail.setCreateBy(sysUser.getUsername());
+                detail.setCreateTime(new Date());
+                detail.setVirtualTrackingNumber(exceptionWrapper("原单号", lineData));
+                detail.setLogisticInternalNumber(exceptionWrapper("内部单号", lineData));
+                detail.setTrackingNumber(exceptionWrapper("转单号", lineData));
+                detail.setChargingWeight(new BigDecimal(exceptionWrapper("计费重", lineData)));
+                detail.setShippingFee(new BigDecimal(exceptionWrapper("运费", lineData)));
+                detail.setRegistrationFee(new BigDecimal(exceptionWrapper("杂费", lineData)));
+                detail.setTotalFee(new BigDecimal(exceptionWrapper("总金额", lineData)));
+                detail.setLogisticCompanyId("1419602215580196866");
+                detailList.add(detail);
+            }
+            logisticExpenseDetailService.saveBatch(detailList);
+            return Result.OK("文件导入成功！数据行数:" + detailList.size());
         }
         return Result.OK("文件导入失败！");
     }

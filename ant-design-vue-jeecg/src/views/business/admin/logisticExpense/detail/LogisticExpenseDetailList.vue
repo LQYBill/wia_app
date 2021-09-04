@@ -23,10 +23,13 @@
         <a-button type="primary"><img src="~@/assets/yunexpress.svg" class="logo" alt="yt" width='30px'>导入云途账单明细</a-button>
       </a-upload>
       <a-upload name="file" :showUploadList="false" :multiple="false" :headers="tokenHeader" :action="importMs" @change="handleImportExcel">
-        <a-button type="primary"><img src="~@/assets/miaoshen.png" class="logo" alt="ms" width='30px'>导入淼深账单明细</a-button>
+        <a-button type="primary"><img src="~@/assets/miaoshen.jpg" class="logo" alt="ms" width='30px'>导入淼深账单明细</a-button>
       </a-upload>
       <a-upload name="file" :showUploadList="false" :multiple="false" :headers="tokenHeader" :action="importCk1" @change="handleImportExcel">
-        <a-button type="primary"><img src="~@/assets/ck1.svg" class="logo" alt="ms" width='30px'>导入出口易账单明细</a-button>
+        <a-button type="primary"><img src="~@/assets/ck1.svg" class="logo" alt="ck1" width='30px'>导入出口易账单明细</a-button>
+      </a-upload>
+      <a-upload name="file" :showUploadList="false" :multiple="false" :headers="tokenHeader" :action="importAntu" @change="handleImportExcel">
+        <a-button type="primary"><img src="~@/assets/antu.png" class="logo" alt="antu" width='30px'>导入安途账单明细</a-button>
       </a-upload>
       <!-- 高级查询区域 -->
       <j-super-query :fieldList="superFieldList" ref="superQueryModal" @handleSuperQuery="handleSuperQuery"></j-super-query>
@@ -237,6 +240,7 @@
           importYunExpress: "business/logisticExpenseDetail/importYunExpress",
           importMs: "business/logisticExpenseDetail/importMs",
           importCk1: "business/logisticExpenseDetail/importCk1",
+          importAntu: "business/logisticExpenseDetail/importAntu",
         },
         dictOptions:{},
         superFieldList:[],
@@ -260,6 +264,9 @@
       },
       importCk1: function(){
         return `${window._CONFIG['domainURL']}/${this.url.importCk1}`;
+      },
+      importAntu: function(){
+        return `${window._CONFIG['domainURL']}/${this.url.importAntu}`;
       },
     },
     methods: {
