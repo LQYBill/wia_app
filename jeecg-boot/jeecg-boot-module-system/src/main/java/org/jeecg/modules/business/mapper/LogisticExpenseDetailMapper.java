@@ -33,4 +33,6 @@ public interface LogisticExpenseDetailMapper extends BaseMapper<LogisticExpenseD
     List<PlatformOrderLogisticExpenseDetail> findBetween(@Param("start") Date start, @Param("end") Date stop,
                                                          @Param("country") List<String> country, @Param("channelName") List<String> channelName);
 
+
+    void insertOrMerge(@Param("data") Collection<LogisticExpenseDetail> expenseDetail);
 }

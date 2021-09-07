@@ -5,6 +5,7 @@ import org.jeecg.modules.business.entity.LogisticExpenseDetail;
 import org.jeecg.modules.business.vo.LogisticExpenseProportion;
 import org.jeecg.modules.business.vo.dashboard.PeriodLogisticProfit;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -32,4 +33,6 @@ public interface ILogisticExpenseDetailService extends IService<LogisticExpenseD
     List<String> allCountries();
 
     List<String> allChannels();
+
+    boolean saveBatch(Collection<LogisticExpenseDetail> expenseDetails);
 }

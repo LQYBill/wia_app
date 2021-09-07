@@ -12,6 +12,7 @@ import org.jeecg.modules.business.vo.dashboard.PeriodLogisticProfit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -196,6 +197,12 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
         };
 
         return groupedOrdersExpenseDetail.entrySet().stream().map(ordersToExpense).collect(Collectors.toList());
+    }
+
+    @Transactional(rollbackFor = {Exception.class})
+    @Override
+    public boolean saveBatch(Collection<LogisticExpenseDetail> expenseDetails) {
+        return this.executeBatch((sqlSession) -> logisticExpenseDetailMapper.insertOrMerge(expenseDetails));
     }
 
     @Override
