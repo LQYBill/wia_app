@@ -21,8 +21,8 @@ import lombok.experimental.Accessors;
 /**
  * @Description: 物流开销明细
  * @Author: jeecg-boot
- * @Date: 2021-07-26
- * @Version: V1.1
+ * @Date: 2021-09-06
+ * @Version: V1.2
  */
 @Data
 @TableName("logistic_expense_detail")
@@ -157,12 +157,18 @@ public class LogisticExpenseDetail implements Serializable {
      */
     @Excel(name = "总费用", width = 15)
     @ApiModelProperty(value = "总费用")
-    private java.math.BigDecimal totalFee;
+    private BigDecimal totalFee;
     /**
      * 物流公司ID
      */
     @Excel(name = "物流公司ID", width = 15, dictTable = "logistic_company", dicText = "name", dicCode = "id")
     @Dict(dictTable = "logistic_company", dicText = "name", dicCode = "id")
     @ApiModelProperty(value = "物流公司ID")
-    private java.lang.String logisticCompanyId;
+    private String logisticCompanyId;
+    /**
+     * 货物赔偿
+     */
+    @Excel(name = "货物赔偿", width = 15)
+    @ApiModelProperty(value = "货物赔偿")
+    private BigDecimal compensation;
 }

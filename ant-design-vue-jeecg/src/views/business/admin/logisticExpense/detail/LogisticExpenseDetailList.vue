@@ -222,6 +222,11 @@
             dataIndex: 'logisticCompanyId_dictText'
           },
           {
+            title:'货物赔偿',
+            align:"center",
+            dataIndex: 'compensation'
+          },
+          {
             title: '操作',
             dataIndex: 'action',
             align:"center",
@@ -291,6 +296,7 @@
         fieldList.push({type:'BigDecimal',value:'additionnalFee',text:'附加费用',dictCode:''})
         fieldList.push({type:'BigDecimal',value:'totalFee',text:'总费用',dictCode:''})
         fieldList.push({type:'sel_search',value:'logisticCompanyId',text:'物流公司ID',dictTable:'logistic_company', dictText:'name', dictCode:'id'})
+        fieldList.push({type:'BigDecimal',value:'compensation',text:'货物赔偿',dictCode:''})
         this.superFieldList = fieldList
       }
     }
