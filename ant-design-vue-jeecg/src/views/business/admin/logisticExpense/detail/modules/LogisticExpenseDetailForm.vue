@@ -88,6 +88,11 @@
               <j-search-select-tag v-model="model.logisticCompanyId" dict="logistic_company,name,id"  />
             </a-form-model-item>
           </a-col>
+          <a-col :span="24">
+            <a-form-model-item label="货物赔偿" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="compensation">
+              <a-input-number v-model="model.compensation" placeholder="请输入货物赔偿" style="width: 100%" />
+            </a-form-model-item>
+          </a-col>
         </a-row>
       </a-form-model>
     </j-form-container>

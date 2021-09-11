@@ -30,5 +30,6 @@ FROM full_logistic_expense_detail fled
          RIGHT JOIN platform_order po ON fled.trackingNumber = po.tracking_number
          JOIN shop s ON po.shop_id = s.id
          JOIN platform_order_content poc ON po.id = poc.platform_order_id
+WHERE po.erp_status IN (3, 4)
 GROUP BY po.id, s.erp_code
 ORDER BY s.erp_code;
