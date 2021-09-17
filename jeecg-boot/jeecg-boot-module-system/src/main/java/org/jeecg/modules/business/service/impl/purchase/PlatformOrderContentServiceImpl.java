@@ -2,6 +2,9 @@ package org.jeecg.modules.business.service.impl.purchase;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import lombok.extern.slf4j.Slf4j;
 import org.jeecg.modules.business.controller.UserException;
 import org.jeecg.modules.business.entity.LogisticChannel;
@@ -17,6 +20,8 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -31,13 +36,30 @@ public class PlatformOrderContentServiceImpl extends ServiceImpl<PlatformOrderCo
         return platformOrderContentMapper.getAllWeightsDiscountsServiceFees();
     }
 
+    private LoadingCache<String, LogisticChannel> logisticChannelLoadingCache = CacheBuilder.newBuilder()
+            .maximumSize(1000)
+            .expireAfterWrite(10, TimeUnit.MINUTES)
+            .build(
+                    new CacheLoader<String, LogisticChannel>() {
+                        @Override
+                        public LogisticChannel load(String channelName) {
+                            QueryWrapper<LogisticChannel> queryWrapper = new QueryWrapper<>();
+                            queryWrapper.eq(true, "zh_name", channelName);
+                            return logisticChannelMapper.selectOne(queryWrapper);
+                        }
+                    });
+
     @Override
     public BigDecimal calculateWeight(String channelName, Map<String, Integer> contentMap,
                                       Map<String, BigDecimal> skuRealWeights) throws UserException {
-        QueryWrapper<LogisticChannel> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq(true, "zh_name", channelName);
-
-        LogisticChannel channel = logisticChannelMapper.selectOne(queryWrapper);
+        LogisticChannel channel;
+        try {
+            channel = logisticChannelLoadingCache.get(channelName);
+        } catch (ExecutionException e) {
+            String msg = "Error while retrieving logistic channel " + channelName;
+            log.error(e.getMessage());
+            throw new UserException(msg);
+        }
         if (channel == null) {
             throw new UserException("Can not find channel: " + channelName);
         }
