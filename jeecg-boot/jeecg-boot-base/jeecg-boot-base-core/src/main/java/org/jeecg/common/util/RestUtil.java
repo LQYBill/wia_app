@@ -1,13 +1,17 @@
 package org.jeecg.common.util;
 
 import com.alibaba.fastjson.JSONObject;
+import org.apache.http.conn.ConnectTimeoutException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.springframework.http.*;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Map;
@@ -50,10 +54,23 @@ public class RestUtil {
     private final static RestTemplate RT;
 
     static {
-        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setConnectTimeout(3000);
-        requestFactory.setReadTimeout(3000);
-        RT = new RestTemplate(requestFactory);
+        HttpClient httpClient = HttpClients.custom()
+                .setRetryHandler((exception, executionCount, context) -> {
+                    if (executionCount > 5) {
+                        log.warn("Maximum retries {} reached", 5);
+                        return false;
+                    }
+                    if (exception instanceof SocketTimeoutException || exception instanceof ConnectTimeoutException) {
+                        log.warn("Retry {}", executionCount);
+                        return true;
+                    }
+                    return false;
+                })
+                .build();
+        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpClient);
+        factory.setConnectTimeout(3000);
+        factory.setReadTimeout(10000);
+        RT = new RestTemplate(factory);
         // 解决乱码问题
         RT.getMessageConverters().set(1, new StringHttpMessageConverter(StandardCharsets.UTF_8));
     }
