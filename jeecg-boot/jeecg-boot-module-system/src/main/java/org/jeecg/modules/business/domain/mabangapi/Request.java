@@ -13,6 +13,8 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Date;
 
+import static java.lang.Thread.sleep;
+
 /**
  * This class contains some key information and necessary procedures
  * to send a request body to mabang API, for example: target URL,
@@ -39,13 +41,21 @@ public abstract class Request {
      * @return the response of the body or null, if response
      */
     protected ResponseEntity<String> rawSend() {
+        int attempts = 0;
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.CONTENT_TYPE, "application/json");
 
         String bodyString = generateJsonBodyString(body);
         String signature = authorization(bodyString);
         headers.add("Authorization", signature);
-        return RestUtil.request(URL, METHOD, headers, null, bodyString, String.class);
+        while (attempts++ < 5){
+            try {
+                return RestUtil.request(URL, METHOD, headers, null, bodyString, String.class);
+            } catch (Exception e) {
+                log.error("Request failed on attempt n°" + attempts);
+            }
+        }
+        return null;
     }
 
 
