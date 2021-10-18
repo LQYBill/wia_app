@@ -25,6 +25,17 @@
         ORDER BY effective_date DESC
         LIMIT 1    </select>
 
+    <select id="findByIdDateWeightAndCountry" resultType="org.jeecg.modules.business.entity.LogisticChannelPrice">
+        SELECT lcp.*
+        FROM logistic_channel_price lcp
+        WHERE channel_id = #{channelId}
+          AND weight_range_start &lt;= #{trueWeight}
+          AND weight_range_end &gt;= #{trueWeight}
+          AND effective_country = #{country}
+          AND effective_date &lt;= #{date}
+        ORDER BY effective_date DESC
+        LIMIT 1    </select>
+
     <select id="getAllCountry" resultType="java.lang.String">
         SELECT DISTINCT effective_country
         FROM logistic_channel_price

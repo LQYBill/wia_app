@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,6 +101,36 @@ public class LogisticChannelPriceServiceImpl extends ServiceImpl<LogisticChannel
             throw new UserException("Can't find price for channel {}, shipped at {}, weight {}, country {}",
                     order.getLogisticChannelName(),
                     order.getShippingTime(),
+                    weight,
+                    countryCode
+            );
+        }
+        return price;
+    }
+
+    @Override
+    public LogisticChannelPrice findPriceOfSkuByCountryAndChannelAndDate(String skuId, String countryCode, String channelId, Date date) throws UserException {
+        Map<String, BigDecimal> skuRealWeights = new HashMap<>();
+        for (SkuWeightDiscountServiceFees skuWeightDiscountServiceFees : platformOrderContentService.getAllSKUWeightsDiscountsServiceFees()) {
+            if (skuWeightDiscountServiceFees.getWeight() != null) {
+                skuRealWeights.put(skuWeightDiscountServiceFees.getSkuId(),
+                        skuWeightDiscountServiceFees.getDiscount().multiply(BigDecimal.valueOf(skuWeightDiscountServiceFees.getWeight())));
+            }
+        }
+
+        BigDecimal weight = skuRealWeights.get(skuId);
+
+        LogisticChannelPrice price = logisticChannelPriceMapper.findByIdDateWeightAndCountry(
+                channelId,
+                date,
+                weight,
+                countryCode
+        );
+
+        if (price == null) {
+            throw new UserException("Can't find price for channel {}, shipped at {}, weight {}, country {}",
+                    channelId,
+                    date,
                     weight,
                     countryCode
             );

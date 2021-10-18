@@ -9,6 +9,11 @@ import org.jeecg.modules.business.entity.*;
 import org.jeecg.modules.business.mapper.*;
 import org.jeecg.modules.business.service.*;
 import org.jeecg.modules.business.vo.*;
+import org.jeecg.modules.business.service.IClientService;
+import org.jeecg.modules.business.service.ISkuService;
+import org.jeecg.modules.business.vo.SkuName;
+import org.jeecg.modules.business.vo.SkuQuantity;
+import org.jeecg.modules.business.vo.SkuUpdate;
 import org.jeecg.modules.business.vo.inventory.InventoryRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -54,6 +60,14 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
     private CountryService countryService;
     @Autowired
     private IPlatformOrderContentService platformOrderContentService;
+    @Autowired
+    private ISkuLogisticChoiceService skuLogisticChoiceService;
+    @Autowired
+    private LogisticChannelPriceMapper logisticChannelPriceMapper;
+    @Autowired
+    private LogisticChannelMapper logisticChannelMapper;
+    @Autowired
+    private ClientSkuMapper clientSkuMapper;
 
     @Override
     @Transactional
@@ -212,12 +226,17 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
     }
 
     @Override
+    public List<ClientSku> findSkuForUser(String userId) {
+        return clientSkuMapper.selectByMainId(userId);
+    }
+
+    @Override
     public List<SkuChannelHistory> findHistoryBySkuId(String skuId) {
         Map<String, BigDecimal> skuRealWeights = new HashMap<>();
-        for (SkuWeightDiscount skuWeightsAndDiscount : platformOrderContentService.getAllSKUWeightsAndDiscounts()) {
-            if (skuWeightsAndDiscount.getWeight() != null) {
-                skuRealWeights.put(skuWeightsAndDiscount.getSkuId(),
-                        skuWeightsAndDiscount.getDiscount().multiply(BigDecimal.valueOf(skuWeightsAndDiscount.getWeight())));
+        for (SkuWeightDiscountServiceFees skuWeightDiscountServiceFees : platformOrderContentService.getAllSKUWeightsDiscountsServiceFees()) {
+            if (skuWeightDiscountServiceFees.getWeight() != null) {
+                skuRealWeights.put(skuWeightDiscountServiceFees.getSkuId(),
+                        skuWeightDiscountServiceFees.getDiscount().multiply(BigDecimal.valueOf(skuWeightDiscountServiceFees.getWeight())));
             }
         }
         BigDecimal skuWeight = skuRealWeights.get(skuId);
@@ -282,6 +301,65 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
                     histories.add(channelHistory);
                 }
             }
+        }
+        return histories;
+    }
+
+    @Override
+    public List<SkuChannelHistory> findHistoryBySkuIdsAndCountryCode(List<String> skuIds, String countryCode) {
+        List<SkuChannelHistory> histories = new ArrayList<>();
+
+        Map<String, BigDecimal> skuRealWeights = new HashMap<>();
+        Map<String, String> skuErpCodes = new HashMap<>();
+        for (SkuWeightDiscountServiceFees skuWeightDiscountServiceFees : platformOrderContentService.getAllSKUWeightsDiscountsServiceFees()) {
+            if (skuWeightDiscountServiceFees.getWeight() != null) {
+                skuRealWeights.put(skuWeightDiscountServiceFees.getSkuId(),
+                        skuWeightDiscountServiceFees.getDiscount().multiply(BigDecimal.valueOf(skuWeightDiscountServiceFees.getWeight())));
+                skuErpCodes.put(skuWeightDiscountServiceFees.getSkuId(), skuWeightDiscountServiceFees.getErpCode());
+            }
+        }
+
+        for (String skuId : skuIds) {
+            BigDecimal skuWeight = skuRealWeights.get(skuId);
+            SkuLogisticChoice latestChoice = skuLogisticChoiceService.findLatestChoice(skuId, countryCode);
+            if (latestChoice == null) {
+                //ignore SKUs without logistic choices, probably no longer active
+                continue;
+            }
+            Map<String, Object> condition = new HashMap<>();
+            String channelId = latestChoice.getLogisticChannelId();
+            LogisticChannel logisticChannel = logisticChannelMapper.selectById(channelId);
+            condition.put("channel_id", channelId);
+            List<LogisticChannelPrice> logisticChannelPrices = logisticChannelPriceMapper.selectByMap(condition);
+            List<Date> priceChangeDates = logisticChannelPrices.stream()
+                    .map(LogisticChannelPrice::getEffectiveDate)
+                    .sorted(Comparator.reverseOrder())
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            assert priceChangeDates.size() > 1;
+            Date latestDate = priceChangeDates.get(0);
+            Date secondLatestDate = priceChangeDates.get(1);
+
+            LogisticChannelPrice latestPrice = null;
+            LogisticChannelPrice secondLatestPrice = null;
+            try {
+                latestPrice = logisticChannelPriceService.findPriceOfSkuByCountryAndChannelAndDate(skuId, countryCode, channelId, latestDate);
+                secondLatestPrice = logisticChannelPriceService.findPriceOfSkuByCountryAndChannelAndDate(skuId, countryCode, channelId, secondLatestDate);
+            } catch (UserException e) {
+                log.error("Could not find price", e);
+            }
+
+            if (latestPrice == null) {
+                continue;
+            }
+            assert secondLatestPrice != null;
+            SkuPriceHistory now = new SkuPriceHistory(skuId, latestPrice.getEffectiveDate(), latestPrice.getRegistrationFee(),
+                    latestPrice.getCalUnitPrice().multiply(skuWeight).setScale(2, RoundingMode.UP));
+            SkuPriceHistory then = new SkuPriceHistory(skuId, secondLatestPrice.getEffectiveDate(), secondLatestPrice.getRegistrationFee(),
+                    secondLatestPrice.getCalUnitPrice().multiply(skuWeight).setScale(2, RoundingMode.UP));
+            SkuChannelHistory channelHistory = new SkuChannelHistory(logisticChannel.getEnName(), "", countryCode, skuErpCodes.get(skuId), now, then);
+            histories.add(channelHistory);
         }
         return histories;
     }

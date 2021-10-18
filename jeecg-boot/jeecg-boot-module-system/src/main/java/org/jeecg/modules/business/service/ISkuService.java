@@ -3,11 +3,7 @@ package org.jeecg.modules.business.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.jeecg.modules.business.controller.UserException;
-import org.jeecg.modules.business.entity.ShippingDiscount;
-import org.jeecg.modules.business.entity.Sku;
-import org.jeecg.modules.business.entity.SkuDeclaredValue;
-import org.jeecg.modules.business.entity.SkuPrice;
-import org.jeecg.modules.business.entity.SkuMeasure;
+import org.jeecg.modules.business.entity.*;
 import org.jeecg.modules.business.vo.*;
 import org.jeecg.modules.business.vo.inventory.InventoryRecord;
 
@@ -77,5 +73,9 @@ public interface ISkuService extends IService<Sku> {
 
     List<UserSku> findSkuForCurrentUser();
 
+    List<ClientSku> findSkuForUser(String userId);
+
     List<SkuChannelHistory> findHistoryBySkuId(String skuId) throws UserException;
+
+    List<SkuChannelHistory> findHistoryBySkuIdsAndCountryCode(List<String> skuIds, String countryCode) throws UserException;
 }

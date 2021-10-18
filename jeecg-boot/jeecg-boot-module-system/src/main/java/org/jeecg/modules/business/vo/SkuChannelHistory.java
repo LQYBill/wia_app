@@ -13,7 +13,7 @@ public class SkuChannelHistory {
 
     private final String englishCountryName;
 
-    private final String chineseCountryName;
+    private final String sku;
 
     private final SkuPriceHistory now;
 
