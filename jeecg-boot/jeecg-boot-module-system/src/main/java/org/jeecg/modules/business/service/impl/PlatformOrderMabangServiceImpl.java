@@ -131,7 +131,7 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
             order.getOrderItems().forEach(
                     item -> {
                         item.setPlatformOrderId(order.getId());
-                        item.setErpStatus(order.getStatus());
+                        item.resolveStatus(order.getStatus());
                     }
             );
             allNewItemsOfOldItems.addAll(order.getOrderItems());

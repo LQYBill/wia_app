@@ -24,5 +24,26 @@ public class OrderItem {
     @JSONField(name = "originOrderId")
     private String originOrderId;
 
+    /**
+     * Status :
+     * 2 = Normal
+     * 4 = Removed
+     */
+    @JSONField(name = "status")
+    private String status;
+
     private String erpStatus;
+
+    /**
+     * Resolve order item's status by the following rule :
+     * If the item's status = 4 (removed), then the item is obsolete, otherwise the item will inherit the order's status
+     * @param orderStatus Status code of the order
+     */
+    public void resolveStatus(String orderStatus) {
+        if (this.status.equals("4")) {
+            this.erpStatus = OrderStatus.Obsolete.getCode();
+        } else {
+            this.erpStatus = orderStatus;
+        }
+    }
 }
