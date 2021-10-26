@@ -132,7 +132,6 @@
   import { JeecgListMixin } from '@/mixins/JeecgListMixin'
   import PlatformOrderModal from './modules/PlatformOrderModal'
   import PlatformOrderContentSubTable from './subTables/PlatformOrderContentSubTable'
-  import {filterMultiDictText} from '@/components/dict/JDictSelectUtil'
   import '@/assets/less/TableExpand.less'
 
   export default {

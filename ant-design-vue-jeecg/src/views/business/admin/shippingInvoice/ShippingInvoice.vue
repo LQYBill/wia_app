@@ -110,7 +110,6 @@ export default {
   data() {
     return {
       queryParam: {},
-      // customerList:[{"id":"111111","surname":"TEST","name":"one","invoiceEntityName":"one TEST Invoice Name","codeName":"customerOne","email":"123123123@163.com","phone":"123123123","invoiceAddress":"testAddress1","currency":0,"discount":1.0,"createBy":null,"createTime":null,"updateBy":null,"updateTime":null},{"id":"222222","surname":"REAL","name":"two","invoiceEntityName":"two REAL Invoice Name","codeName":"customerTwo","email":"321321321@qq.com","phone":"321321321","invoiceAddress":"testAddress2","currency":1,"discount":1.0,"createBy":null,"createTime":null,"updateBy":null,"updateTime":null}],
       customerList: [],
       /**
        *  available shops, array of
