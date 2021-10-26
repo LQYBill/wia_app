@@ -2,14 +2,14 @@
   <div class="page-header-index-wide">
     <a-row :gutter="24">
       <a-col :sm="24" :md="12" :xl="6" :style="{ marginBottom: '24px' }">
-        <chart-card :loading="loading" title="订单量To be translated" :total="8846 | NumberFormat">
-          <a-tooltip title="指标说明To be translated" slot="action">
+        <chart-card :loading="loading" title="订单量" :total="8846 | NumberFormat">
+          <a-tooltip title="指标说明" slot="action">
             <a-icon type="info-circle-o"/>
           </a-tooltip>
           <div>
             <mini-area/>
           </div>
-          <template slot="footer">日订单量To be translated<span> {{ '1234' | NumberFormat }}</span></template>
+          <template slot="footer">日订单量<span> {{ '1234' | NumberFormat }}</span></template>
         </chart-card>
       </a-col>
     </a-row>
