@@ -34,10 +34,7 @@ import org.springframework.web.servlet.ModelAndView;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -109,7 +106,9 @@ public class ClientController {
      */
     @GetMapping(value = "/all")
     public Result<List<Client>> all(){
-        return Result.OK(clientService.list());
+        List<Client> list = clientService.list();
+        list.sort(Comparator.comparing(Client::getInternalCode));
+        return Result.OK(list);
     }
 
     /**
