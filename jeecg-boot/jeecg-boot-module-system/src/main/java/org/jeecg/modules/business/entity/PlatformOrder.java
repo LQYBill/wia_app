@@ -180,9 +180,4 @@ public class PlatformOrder implements Serializable {
     @ApiModelProperty(value = "ERP中状态")
     private String erpStatus;
 
-    public BigDecimal totalFee() {
-        // TODO to finish
-        return null;
-    }
-
 }
