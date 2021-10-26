@@ -27,7 +27,6 @@ public interface PlatformOrderContentMapper extends BaseMapper<PlatformOrderCont
 
     List<ClientPlatformOrderContent> selectClientVersionByMainId(@Param("mainId") String mainId);
 
-
     /**
      * Search order contents of a list of order
      *
@@ -36,6 +35,13 @@ public interface PlatformOrderContentMapper extends BaseMapper<PlatformOrderCont
      */
     List<SkuQuantity> searchOrderContent(List<String> orderIDList);
 
+    /**
+     * Search order contents of orders
+     *
+     * @param orderIds Order IDs
+     * @return order contents
+     */
+    List<PlatformOrderContent> fetchOrderContent(List<String> orderIds);
 
     List<SkuDetail> searchSkuDetail(List<String> skuIDs);
 

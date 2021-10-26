@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 /**
  * This class represent the invoice file needed in business process, since the generation of this file
- * need complex data, instance of class can only be created by it's factory.
+ * need complex data, instance of class can only be created by its factory.
  */
 public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Object, BigDecimal> {
     private final Map<PlatformOrder, List<PlatformOrderContent>> ordersToContent;

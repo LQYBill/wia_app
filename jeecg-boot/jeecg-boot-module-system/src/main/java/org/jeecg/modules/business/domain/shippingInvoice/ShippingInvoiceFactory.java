@@ -30,6 +30,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static cn.hutool.core.date.DateTime.now;
+
 @Slf4j
 @Component
 public class ShippingInvoiceFactory {
@@ -87,9 +89,76 @@ public class ShippingInvoiceFactory {
     }
 
     /**
-     * Creates a invoice based for a client, a list of shops, a date range.
+     * Creates a pre-shipping invoice for a client
      * <p>
-     * To generate a invoice, it
+     * To generate an invoice, it
+     * <ol>
+     * <li>Search orders and their contents by IDs</li>
+     * <li>Generate a new invoice code</li>
+     * <li>Find propre logistic channel price for each order </li>
+     * <li>Update prices of orders and their contents</li>
+     * <li>Generate a invoice</li>
+     * <li>Update invoiced their orders and contents to DB</li>
+     * </ol>
+     *
+     * @param customerId the customer id
+     * @param ordersIds  the list of order IDs
+     * @return the generated invoice
+     * @throws UserException if package used by the invoice can not or find more than 1 logistic
+     *                       channel price, this exception will be thrown.
+     */
+    @Transactional
+    public ShippingInvoice createPreShippingInvoice(String customerId, List<String> ordersIds) throws UserException {
+        log.info("Creating a invoice with arguments:\n client ID: {}, order IDs: {}]", customerId, ordersIds);
+        // find orders and their contents of the invoice
+        Map<PlatformOrder, List<PlatformOrderContent>> uninvoicedOrderToContent = platformOrderService.fetchOrderData(ordersIds);
+        Set<PlatformOrder> platformOrders = uninvoicedOrderToContent.keySet();
+        List<String> shopIds = platformOrders.stream()
+                .map(PlatformOrder::getShopId)
+                .distinct()
+                .collect(Collectors.toList());
+        log.info("Orders to be invoiced: {}", uninvoicedOrderToContent);
+        return createInvoice(customerId, shopIds, uninvoicedOrderToContent, "Pre-Shipping fees");
+    }
+
+    private void calculateAndUpdateContentFees(Map<String, BigDecimal> skuRealWeights, Map<String, BigDecimal> skuServiceFees, PlatformOrder uninvoicedOrder, BigDecimal contentWeight, BigDecimal totalShippingFee, BigDecimal clientVatPercentage, Map<PlatformOrderContent, BigDecimal> contentDeclaredValueMap, BigDecimal totalDeclaredValue, BigDecimal totalVAT, boolean vatApplicable, PlatformOrderContent content) {
+        String skuId = content.getSkuId();
+        BigDecimal realWeight = skuRealWeights.get(skuId);
+        // Each content will share the total shipping fee proportionally, because minimum price and unit price
+        // vary with total weight, so calculating each content's fee with its weight is just wrong
+        content.setShippingFee(realWeight.compareTo(BigDecimal.ZERO) == 0 ? BigDecimal.ZERO :
+                totalShippingFee.multiply(BigDecimal.valueOf(content.getQuantity()))
+                        .multiply(realWeight)
+                        .divide(contentWeight, RoundingMode.UP)
+                        .setScale(2, RoundingMode.UP)
+        );
+        content.setServiceFee(skuServiceFees.get(skuId)
+                .multiply(BigDecimal.valueOf(content.getQuantity()))
+                .setScale(2, RoundingMode.UP)
+        );
+        BigDecimal vat = BigDecimal.ZERO;
+        if (vatApplicable) {
+            BigDecimal contentDeclaredValue = contentDeclaredValueMap.get(content);
+            // Total VAT greater than 0 means total declared value is less than minimum declared value
+            // VAT of content must be re-adjusted proportionally
+            if (totalVAT.compareTo(BigDecimal.ZERO) > 0) {
+                log.info("VAT re-adjusted for SKU : {} of order {}", content.getSkuId(), uninvoicedOrder.getId());
+                vat = totalVAT.multiply(contentDeclaredValue)
+                        .divide(totalDeclaredValue, RoundingMode.UP)
+                        .setScale(2, RoundingMode.UP);
+            } else {
+                vat = contentDeclaredValue
+                        .multiply(clientVatPercentage)
+                        .setScale(2, RoundingMode.UP);
+            }
+        }
+        content.setVat(vat);
+    }
+
+    /**
+     * Creates an invoice based for a client, a list of shops, a date range.
+     * <p>
+     * To generate an invoice, it
      * <ol>
      * <li>Search orders and their contents based on shop and date range</li>
      * <li>Generate a new invoice code</li>
@@ -115,8 +184,40 @@ public class ShippingInvoiceFactory {
         );
         // find orders and their contents of the invoice
         Map<PlatformOrder, List<PlatformOrderContent>> uninvoicedOrderToContent = platformOrderService.findUninvoicedOrders(shopIds, begin, end);
-        log.info("Orders to be invoiced: {}", uninvoicedOrderToContent);
-        if (uninvoicedOrderToContent == null) {
+        String subject = String.format(
+                "Shipping fees from %s to %s",
+                SUBJECT_FORMAT.format(begin),
+                SUBJECT_FORMAT.format(end)
+        );
+        return createInvoice(customerId, shopIds, uninvoicedOrderToContent, subject);
+    }
+
+    /**
+     * Creates an invoice based for a client, a list of shops, a date range.
+     * <p>
+     * To generate an invoice, it
+     * <ol>
+     * <li>Search orders and their contents based on shop and date range</li>
+     * <li>Generate a new invoice code</li>
+     * <li>Find propre logistic channel price for each order </li>
+     * <li>Update prices of orders and their contents</li>
+     * <li>Generate a invoice</li>
+     * <li>Update invoiced their orders and contents to DB</li>
+     * </ol>
+     *
+     * @param customerId Customer ID
+     * @param shopIds Shop IDs
+     * @param subject Invoice subject
+     * @return the generated invoice
+     * @throws UserException if package used by the invoice can not or find more than 1 logistic
+     *                       channel price, this exception will be thrown.
+     */
+    @Transactional
+    public ShippingInvoice createInvoice(String customerId, List<String> shopIds,
+                                         Map<PlatformOrder, List<PlatformOrderContent>> orderAndContent,
+                                         String subject) throws UserException {
+        log.info("Orders to be invoiced: {}", orderAndContent);
+        if (orderAndContent == null) {
             throw new UserException("None platform order in the selected period!");
         }
         Map<String, BigDecimal> skuRealWeights = new HashMap<>();
@@ -136,8 +237,8 @@ public class ShippingInvoiceFactory {
         String invoiceCode = generateInvoiceCode();
         log.info("New invoice code: {}", invoiceCode);
         // find logistic channel price for each order based on its content
-        for (PlatformOrder uninvoicedOrder : uninvoicedOrderToContent.keySet()) {
-            List<PlatformOrderContent> contents = uninvoicedOrderToContent.get(uninvoicedOrder);
+        for (PlatformOrder uninvoicedOrder : orderAndContent.keySet()) {
+            List<PlatformOrderContent> contents = orderAndContent.get(uninvoicedOrder);
             if (contents.size() == 0) {
                 throw new UserException("Order: {} doesn't have content", uninvoicedOrder.getPlatformOrderId());
             }
@@ -176,50 +277,16 @@ public class ShippingInvoiceFactory {
                 totalVAT = calculateTotalVat(totalDeclaredValue, clientVatPercentage, minimumDeclaredValue);
             }
             for (PlatformOrderContent content : contents) {
-                String skuId = content.getSkuId();
-                BigDecimal realWeight = skuRealWeights.get(skuId);
-                // Each content will share the total shipping fee proportionally, because minimum price and unit price
-                // vary with total weight, so calculating each content's fee with its weight is just wrong
-                content.setShippingFee(realWeight.compareTo(BigDecimal.ZERO) == 0 ? BigDecimal.ZERO :
-                        totalShippingFee.multiply(BigDecimal.valueOf(content.getQuantity()))
-                                .multiply(realWeight)
-                                .divide(contentWeight, RoundingMode.UP)
-                                .setScale(2, RoundingMode.UP)
-                );
-                content.setServiceFee(skuServiceFees.get(skuId)
-                        .multiply(BigDecimal.valueOf(content.getQuantity()))
-                        .setScale(2, RoundingMode.UP)
-                );
-                BigDecimal vat = BigDecimal.ZERO;
-                if (vatApplicable) {
-                    BigDecimal contentDeclaredValue = contentDeclaredValueMap.get(content);
-                    // Total VAT greater than 0 means total declared value is less than minimum declared value
-                    // VAT of content must be re-adjusted proportionally
-                    if (totalVAT.compareTo(BigDecimal.ZERO) > 0) {
-                        log.info("VAT re-adjusted for SKU : {} of order {}", content.getSkuId(), uninvoicedOrder.getId());
-                        vat = totalVAT.multiply(contentDeclaredValue)
-                                .divide(totalDeclaredValue, RoundingMode.UP)
-                                .setScale(2, RoundingMode.UP);
-                    } else {
-                        vat = contentDeclaredValue
-                                .multiply(clientVatPercentage)
-                                .setScale(2, RoundingMode.UP);
-                    }
-                }
-                content.setVat(vat);
+                calculateAndUpdateContentFees(skuRealWeights, skuServiceFees, uninvoicedOrder, contentWeight,
+                        totalShippingFee, clientVatPercentage, contentDeclaredValueMap, totalDeclaredValue, totalVAT,
+                        vatApplicable, content);
             }
         }
-
-        String subject = String.format(
-                "Shipping fees from %s to %s",
-                SUBJECT_FORMAT.format(begin),
-                SUBJECT_FORMAT.format(end)
-        );
         BigDecimal eurToUsd = exchangeRatesMapper.getLatestExchangeRate("EUR", "USD");
-        ShippingInvoice invoice = new ShippingInvoice(client, invoiceCode, subject, uninvoicedOrderToContent, eurToUsd);
+        ShippingInvoice invoice = new ShippingInvoice(client, invoiceCode, subject, orderAndContent, eurToUsd);
         // update them to DB after invoiced
-        platformOrderService.updateBatchById(uninvoicedOrderToContent.keySet());
-        platformOrderContentService.updateBatchById(uninvoicedOrderToContent.values()
+        platformOrderService.updateBatchById(orderAndContent.keySet());
+        platformOrderContentService.updateBatchById(orderAndContent.values()
                 .stream()
                 .flatMap(List::stream)
                 .collect(Collectors.toList()));
@@ -239,11 +306,12 @@ public class ShippingInvoiceFactory {
     private BigDecimal calculateTotalDeclaredValue(PlatformOrder order, List<PlatformOrderContent> contents,
                                                    Map<PlatformOrderContent, BigDecimal> contentDeclaredValueMap) throws UserException {
         BigDecimal totalDeclaredValue = BigDecimal.ZERO;
+        Date shippingTime = order.getShippingTime() == null ? now().toSqlDate() : order.getShippingTime();
         for (PlatformOrderContent content : contents) {
             String skuId = content.getSkuId();
             BigDecimal declaredValueForSKU;
             try {
-                declaredValueForSKU = declaredValueCache.get(Pair.of(skuId, order.getShippingTime()));
+                declaredValueForSKU = declaredValueCache.get(Pair.of(skuId, shippingTime));
             } catch (ExecutionException e) {
                 String msg = "Error while retrieving declared value of SKU " + skuId + " of order "
                         + content.getPlatformOrderId();
@@ -264,9 +332,11 @@ public class ShippingInvoiceFactory {
             /* Find channel price */
             Country country = countryService.findByEnName(uninvoicedOrder.getCountry());
 
+            Date shippingTime = uninvoicedOrder.getShippingTime() == null ? now().toSqlDate() : uninvoicedOrder.getShippingTime();
             price = logisticChannelPriceMapper.findBy(
                     uninvoicedOrder.getLogisticChannelName(),
-                    uninvoicedOrder.getShippingTime(),
+                    // For orders without shipping time (pre-shipping), use today
+                    shippingTime,
                     contentWeight,
                     country.getCode()
             );
@@ -277,7 +347,7 @@ public class ShippingInvoiceFactory {
                 String msg = String.format(
                         format,
                         uninvoicedOrder.getPlatformOrderId(),
-                        uninvoicedOrder.getShippingTime(),
+                        shippingTime,
                         contentWeight,
                         uninvoicedOrder.getLogisticChannelName(),
                         uninvoicedOrder.getCountry()
@@ -298,7 +368,7 @@ public class ShippingInvoiceFactory {
      * Generate a new invoice code, it is generated based on latest invoice's code.
      * <p>
      * If there is no invoice this month, the new code will be N°yyyy-MM-2001,
-     * otherwise, the new code will be N°yyyy-MM-No, where "No" is the "No" part of latest invoice's code + 1.
+     * otherwise, the new code will be N°yyyy-MM-No, where "No" is the "No" part of last invoice's code + 1.
      *
      * @return the invoice code.
      */

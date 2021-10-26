@@ -70,7 +70,7 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
     OrderQuantity queryOrderQuantities();
 
     /**
-     * Find all uninvoiced platform orders and its content of certains shops in a period.
+     * Find all uninvoiced platform orders and its content of certain shops in a period.
      *
      * @param shopIds list of the shops
      * @param begin   begin of the period
@@ -78,6 +78,14 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
      * @return list of uninvoiced orders
      */
     Map<PlatformOrder, List<PlatformOrderContent>> findUninvoicedOrders(List<String> shopIds, Date begin, Date end);
+
+    /**
+     * Fetch data for orders and their contents
+     *
+     * @param orderIds order IDs
+     * @return list of pre-shipping orders and their contents
+     */
+    Map<PlatformOrder, List<PlatformOrderContent>> fetchOrderData(List<String> orderIds);
 
     /**
      * Find previous invoice code
@@ -88,7 +96,7 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
 
     /**
      * Find platform order quantity of each day for current login user.
-     * If he's client, only orders that belonged to him will be take into count, otherwise all orders will be included.
+     * If he's client, only orders that belonged to him will be taken into account, otherwise all orders will be included.
      *
      * @return platform order quantity of each day.
      */

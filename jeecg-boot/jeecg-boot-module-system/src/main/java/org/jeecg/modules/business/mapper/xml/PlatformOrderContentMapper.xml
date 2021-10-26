@@ -46,6 +46,14 @@
         GROUP BY sku_id
     </select>
 
+    <select id="fetchOrderContent" parameterType="java.lang.String"
+            resultType="org.jeecg.modules.business.entity.PlatformOrderContent">
+        SELECT *
+        FROM platform_order_content
+        WHERE platform_order_id IN
+        <foreach collection="list" index="i" item="item" open="(" separator="," close=")">#{item}</foreach>
+    </select>
+
     <select id="searchSkuDetail"
             resultType="org.jeecg.modules.business.vo.SkuDetail"
             resultMap="skuDetailResultMap">
@@ -54,7 +62,8 @@
         WHERE sku_id IN
         <foreach collection="list" index="i" item="item" open="(" separator="," close=")">#{item}</foreach>
     </select>
-    <select id="getAllWeightsDiscountsServiceFees" resultType="org.jeecg.modules.business.vo.SkuWeightDiscountServiceFees">
+    <select id="getAllWeightsDiscountsServiceFees"
+            resultType="org.jeecg.modules.business.vo.SkuWeightDiscountServiceFees">
         SELECT *
         FROM sku_weight_discount_service_fees
     </select>

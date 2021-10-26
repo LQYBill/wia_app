@@ -267,6 +267,15 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
     }
 
     @Override
+    public Map<PlatformOrder, List<PlatformOrderContent>> fetchOrderData(List<String> orderIds) {
+        List<PlatformOrder> orderList = platformOrderMap.selectBatchIds(orderIds);
+        List<PlatformOrderContent> orderContents = platformOrderContentMap.fetchOrderContent(orderIds);
+        Map<String, PlatformOrder> orderMap = orderList.stream().collect(toMap(PlatformOrder::getId, Function.identity()));
+        return orderContents.stream().collect(groupingBy(platformOrderContent -> orderMap.get(platformOrderContent.getPlatformOrderId())));
+    }
+
+
+    @Override
     public String findPreviousInvoice() {
         return platformOrderMap.findPreviousInvoice();
     }

@@ -7,10 +7,8 @@ import org.jeecg.modules.business.domain.shippingInvoice.ShippingInvoice;
 import org.jeecg.modules.business.domain.shippingInvoice.ShippingInvoiceFactory;
 import org.jeecg.modules.business.entity.ShippingInvoiceEntity;
 import org.jeecg.modules.business.mapper.*;
-import org.jeecg.modules.business.vo.FactureDetail;
-import org.jeecg.modules.business.vo.InvoiceMetaData;
-import org.jeecg.modules.business.vo.Period;
-import org.jeecg.modules.business.vo.ShippingInvoiceParam;
+import org.jeecg.modules.business.vo.*;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -84,14 +82,68 @@ public class PlatformOrderShippingInvoiceService {
             "N° de facture"
     };
 
-    public Period getValidePeriod(List<String> shopIDs) {
+    public Period getValidPeriod(List<String> shopIDs) {
         Date begin = platformOrderMapper.findEarliestUninvoicedPlatformOrder(shopIDs);
         Date end = platformOrderMapper.findLatestUninvoicedPlatformOrder(shopIDs);
         return new Period(begin, end);
     }
 
     /**
-     * Make a invoice based on parameters.
+     * Make a pre-shipping invoice for specified orders
+     *
+     * @param param the parameters to make the invoice
+     * @return name of the invoice, can be used to in {@code getInvoiceBinary}.
+     * @throws UserException  exception due to error of user input, message will contain detail
+     * @throws ParseException exception because of format of "start" and "end" date does not follow
+     *                        pattern: "yyyy-MM-dd"
+     * @throws IOException    exception related to invoice file IO.
+     */
+    @Transactional
+    public InvoiceMetaData makeInvoice(PreShippingInvoiceParam param) throws UserException, ParseException, IOException {
+        // Creates factory
+        ShippingInvoiceFactory factory = new ShippingInvoiceFactory(
+                platformOrderService,
+                clientMapper,
+                shopMapper,
+                logisticChannelPriceMapper,
+                platformOrderContentService,
+                skuDeclaredValueService,
+                countryService,
+                exchangeRatesMapper);
+        // Creates invoice by factory
+        ShippingInvoice invoice = factory.createPreShippingInvoice(param.clientID(), param.orderIds());
+        return getInvoiceMetaData(invoice);
+    }
+
+    @NotNull
+    private InvoiceMetaData getInvoiceMetaData(ShippingInvoice invoice) throws IOException {
+        // Chooses invoice template based on client's preference on currency
+        Path src;
+        if (invoice.client().getCurrency().equals("USD")) {
+            src = Paths.get(INVOICE_TEMPLATE_US);
+        } else {
+            src = Paths.get(INVOICE_TEMPLATE_EU);
+        }
+        // Writes invoice content to a new excel file
+        String filename = "Invoice N°" + invoice.code() + " (" + invoice.client().getInvoiceEntity() + ").xlsx";
+        Path out = Paths.get(INVOICE_DIR, filename);
+        if (!Files.exists(out, LinkOption.NOFOLLOW_LINKS)) {
+            Files.copy(src, out);
+            invoice.toExcelFile(out);
+        }
+        // save to DB
+        ShippingInvoiceEntity shippingInvoiceEntity = ShippingInvoiceEntity.of(
+                invoice.code(),
+                invoice.totalAmount(),
+                invoice.reducedAmount(),
+                invoice.paidAmount()
+        );
+        shippingInvoiceMapper.save(shippingInvoiceEntity);
+        return new InvoiceMetaData(filename, invoice.code());
+    }
+
+    /**
+     * Make an invoice based on parameters.
      *
      * @param param the parameters to make the invoice
      * @return identifiant name of the invoice, can be used to in {@code getInvoiceBinary}.
@@ -119,28 +171,7 @@ public class PlatformOrderShippingInvoiceService {
                 param.end()
         );
         // Chooses invoice template based on client's preference on currency
-        Path src;
-        if (invoice.client().getCurrency().equals("USD")) {
-            src = Paths.get(INVOICE_TEMPLATE_US);
-        } else {
-            src = Paths.get(INVOICE_TEMPLATE_EU);
-        }
-        // Writes invoice content to a new excel file
-        String filename = "Invoice N°" + invoice.code() + " (" + invoice.client().getInvoiceEntity() + ").xlsx";
-        Path out = Paths.get(INVOICE_DIR, filename);
-        if (!Files.exists(out, LinkOption.NOFOLLOW_LINKS)) {
-            Files.copy(src, out);
-            invoice.toExcelFile(out);
-        }
-        // save to DB
-        ShippingInvoiceEntity shippingInvoiceEntity = ShippingInvoiceEntity.of(
-                invoice.code(),
-                invoice.totalAmount(),
-                invoice.reducedAmount(),
-                invoice.paidAmount()
-        );
-        shippingInvoiceMapper.save(shippingInvoiceEntity);
-        return new InvoiceMetaData(filename, invoice.code());
+        return getInvoiceMetaData(invoice);
     }
 
     /**

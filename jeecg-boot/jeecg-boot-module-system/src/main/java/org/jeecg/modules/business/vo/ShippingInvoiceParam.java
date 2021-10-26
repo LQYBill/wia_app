@@ -1,13 +1,12 @@
 package org.jeecg.modules.business.vo;
 
-import lombok.SneakyThrows;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
 public class ShippingInvoiceParam {
+
     private final String clientID;
 
     private final List<String> shopIDs;
@@ -43,7 +42,7 @@ public class ShippingInvoiceParam {
 
     @Override
     public String toString() {
-        return "ShippingInvoiceParam{" +
+        return "ShippingInvoiceParam{" + clientID +
                 ", shopIDs=" + shopIDs +
                 ", start=" + start +
                 ", end=" + end +
