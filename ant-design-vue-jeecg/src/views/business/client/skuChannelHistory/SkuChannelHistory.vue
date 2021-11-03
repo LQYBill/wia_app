@@ -283,7 +283,7 @@ export default {
         }
       } else {
         let diff = (now['shippingFee'] - old['shippingFee']).toFixed(2)
-        let diff_per = ((diff / old['shippingFee']) * 100).toFixed(2)
+        let diff_per = ((diff / (old['shippingFee'] + old['registrationFee'])) * 100).toFixed(2)
         return {
           i: i,
           sku: sku,
