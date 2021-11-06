@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -62,7 +63,7 @@ public class InvoiceController {
                                                @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize) {
         QueryWrapper<PlatformOrder> queryWrapper = QueryGenerator.initQueryWrapper(platformOrder, null);
         LambdaQueryWrapper<PlatformOrder> lambdaQueryWrapper = queryWrapper.lambda();
-        lambdaQueryWrapper.eq(PlatformOrder::getErpStatus, OrderStatus.Pending.getCode());
+        lambdaQueryWrapper.in(PlatformOrder::getErpStatus, Arrays.asList(OrderStatus.Pending.getCode(), OrderStatus.Preparing.getCode()));
         lambdaQueryWrapper.isNull(PlatformOrder::getShippingInvoiceNumber);
         Page<PlatformOrder> page = new Page<>(pageNo, pageSize);
         IPage<PlatformOrder> pageList;
