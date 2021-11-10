@@ -184,7 +184,8 @@ export default {
           align: 'center',
           dataIndex: 'invoiceEntity',
           ellipsis: true,
-          width: 50
+          width: 50,
+          sorter: true
         },
         {
           title: '邮箱',
@@ -263,6 +264,12 @@ export default {
           dataIndex: 'vatPercentage',
         },
         {
+          title:'是否活跃',
+          align:"center",
+          dataIndex: 'active_dictText',
+          sorter: true,
+        },
+        {
           title: '操作',
           dataIndex: 'action',
           align: 'center',
@@ -304,25 +311,26 @@ export default {
     },
     getSuperFieldList() {
       let fieldList = [];
-      fieldList.push({type: 'string', value: 'surname', text: '姓', dictCode: ''})
-      fieldList.push({type: 'string', value: 'firstName', text: '名', dictCode: ''})
-      fieldList.push({type: 'string', value: 'internalCode', text: '简称', dictCode: ''})
-      fieldList.push({type: 'string', value: 'invoiceEntity', text: '发票实体', dictCode: ''})
-      fieldList.push({type: 'string', value: 'email', text: '邮箱', dictCode: ''})
-      fieldList.push({type: 'string', value: 'phone', text: '电话', dictCode: ''})
-      fieldList.push({type: 'string', value: 'streetNumber', text: '门牌号码', dictCode: ''})
-      fieldList.push({type: 'string', value: 'streetName', text: '街道名', dictCode: ''})
-      fieldList.push({type: 'string', value: 'additionalAddress', text: '备用地址', dictCode: ''})
-      fieldList.push({type: 'string', value: 'postcode', text: '邮编', dictCode: ''})
-      fieldList.push({type: 'string', value: 'city', text: '城市', dictCode: ''})
-      fieldList.push({type:'sel_search',value:'country',text:'国家',dictTable:'country', dictText:'name_en', dictCode:'id'})
-      fieldList.push({type: 'string', value: 'currency', text: '货币', dictCode: ''})
-      fieldList.push({type: 'BigDecimal', value: 'shippingDiscount', text: '运费折扣', dictCode: ''})
-      fieldList.push({type: 'string', value: 'companyIdType', text: '公司识别码类型', dictCode: ''})
-      fieldList.push({type: 'string', value: 'companyIdValue', text: '公司识别码数值', dictCode: ''})
-      fieldList.push({type: 'BigDecimal', value: 'balance', text: '账户余额', dictCode: ''})
+      fieldList.push({type:'string',value:'surname',text:'姓',dictCode:''})
+      fieldList.push({type:'string',value:'firstName',text:'名',dictCode:''})
+      fieldList.push({type:'string',value:'internalCode',text:'简称',dictCode:''})
+      fieldList.push({type:'string',value:'invoiceEntity',text:'发票实体',dictCode:''})
+      fieldList.push({type:'string',value:'email',text:'邮箱',dictCode:''})
+      fieldList.push({type:'string',value:'phone',text:'电话',dictCode:''})
+      fieldList.push({type:'string',value:'streetNumber',text:'门牌号码',dictCode:''})
+      fieldList.push({type:'string',value:'streetName',text:'街道名',dictCode:''})
+      fieldList.push({type:'string',value:'additionalAddress',text:'备用地址',dictCode:''})
+      fieldList.push({type:'string',value:'postcode',text:'邮编',dictCode:''})
+      fieldList.push({type:'string',value:'city',text:'城市',dictCode:''})
+      fieldList.push({type:'sel_search',value:'country',text:'国家',dictTable:'country', dictText:'name_en', dictCode:'name_en'})
+      fieldList.push({type:'string',value:'currency',text:'货币',dictCode:''})
+      fieldList.push({type:'BigDecimal',value:'shippingDiscount',text:'运费折扣',dictCode:''})
+      fieldList.push({type:'string',value:'companyIdType',text:'公司识别码类型',dictCode:''})
+      fieldList.push({type:'string',value:'companyIdValue',text:'公司识别码数值',dictCode:''})
+      fieldList.push({type:'BigDecimal',value:'balance',text:'账户余额',dictCode:''})
       fieldList.push({type:'string',value:'iossNumber',text:'IOSS号码',dictCode:''})
       fieldList.push({type:'BigDecimal',value:'vatPercentage',text:'VAT代缴比例',dictCode:''})
+      fieldList.push({type:'string',value:'active',text:'是否活跃',dictCode:'yn'})
       this.superFieldList = fieldList
     }
   }

@@ -19,8 +19,8 @@ import java.math.BigDecimal;
 /**
  * @Description: 客户
  * @Author: jeecg-boot
- * @Date: 2021-06-29
- * @Version: V1.1
+ * @Date: 2021-11-10
+ * @Version: V1.2
  */
 @ApiModel(value = "client对象", description = "客户")
 @Data
@@ -166,13 +166,20 @@ public class Client implements Serializable {
      */
     @Excel(name = "IOSS号码", width = 15)
     @ApiModelProperty(value = "IOSS号码")
-    private java.lang.String iossNumber;
+    private String iossNumber;
     /**
      * VAT代缴比例
      */
     @Excel(name = "VAT代缴比例", width = 15)
     @ApiModelProperty(value = "VAT代缴比例")
-    private java.math.BigDecimal vatPercentage;
+    private BigDecimal vatPercentage;
+    /**
+     * 是否活跃
+     */
+    @Excel(name = "是否活跃", width = 15, dicCode = "yn")
+    @Dict(dicCode = "yn")
+    @ApiModelProperty(value = "是否活跃")
+    private String active;
 
     public String fullName() {
         return firstName + " " + surname;
