@@ -61,7 +61,7 @@
           </a-col>
           <a-col :xs="24" :sm="12">
             <a-form-model-item label="国家" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="country">
-              <j-search-select-tag v-model="model.country" dict="country,name_en,id" />
+              <j-search-select-tag v-model="model.country" dict="country,name_en,name_en" />
             </a-form-model-item>
           </a-col>
           <a-col :xs="24" :sm="12">
@@ -98,6 +98,11 @@
             <a-form-model-item label="VAT代缴比例" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="vatPercentage">
               <a-input-number v-model="model.vatPercentage" placeholder="请输入VAT代缴比例" style="width: 100%" />
             </a-form-model-item>
+          </a-col>
+          <a-col :span="24" >
+             <a-form-model-item label="是否活跃" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="active">
+               <j-dict-select-tag type="list" v-model="model.active" dictCode="yn" placeholder="请选择是否活跃" />
+             </a-form-model-item>
           </a-col>
         </a-row>
       </a-form-model>
