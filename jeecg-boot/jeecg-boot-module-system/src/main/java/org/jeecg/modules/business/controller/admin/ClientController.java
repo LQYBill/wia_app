@@ -106,8 +106,10 @@ public class ClientController {
      */
     @GetMapping(value = "/all")
     public Result<List<Client>> all(){
-        List<Client> list = clientService.list();
-        list.sort(Comparator.comparing(Client::getInternalCode));
+        List<Client> list = clientService.list().stream()
+                .filter(client -> client.getActive().equals("1"))
+                .sorted(Comparator.comparing(Client::getInternalCode))
+                .collect(Collectors.toList());
         return Result.OK(list);
     }
 
