@@ -69,13 +69,15 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
                 retrievedOrder.setId(orderInDatabase.getId());
                 // For orders that pass from Shipped to Completed, we must NOT delete then re-insert their contents
                 // Because we would lose all calculated fees (shipping, vat, service)
-                if (retrievedOrder.getStatus().equals(OrderStatus.Completed.getCode())){
+                if (retrievedOrder.getStatus().equals(OrderStatus.Completed.getCode())) {
                     if (orderInDatabase.getErpStatus().equals(OrderStatus.Shipped.getCode())) {
                         ordersFromShippedToCompleted.add(retrievedOrder);
                     }
                 } else {
-                    // If order is shipped, don't update anything, wait until it becomes Completed then only update status
-                    if (!orderInDatabase.getErpStatus().equals(OrderStatus.Shipped.getCode())) {
+                    // If order is shipped or already has shipping invoice number(pre-shipping), don't update anything,
+                    // wait until it becomes Completed then only update status
+                    if (!orderInDatabase.getErpStatus().equals(OrderStatus.Shipped.getCode())
+                            || orderInDatabase.getShippingInvoiceNumber() != null) {
                         // for old orders get their id, update their attributes
                         oldOrders.add(retrievedOrder);
                     }
@@ -151,7 +153,7 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
         platformOrderMabangMapper.updateMergedOrderItems(targetID, sourceIDs);
     }
 
-    private void updateExistedOrders(List<Order> orders){
+    private void updateExistedOrders(List<Order> orders) {
 
     }
 }
