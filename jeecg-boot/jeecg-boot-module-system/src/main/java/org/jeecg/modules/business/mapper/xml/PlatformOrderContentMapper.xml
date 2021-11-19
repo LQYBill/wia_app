@@ -50,7 +50,8 @@
             resultType="org.jeecg.modules.business.entity.PlatformOrderContent">
         SELECT *
         FROM platform_order_content
-        WHERE platform_order_id IN
+        WHERE erp_status &lt;&gt; 5
+        AND platform_order_id IN
         <foreach collection="list" index="i" item="item" open="(" separator="," close=")">#{item}</foreach>
     </select>
 
