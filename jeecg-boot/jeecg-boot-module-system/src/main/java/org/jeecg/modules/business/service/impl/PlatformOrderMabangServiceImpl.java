@@ -77,7 +77,7 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
                     // If order is shipped or already has shipping invoice number(pre-shipping), don't update anything,
                     // wait until it becomes Completed then only update status
                     if (!orderInDatabase.getErpStatus().equals(OrderStatus.Shipped.getCode())
-                            || orderInDatabase.getShippingInvoiceNumber() != null) {
+                            && orderInDatabase.getShippingInvoiceNumber() == null) {
                         // for old orders get their id, update their attributes
                         oldOrders.add(retrievedOrder);
                     }
