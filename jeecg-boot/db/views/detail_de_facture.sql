@@ -21,6 +21,6 @@ FROM platform_order po
          RIGHT JOIN platform_order_content poc ON po.id = poc.platform_order_id
          JOIN sku ON poc.sku_id = sku.id
          JOIN product p ON sku.product_id = p.id
-WHERE shipping_invoice_number IS NOT NULL
+WHERE shipping_invoice_number IS NOT NULL AND poc.erp_status <> 5
 GROUP BY po.id, s.name, po.order_time
 ORDER BY s.name, po.order_time;
