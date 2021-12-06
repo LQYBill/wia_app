@@ -140,6 +140,16 @@
         </template>
         <!-- 内嵌table区域 end -->
 
+        <template slot="erpStatus" slot-scope="record">
+          <a-tag
+            v-for="erpStatus in record"
+            :key="erpStatus"
+            :color="erpStatus === '1' ? 'volcano' : 'green'"
+          >
+            {{ erpStatus }}
+          </a-tag>
+        </template>
+
         <template slot='htmlSlot' slot-scope='text'>
           <div v-html='text'></div>
         </template>
@@ -258,7 +268,8 @@ export default {
           title: 'ERP中状态',
           align: 'center',
           dataIndex: 'erpStatus',
-          sorter: true
+          sorter: true,
+          scopedSlots: { customRender : 'erpStatus' }
         }
       ],
       pagination: {
