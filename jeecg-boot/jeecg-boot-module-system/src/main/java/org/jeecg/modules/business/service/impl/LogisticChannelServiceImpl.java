@@ -88,7 +88,7 @@ public class LogisticChannelServiceImpl extends ServiceImpl<LogisticChannelMappe
 
         return channels.stream()
                 .map(c -> {
-                     String internalName = c.getInternalName();
+                    String internalName = c.getInternalName();
                     String channelName = c.getZhName();
                     boolean useVolumetricWeight = c.getUseVolumetricWeight() == 1;
                     int trueWeight;
