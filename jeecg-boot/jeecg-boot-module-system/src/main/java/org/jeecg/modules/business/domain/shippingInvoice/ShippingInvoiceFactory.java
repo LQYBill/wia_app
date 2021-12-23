@@ -250,7 +250,8 @@ public class ShippingInvoiceFactory {
 
             // calculate weight of an order
             BigDecimal contentWeight = platformOrderContentService.calculateWeight(
-                    uninvoicedOrder.getLogisticChannelName(),
+                    uninvoicedOrder.getInvoiceLogisticChannelName() == null ?
+                            uninvoicedOrder.getLogisticChannelName() : uninvoicedOrder.getInvoiceLogisticChannelName(),
                     contentMap,
                     skuRealWeights
             );
@@ -333,8 +334,10 @@ public class ShippingInvoiceFactory {
             Country country = countryService.findByEnName(uninvoicedOrder.getCountry());
 
             Date shippingTime = uninvoicedOrder.getShippingTime() == null ? now().toSqlDate() : uninvoicedOrder.getShippingTime();
+            String logisticChannelName = uninvoicedOrder.getInvoiceLogisticChannelName() == null ?
+                    uninvoicedOrder.getLogisticChannelName() : uninvoicedOrder.getInvoiceLogisticChannelName();
             price = logisticChannelPriceMapper.findBy(
-                    uninvoicedOrder.getLogisticChannelName(),
+                    logisticChannelName,
                     // For orders without shipping time (pre-shipping), use today
                     shippingTime,
                     contentWeight,
@@ -349,7 +352,7 @@ public class ShippingInvoiceFactory {
                         uninvoicedOrder.getPlatformOrderId(),
                         shippingTime,
                         contentWeight,
-                        uninvoicedOrder.getLogisticChannelName(),
+                        logisticChannelName,
                         uninvoicedOrder.getCountry()
                 );
                 log.error(msg);

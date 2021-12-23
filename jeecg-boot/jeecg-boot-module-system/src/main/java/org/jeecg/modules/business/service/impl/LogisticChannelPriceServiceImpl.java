@@ -81,8 +81,10 @@ public class LogisticChannelPriceServiceImpl extends ServiceImpl<LogisticChannel
             contentMap.put(content.getSkuId(), content.getQuantity());
         }
 
+        String logisticChannelName = order.getInvoiceLogisticChannelName() == null ?
+                order.getLogisticChannelName() : order.getInvoiceLogisticChannelName();
         BigDecimal weight = platformOrderContentService.calculateWeight(
-                order.getLogisticChannelName(),
+                logisticChannelName,
                 contentMap,
                 skuRealWeights
         );
@@ -91,7 +93,7 @@ public class LogisticChannelPriceServiceImpl extends ServiceImpl<LogisticChannel
         String countryCode = countryService.findByEnName(order.getCountry()).getCode();
 
         LogisticChannelPrice price = logisticChannelPriceMapper.findBy(
-                order.getLogisticChannelName(),
+                logisticChannelName,
                 order.getShippingTime(),
                 weight,
                 countryCode
@@ -99,7 +101,7 @@ public class LogisticChannelPriceServiceImpl extends ServiceImpl<LogisticChannel
 
         if (price == null) {
             throw new UserException("Can't find price for channel {}, shipped at {}, weight {}, country {}",
-                    order.getLogisticChannelName(),
+                    logisticChannelName,
                     order.getShippingTime(),
                     weight,
                     countryCode
