@@ -254,6 +254,11 @@
             sorter: true
           },
           {
+            title:'开票物流渠道名称',
+            align:"center",
+            dataIndex: 'invoiceLogisticChannelName'
+          },
+          {
             title: '操作',
             dataIndex: 'action',
             align: 'center',
@@ -312,6 +317,7 @@
         fieldList.push({type:'string',value:'status',text:'采购状态',dictCode:''})
         fieldList.push({type:'string',value:'target',text:'合并订单目标订单ID',dictCode:''})
         fieldList.push({type:'string',value:'erpStatus',text:'ERP中状态',dictCode:''})
+        fieldList.push({type:'string',value:'invoiceLogisticChannelName',text:'开票物流渠道名称',dictCode:''})
         this.superFieldList = fieldList
       }
     }

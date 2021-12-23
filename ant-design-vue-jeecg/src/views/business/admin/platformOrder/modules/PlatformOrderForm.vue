@@ -89,6 +89,11 @@
               <a-input v-model="model.erpStatus" placeholder="请输入ERP中状态" ></a-input>
             </a-form-model-item>
           </a-col>
+          <a-col :span="24" >
+            <a-form-model-item label="开票物流渠道名称" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="invoiceLogisticChannelName">
+              <a-input v-model="model.invoiceLogisticChannelName" placeholder="请输入开票物流渠道名称" ></a-input>
+            </a-form-model-item>
+          </a-col>
         </a-row>
       </a-form-model>
      </j-form-container>

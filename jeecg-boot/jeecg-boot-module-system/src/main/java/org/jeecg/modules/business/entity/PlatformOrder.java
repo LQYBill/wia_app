@@ -18,8 +18,8 @@ import java.util.Date;
 /**
  * @Description: 平台订单表
  * @Author: jeecg-boot
- * @Date: 2021-08-10
- * @Version: V1.2
+ * @Date: 2021-12-23
+ * @Version: V1.3
  */
 @ApiModel(value = "platform_order对象", description = "平台订单表")
 @Data
@@ -179,5 +179,10 @@ public class PlatformOrder implements Serializable {
     @Excel(name = "ERP中状态", width = 15)
     @ApiModelProperty(value = "ERP中状态")
     private String erpStatus;
-
+    /**
+     * 开票物流渠道名称
+     */
+    @Excel(name = "开票物流渠道名称", width = 15)
+    @ApiModelProperty(value = "开票物流渠道名称")
+    private String invoiceLogisticChannelName;
 }
