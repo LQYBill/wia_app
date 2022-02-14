@@ -283,6 +283,11 @@ export default {
         showSizeChanger: true,
         total: 0
       },
+      /* 排序参数 */
+      isorter:{
+        column: 'order_time',
+        order: 'desc',
+      },
       invoiceLoading: false,
       findOrdersLoading: false,
       shopDisable: true,
@@ -389,6 +394,10 @@ export default {
               shopIds: self.shopIDs,
               pageNo: self.pagination.current,
               pageSize: self.pagination.pageSize
+            }
+            if (Object.keys(self.isorter).length > 0) {
+              requestParam.order = self.isorter.order;
+              requestParam.column = self.isorter.column
             }
             this.findOrdersLoading = true
             this.orderListLoading = true

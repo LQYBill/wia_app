@@ -19,6 +19,7 @@ import org.jeecg.modules.business.vo.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.Arrays;
@@ -60,8 +61,9 @@ public class InvoiceController {
                                                @RequestParam("clientId") String clientId,
                                                @RequestParam(name = "shopIds", required = false) List<String> shopIDs,
                                                @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
-                                               @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize) {
-        QueryWrapper<PlatformOrder> queryWrapper = QueryGenerator.initQueryWrapper(platformOrder, null);
+                                               @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
+                                               HttpServletRequest req) {
+        QueryWrapper<PlatformOrder> queryWrapper = QueryGenerator.initQueryWrapper(platformOrder, req.getParameterMap());
         LambdaQueryWrapper<PlatformOrder> lambdaQueryWrapper = queryWrapper.lambda();
         lambdaQueryWrapper.in(PlatformOrder::getErpStatus, Arrays.asList(OrderStatus.Pending.getCode(), OrderStatus.Preparing.getCode()));
         lambdaQueryWrapper.isNull(PlatformOrder::getShippingInvoiceNumber);
