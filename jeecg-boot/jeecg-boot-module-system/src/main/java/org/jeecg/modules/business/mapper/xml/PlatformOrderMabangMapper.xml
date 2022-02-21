@@ -68,7 +68,7 @@
         end,
         internal_tracking_number = case id
         <foreach collection="orders" separator=" " open="" close="" index="index" item="item">
-            when #{item.id} then #{trackingNumber1}
+            when #{item.id} then #{item.trackingNumber1}
         </foreach>
         end,
         order_time = case id
