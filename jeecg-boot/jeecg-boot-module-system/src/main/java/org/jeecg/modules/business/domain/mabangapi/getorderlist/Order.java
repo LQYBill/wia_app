@@ -58,6 +58,12 @@ public class Order {
     @JSONField(name = "trackNumber")
     private String trackingNumber;
 
+    /**
+     * If tracking is empty, set it null
+     */
+    @JSONField(name = "trackNumber1")
+    private String trackingNumber1;
+
     @JSONField(name = "paidTime", format = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", locale = "fr", timezone = "GMT+1")
@@ -108,6 +114,13 @@ public class Order {
             this.trackingNumber = null;
         } else
             this.trackingNumber = trackingNumber;
+    }
+
+    public void setTrackingNumber1(String trackingNumber) {
+        if (trackingNumber != null && trackingNumber.length() == 0) {
+            this.trackingNumber1 = null;
+        } else
+            this.trackingNumber1 = trackingNumber;
     }
 
     public boolean isUnion() {
