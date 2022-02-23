@@ -309,4 +309,9 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
                 )
                 .collect(toList());
     }
+
+    @Override
+    public List<String> fetchBillCodesOfParcelsWithoutTrace(Date startDate, Date endDate, String transporter) {
+        return platformOrderMap.fetchBillCodesOfParcelsWithoutTrace(startDate, endDate, transporter);
+    }
 }

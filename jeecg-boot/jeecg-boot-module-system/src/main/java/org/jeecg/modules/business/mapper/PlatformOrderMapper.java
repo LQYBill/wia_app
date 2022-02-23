@@ -123,4 +123,7 @@ public interface PlatformOrderMapper extends BaseMapper<PlatformOrder> {
     List<String> allCountries();
 
     List<String> allChannels();
+
+    List<String> fetchBillCodesOfParcelsWithoutTrace(@Param("startDate") Date startDate, @Param("endDate") Date endDate,
+                                                     @Param("transporter") String transporter);
 }

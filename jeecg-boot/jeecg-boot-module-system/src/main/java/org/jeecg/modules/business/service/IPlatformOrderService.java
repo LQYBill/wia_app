@@ -101,4 +101,6 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
      * @return platform order quantity of each day.
      */
     List<PlatformOrderQuantity> monthOrderNumber();
+
+    List<String> fetchBillCodesOfParcelsWithoutTrace(Date startDate, Date endDate, String transporter);
 }

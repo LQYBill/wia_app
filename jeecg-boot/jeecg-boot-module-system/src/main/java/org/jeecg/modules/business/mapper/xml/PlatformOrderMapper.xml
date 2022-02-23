@@ -245,5 +245,13 @@
         FROM wia_app.platform_order
     </select>
 
+    <select id="fetchBillCodesOfParcelsWithoutTrace" resultType="java.lang.String">
+        SELECT internal_tracking_number
+        FROM platform_order
+        WHERE logistic_channel_name = #{transporter}
+          AND shipping_time &gt;= #{startDate}
+          AND shipping_time &lt;= #{endDate}
+          AND internal_tracking_number NOT IN (SELECT bill_code FROM parcel);
+    </select>
 
 </mapper>
