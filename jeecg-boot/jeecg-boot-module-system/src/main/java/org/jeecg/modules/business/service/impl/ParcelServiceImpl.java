@@ -111,7 +111,7 @@ public class ParcelServiceImpl extends ServiceImpl<ParcelMapper, Parcel> impleme
             tracesToInsert.addAll(
                     traceDetails.stream().filter(detail -> detail.getScanType() != null).collect(Collectors.toList()));
         }
-        log.info("After filtering, {} parcels will be inserted into the DB.", parcelToInsert);
+        log.info("After filtering, {} parcels will be inserted into the DB.", parcelToInsert.size());
         parcelMapper.insertOrIgnore(parcelToInsert);
         parcelTraceMapper.insertOrIgnore(tracesToInsert);
         log.info("Finished inserting {} parcels and their traces into DB.", traceList.size());
