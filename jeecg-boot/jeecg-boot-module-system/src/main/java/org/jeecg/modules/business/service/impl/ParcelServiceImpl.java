@@ -86,10 +86,10 @@ public class ParcelServiceImpl extends ServiceImpl<ParcelMapper, Parcel> impleme
     @Override
     @Transactional
     public void saveParcelAndTraces(List<JTParcelTrace> traceList) {
-        log.info("Started inserting {} parcels and their traces into DB.", traceList.size() );
         if (traceList.isEmpty()) {
             return;
         }
+        log.info("Started inserting {} parcels and their traces into DB.", traceList.size() );
         List<Parcel> existingParcels = parcelMapper.searchByBillCode(
                 traceList.stream().map(JTParcelTrace::getBillCode).collect(Collectors.toList()));
         Map<String, Parcel> billCodeToExistingParcels = existingParcels.stream().collect(
