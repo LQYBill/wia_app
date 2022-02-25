@@ -86,7 +86,7 @@ public class ParcelServiceImpl extends ServiceImpl<ParcelMapper, Parcel> impleme
     @Override
     @Transactional
     public void saveParcelAndTraces(List<JTParcelTrace> traceList) {
-        log.info("Starting to insert " + traceList.size() + " parcels and their traces into DB.");
+        log.info("Started inserting {} parcels and their traces into DB.", traceList.size() );
         if (traceList.isEmpty()) {
             return;
         }
@@ -100,17 +100,18 @@ public class ParcelServiceImpl extends ServiceImpl<ParcelMapper, Parcel> impleme
         List<JTParcelTraceDetail> tracesToInsert = new ArrayList<>();
         for (JTParcelTrace parcelAndTrace : traceList) {
             Parcel existingParcel = billCodeToExistingParcels.get(parcelAndTrace.getBillCode());
+            List<JTParcelTraceDetail> traceDetails = parcelAndTrace.getTraceDetails();
             if (existingParcel == null) {
                 parcelToInsert.add(parcelAndTrace);
-                parcelAndTrace.getTraceDetails().forEach(trace -> trace.parcelTraceProcess(parcelAndTrace.getId()));
+                traceDetails.forEach(trace -> trace.parcelTraceProcess(parcelAndTrace.getId()));
             } else {
-                parcelAndTrace.getTraceDetails().forEach(trace -> trace.parcelTraceProcess(existingParcel.getId()));
+                traceDetails.forEach(trace -> trace.parcelTraceProcess(existingParcel.getId()));
             }
-            tracesToInsert.addAll(parcelAndTrace.getTraceDetails());
+            tracesToInsert.addAll(traceDetails);
         }
-
+        log.info("After filtering, {} parcels will be inserted into the DB.", parcelToInsert);
         parcelMapper.insertOrIgnore(parcelToInsert);
         parcelTraceMapper.insertOrIgnore(tracesToInsert);
-        log.info("Finished inserting " + traceList.size() + " parcels and their traces into DB.");
+        log.info("Finished inserting {} parcels and their traces into DB.", traceList.size());
     }
 }

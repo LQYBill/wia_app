@@ -75,12 +75,12 @@ public class JTJob implements Job {
             throw new RuntimeException("No more than 30 days can separate startDate and endDate !");
         }
 
-        log.info("Starting to retrieve parcel traces of " + transporter + " from " + startDate + " to " + endDate);
+        log.info("Starting to retrieve parcel traces of {} from {} to {}", transporter, startDate, endDate);
         List<String> billCodes = platformOrderService.fetchBillCodesOfParcelsWithoutTrace(
                 Date.valueOf(startDate), Date.valueOf(endDate), transporter);
-        log.info(billCodes.size() + " parcels without trace in total");
+        log.info("{} parcels without trace in total", billCodes.size());
         List<List<String>> billCodeLists = Lists.partition(billCodes, 50);
-        log.info("Requests will be divided in to " + billCodeLists.size() + " parts");
+        log.info("Requests will be divided in to {} parts", billCodeLists.size());
         List<JTParcelTrace> parcelTraces = new ArrayList<>();
         try {
             for (List<String> billCodeList : billCodeLists) {
@@ -90,12 +90,14 @@ public class JTJob implements Job {
                 // String of the response
                 String responseString = EntityUtils.toString(entity, "UTF-8");
                 JTResponse jtResponse = mapper.readValue(responseString, JTResponse.class);
-                parcelTraces.addAll(jtResponse.getResponseItems().get(0).getTracesList());
+                List<JTParcelTrace> tracesList = jtResponse.getResponseItems().get(0).getTracesList();
+                parcelTraces.addAll(tracesList);
+                log.info("{} parcels added to the queue to be inserted into DB.", tracesList.size());
             }
         } catch (IOException e) {
             log.error("Error while parsing response into String", e);
         }
-        log.info(parcelTraces.size() + " parcels have been retrieved.");
+        log.info("{} parcels have been retrieved.", parcelTraces.size());
         parcelService.saveParcelAndTraces(parcelTraces);
     }
 
