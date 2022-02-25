@@ -107,7 +107,9 @@ public class ParcelServiceImpl extends ServiceImpl<ParcelMapper, Parcel> impleme
             } else {
                 traceDetails.forEach(trace -> trace.parcelTraceProcess(existingParcel.getId()));
             }
-            tracesToInsert.addAll(traceDetails);
+            // In some rare cases, scan type can be null thus provide no valuable info, no need to insert into DB
+            tracesToInsert.addAll(
+                    traceDetails.stream().filter(detail -> detail.getScanType() != null).collect(Collectors.toList()));
         }
         log.info("After filtering, {} parcels will be inserted into the DB.", parcelToInsert);
         parcelMapper.insertOrIgnore(parcelToInsert);

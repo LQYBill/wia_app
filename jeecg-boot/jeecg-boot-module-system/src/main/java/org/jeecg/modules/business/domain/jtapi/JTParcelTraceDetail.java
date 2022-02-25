@@ -41,6 +41,9 @@ public class JTParcelTraceDetail {
      * @param parcelId Parcel ID to which the trace belongs to
      */
     public void parcelTraceProcess(String parcelId) {
+        if (scanType == null) {
+            return;
+        }
         setParcelId(parcelId);
         if (descriptionEn == null || descriptionEn.isEmpty()) {
             switch (scanType) {
