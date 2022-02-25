@@ -1,6 +1,7 @@
 package org.jeecg.modules.business.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.jeecg.modules.business.domain.jtapi.JTParcelTrace;
 import org.jeecg.modules.business.entity.Parcel;
 import org.jeecg.modules.business.entity.ParcelTrace;
 
@@ -15,8 +16,6 @@ import java.util.List;
  * @Version: V1.0
  */
 public interface IParcelService extends IService<Parcel> {
-
-	void saveParcelFromJT(List<Parcel> parcels);
 
 	/**
 	 * 添加一对多
@@ -39,5 +38,6 @@ public interface IParcelService extends IService<Parcel> {
 	 * 批量删除一对多
 	 */
 	public void delBatchMain (Collection<? extends Serializable> idList);
-	
+
+	void saveParcelAndTraces(List<JTParcelTrace> traceList);
 }

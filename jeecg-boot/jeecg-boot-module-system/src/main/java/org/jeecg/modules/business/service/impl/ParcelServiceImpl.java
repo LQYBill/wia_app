@@ -2,6 +2,8 @@ package org.jeecg.modules.business.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
+import org.jeecg.modules.business.domain.jtapi.JTParcelTrace;
+import org.jeecg.modules.business.domain.jtapi.JTParcelTraceDetail;
 import org.jeecg.modules.business.entity.Parcel;
 import org.jeecg.modules.business.entity.ParcelTrace;
 import org.jeecg.modules.business.mapper.ParcelMapper;
@@ -12,8 +14,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @Description: 包裹
@@ -29,11 +35,6 @@ public class ParcelServiceImpl extends ServiceImpl<ParcelMapper, Parcel> impleme
     private ParcelMapper parcelMapper;
     @Autowired
     private ParcelTraceMapper parcelTraceMapper;
-
-    @Override
-    public void saveParcelFromJT(List<Parcel> parcels) {
-        return;
-    }
 
     @Override
     @Transactional
@@ -82,4 +83,34 @@ public class ParcelServiceImpl extends ServiceImpl<ParcelMapper, Parcel> impleme
         }
     }
 
+    @Override
+    @Transactional
+    public void saveParcelAndTraces(List<JTParcelTrace> traceList) {
+        log.info("Starting to insert " + traceList.size() + " parcels and their traces into DB.");
+        if (traceList.isEmpty()) {
+            return;
+        }
+        List<Parcel> existingParcels = parcelMapper.searchByBillCode(
+                traceList.stream().map(JTParcelTrace::getBillCode).collect(Collectors.toList()));
+        Map<String, Parcel> billCodeToExistingParcels = existingParcels.stream().collect(
+                Collectors.toMap(Parcel::getBillCode, Function.identity())
+        );
+
+        List<JTParcelTrace> parcelToInsert = new ArrayList<>();
+        List<JTParcelTraceDetail> tracesToInsert = new ArrayList<>();
+        for (JTParcelTrace parcelAndTrace : traceList) {
+            Parcel existingParcel = billCodeToExistingParcels.get(parcelAndTrace.getBillCode());
+            if (existingParcel == null) {
+                parcelToInsert.add(parcelAndTrace);
+                parcelAndTrace.getTraceDetails().forEach(trace -> trace.parcelTraceProcess(parcelAndTrace.getId()));
+            } else {
+                parcelAndTrace.getTraceDetails().forEach(trace -> trace.parcelTraceProcess(existingParcel.getId()));
+            }
+            tracesToInsert.addAll(parcelAndTrace.getTraceDetails());
+        }
+
+        parcelMapper.insertOrIgnore(parcelToInsert);
+        parcelTraceMapper.insertOrIgnore(tracesToInsert);
+        log.info("Finished inserting " + traceList.size() + " parcels and their traces into DB.");
+    }
 }

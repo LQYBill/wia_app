@@ -9,6 +9,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.jeecg.modules.business.domain.jtapi.JTParcelTrace;
 import org.jeecg.modules.business.domain.jtapi.JTRequest;
 import org.jeecg.modules.business.domain.jtapi.JTResponse;
 import org.jeecg.modules.business.service.IParcelService;
@@ -22,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.io.IOException;
 import java.sql.Date;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -41,6 +43,8 @@ public class JTJob implements Job {
         LocalDate startDate = endDate.minusDays(DEFAULT_NUMBER_OF_DAYS);
         String transporter = DEFAULT_TRANSPORTER;
         boolean overrideRestriction = false;
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         JobDataMap jobDataMap = context.getMergedJobDataMap();
         String parameter = ((String) jobDataMap.get("parameter"));
         if (parameter != null) {
@@ -71,9 +75,13 @@ public class JTJob implements Job {
             throw new RuntimeException("No more than 30 days can separate startDate and endDate !");
         }
 
+        log.info("Starting to retrieve parcel traces of " + transporter + " from " + startDate + " to " + endDate);
         List<String> billCodes = platformOrderService.fetchBillCodesOfParcelsWithoutTrace(
                 Date.valueOf(startDate), Date.valueOf(endDate), transporter);
-        List<List<String>> billCodeLists = Lists.partition(billCodes, 100);
+        log.info(billCodes.size() + " parcels without trace in total");
+        List<List<String>> billCodeLists = Lists.partition(billCodes, 50);
+        log.info("Requests will be divided in to " + billCodeLists.size() + " parts");
+        List<JTParcelTrace> parcelTraces = new ArrayList<>();
         try {
             for (List<String> billCodeList : billCodeLists) {
                 JTRequest JTRequest = new JTRequest(billCodeList);
@@ -81,14 +89,14 @@ public class JTJob implements Job {
                 HttpEntity entity = response.getEntity();
                 // String of the response
                 String responseString = EntityUtils.toString(entity, "UTF-8");
-                ObjectMapper mapper = new ObjectMapper();
-                mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
                 JTResponse jtResponse = mapper.readValue(responseString, JTResponse.class);
-                System.out.println(jtResponse);
+                parcelTraces.addAll(jtResponse.getResponseItems().get(0).getTracesList());
             }
         } catch (IOException e) {
             log.error("Error while parsing response into String", e);
         }
+        log.info(parcelTraces.size() + " parcels have been retrieved.");
+        parcelService.saveParcelAndTraces(parcelTraces);
     }
 
 }
