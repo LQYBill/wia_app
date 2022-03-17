@@ -33,6 +33,19 @@ public class JTParcelTraceDetail {
         this.descriptionEn = descriptionEn;
     }
 
+    public final static String PROBLEME_ADRESSAGE = "En raison d'un problème d'adressage, votre colis a été réacheminé vers le site de distribution qui dessert votre adresse.";
+    public final static String PROBLEME_ADRESSAGE_CN = "您的包裹路由发生错误.它目前正在被重新路由到其交货地点.";
+    public final static String ADRESSE_INCOMPLETE_INCORRECTE = "L'adresse indiquée sur votre colis est incomplète ou incorrecte. Nous procédons à sa correction afin de permettre le bon acheminement de votre colis.";
+    public final static String ADRESSE_INCOMPLETE_INCORRECTE_CN = "由于送货地址问您的包裹无法送达.它将退还给发件人.";
+    public final static String ADRESSE_INCOMPLETE_INCORRECTE_CN_2 = "由于收货地址不完整，您的包裹目前无法送达收件人。收件人可以通过单击在线联系我们联系我们的客户服务以提供必要的附加信息。";
+    public final static String DISTRIBUTION_SUSPENDUE = "La distribution à domicile est actuellement suspendue sur votre secteur. Votre colis va être acheminé vers votre point de retrait habituel.";
+    public final static String DANS_BOITE_POSTALE = "Votre colis est à votre disposition dans votre boîte postale.";
+    public final static String NON_REMIS = "Votre colis n'a pas pu vous être remis.";
+    public final static String COLIS_REFUSE = "Vous avez refusé votre colis car il était détérioré. Il est retourné à l'expéditeur.";
+    public final static String NO_DELIVERY_TODAY = "您的包裹今天无法送达.我们将尽快交付.";
+    public final static String NO_DELIVERY_TODAY_FR = "Votre colis ne peut être livré ce jour en raison d'une situation exceptionnelle indépendante de notre volonté. Il sera mis en livraison dans les prochains jours.";
+    public final static String DELIVERY_NEXT_BUSINESS_DAY = "您的包裹无法送达.它将在下一个工作日交付.";
+
     public JTParcelTraceDetail() {
     }
 
@@ -78,7 +91,57 @@ public class JTParcelTraceDetail {
                     setDescriptionEn("The parcel has completed its customs clearance.");
                     break;
             }
+        } else {
+            switch (scanType) {
+                case "已签收":
+                case "MD006":
+                case DANS_BOITE_POSTALE:
+                    setScanType("End Delivered");
+                    break;
+                case "末端收件":
+                case "MD001":
+                    setScanType("End Received");
+                    break;
+                case "等待签收":
+                case "MD009":
+                    setScanType("End Delivery");
+                    break;
+                case "MD007":
+                    setScanType("Return");
+                    setDescriptionEn("The parcel will be returned to sender.");
+                    break;
+                case COLIS_REFUSE:
+                    setScanType("Return");
+                    break;
+                case "MD1011":
+                case "1011":
+                    setScanType("End Arrived");
+                    setDescriptionEn("The parcel is being routed towards its final destination.");
+                    break;
+                case PROBLEME_ADRESSAGE:
+                case PROBLEME_ADRESSAGE_CN:
+                case ADRESSE_INCOMPLETE_INCORRECTE:
+                case DISTRIBUTION_SUSPENDUE:
+                case NON_REMIS:
+                case ADRESSE_INCOMPLETE_INCORRECTE_CN:
+                case ADRESSE_INCOMPLETE_INCORRECTE_CN_2:
+                case NO_DELIVERY_TODAY:
+                case DELIVERY_NEXT_BUSINESS_DAY:
+                case NO_DELIVERY_TODAY_FR:
+                    setScanType("End Abnormal");
+                    break;
+            }
         }
     }
 
+    public boolean equals(Object anotherDetail) {
+        if (anotherDetail instanceof JTParcelTraceDetail) {
+            JTParcelTraceDetail another = (JTParcelTraceDetail) anotherDetail;
+            return another.getParcelId().equals(this.parcelId)
+                    && another.getScanType().equals(this.scanType)
+                    && another.getScanTime().equals(this.scanTime)
+                    && another.getDescriptionEn().equals(this.descriptionEn);
+        }
+        return false;
+    }
 }
