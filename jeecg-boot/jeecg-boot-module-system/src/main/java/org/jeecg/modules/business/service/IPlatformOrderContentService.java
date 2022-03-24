@@ -24,7 +24,7 @@ public interface IPlatformOrderContentService extends IService<PlatformOrderCont
      * @param skuRealWeights All SKU's real weights
      * @return weight
      */
-    BigDecimal calculateWeight(String channelName, Map<String, Integer> contentMap, Map<String, BigDecimal> skuRealWeights) throws UserException;
+    BigDecimal calculateWeight(Map<String, Integer> contentMap, Map<String, BigDecimal> skuRealWeights) throws UserException;
 
     /**
      * Retrieve all SKU weights and discounts

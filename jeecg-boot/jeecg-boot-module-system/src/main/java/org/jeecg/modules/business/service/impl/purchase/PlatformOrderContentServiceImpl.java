@@ -27,47 +27,15 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class PlatformOrderContentServiceImpl extends ServiceImpl<PlatformOrderContentMapper, PlatformOrderContent> implements IPlatformOrderContentService {
     @Autowired
-    private LogisticChannelMapper logisticChannelMapper;
-
-    @Autowired
     private PlatformOrderContentMapper platformOrderContentMapper;
 
     public List<SkuWeightDiscountServiceFees> getAllSKUWeightsDiscountsServiceFees() {
         return platformOrderContentMapper.getAllWeightsDiscountsServiceFees();
     }
 
-    private LoadingCache<String, LogisticChannel> logisticChannelLoadingCache = CacheBuilder.newBuilder()
-            .maximumSize(1000)
-            .expireAfterWrite(10, TimeUnit.MINUTES)
-            .build(
-                    new CacheLoader<String, LogisticChannel>() {
-                        @Override
-                        public LogisticChannel load(String channelName) {
-                            QueryWrapper<LogisticChannel> queryWrapper = new QueryWrapper<>();
-                            queryWrapper.eq(true, "zh_name", channelName);
-                            return logisticChannelMapper.selectOne(queryWrapper);
-                        }
-                    });
-
     @Override
-    public BigDecimal calculateWeight(String channelName, Map<String, Integer> contentMap,
+    public BigDecimal calculateWeight(Map<String, Integer> contentMap,
                                       Map<String, BigDecimal> skuRealWeights) throws UserException {
-        LogisticChannel channel;
-        try {
-            channel = logisticChannelLoadingCache.get(channelName);
-        } catch (ExecutionException e) {
-            String msg = "Error while retrieving logistic channel " + channelName;
-            log.error(e.getMessage());
-            throw new UserException(msg);
-        } catch (CacheLoader.InvalidCacheLoadException e) {
-            String msg = "Found order without channel name";
-            log.error(e.getMessage());
-            throw new UserException(msg);
-        }
-        if (channel == null) {
-            throw new UserException("Can not find channel: " + channelName);
-        }
-
         List<String> skuIDs = new ArrayList<>(contentMap.keySet());
         log.info("skus : " + skuIDs);
 

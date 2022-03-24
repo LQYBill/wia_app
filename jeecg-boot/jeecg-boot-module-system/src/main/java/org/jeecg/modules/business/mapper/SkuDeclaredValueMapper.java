@@ -22,5 +22,7 @@ public interface SkuDeclaredValueMapper extends BaseMapper<SkuDeclaredValue> {
     
 	List<SkuDeclaredValue> selectByMainId(@Param("mainId") String mainId);
 
+	List<SkuDeclaredValue> getLatestSkuDeclaredValues();
+
 	BigDecimal getDeclaredValueForDate(@Param("skuId") String skuId, @Param("date") Date date);
 }

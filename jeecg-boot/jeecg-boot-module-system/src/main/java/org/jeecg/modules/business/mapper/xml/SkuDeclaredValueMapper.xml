@@ -13,6 +13,16 @@
         FROM sku_declared_value
         WHERE sku_id = #{mainId}    </select>
 
+    <select id="getLatestSkuDeclaredValues" resultType="org.jeecg.modules.business.entity.SkuDeclaredValue">
+        SELECT sdv.*
+        FROM sku_declared_value sdv
+                 INNER JOIN
+             (SELECT sku_id, MAX(effective_date) max_date
+              FROM sku_declared_value sdv
+              GROUP BY sku_id) sdv2 ON sdv.sku_id = sdv2.sku_id AND sdv.effective_date = sdv2.max_date
+                 JOIN sku s ON sdv.sku_id = s.id
+    </select>
+
     <select id="getDeclaredValueForDate" resultType="java.math.BigDecimal">
         SELECT sdv.declared_value
         FROM sku_declared_value sdv

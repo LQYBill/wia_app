@@ -84,7 +84,6 @@ public class LogisticChannelPriceServiceImpl extends ServiceImpl<LogisticChannel
         String logisticChannelName = order.getInvoiceLogisticChannelName() == null ?
                 order.getLogisticChannelName() : order.getInvoiceLogisticChannelName();
         BigDecimal weight = platformOrderContentService.calculateWeight(
-                logisticChannelName,
                 contentMap,
                 skuRealWeights
         );

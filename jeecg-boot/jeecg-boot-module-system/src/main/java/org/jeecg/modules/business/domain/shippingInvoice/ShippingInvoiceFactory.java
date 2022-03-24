@@ -24,7 +24,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -210,8 +209,8 @@ public class ShippingInvoiceFactory {
      * </ol>
      *
      * @param customerId Customer ID
-     * @param shopIds Shop IDs
-     * @param subject Invoice subject
+     * @param shopIds    Shop IDs
+     * @param subject    Invoice subject
      * @return the generated invoice
      * @throws UserException if package used by the invoice can not or find more than 1 logistic
      *                       channel price, this exception will be thrown.
@@ -229,6 +228,7 @@ public class ShippingInvoiceFactory {
         skuDataPreparation(skuRealWeights, skuServiceFees);
         List<Country> countryList = countryService.findAll();
         Map<LogisticChannel, List<LogisticChannelPrice>> channelPriceMap = getChannelPriceMap(orderAndContent);
+        List<SkuDeclaredValue> latestDeclaredValues = skuDeclaredValueService.getLatestDeclaredValues();
 
         Client client = clientMapper.selectById(customerId);
         List<Shop> shops = shopMapper.selectBatchIds(shopIds);
@@ -236,7 +236,7 @@ public class ShippingInvoiceFactory {
         shops.forEach(shop -> shopServiceFeeMap.put(shop.getId(), shop.getOrderServiceFee()));
         String invoiceCode = generateInvoiceCode();
         log.info("New invoice code: {}", invoiceCode);
-        calculateFees(orderAndContent, channelPriceMap, countryList, skuRealWeights, skuServiceFees, client, shopServiceFeeMap, invoiceCode);
+        calculateFees(orderAndContent, channelPriceMap, countryList, skuRealWeights, skuServiceFees, latestDeclaredValues, client, shopServiceFeeMap, invoiceCode);
         BigDecimal eurToUsd = exchangeRatesMapper.getLatestExchangeRate("EUR", "USD");
         ShippingInvoice invoice = new ShippingInvoice(client, invoiceCode, subject, orderAndContent, eurToUsd);
         updateOrdersAndContentsInDb(orderAndContent);
@@ -247,10 +247,13 @@ public class ShippingInvoiceFactory {
         List<PlatformOrder> sortedList = orderAndContent.keySet().stream()
                 .sorted(Comparator.comparing(PlatformOrder::getShippingTime).reversed())
                 .collect(Collectors.toList());
+        List<String> distinctCountries = sortedList.stream().map(PlatformOrder::getCountry).distinct().collect(toList());
+        List<String> distinctChannelNames = sortedList.stream().map(PlatformOrder::getLogisticChannelName).distinct().collect(toList());
         Date latestShippingTime = sortedList.get(0).getShippingTime();
         Map<String, LogisticChannel> logisticChannelMapById = logisticChannelMapper.getAll().stream()
                 .collect(toMap(LogisticChannel::getId, Function.identity()));
-        List<LogisticChannelPrice> allEligiblePrices = logisticChannelPriceMapper.findByDate(latestShippingTime);
+        List<LogisticChannelPrice> allEligiblePrices = logisticChannelPriceMapper.findPricesBy(latestShippingTime,
+                distinctCountries, distinctChannelNames);
         return allEligiblePrices.stream().collect(
                 groupingBy(logisticChannelPrice -> logisticChannelMapById.get(logisticChannelPrice.getChannelId()))
         );
@@ -267,8 +270,9 @@ public class ShippingInvoiceFactory {
     }
 
     private void calculateFees(Map<PlatformOrder, List<PlatformOrderContent>> orderAndContent,
-                               Map<LogisticChannel, List<LogisticChannelPrice>> channelPriceMap, List<Country> countryList, Map<String, BigDecimal> skuRealWeights, Map<String, BigDecimal> skuServiceFees,
-                               Client client, Map<String, BigDecimal> shopServiceFeeMap, String invoiceCode
+                               Map<LogisticChannel, List<LogisticChannelPrice>> channelPriceMap, List<Country> countryList,
+                               Map<String, BigDecimal> skuRealWeights, Map<String, BigDecimal> skuServiceFees,
+                               List<SkuDeclaredValue> latestDeclaredValues, Client client, Map<String, BigDecimal> shopServiceFeeMap, String invoiceCode
     ) throws UserException {
         // find logistic channel price for each order based on its content
         for (PlatformOrder uninvoicedOrder : orderAndContent.keySet()) {
@@ -276,7 +280,7 @@ public class ShippingInvoiceFactory {
             if (contents.size() == 0) {
                 throw new UserException("Order: {} doesn't have content", uninvoicedOrder.getPlatformOrderId());
             }
-            log.info("Searching price for {} of order {}", contents, uninvoicedOrder);
+            log.info("Calculating price for {} of order {}", contents, uninvoicedOrder);
             Map<String, Integer> contentMap = new HashMap<>();
             for (PlatformOrderContent content : contents) {
                 contentMap.put(content.getSkuId(), content.getQuantity());
@@ -284,12 +288,9 @@ public class ShippingInvoiceFactory {
 
             // calculate weight of an order
             BigDecimal contentWeight = platformOrderContentService.calculateWeight(
-                    uninvoicedOrder.getInvoiceLogisticChannelName() == null ?
-                            uninvoicedOrder.getLogisticChannelName() : uninvoicedOrder.getInvoiceLogisticChannelName(),
                     contentMap,
                     skuRealWeights
             );
-            /* Convert country name to country name */
 
             LogisticChannelPrice price = findAppropriatePrice(countryList, channelPriceMap, uninvoicedOrder, contentWeight);
             // update attributes of orders and theirs content
@@ -299,7 +300,7 @@ public class ShippingInvoiceFactory {
             BigDecimal totalShippingFee = price.calculateShippingPrice(contentWeight);
             BigDecimal clientVatPercentage = client.getVatPercentage();
             Map<PlatformOrderContent, BigDecimal> contentDeclaredValueMap = new HashMap<>();
-            BigDecimal totalDeclaredValue = calculateTotalDeclaredValue(uninvoicedOrder, contents, contentDeclaredValueMap);
+            BigDecimal totalDeclaredValue = calculateTotalDeclaredValue(contents, contentDeclaredValueMap, latestDeclaredValues);
             BigDecimal totalVAT = BigDecimal.ZERO;
             boolean vatApplicable = clientVatPercentage.compareTo(BigDecimal.ZERO) > 0
                     && EU_COUNTRY_LIST.contains(uninvoicedOrder.getCountry());
@@ -338,22 +339,16 @@ public class ShippingInvoiceFactory {
         return totalVAT;
     }
 
-    private BigDecimal calculateTotalDeclaredValue(PlatformOrder order, List<PlatformOrderContent> contents,
-                                                   Map<PlatformOrderContent, BigDecimal> contentDeclaredValueMap) throws UserException {
+    private BigDecimal calculateTotalDeclaredValue(List<PlatformOrderContent> contents,
+                                                   Map<PlatformOrderContent, BigDecimal> contentDeclaredValueMap,
+                                                   List<SkuDeclaredValue> latestDeclaredValues) {
         BigDecimal totalDeclaredValue = BigDecimal.ZERO;
-        Date shippingTime = order.getShippingTime() == null ? now().toSqlDate() : order.getShippingTime();
         for (PlatformOrderContent content : contents) {
             String skuId = content.getSkuId();
-            BigDecimal declaredValueForSKU;
-            try {
-                declaredValueForSKU = declaredValueCache.get(Pair.of(skuId, shippingTime));
-            } catch (ExecutionException e) {
-                String msg = "Error while retrieving declared value of SKU " + skuId + " of order "
-                        + content.getPlatformOrderId();
-                log.error(e.getMessage());
-                throw new UserException(msg);
-            }
-            BigDecimal contentDeclaredValue = declaredValueForSKU.multiply(BigDecimal.valueOf(content.getQuantity()));
+            Optional<SkuDeclaredValue> declaredValueForSKU = latestDeclaredValues.stream()
+                    .filter(sdv -> sdv.getSkuId().equals(skuId)).findFirst();
+            BigDecimal contentDeclaredValue = declaredValueForSKU.get().getDeclaredValue()
+                    .multiply(BigDecimal.valueOf(content.getQuantity()));
             contentDeclaredValueMap.put(content, contentDeclaredValue);
             totalDeclaredValue = totalDeclaredValue.add(contentDeclaredValue);
         }
@@ -367,7 +362,8 @@ public class ShippingInvoiceFactory {
         try {
             /* Find channel price */
             Optional<Country> foundCountry = countryList.stream()
-                    .filter(country -> country.getNameEn().equals(uninvoicedOrder.getCountry())).findFirst();
+                    .filter(country -> country.getNameEn().equals(uninvoicedOrder.getCountry())
+                            || country.getSpecialName().equals(uninvoicedOrder.getCountry())).findFirst();
             if (!foundCountry.isPresent()) {
                 String msg = "Couldn't find country named " + uninvoicedOrder.getCountry();
                 log.error(msg);
@@ -440,6 +436,7 @@ public class ShippingInvoiceFactory {
         Map<String, Client> clientMap = clients.stream().collect(toMap(Client::getId, Function.identity()));
 
         List<Country> countryList = countryService.findAll();
+        List<SkuDeclaredValue> latestDeclaredValues = skuDeclaredValueService.getLatestDeclaredValues();
 
         Map<String, BigDecimal> skuRealWeights = new HashMap<>();
         Map<String, BigDecimal> skuServiceFees = new HashMap<>();
@@ -462,7 +459,7 @@ public class ShippingInvoiceFactory {
                 shopServiceFeeMap.put(shop.getId(), shop.getOrderServiceFee());
                 Map<PlatformOrder, List<PlatformOrderContent>> orders = uninvoicedOrdersByShopId.get(shop.getId());
                 try {
-                    calculateFees(orders, channelPriceMap, countryList, skuRealWeights, skuServiceFees, client, shopServiceFeeMap, null);
+                    calculateFees(orders, channelPriceMap, countryList, skuRealWeights, skuServiceFees, latestDeclaredValues, client, shopServiceFeeMap, null);
                     BigDecimal eurToUsd = exchangeRatesMapper.getLatestExchangeRate("EUR", "USD");
                     ShippingInvoice invoice = new ShippingInvoice(client, "", "", orders, eurToUsd);
                     invoice.tableData();

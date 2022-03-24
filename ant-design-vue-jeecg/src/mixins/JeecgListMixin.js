@@ -94,6 +94,9 @@ export const JeecgListMixin = {
           }else{
             this.ipagination.total = 0;
           }
+          if (res.message) {
+            this.$message.warning(res.message)
+          }
         }
         if(res.code===510){
           this.$message.warning(res.message)

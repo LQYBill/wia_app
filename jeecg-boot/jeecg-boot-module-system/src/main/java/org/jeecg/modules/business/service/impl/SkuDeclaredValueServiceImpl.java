@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Description: SKU申报价格
@@ -31,5 +32,10 @@ public class SkuDeclaredValueServiceImpl extends ServiceImpl<SkuDeclaredValueMap
     @Override
     public BigDecimal getDeclaredValueForDate(String skuId, Date date) {
         return skuDeclaredValueMapper.getDeclaredValueForDate(skuId, date);
+    }
+
+    @Override
+    public List<SkuDeclaredValue> getLatestDeclaredValues() {
+        return skuDeclaredValueMapper.getLatestSkuDeclaredValues();
     }
 }
