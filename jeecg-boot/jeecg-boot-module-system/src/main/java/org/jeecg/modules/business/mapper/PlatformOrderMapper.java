@@ -83,6 +83,13 @@ public interface PlatformOrderMapper extends BaseMapper<PlatformOrder> {
     );
 
     /**
+     * Find all uninvoiced platform orders
+     *
+     * @return list of uninvoiced orders
+     */
+    List<PlatformOrder> findUninvoicedShippedOrders();
+
+    /**
      * Find previous invoice code.
      *
      * @return previous code.

@@ -26,6 +26,13 @@
         ORDER BY effective_date DESC
         LIMIT 1    </select>
 
+    <select id="findByDate" resultType="org.jeecg.modules.business.entity.LogisticChannelPrice">
+        SELECT lcp.*
+        FROM logistic_channel_price lcp
+                 JOIN logistic_channel lc ON lc.id = lcp.channel_id
+        WHERE effective_date &lt;= #{date}
+          AND active = 1 </select>
+
     <select id="findByIdDateWeightAndCountry" resultType="org.jeecg.modules.business.entity.LogisticChannelPrice">
         SELECT lcp.*
         FROM logistic_channel_price lcp

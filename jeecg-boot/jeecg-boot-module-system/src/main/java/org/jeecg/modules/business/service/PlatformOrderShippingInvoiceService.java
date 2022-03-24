@@ -37,6 +37,8 @@ public class PlatformOrderShippingInvoiceService {
     @Autowired
     LogisticChannelPriceMapper logisticChannelPriceMapper;
     @Autowired
+    LogisticChannelMapper logisticChannelMapper;
+    @Autowired
     IPlatformOrderContentService platformOrderContentService;
     @Autowired
     ISkuDeclaredValueService skuDeclaredValueService;
@@ -105,6 +107,7 @@ public class PlatformOrderShippingInvoiceService {
                 platformOrderService,
                 clientMapper,
                 shopMapper,
+                logisticChannelMapper,
                 logisticChannelPriceMapper,
                 platformOrderContentService,
                 skuDeclaredValueService,
@@ -159,6 +162,7 @@ public class PlatformOrderShippingInvoiceService {
                 platformOrderService,
                 clientMapper,
                 shopMapper,
+                logisticChannelMapper,
                 logisticChannelPriceMapper,
                 platformOrderContentService,
                 skuDeclaredValueService,
@@ -172,6 +176,28 @@ public class PlatformOrderShippingInvoiceService {
         );
         // Chooses invoice template based on client's preference on currency
         return getInvoiceMetaData(invoice);
+    }
+
+
+    /**
+     * Get an estimation of all shipped orders
+     *
+     * @return List of shipping fees estimations.
+     * @param errorMessages List of error messages to be filled
+     */
+    public List<ShippingFeesEstimation> getShippingFeesEstimation(List<String> errorMessages) {
+        // Creates factory
+        ShippingInvoiceFactory factory = new ShippingInvoiceFactory(
+                platformOrderService,
+                clientMapper,
+                shopMapper,
+                logisticChannelMapper,
+                logisticChannelPriceMapper,
+                platformOrderContentService,
+                skuDeclaredValueService,
+                countryService,
+                exchangeRatesMapper);
+        return factory.getEstimations(errorMessages);
     }
 
     /**

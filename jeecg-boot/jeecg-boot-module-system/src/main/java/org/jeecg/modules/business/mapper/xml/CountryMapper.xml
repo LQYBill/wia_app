@@ -23,4 +23,7 @@
         FROM country_code_alias
         WHERE alias = #{param1}
     </select>
+    <select id="findAll" resultType="org.jeecg.modules.business.entity.Country">
+        SELECT * FROM country
+    </select>
 </mapper>

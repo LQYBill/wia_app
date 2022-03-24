@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -152,5 +153,15 @@ public class InvoiceController {
         return shippingInvoiceService.exportToExcel(res, invoiceNumber);
     }
 
+    @GetMapping(value = "/breakdown/byShop")
+    public Result<?> getOrdersByClientAndShops() {
+        List<String> errorMessages = new ArrayList<>();
+        List<ShippingFeesEstimation> shippingFeesEstimation = shippingInvoiceService.getShippingFeesEstimation(errorMessages);
+        if (shippingFeesEstimation.isEmpty()) {
+            return Result.error("No data");
+        } else {
+            return Result.OK(errorMessages.toString(), shippingFeesEstimation);
+        }
+    }
 
 }

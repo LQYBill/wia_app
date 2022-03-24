@@ -8,14 +8,12 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.jeecg.modules.business.controller.UserException;
 import org.jeecg.modules.business.domain.codeGeneration.ShippingInvoiceCodeRule;
 import org.jeecg.modules.business.entity.*;
-import org.jeecg.modules.business.mapper.ClientMapper;
-import org.jeecg.modules.business.mapper.ExchangeRatesMapper;
-import org.jeecg.modules.business.mapper.LogisticChannelPriceMapper;
-import org.jeecg.modules.business.mapper.ShopMapper;
+import org.jeecg.modules.business.mapper.*;
 import org.jeecg.modules.business.service.CountryService;
 import org.jeecg.modules.business.service.IPlatformOrderContentService;
 import org.jeecg.modules.business.service.IPlatformOrderService;
 import org.jeecg.modules.business.service.ISkuDeclaredValueService;
+import org.jeecg.modules.business.vo.ShippingFeesEstimation;
 import org.jeecg.modules.business.vo.SkuWeightDiscountServiceFees;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
@@ -28,9 +26,11 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static cn.hutool.core.date.DateTime.now;
+import static java.util.stream.Collectors.*;
 
 @Slf4j
 @Component
@@ -43,6 +43,8 @@ public class ShippingInvoiceFactory {
     private final ShopMapper shopMapper;
 
     private final LogisticChannelPriceMapper logisticChannelPriceMapper;
+
+    private final LogisticChannelMapper logisticChannelMapper;
 
     private final IPlatformOrderContentService platformOrderContentService;
 
@@ -71,8 +73,9 @@ public class ShippingInvoiceFactory {
                     });
 
     public ShippingInvoiceFactory(IPlatformOrderService platformOrderService,
-                                  ClientMapper clientMapper,
-                                  ShopMapper shopMapper, LogisticChannelPriceMapper logisticChannelPriceMapper,
+                                  ClientMapper clientMapper, ShopMapper shopMapper,
+                                  LogisticChannelMapper logisticChannelMapper,
+                                  LogisticChannelPriceMapper logisticChannelPriceMapper,
                                   IPlatformOrderContentService platformOrderContentService,
                                   ISkuDeclaredValueService skuDeclaredValueService,
                                   CountryService countryService,
@@ -81,6 +84,7 @@ public class ShippingInvoiceFactory {
         this.platformOrderService = platformOrderService;
         this.clientMapper = clientMapper;
         this.shopMapper = shopMapper;
+        this.logisticChannelMapper = logisticChannelMapper;
         this.logisticChannelPriceMapper = logisticChannelPriceMapper;
         this.platformOrderContentService = platformOrderContentService;
         this.skuDeclaredValueService = skuDeclaredValueService;
@@ -222,13 +226,9 @@ public class ShippingInvoiceFactory {
         }
         Map<String, BigDecimal> skuRealWeights = new HashMap<>();
         Map<String, BigDecimal> skuServiceFees = new HashMap<>();
-        for (SkuWeightDiscountServiceFees skuWeightDiscountServiceFees : platformOrderContentService.getAllSKUWeightsDiscountsServiceFees()) {
-            if (skuWeightDiscountServiceFees.getWeight() != null) {
-                skuRealWeights.put(skuWeightDiscountServiceFees.getSkuId(),
-                        skuWeightDiscountServiceFees.getDiscount().multiply(BigDecimal.valueOf(skuWeightDiscountServiceFees.getWeight())));
-            }
-            skuServiceFees.put(skuWeightDiscountServiceFees.getSkuId(), skuWeightDiscountServiceFees.getServiceFees());
-        }
+        skuDataPreparation(skuRealWeights, skuServiceFees);
+        List<Country> countryList = countryService.findAll();
+        Map<LogisticChannel, List<LogisticChannelPrice>> channelPriceMap = getChannelPriceMap(orderAndContent);
 
         Client client = clientMapper.selectById(customerId);
         List<Shop> shops = shopMapper.selectBatchIds(shopIds);
@@ -236,6 +236,40 @@ public class ShippingInvoiceFactory {
         shops.forEach(shop -> shopServiceFeeMap.put(shop.getId(), shop.getOrderServiceFee()));
         String invoiceCode = generateInvoiceCode();
         log.info("New invoice code: {}", invoiceCode);
+        calculateFees(orderAndContent, channelPriceMap, countryList, skuRealWeights, skuServiceFees, client, shopServiceFeeMap, invoiceCode);
+        BigDecimal eurToUsd = exchangeRatesMapper.getLatestExchangeRate("EUR", "USD");
+        ShippingInvoice invoice = new ShippingInvoice(client, invoiceCode, subject, orderAndContent, eurToUsd);
+        updateOrdersAndContentsInDb(orderAndContent);
+        return invoice;
+    }
+
+    private Map<LogisticChannel, List<LogisticChannelPrice>> getChannelPriceMap(Map<PlatformOrder, List<PlatformOrderContent>> orderAndContent) {
+        List<PlatformOrder> sortedList = orderAndContent.keySet().stream()
+                .sorted(Comparator.comparing(PlatformOrder::getShippingTime).reversed())
+                .collect(Collectors.toList());
+        Date latestShippingTime = sortedList.get(0).getShippingTime();
+        Map<String, LogisticChannel> logisticChannelMapById = logisticChannelMapper.getAll().stream()
+                .collect(toMap(LogisticChannel::getId, Function.identity()));
+        List<LogisticChannelPrice> allEligiblePrices = logisticChannelPriceMapper.findByDate(latestShippingTime);
+        return allEligiblePrices.stream().collect(
+                groupingBy(logisticChannelPrice -> logisticChannelMapById.get(logisticChannelPrice.getChannelId()))
+        );
+    }
+
+    private void skuDataPreparation(Map<String, BigDecimal> skuRealWeights, Map<String, BigDecimal> skuServiceFees) {
+        for (SkuWeightDiscountServiceFees skuWeightDiscountServiceFees : platformOrderContentService.getAllSKUWeightsDiscountsServiceFees()) {
+            if (skuWeightDiscountServiceFees.getWeight() != null) {
+                skuRealWeights.put(skuWeightDiscountServiceFees.getSkuId(),
+                        skuWeightDiscountServiceFees.getDiscount().multiply(BigDecimal.valueOf(skuWeightDiscountServiceFees.getWeight())));
+            }
+            skuServiceFees.put(skuWeightDiscountServiceFees.getSkuId(), skuWeightDiscountServiceFees.getServiceFees());
+        }
+    }
+
+    private void calculateFees(Map<PlatformOrder, List<PlatformOrderContent>> orderAndContent,
+                               Map<LogisticChannel, List<LogisticChannelPrice>> channelPriceMap, List<Country> countryList, Map<String, BigDecimal> skuRealWeights, Map<String, BigDecimal> skuServiceFees,
+                               Client client, Map<String, BigDecimal> shopServiceFeeMap, String invoiceCode
+    ) throws UserException {
         // find logistic channel price for each order based on its content
         for (PlatformOrder uninvoicedOrder : orderAndContent.keySet()) {
             List<PlatformOrderContent> contents = orderAndContent.get(uninvoicedOrder);
@@ -257,7 +291,7 @@ public class ShippingInvoiceFactory {
             );
             /* Convert country name to country name */
 
-            LogisticChannelPrice price = findAppropriatePrice(uninvoicedOrder, contentWeight);
+            LogisticChannelPrice price = findAppropriatePrice(countryList, channelPriceMap, uninvoicedOrder, contentWeight);
             // update attributes of orders and theirs content
             uninvoicedOrder.setFretFee(price.getRegistrationFee());
             uninvoicedOrder.setOrderServiceFee(shopServiceFeeMap.get(uninvoicedOrder.getShopId()));
@@ -283,15 +317,15 @@ public class ShippingInvoiceFactory {
                         vatApplicable, content);
             }
         }
-        BigDecimal eurToUsd = exchangeRatesMapper.getLatestExchangeRate("EUR", "USD");
-        ShippingInvoice invoice = new ShippingInvoice(client, invoiceCode, subject, orderAndContent, eurToUsd);
+    }
+
+    private void updateOrdersAndContentsInDb(Map<PlatformOrder, List<PlatformOrderContent>> orderAndContent) {
         // update them to DB after invoiced
         platformOrderService.updateBatchById(orderAndContent.keySet());
         platformOrderContentService.updateBatchById(orderAndContent.values()
                 .stream()
                 .flatMap(List::stream)
                 .collect(Collectors.toList()));
-        return invoice;
     }
 
     private BigDecimal calculateTotalVat(BigDecimal totalDeclaredValue, BigDecimal clientVatPercentage,
@@ -327,22 +361,35 @@ public class ShippingInvoiceFactory {
     }
 
     @NotNull
-    private LogisticChannelPrice findAppropriatePrice(PlatformOrder uninvoicedOrder, BigDecimal contentWeight) throws UserException {
-        LogisticChannelPrice price;
+    private LogisticChannelPrice findAppropriatePrice(List<Country> countryList, Map<LogisticChannel, List<LogisticChannelPrice>> channelPriceMap,
+                                                      PlatformOrder uninvoicedOrder, BigDecimal contentWeight) throws UserException {
+        LogisticChannelPrice price = null;
         try {
             /* Find channel price */
-            Country country = countryService.findByEnName(uninvoicedOrder.getCountry());
+            Optional<Country> foundCountry = countryList.stream()
+                    .filter(country -> country.getNameEn().equals(uninvoicedOrder.getCountry())).findFirst();
+            if (!foundCountry.isPresent()) {
+                String msg = "Couldn't find country named " + uninvoicedOrder.getCountry();
+                log.error(msg);
+                throw new UserException(msg);
+            }
 
             Date shippingTime = uninvoicedOrder.getShippingTime() == null ? now().toSqlDate() : uninvoicedOrder.getShippingTime();
             String logisticChannelName = uninvoicedOrder.getInvoiceLogisticChannelName() == null ?
                     uninvoicedOrder.getLogisticChannelName() : uninvoicedOrder.getInvoiceLogisticChannelName();
-            price = logisticChannelPriceMapper.findBy(
-                    logisticChannelName,
-                    // For orders without shipping time (pre-shipping), use today
-                    shippingTime,
-                    contentWeight,
-                    country.getCode()
-            );
+            Optional<Map.Entry<LogisticChannel, List<LogisticChannelPrice>>> channelPriceMapCandidate = channelPriceMap.entrySet().stream()
+                    // Find prices of the used channel
+                    .filter(entry -> entry.getKey().getZhName().equals(logisticChannelName))
+                    .findFirst();
+            if (channelPriceMapCandidate.isPresent()) {
+                Optional<LogisticChannelPrice> priceCandidate = channelPriceMapCandidate.get().getValue().stream()
+                        .filter(channelPrice -> channelPrice.getEffectiveCountry().equals(foundCountry.get().getCode()))
+                        .filter(channelPrice -> channelPrice.getWeightRangeEnd() > contentWeight.intValue()
+                                && channelPrice.getWeightRangeStart() < contentWeight.intValue())
+                        .filter(channelPrice -> channelPrice.getEffectiveDate().before(shippingTime))
+                        .max(Comparator.comparing(LogisticChannelPrice::getEffectiveDate));
+                price = priceCandidate.orElse(null);
+            }
             if (price == null) {
                 String format = "Can not find propre channel price for" +
                         "package Serial No: %s, delivered at %s, " +
@@ -380,5 +427,55 @@ public class ShippingInvoiceFactory {
 
         ShippingInvoiceCodeRule rule = new ShippingInvoiceCodeRule();
         return rule.next(lastInvoiceCode);
+    }
+
+    public List<ShippingFeesEstimation> getEstimations(List<String> errorMessages) {
+        List<ShippingFeesEstimation> estimations = new ArrayList<>();
+        Map<String, Map<PlatformOrder, List<PlatformOrderContent>>> uninvoicedOrdersByShopId = platformOrderService.findUninvoicedOrders();
+        Set<String> shopIds = uninvoicedOrdersByShopId.keySet();
+        Set<String> clientIds = new HashSet<>();
+        List<Shop> shops = shopMapper.selectBatchIds(shopIds);
+        shops.forEach(shop -> clientIds.add(clientMapper.selectById(shop.getOwnerId()).getId()));
+        List<Client> clients = clientMapper.selectBatchIds(clientIds);
+        Map<String, Client> clientMap = clients.stream().collect(toMap(Client::getId, Function.identity()));
+
+        List<Country> countryList = countryService.findAll();
+
+        Map<String, BigDecimal> skuRealWeights = new HashMap<>();
+        Map<String, BigDecimal> skuServiceFees = new HashMap<>();
+        skuDataPreparation(skuRealWeights, skuServiceFees);
+
+        Map<Client, List<Shop>> clientToShopsMap = shops.stream().collect(
+                groupingBy(shop -> clientMap.get(shop.getOwnerId()))
+        );
+
+        Map<PlatformOrder, List<PlatformOrderContent>> flattenedOrdersMap = uninvoicedOrdersByShopId.values().stream()
+                .flatMap(map -> map.entrySet().stream())
+                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
+        Map<LogisticChannel, List<LogisticChannelPrice>> channelPriceMap = getChannelPriceMap(flattenedOrdersMap);
+
+        for (Map.Entry<Client, List<Shop>> entry : clientToShopsMap.entrySet()) {
+            Client client = entry.getKey();
+            List<Shop> shopList = entry.getValue();
+            for (Shop shop : shopList) {
+                Map<String, BigDecimal> shopServiceFeeMap = new HashMap<>();
+                shopServiceFeeMap.put(shop.getId(), shop.getOrderServiceFee());
+                Map<PlatformOrder, List<PlatformOrderContent>> orders = uninvoicedOrdersByShopId.get(shop.getId());
+                try {
+                    calculateFees(orders, channelPriceMap, countryList, skuRealWeights, skuServiceFees, client, shopServiceFeeMap, null);
+                    BigDecimal eurToUsd = exchangeRatesMapper.getLatestExchangeRate("EUR", "USD");
+                    ShippingInvoice invoice = new ShippingInvoice(client, "", "", orders, eurToUsd);
+                    invoice.tableData();
+                    estimations.add(new ShippingFeesEstimation(
+                            client.getInternalCode(), shop.getErpCode(), 0, orders.entrySet().size(), invoice.totalAmount()));
+                } catch (UserException e) {
+                    log.error("Couldn't calculate all fees for shop {} for following reason {}", shop.getErpCode(), e.getMessage());
+                    errorMessages.add(e.getMessage());
+                }
+            }
+        }
+        return estimations.stream()
+                .sorted(Comparator.comparing(ShippingFeesEstimation::getDueForProcessedOrders).reversed())
+                .collect(Collectors.toList());
     }
 }

@@ -59,6 +59,10 @@ public class PlatformOrderContentServiceImpl extends ServiceImpl<PlatformOrderCo
             String msg = "Error while retrieving logistic channel " + channelName;
             log.error(e.getMessage());
             throw new UserException(msg);
+        } catch (CacheLoader.InvalidCacheLoadException e) {
+            String msg = "Found order without channel name";
+            log.error(e.getMessage());
+            throw new UserException(msg);
         }
         if (channel == null) {
             throw new UserException("Can not find channel: " + channelName);

@@ -124,4 +124,14 @@
         AND po.shipping_invoice_number IS NULL
         AND poc.erp_status = 3
     </select>
+
+    <select id="findUninvoicedShippedOrderContents" resultType="org.jeecg.modules.business.entity.PlatformOrderContent">
+        SELECT poc.*
+        FROM platform_order_content poc
+        JOIN platform_order po ON poc.platform_order_id = po.id
+        JOIN shop s ON po.shop_id = s.id
+        WHERE
+            po.shipping_invoice_number IS NULL
+        AND poc.erp_status = 3
+    </select>
 </mapper>

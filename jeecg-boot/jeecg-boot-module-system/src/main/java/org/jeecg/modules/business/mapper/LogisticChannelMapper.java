@@ -16,4 +16,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface LogisticChannelMapper extends BaseMapper<LogisticChannel> {
 
+    List<LogisticChannel> getAll();
+
 }

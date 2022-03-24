@@ -46,4 +46,6 @@ public interface CountryMapper extends BaseMapper<Country> {
      * @return country code alias
      */
     CountryCodeAlias findAlias(String alias);
+
+    List<Country> findAll();
 }

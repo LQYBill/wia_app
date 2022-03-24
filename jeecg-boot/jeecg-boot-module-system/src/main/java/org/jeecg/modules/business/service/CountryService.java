@@ -6,6 +6,8 @@ import org.jeecg.modules.business.vo.CountryCodeAlias;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class CountryService {
     @Autowired
@@ -15,6 +17,9 @@ public class CountryService {
         return countryMapper.findByEnName(en_name);
     }
 
+    public List<Country> findAll() {
+        return countryMapper.findAll();
+    }
 
     public Country findByCode(String code) {
         /* check whether the code here is an alias */

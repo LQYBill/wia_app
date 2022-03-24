@@ -41,6 +41,14 @@ public interface LogisticChannelPriceMapper extends BaseMapper<LogisticChannelPr
             @Param("country") String country);
 
     /**
+     * Find logistic channel price by indicting platform order's shipping time
+     *
+     * @param shippingTime the shipping time
+     * @return A list of prices
+     */
+    List<LogisticChannelPrice> findByDate(@Param("date") Date shippingTime);
+
+    /**
      * Find logistic channel price by indicting its channel id, and destination country,
      * also the platform order's shipping time and weight.
      *

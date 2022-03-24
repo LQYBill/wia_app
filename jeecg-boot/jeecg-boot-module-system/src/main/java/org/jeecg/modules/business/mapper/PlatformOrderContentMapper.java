@@ -52,4 +52,6 @@ public interface PlatformOrderContentMapper extends BaseMapper<PlatformOrderCont
             @Param("begin") Date begin,
             @Param("end") Date end
     );
+
+    List<PlatformOrderContent> findUninvoicedShippedOrderContents();
 }

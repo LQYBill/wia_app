@@ -80,6 +80,13 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
     Map<PlatformOrder, List<PlatformOrderContent>> findUninvoicedOrders(List<String> shopIds, Date begin, Date end);
 
     /**
+     * Find all uninvoiced platform orders by shop ID
+     *
+     * @return map of uninvoiced orders by shop ID
+     */
+    Map<String, Map<PlatformOrder, List<PlatformOrderContent>>> findUninvoicedOrders();
+
+    /**
      * Fetch data for orders and their contents
      *
      * @param orderIds order IDs
