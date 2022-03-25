@@ -121,7 +121,7 @@ public class ShippingInvoiceFactory {
                 .distinct()
                 .collect(Collectors.toList());
         log.info("Orders to be invoiced: {}", uninvoicedOrderToContent);
-        return createInvoice(customerId, shopIds, uninvoicedOrderToContent, "Pre-Shipping fees");
+        return createInvoice(customerId, shopIds, uninvoicedOrderToContent, "Pre-Shipping fees", true);
     }
 
     private void calculateAndUpdateContentFees(Map<String, BigDecimal> skuRealWeights, Map<String, BigDecimal> skuServiceFees, PlatformOrder uninvoicedOrder, BigDecimal contentWeight, BigDecimal totalShippingFee, BigDecimal clientVatPercentage, Map<PlatformOrderContent, BigDecimal> contentDeclaredValueMap, BigDecimal totalDeclaredValue, BigDecimal totalVAT, boolean vatApplicable, PlatformOrderContent content) {
@@ -192,7 +192,7 @@ public class ShippingInvoiceFactory {
                 SUBJECT_FORMAT.format(begin),
                 SUBJECT_FORMAT.format(end)
         );
-        return createInvoice(customerId, shopIds, uninvoicedOrderToContent, subject);
+        return createInvoice(customerId, shopIds, uninvoicedOrderToContent, subject, false);
     }
 
     /**
@@ -208,9 +208,10 @@ public class ShippingInvoiceFactory {
      * <li>Update invoiced their orders and contents to DB</li>
      * </ol>
      *
-     * @param customerId Customer ID
-     * @param shopIds    Shop IDs
-     * @param subject    Invoice subject
+     * @param customerId                Customer ID
+     * @param shopIds                   Shop IDs
+     * @param subject                   Invoice subject
+     * @param skipShippingTimeComparing Skip comparing shipping time, true for Pre-shipping, false otherwise
      * @return the generated invoice
      * @throws UserException if package used by the invoice can not or find more than 1 logistic
      *                       channel price, this exception will be thrown.
@@ -218,7 +219,7 @@ public class ShippingInvoiceFactory {
     @Transactional
     public ShippingInvoice createInvoice(String customerId, List<String> shopIds,
                                          Map<PlatformOrder, List<PlatformOrderContent>> orderAndContent,
-                                         String subject) throws UserException {
+                                         String subject, boolean skipShippingTimeComparing) throws UserException {
         log.info("Orders to be invoiced: {}", orderAndContent);
         if (orderAndContent == null) {
             throw new UserException("None platform order in the selected period!");
@@ -227,7 +228,7 @@ public class ShippingInvoiceFactory {
         Map<String, BigDecimal> skuServiceFees = new HashMap<>();
         skuDataPreparation(skuRealWeights, skuServiceFees);
         List<Country> countryList = countryService.findAll();
-        Map<LogisticChannel, List<LogisticChannelPrice>> channelPriceMap = getChannelPriceMap(orderAndContent);
+        Map<LogisticChannel, List<LogisticChannelPrice>> channelPriceMap = getChannelPriceMap(orderAndContent, skipShippingTimeComparing);
         List<SkuDeclaredValue> latestDeclaredValues = skuDeclaredValueService.getLatestDeclaredValues();
 
         Client client = clientMapper.selectById(customerId);
@@ -243,13 +244,21 @@ public class ShippingInvoiceFactory {
         return invoice;
     }
 
-    private Map<LogisticChannel, List<LogisticChannelPrice>> getChannelPriceMap(Map<PlatformOrder, List<PlatformOrderContent>> orderAndContent) {
-        List<PlatformOrder> sortedList = orderAndContent.keySet().stream()
-                .sorted(Comparator.comparing(PlatformOrder::getShippingTime).reversed())
-                .collect(Collectors.toList());
+    private Map<LogisticChannel, List<LogisticChannelPrice>> getChannelPriceMap(Map<PlatformOrder, List<PlatformOrderContent>> orderAndContent,
+                                                                                boolean skipShippingTimeComparing) {
+        Date latestShippingTime;
+        List<PlatformOrder> sortedList;
+        if (skipShippingTimeComparing) {
+            sortedList = new ArrayList<>(orderAndContent.keySet());
+            latestShippingTime = now().toSqlDate();
+        } else {
+            sortedList = orderAndContent.keySet().stream()
+                    .sorted(Comparator.comparing(PlatformOrder::getShippingTime).reversed())
+                    .collect(Collectors.toList());
+            latestShippingTime = sortedList.get(0).getShippingTime() == null ? now().toSqlDate() : sortedList.get(0).getShippingTime();
+        }
         List<String> distinctCountries = sortedList.stream().map(PlatformOrder::getCountry).distinct().collect(toList());
         List<String> distinctChannelNames = sortedList.stream().map(PlatformOrder::getLogisticChannelName).distinct().collect(toList());
-        Date latestShippingTime = sortedList.get(0).getShippingTime() == null ? now().toSqlDate() : sortedList.get(0).getShippingTime();
         Map<String, LogisticChannel> logisticChannelMapById = logisticChannelMapper.getAll().stream()
                 .collect(toMap(LogisticChannel::getId, Function.identity()));
         List<LogisticChannelPrice> allEligiblePrices = logisticChannelPriceMapper.findPricesBy(latestShippingTime,
@@ -449,7 +458,7 @@ public class ShippingInvoiceFactory {
         Map<PlatformOrder, List<PlatformOrderContent>> flattenedOrdersMap = uninvoicedOrdersByShopId.values().stream()
                 .flatMap(map -> map.entrySet().stream())
                 .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
-        Map<LogisticChannel, List<LogisticChannelPrice>> channelPriceMap = getChannelPriceMap(flattenedOrdersMap);
+        Map<LogisticChannel, List<LogisticChannelPrice>> channelPriceMap = getChannelPriceMap(flattenedOrdersMap, true);
 
         for (Map.Entry<Client, List<Shop>> entry : clientToShopsMap.entrySet()) {
             Client client = entry.getKey();
