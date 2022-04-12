@@ -1,5 +1,5 @@
 CREATE OR REPLACE VIEW api_view AS
-SELECT p.country, p.order_no as trackingNumber,
+SELECT p.country, p.third_bill_code as trackingNumber,
        (SELECT JSON_ARRAYAGG(
                        JSON_OBJECT(
                                'scanType', scan_type,
