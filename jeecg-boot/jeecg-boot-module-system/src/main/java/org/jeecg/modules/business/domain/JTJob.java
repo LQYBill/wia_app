@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
+import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.jeecg.modules.business.domain.jtapi.JTParcelTrace;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -35,13 +37,13 @@ public class JTJob implements Job {
     private IPlatformOrderService platformOrderService;
 
     private static final Integer DEFAULT_NUMBER_OF_DAYS = 10;
-    private static final String DEFAULT_TRANSPORTER = "法国专线普货";
+    private static final List<String> DEFAULT_TRANSPORTERS = Arrays.asList("法国专线普货", "珠海E邮宝-比利时", "珠海E邮宝-法国");
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate.minusDays(DEFAULT_NUMBER_OF_DAYS);
-        String transporter = DEFAULT_TRANSPORTER;
+        List<String> transporters = DEFAULT_TRANSPORTERS;
         boolean overrideRestriction = false;
         ObjectMapper mapper = new ObjectMapper();
         mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
@@ -58,8 +60,13 @@ public class JTJob implements Job {
                     String endDateStr = jsonObject.getString("endDate");
                     endDate = LocalDate.parse(endDateStr);
                 }
-                if (!jsonObject.isNull("transporter")) {
-                    transporter = jsonObject.getString("transporter");
+                if (!jsonObject.isNull("transporters")) {
+                    JSONArray transporterArray = jsonObject.getJSONArray("transporters");
+                    List<String> transporterList = new ArrayList<>();
+                    for (int i = 0; i < transporterArray.length(); i++) {
+                        transporterList.add(transporterArray.getString(i));
+                    }
+                    transporters = transporterList;
                 }
                 if (!jsonObject.isNull("override")) {
                     overrideRestriction = jsonObject.getBoolean("override");
@@ -75,9 +82,9 @@ public class JTJob implements Job {
             throw new RuntimeException("No more than 30 days can separate startDate and endDate !");
         }
 
-        log.info("Starting to retrieve parcel traces of {} from {} to {}", transporter, startDate, endDate);
+        log.info("Starting to retrieve parcel traces of {} from {} to {}", transporters, startDate, endDate);
         List<String> billCodes = platformOrderService.fetchBillCodesOfParcelsWithoutTrace(
-                Date.valueOf(startDate), Date.valueOf(endDate), transporter);
+                Date.valueOf(startDate), Date.valueOf(endDate), transporters);
         log.info("{} parcels without trace in total", billCodes.size());
         List<List<String>> billCodeLists = Lists.partition(billCodes, 50);
         log.info("Requests will be divided in to {} parts", billCodeLists.size());
