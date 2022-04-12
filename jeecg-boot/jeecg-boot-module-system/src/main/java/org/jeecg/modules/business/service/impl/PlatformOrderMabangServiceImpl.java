@@ -70,7 +70,10 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
                 // For orders that pass from Shipped to Completed, we must NOT delete then re-insert their contents
                 // Because we would lose all calculated fees (shipping, vat, service)
                 if (retrievedOrder.getStatus().equals(OrderStatus.Completed.getCode())) {
-                    if (orderInDatabase.getErpStatus().equals(OrderStatus.Shipped.getCode())) {
+                    if (orderInDatabase.getErpStatus().equals(OrderStatus.Shipped.getCode())
+                            || orderInDatabase.getErpStatus().equals(OrderStatus.Preparing.getCode())
+                            || orderInDatabase.getErpStatus().equals(OrderStatus.Pending.getCode())
+                    ) {
                         ordersFromShippedToCompleted.add(retrievedOrder);
                     }
                 } else {
