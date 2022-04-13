@@ -1,6 +1,7 @@
 package org.jeecg.modules.business.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.jeecg.modules.business.domain.equickapi.EQuickResponse;
 import org.jeecg.modules.business.domain.jtapi.JTParcelTrace;
 import org.jeecg.modules.business.entity.Parcel;
 import org.jeecg.modules.business.entity.ParcelTrace;
@@ -39,5 +40,7 @@ public interface IParcelService extends IService<Parcel> {
 	 */
 	public void delBatchMain (Collection<? extends Serializable> idList);
 
-	void saveParcelAndTraces(List<JTParcelTrace> traceList);
+	void saveJTParcelAndTraces(List<JTParcelTrace> traceList);
+
+	void saveEQParcelAndTraces(List<EQuickResponse> parcelTraces);
 }

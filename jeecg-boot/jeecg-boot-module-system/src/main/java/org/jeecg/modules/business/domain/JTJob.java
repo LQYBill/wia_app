@@ -105,7 +105,7 @@ public class JTJob implements Job {
             log.error("Error while parsing response into String", e);
         }
         log.info("{} parcels have been retrieved.", parcelTraces.size());
-        parcelService.saveParcelAndTraces(parcelTraces);
+        parcelService.saveJTParcelAndTraces(parcelTraces);
     }
 
 }

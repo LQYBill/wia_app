@@ -85,7 +85,7 @@ public class ParcelServiceImpl extends ServiceImpl<ParcelMapper, Parcel> impleme
 
     @Override
     @Transactional
-    public void saveParcelAndTraces(List<JTParcelTrace> traceList) {
+    public void saveJTParcelAndTraces(List<JTParcelTrace> traceList) {
         if (traceList.isEmpty()) {
             return;
         }
