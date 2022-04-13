@@ -88,9 +88,19 @@
             dataIndex: 'serviceFee',
           },
           {
-            title: 'sku状态',
+            title: '增值税',
+            align: 'center',
+            dataIndex: 'vat',
+          },
+          {
+            title: 'SKU采购状态',
             align: 'center',
             dataIndex: 'status_dictText',
+          },
+          {
+            title: 'ERP中状态',
+            align: 'center',
+            dataIndex: 'erpStatus',
           },
         ],
         url: {
