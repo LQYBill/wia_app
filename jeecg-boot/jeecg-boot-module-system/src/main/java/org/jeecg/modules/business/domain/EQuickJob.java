@@ -30,6 +30,10 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class EQuickJob implements Job {
@@ -40,6 +44,7 @@ public class EQuickJob implements Job {
     private IPlatformOrderService platformOrderService;
 
     private static final Integer DEFAULT_NUMBER_OF_DAYS = 10;
+    private static final Integer DEFAULT_NUMBER_OF_THREADS = 10;
     private static final List<String> DEFAULT_TRANSPORTERS = Arrays.asList("EQ快速专线小包（D）", "EQ快速专线小包（带电）", "EQ美国快速专线小包",
             "Equick快速专线小包（AT/CZ/SK/HU/BG/GR/RO/SI）", "Equick欧美速递专线", "Equick法国快速专线小包");
 
@@ -91,18 +96,31 @@ public class EQuickJob implements Job {
                 Date.valueOf(startDate), Date.valueOf(endDate), transporters);
         log.info("{} parcels without trace in total", equickNumbers.size());
         List<EQuickResponse> parcels = new ArrayList<>();
-        try {
-            for (String equickNumber : equickNumbers) {
-                EQuickRequest equickRequest = new EQuickRequest(equickNumber);
-                String responseString = equickRequest.send().getBody();
-                EQuickResponse eQuickResponse = mapper.readValue(responseString, EQuickResponse.class);
-                parcels.add(eQuickResponse);
-                log.info("{} parcel added to the queue to be inserted into DB.", parcels.size());
-            }
-        } catch (IOException e) {
-            log.error("Error while parsing response into String", e);
-        }
-        log.info("{} parcel traces have been retrieved.", parcels.size());
+        List<EQuickRequest> requests = new ArrayList<>();
+        equickNumbers.forEach(number -> {
+            EQuickRequest equickRequest = new EQuickRequest(number);
+            requests.add(equickRequest);
+        });
+        ExecutorService executor = Executors.newFixedThreadPool(DEFAULT_NUMBER_OF_THREADS);
+        List<CompletableFuture<Boolean>> futures = requests.stream()
+                .map(request -> CompletableFuture.supplyAsync(() -> {
+                    boolean success = false;
+                    String responseString = request.send().getBody();
+                    try {
+                        EQuickResponse eQuickResponse = mapper.readValue(responseString, EQuickResponse.class);
+                        parcels.add(eQuickResponse);
+                        success = true;
+                    } catch (IOException e) {
+                        log.error("Error while parsing response into String", e);
+                    }
+                    log.info("{} parcel added to the queue to be inserted into DB.", parcels.size());
+                    return success;
+                }, executor))
+                .collect(Collectors.toList());
+
+        List<Boolean> results = futures.stream().map(CompletableFuture::join).collect(Collectors.toList());
+        long nbSuccesses = results.stream().filter(b -> b).count();
+        log.info("{} of {} parcel traces have been retrieved.", nbSuccesses, requests.size());
         parcelService.saveEQParcelAndTraces(parcels);
     }
 
