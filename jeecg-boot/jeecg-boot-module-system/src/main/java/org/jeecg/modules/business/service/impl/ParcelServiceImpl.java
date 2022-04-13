@@ -2,6 +2,8 @@ package org.jeecg.modules.business.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
+import org.jeecg.modules.business.domain.equickapi.EQuickResponse;
+import org.jeecg.modules.business.domain.equickapi.EQuickTraceData;
 import org.jeecg.modules.business.domain.jtapi.JTParcelTrace;
 import org.jeecg.modules.business.domain.jtapi.JTParcelTraceDetail;
 import org.jeecg.modules.business.entity.Parcel;
@@ -14,10 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -120,5 +119,51 @@ public class ParcelServiceImpl extends ServiceImpl<ParcelMapper, Parcel> impleme
             parcelTraceMapper.insertOrIgnore(tracesToInsert);
         }
         log.info("Finished inserting {} parcels and their traces into DB.", traceList.size());
+    }
+
+    @Override
+    @Transactional
+    public void saveEQParcelAndTraces(List<EQuickResponse> parcelTraces) {
+        if (parcelTraces.isEmpty()) {
+            return;
+        }
+        log.info("Started inserting {} EQ parcels and their traces into DB.", parcelTraces.size() );
+        List<String> parcelBillCodes = parcelTraces.stream().map(eQuickResponse -> eQuickResponse.getTraceDataSet().get(0).getTraceLabelNo())
+                .collect(Collectors.toList());
+        List<Parcel> existingParcels = parcelMapper.searchByBillCode(parcelBillCodes);
+        Map<String, Parcel> billCodeToExistingParcels = existingParcels.stream().collect(
+                Collectors.toMap(Parcel::getBillCode, Function.identity())
+        );
+
+        List<EQuickResponse> parcelToInsert = new ArrayList<>();
+        List<EQuickTraceData> tracesToInsert = new ArrayList<>();
+        for (EQuickResponse parcelAndTrace : parcelTraces) {
+            // Any trace of parcel contains info about bill code, service type and destination country
+            List<EQuickTraceData> traceDataSet = parcelAndTrace.getTraceDataSet();
+            // Apart from the initial trace, all other traces contain the same third bill code
+            Optional<String> firstThirdBillCode = traceDataSet.stream().map(EQuickTraceData::getDestinationWBNo)
+                    .filter(Objects::nonNull).distinct().findFirst();
+            EQuickTraceData anyTraceOfParcel = traceDataSet.get(0);
+            parcelAndTrace.setCountry(anyTraceOfParcel.getTraceCountry());
+            parcelAndTrace.setProductCode(anyTraceOfParcel.getQuickType());
+            parcelAndTrace.setBillCode(anyTraceOfParcel.getTraceLabelNo());
+            parcelAndTrace.setThirdBillCode(firstThirdBillCode.orElse(parcelAndTrace.getEquickWBNo()));
+            Parcel existingParcel = billCodeToExistingParcels.get(anyTraceOfParcel.getTraceLabelNo());
+            if (existingParcel == null) {
+                parcelToInsert.add(parcelAndTrace);
+                traceDataSet.forEach(trace -> trace.setParcelId(parcelAndTrace.getId()));
+            } else {
+                traceDataSet.forEach(trace -> trace.setParcelId(existingParcel.getId()));
+            }
+            tracesToInsert.addAll(new ArrayList<>(traceDataSet));
+        }
+        log.info("After filtering, {} parcels will be inserted into the DB.", parcelToInsert.size());
+        if (!parcelToInsert.isEmpty()) {
+//            parcelMapper.insertOrIgnore(parcelToInsert);
+        }
+        if (!tracesToInsert.isEmpty()) {
+//            parcelTraceMapper.insertOrIgnore(tracesToInsert);
+        }
+        log.info("Finished inserting {} parcels and their traces into DB.", parcelTraces.size());
     }
 }
