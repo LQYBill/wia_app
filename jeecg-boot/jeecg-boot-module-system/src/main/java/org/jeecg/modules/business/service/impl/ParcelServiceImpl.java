@@ -128,7 +128,9 @@ public class ParcelServiceImpl extends ServiceImpl<ParcelMapper, Parcel> impleme
             return;
         }
         log.info("Started inserting {} EQ parcels and their traces into DB.", parcelTraces.size() );
-        List<String> parcelBillCodes = parcelTraces.stream().map(eQuickResponse -> eQuickResponse.getTraceDataSet().get(0).getTraceLabelNo())
+        List<String> parcelBillCodes = parcelTraces.stream()
+                .filter(eQuickResponse -> !eQuickResponse.getTraceDataSet().isEmpty())
+                .map(eQuickResponse -> eQuickResponse.getTraceDataSet().get(0).getTraceLabelNo())
                 .collect(Collectors.toList());
         List<Parcel> existingParcels = parcelMapper.searchByBillCode(parcelBillCodes);
         Map<String, Parcel> billCodeToExistingParcels = existingParcels.stream().collect(

@@ -272,7 +272,7 @@
           AND internal_tracking_number NOT IN (SELECT p.bill_code
                                                FROM parcel_trace pt
                                                         JOIN parcel p ON pt.parcel_id = p.id
-                                               WHERE pt.scan_type = 'MD006')
+                                               WHERE pt.scan_type = 'End Delivered')
           AND internal_tracking_number IS NOT NULL;
     </select>
 
