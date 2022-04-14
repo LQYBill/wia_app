@@ -2,11 +2,11 @@ package org.jeecg.modules.business.domain;
 
 import org.junit.jupiter.api.Test;
 
-public class TemporaryJobTest {
+public class MabangJobTest {
 
 
     @Test
     void get28Order(){
-        TemporaryJob job = new TemporaryJob();
+        MabangJob job = new MabangJob();
     }
 }
