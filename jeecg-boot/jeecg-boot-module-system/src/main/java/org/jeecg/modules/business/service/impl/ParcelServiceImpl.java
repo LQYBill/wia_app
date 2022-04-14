@@ -113,10 +113,10 @@ public class ParcelServiceImpl extends ServiceImpl<ParcelMapper, Parcel> impleme
         }
         log.info("After filtering, {} parcels will be inserted into the DB.", parcelToInsert.size());
         if (!parcelToInsert.isEmpty()) {
-            parcelMapper.insertOrIgnore(parcelToInsert);
+            parcelMapper.insertOrIgnoreJTParcels(parcelToInsert);
         }
         if (!tracesToInsert.isEmpty()) {
-            parcelTraceMapper.insertOrIgnore(tracesToInsert);
+            parcelTraceMapper.insertOrIgnoreJTTraces(tracesToInsert);
         }
         log.info("Finished inserting {} parcels and their traces into DB.", traceList.size());
     }
@@ -151,18 +151,18 @@ public class ParcelServiceImpl extends ServiceImpl<ParcelMapper, Parcel> impleme
             Parcel existingParcel = billCodeToExistingParcels.get(anyTraceOfParcel.getTraceLabelNo());
             if (existingParcel == null) {
                 parcelToInsert.add(parcelAndTrace);
-                traceDataSet.forEach(trace -> trace.setParcelId(parcelAndTrace.getId()));
+                traceDataSet.forEach(trace -> trace.parcelTraceProcess(parcelAndTrace.getId()));
             } else {
-                traceDataSet.forEach(trace -> trace.setParcelId(existingParcel.getId()));
+                traceDataSet.forEach(trace -> trace.parcelTraceProcess(existingParcel.getId()));
             }
             tracesToInsert.addAll(new ArrayList<>(traceDataSet));
         }
         log.info("After filtering, {} parcels will be inserted into the DB.", parcelToInsert.size());
         if (!parcelToInsert.isEmpty()) {
-//            parcelMapper.insertOrIgnore(parcelToInsert);
+            parcelMapper.insertOrIgnoreEQParcels(parcelToInsert);
         }
         if (!tracesToInsert.isEmpty()) {
-//            parcelTraceMapper.insertOrIgnore(tracesToInsert);
+            parcelTraceMapper.insertOrIgnoreEQTraces(tracesToInsert);
         }
         log.info("Finished inserting {} parcels and their traces into DB.", parcelTraces.size());
     }

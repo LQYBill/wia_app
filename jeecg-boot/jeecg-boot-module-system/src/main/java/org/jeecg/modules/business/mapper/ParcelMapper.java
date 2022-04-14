@@ -1,6 +1,7 @@
 package org.jeecg.modules.business.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.jeecg.modules.business.domain.equickapi.EQuickResponse;
 import org.jeecg.modules.business.domain.jtapi.JTParcelTrace;
 import org.jeecg.modules.business.entity.Parcel;
 import org.springframework.stereotype.Repository;
@@ -16,7 +17,9 @@ import java.util.List;
 @Repository
 public interface ParcelMapper extends BaseMapper<Parcel> {
 
-    void insertOrIgnore(List<JTParcelTrace> parcels);
+    void insertOrIgnoreJTParcels(List<JTParcelTrace> parcels);
 
     List<Parcel> searchByBillCode(List<String> billCodes);
+
+    void insertOrIgnoreEQParcels(List<EQuickResponse> parcels);
 }

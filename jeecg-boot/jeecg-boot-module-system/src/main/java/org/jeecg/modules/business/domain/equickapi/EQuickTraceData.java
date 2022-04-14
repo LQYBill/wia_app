@@ -15,7 +15,11 @@ public class EQuickTraceData {
     @JSONField(deserialize = false)
     private String parcelId;
 
-    /**+
+    @JSONField(deserialize = false)
+    private String scanType;
+
+    /**
+     * +
      * 产品代码
      */
     @JsonProperty("QuickType")
@@ -82,5 +86,52 @@ public class EQuickTraceData {
     }
 
     public EQuickTraceData() {
+    }
+
+    /**
+     * Set parcel ID, and add scan type info accordingly
+     *
+     * @param parcelId Parcel ID to which the trace belongs to
+     */
+    public void parcelTraceProcess(String parcelId) {
+        setParcelId(parcelId);
+        switch (traceKind) {
+            case 111:
+                setScanType("Order Placed");
+                break;
+            case 112:
+                setScanType("Waiting for Delivery");
+                break;
+            case 123:
+                setScanType("Received by Consolidation Warehouse");
+                break;
+            case 131:
+                setScanType("Consolidation Center Outbound");
+                break;
+            case 141:
+                setScanType("Consolidation Center Dispatch");
+                setTraceContent("Arrived at carrier operation center");
+                break;
+            case 151:
+                setScanType("Aviation Stowage");
+                setTraceContent("Departed from carrier operation center");
+                break;
+            case 161:
+                setScanType("Arrived at Port");
+                break;
+            case 164:
+                setScanType("Flight Departure");
+                break;
+            case 168:
+                setScanType("Flight Arrived");
+                break;
+            case 200:
+            case 232:
+                setScanType("Customs Clearance Completed");
+                break;
+            case 210:
+                setScanType("End Received");
+                break;
+        }
     }
 }

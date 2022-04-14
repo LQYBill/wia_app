@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.jeecg.modules.business.mapper.ParcelMapper">
-    <insert id="insertOrIgnore" parameterType="list">
+    <insert id="insertOrIgnoreJTParcels" parameterType="list">
         INSERT IGNORE INTO parcel(id, create_by, create_time, update_by, update_time, bill_code, country,
                                   third_bill_code, order_no)
         VALUES
@@ -27,4 +27,23 @@
             #{item}
         </foreach>
     </select>
+
+    <insert id="insertOrIgnoreEQParcels" parameterType="list">
+        INSERT IGNORE INTO parcel(id, create_by, create_time, update_by, update_time, bill_code, country,
+        third_bill_code, product_code)
+        VALUES
+        <foreach collection="parcels" separator="," open="" close="" item="parcel" index="index">
+            (
+            #{parcel.id},
+            'eq api',
+            NOW(),
+            'eq api',
+            NOW(),
+            #{parcel.billCode},
+            #{parcel.country},
+            #{parcel.thirdBillCode},
+            #{parcel.productCode}
+            )
+        </foreach>
+    </insert>
 </mapper>

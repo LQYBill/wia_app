@@ -15,7 +15,7 @@
         ORDER BY scan_time DESC
     </select>
 
-    <insert id="insertOrIgnore" parameterType="list">
+    <insert id="insertOrIgnoreJTTraces" parameterType="list">
         INSERT IGNORE INTO parcel_trace(id, create_by, create_time, update_by, update_time, parcel_id, scan_time,
         scan_type, description, description_en)
         VALUES
@@ -31,6 +31,28 @@
             #{trace.scanType},
             #{trace.descriptionCn},
             #{trace.descriptionEn}
+            )
+        </foreach>
+    </insert>
+
+    <insert id="insertOrIgnoreEQTraces" parameterType="list">
+        INSERT IGNORE INTO parcel_trace(id, create_by, create_time, update_by, update_time, parcel_id, scan_time,
+        scan_type, description_en, trace_location, trace_status, trace_code)
+        VALUES
+        <foreach collection="traces" separator="," open="" close="" item="trace" index="index">
+            (
+            UUID(),
+            'eq api',
+            NOW(),
+            'eq api',
+            NOW(),
+            #{trace.parcelId},
+            #{trace.traceDateTime},
+            #{trace.scanType},
+            #{trace.traceContent},
+            #{trace.traceLocation},
+            #{trace.traceStatus},
+            #{trace.traceKind}
             )
         </foreach>
     </insert>
