@@ -60,6 +60,7 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
         ArrayList<Order> newOrders = new ArrayList<>();
         ArrayList<Order> oldOrders = new ArrayList<>();
         ArrayList<Order> ordersFromShippedToCompleted = new ArrayList<>();
+        ArrayList<Order> obsoleteOrders = new ArrayList<>();
         for (Order retrievedOrder : orders) {
             PlatformOrder orderInDatabase = platformOrderIDToExistOrders.get(retrievedOrder.getPlatformOrderId());
             if (orderInDatabase == null) {
@@ -83,6 +84,9 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
                             && orderInDatabase.getShippingInvoiceNumber() == null) {
                         // for old orders get their id, update their attributes
                         oldOrders.add(retrievedOrder);
+                    }
+                    if (retrievedOrder.getStatus().equals(OrderStatus.Obsolete.getCode())) {
+                        obsoleteOrders.add(retrievedOrder);
                     }
                 }
             }
@@ -119,6 +123,14 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
                 platformOrderMabangMapper.batchUpdateErpStatusByMainId(
                         ordersFromShippedToCompleted.stream().map(Order::getId).collect(toList()),
                         OrderStatus.Completed.getCode());
+            }
+            if (obsoleteOrders.size() != 0) {
+                log.info("{} orders to become obsolete.", obsoleteOrders.size());
+                platformOrderMabangMapper.batchUpdateById(obsoleteOrders);
+                log.info("Contents of {} orders to be updated to Obsolete.", obsoleteOrders.size());
+                platformOrderMabangMapper.batchUpdateErpStatusByMainId(
+                        obsoleteOrders.stream().map(Order::getId).collect(toList()),
+                        OrderStatus.Obsolete.getCode());
             }
             if (allNewItemsOfOldItems.size() != 0) {
                 log.info("{} order items to be inserted/updated.", allNewItemsOfOldItems.size());
