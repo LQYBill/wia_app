@@ -275,7 +275,7 @@ export default {
       pagination: {
         current: 1,
         pageSize: 100,
-        pageSizeOptions: ['100', '200', '500'],
+        pageSizeOptions: ['50', '100', '200', '500'],
         showTotal: (total, range) => {
           return range[0] + '-' + range[1] + ' / ' + total
         },
