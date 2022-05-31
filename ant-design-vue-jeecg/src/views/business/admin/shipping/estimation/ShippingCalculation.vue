@@ -167,6 +167,12 @@ const columns = [
     width: 180,
   },
   {
+    title: "渠道代码",
+    align: "center",
+    dataIndex: "logisticChannelCode",
+    width: 180,
+  },
+  {
     title: "运费",
     children: [
       {

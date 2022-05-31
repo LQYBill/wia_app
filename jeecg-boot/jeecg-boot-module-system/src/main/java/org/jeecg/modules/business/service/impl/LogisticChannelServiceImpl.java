@@ -89,6 +89,7 @@ public class LogisticChannelServiceImpl extends ServiceImpl<LogisticChannelMappe
         return channels.stream()
                 .map(c -> {
                     String internalName = c.getInternalName();
+                    String code = c.getCode();
                     String channelName = c.getZhName();
                     boolean useVolumetricWeight = c.getUseVolumetricWeight() == 1;
                     int trueWeight;
@@ -99,7 +100,7 @@ public class LogisticChannelServiceImpl extends ServiceImpl<LogisticChannelMappe
                     }
                     LogisticChannelPrice price = findLogisticsChannelPrice(channelName, new Date(), trueWeight, country);
                     if (price != null) {
-                        return new CostTrialCalculation(price, trueWeight, internalName);
+                        return new CostTrialCalculation(price, trueWeight, internalName, code);
                     } else {
                         return null;
                     }

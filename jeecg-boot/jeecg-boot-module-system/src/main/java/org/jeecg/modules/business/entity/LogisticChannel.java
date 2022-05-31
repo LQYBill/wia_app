@@ -18,8 +18,8 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * @Description: 物流渠道
  * @Author: jeecg-boot
- * @Date: 2021-08-02
- * @Version: V1.0
+ * @Date: 2022-05-31
+ * @Version: V1.1
  */
 @ApiModel(value = "logistic_channel对象", description = "物流渠道")
 @Data
@@ -95,4 +95,16 @@ public class LogisticChannel implements Serializable {
     @Excel(name = "抛重系数", width = 15)
     @ApiModelProperty(value = "抛重系数")
     private Integer volumetricWeightFactor;
+    /**
+     * 是否活跃
+     */
+    @Excel(name = "是否活跃", width = 15)
+    @ApiModelProperty(value = "是否活跃")
+    private String active;
+    /**
+     * 是否活跃
+     */
+    @Excel(name = "渠道编码", width = 15)
+    @ApiModelProperty(value = "渠道编码")
+    private String code;
 }
