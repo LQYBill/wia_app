@@ -60,7 +60,7 @@ public class InvoiceController {
     @GetMapping(value = "/preShipping/orders")
     public Result<?> getOrdersByClientAndShops(PlatformOrder platformOrder,
                                                @RequestParam("clientId") String clientId,
-                                               @RequestParam(name = "shopIds", required = false) List<String> shopIDs,
+                                               @RequestParam(name = "shopIds[]", required = false) List<String> shopIDs,
                                                @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
                                                @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
                                                HttpServletRequest req) {
