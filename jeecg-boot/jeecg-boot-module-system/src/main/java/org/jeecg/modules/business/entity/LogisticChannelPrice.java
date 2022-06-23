@@ -142,12 +142,19 @@ public class LogisticChannelPrice implements Serializable {
         if (weight.compareTo(min) < 0) {
             return minimumWeightPrice;
         }
-        /* (weight - minimum weight)/unit * UP + minimum weight price */
-        return weight
-                .subtract(min)
-                .divide(BigDecimal.valueOf(calUnit), RoundingMode.UP)
-                .multiply(calUnitPrice)
-                .add(minimumWeightPrice)
-                .setScale(2, RoundingMode.UP);
+        if (calUnit == 1) {
+            return weight
+                    .multiply(calUnitPrice)
+                    .setScale(2, RoundingMode.UP);
+        } else {
+            BigDecimal calUnitBigDecimal = BigDecimal.valueOf(calUnit);
+            return weight
+                    .subtract(min)
+                    .divide(calUnitBigDecimal, RoundingMode.UP)
+                    .multiply(calUnitBigDecimal)
+                    .multiply(calUnitPrice)
+                    .add(minimumWeightPrice)
+                    .setScale(2, RoundingMode.UP);
+        }
     }
 }
