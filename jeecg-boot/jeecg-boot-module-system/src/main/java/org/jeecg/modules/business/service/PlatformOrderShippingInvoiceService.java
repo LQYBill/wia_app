@@ -1,8 +1,11 @@
 package org.jeecg.modules.business.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import org.apache.shiro.SecurityUtils;
+import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.modules.business.controller.UserException;
 import org.jeecg.modules.business.domain.excel.SheetManager;
+import org.jeecg.modules.business.domain.shippingInvoice.CompleteInvoice;
 import org.jeecg.modules.business.domain.shippingInvoice.ShippingInvoice;
 import org.jeecg.modules.business.domain.shippingInvoice.ShippingInvoiceFactory;
 import org.jeecg.modules.business.entity.ShippingInvoiceEntity;
@@ -50,13 +53,25 @@ public class PlatformOrderShippingInvoiceService {
     @Autowired
     CountryService countryService;
     @Autowired
+    IPurchaseOrderService purchaseOrderService;
+    @Autowired
+    PurchaseOrderContentMapper purchaseOrderContentMapper;
+    @Autowired
+    SkuPromotionHistoryMapper skuPromotionHistoryMapper;
+    @Autowired
     ExchangeRatesMapper exchangeRatesMapper;
 
     @Value("${jeecg.path.shippingTemplatePath_EU}")
-    private String INVOICE_TEMPLATE_EU;
+    private String SHIPPING_INVOICE_TEMPLATE_EU;
 
     @Value("${jeecg.path.shippingTemplatePath_US}")
-    private String INVOICE_TEMPLATE_US;
+    private String SHIPPING_INVOICE_TEMPLATE_US;
+
+    @Value("${jeecg.path.completeTemplatePath_EU}")
+    private String COMPLETE_INVOICE_TEMPLATE_EU;
+
+    @Value("${jeecg.path.completeTemplatePath_US}")
+    private String COMPLETE_INVOICE_TEMPLATE_US;
 
     @Value("${jeecg.path.shippingInvoiceDir}")
     private String INVOICE_DIR;
@@ -112,21 +127,66 @@ public class PlatformOrderShippingInvoiceService {
                 platformOrderContentService,
                 skuDeclaredValueService,
                 countryService,
-                exchangeRatesMapper);
+                exchangeRatesMapper,
+                purchaseOrderService,
+                purchaseOrderContentMapper,
+                skuPromotionHistoryMapper);
+        String username = ((LoginUser) SecurityUtils.getSubject().getPrincipal()).getUsername();
         // Creates invoice by factory
-        ShippingInvoice invoice = factory.createPreShippingInvoice(param.clientID(), param.orderIds());
-        return getInvoiceMetaData(invoice);
+        ShippingInvoice invoice = factory.createPreShippingInvoice(username, param.clientID(), param.orderIds());
+        return getInvoiceMetaData(username, invoice);
+    }
+
+    /**
+     * Make a complete pre-shipping (purchase + shipping) invoice for specified orders
+     *
+     * @param param the parameters to make the invoice
+     * @return name of the invoice, can be used to in {@code getInvoiceBinary}.
+     * @throws UserException  exception due to error of user input, message will contain detail
+     * @throws ParseException exception because of format of "start" and "end" date does not follow
+     *                        pattern: "yyyy-MM-dd"
+     * @throws IOException    exception related to invoice file IO.
+     */
+    @Transactional
+    public InvoiceMetaData makeCompleteInvoice(PreShippingInvoiceParam param) throws UserException, ParseException, IOException {
+        // Creates factory
+        ShippingInvoiceFactory factory = new ShippingInvoiceFactory(
+                platformOrderService,
+                clientMapper,
+                shopMapper,
+                logisticChannelMapper,
+                logisticChannelPriceMapper,
+                platformOrderContentService,
+                skuDeclaredValueService,
+                countryService,
+                exchangeRatesMapper,
+                purchaseOrderService,
+                purchaseOrderContentMapper,
+                skuPromotionHistoryMapper);
+        String username = ((LoginUser) SecurityUtils.getSubject().getPrincipal()).getUsername();
+        // Creates invoice by factory
+        CompleteInvoice invoice = factory.createCompletePreShippingInvoice(username, param.clientID(), param.orderIds());
+        return getInvoiceMetaData(username, invoice);
     }
 
     @NotNull
-    private InvoiceMetaData getInvoiceMetaData(ShippingInvoice invoice) throws IOException {
+    private InvoiceMetaData getInvoiceMetaData(String username, ShippingInvoice invoice) throws IOException {
         // Chooses invoice template based on client's preference on currency
         Path src;
-        if (invoice.client().getCurrency().equals("USD")) {
-            src = Paths.get(INVOICE_TEMPLATE_US);
+        if (invoice instanceof CompleteInvoice) {
+            if (invoice.client().getCurrency().equals("USD")) {
+                src = Paths.get(COMPLETE_INVOICE_TEMPLATE_US);
+            } else {
+                src = Paths.get(COMPLETE_INVOICE_TEMPLATE_EU);
+            }
         } else {
-            src = Paths.get(INVOICE_TEMPLATE_EU);
+            if (invoice.client().getCurrency().equals("USD")) {
+                src = Paths.get(SHIPPING_INVOICE_TEMPLATE_US);
+            } else {
+                src = Paths.get(SHIPPING_INVOICE_TEMPLATE_EU);
+            }
         }
+
         // Writes invoice content to a new excel file
         String filename = "Invoice N°" + invoice.code() + " (" + invoice.client().getInvoiceEntity() + ").xlsx";
         Path out = Paths.get(INVOICE_DIR, filename);
@@ -136,8 +196,9 @@ public class PlatformOrderShippingInvoiceService {
         }
         // save to DB
         ShippingInvoiceEntity shippingInvoiceEntity = ShippingInvoiceEntity.of(
+                username,
                 invoice.code(),
-                invoice.totalAmount(),
+                invoice.getTotalAmount(),
                 invoice.reducedAmount(),
                 invoice.paidAmount()
         );
@@ -167,7 +228,11 @@ public class PlatformOrderShippingInvoiceService {
                 platformOrderContentService,
                 skuDeclaredValueService,
                 countryService,
-                exchangeRatesMapper);
+                exchangeRatesMapper,
+                purchaseOrderService,
+                purchaseOrderContentMapper,
+                skuPromotionHistoryMapper);
+        String username = ((LoginUser) SecurityUtils.getSubject().getPrincipal()).getUsername();
         // Creates invoice by factory
         ShippingInvoice invoice = factory.createInvoice(param.clientID(),
                 param.shopIDs(),
@@ -175,7 +240,7 @@ public class PlatformOrderShippingInvoiceService {
                 param.end()
         );
         // Chooses invoice template based on client's preference on currency
-        return getInvoiceMetaData(invoice);
+        return getInvoiceMetaData(username, invoice);
     }
 
 
@@ -196,7 +261,9 @@ public class PlatformOrderShippingInvoiceService {
                 platformOrderContentService,
                 skuDeclaredValueService,
                 countryService,
-                exchangeRatesMapper);
+                exchangeRatesMapper, purchaseOrderService,
+                purchaseOrderContentMapper,
+                skuPromotionHistoryMapper);
         return factory.getEstimations(errorMessages);
     }
 

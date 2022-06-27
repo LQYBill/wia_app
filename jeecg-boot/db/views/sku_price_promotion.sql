@@ -1,6 +1,7 @@
 CREATE OR REPLACE VIEW sku_price_promotion AS
 SELECT s.id                   AS sku_id,
-       p.en_name              AS product_name,
+       p.en_name              AS name_en,
+       p.zh_name              AS name_zh,
        s.erp_code             AS erp_code,
        s.image_source         AS image_source,
        spr.promotion_id       AS promotion_id,

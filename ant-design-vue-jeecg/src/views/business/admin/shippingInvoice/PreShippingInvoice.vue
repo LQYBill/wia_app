@@ -94,7 +94,23 @@
                 :loading='invoiceLoading'
                 @click='makeInvoice'
                 :disabled='invoiceDisable'
-              >生成文件</a-button>
+              >生成物流发票文件</a-button>
+            </a-col>
+          </span>
+          <span
+            style='float: left;overflow: hidden;'
+            class='table-page-search-submitButtons'
+          >
+            <a-col
+              :md='6'
+              :sm='24'
+            >
+              <a-button
+                type='danger'
+                :loading='invoiceLoading'
+                @click='makeCompleteInvoice'
+                :disabled='completeInvoiceDisable'
+              >生成完整（物流+采购）发票文件</a-button>
             </a-col>
           </span>
         </a-row>
@@ -199,6 +215,8 @@ export default {
         getClientList: '/client/client/all',
         getShopsByCustomerId: '/shippingInvoice/shopsByClient',
         makeInvoice: '/shippingInvoice/preShipping/make',
+        checkSkuPrices: '/shippingInvoice/preShipping/checkSkuPrices',
+        makeCompleteInvoice: '/shippingInvoice/preShipping/makeComplete',
         downloadInvoice: '/shippingInvoice/download',
         invoiceDetail: '/shippingInvoice/invoiceDetail'
       },
@@ -292,6 +310,8 @@ export default {
       findOrdersLoading: false,
       shopDisable: true,
       clientDisable: false,
+      purchasePricesAvailable: true,
+      completeInvoiceDisable: true,
       invoiceDisable: true,
       dataDisable: true,
       orderListLoading: false
@@ -334,6 +354,8 @@ export default {
       this.pagination.current = 1
       this.pagination.pageSize = 100
       this.pagination.total = 0
+      this.invoiceDisable = true
+      this.completeInvoiceDisable = true
     },
     handleShopChange(value) {
       // value returned is array of shop
@@ -411,6 +433,24 @@ export default {
                 } else {
                   self.pagination.total = 0
                 }
+                if (self.orderList.length > 0) {
+                  let orderIdList = []
+                  self.orderList.map(order => {
+                    orderIdList.push(order.id)
+                  })
+                  let param = {
+                    clientID : self.customerId,
+                    orderIds : orderIdList
+                  }
+                  postAction(self.url.checkSkuPrices, param)
+                    .then(res => {
+                      self.purchasePricesAvailable = res.code === '200';
+                      console.log(res.code)
+                      if (res.message) {
+                        this.$message.warning(res.message)
+                      }
+                    })
+                }
                 this.findOrdersLoading = false
                 this.orderListLoading = false
               })
@@ -460,6 +500,48 @@ export default {
           }
         )
     },
+    makeCompleteInvoice() {
+      let self = this
+      self.loading = true
+      if (!this.customerId) {
+        this.$message.warning('请选择客户！')
+        return
+      }
+      let param = {
+        clientID: this.customerId,
+        orderIds: this.selectedRowKeys
+      };
+      self.invoiceDisable = true
+      self.findOrdersLoading = true
+      self.orderListLoading = true
+      self.shopDisable = true
+      self.clientDisable = true
+      postAction(this.url.makeCompleteInvoice, param)
+        .then(
+          res => {
+            console.log(res)
+            if (!res.success) {
+              self.$message.error(res.message, 10)
+            } else {
+              self.selectionRows = []
+              self.selectedRowKeys = []
+              let filename = res.result.filename
+              let code = res.result.invoiceCode
+              this.downloadInvoice(filename).then(
+                this.$message.info('Download succeed.')
+              )
+              this.downloadDetailFile(code)
+              this.pagination.current = 1
+              this.loadOrders()
+            }
+            self.clientDisable = false
+            self.shopDisable = false
+            self.completeInvoiceDisable = false
+            self.findOrdersLoading = false
+            self.orderListLoading = false
+          }
+        )
+    },
     downloadInvoice(filename) {
       const param = { filename: filename }
       console.log(filename)
@@ -485,6 +567,7 @@ export default {
       this.selectionRows = selectionRows
       // No selected row, no invoice
       this.invoiceDisable = this.selectionRows.length === 0
+      this.completeInvoiceDisable = this.selectionRows.length === 0 || !this.purchasePricesAvailable
     },
     getCheckboxProps: record => ({
       props: {
@@ -496,6 +579,7 @@ export default {
       this.selectedRowKeys = []
       this.selectionRows = []
       this.invoiceDisable = true
+      this.completeInvoiceDisable = true
     },
     downloadDetailFile(invoiceNumber) {
       const param = {

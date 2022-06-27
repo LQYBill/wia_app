@@ -11,7 +11,10 @@ import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.modules.business.controller.UserException;
 import org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderStatus;
 import org.jeecg.modules.business.entity.PlatformOrder;
+import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.entity.Shop;
+import org.jeecg.modules.business.entity.SkuPrice;
+import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
 import org.jeecg.modules.business.service.IShopService;
 import org.jeecg.modules.business.service.PlatformOrderShippingInvoiceService;
@@ -22,9 +25,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Controller for request related to shipping invoice
@@ -40,6 +42,9 @@ public class InvoiceController {
     private PlatformOrderShippingInvoiceService shippingInvoiceService;
     @Autowired
     private PlatformOrderMapper platformOrderMapper;
+
+    @Autowired
+    private PlatformOrderContentMapper platformOrderContentMap;
 
 
     @GetMapping(value = "/shopsByClient")
@@ -101,6 +106,47 @@ public class InvoiceController {
     public Result<?> makePreShippingInvoice(@RequestBody PreShippingInvoiceParam param) {
         try {
             InvoiceMetaData metaData = shippingInvoiceService.makeInvoice(param);
+            return Result.OK(metaData);
+        } catch (UserException e) {
+            return Result.error(e.getMessage());
+        } catch (IOException | ParseException e) {
+            log.error(e.getMessage());
+            return Result.error("Sorry, server error, please try later");
+        }
+    }
+
+    /**
+     * Make complete pre-shipping invoice (Purchase + shipping) for specified orders
+     *
+     * @param param Order IDs
+     * @return List of SKUs whose prices are unavailable
+     */
+    @PostMapping(value = "/preShipping/checkSkuPrices")
+    public Result<?> checkSkuPrices(@RequestBody PreShippingInvoiceParam param) {
+        List<PlatformOrderContent> orderContents = platformOrderContentMap.fetchOrderContent(param.orderIds());
+        Set<String> skuIds = orderContents.stream().map(PlatformOrderContent::getSkuId).collect(Collectors.toSet());
+        List<String> skusWithoutPrice = platformOrderContentMap.searchSkuDetail(new ArrayList<>(skuIds))
+                .stream()
+                .filter(skuDetail -> skuDetail.getPrice().getPrice() == null)
+                .map(SkuDetail::getErpCode)
+                .collect(Collectors.toList());
+        if (skusWithoutPrice.isEmpty()) {
+            return Result.OK();
+        }
+        return Result.error("Couldn't find prices for following SKUs : " + skusWithoutPrice);
+    }
+
+    /**
+     * Make complete pre-shipping invoice (Purchase + shipping) for specified orders
+     *
+     * @param param Parameters for creating a pre-shipping invoice
+     * @return Result of the generation, in case of error, message will be contained,
+     * in case of success, data will contain filename.
+     */
+    @PostMapping(value = "/preShipping/makeComplete")
+    public Result<?> makeCompletePreShippingInvoice(@RequestBody PreShippingInvoiceParam param) {
+        try {
+            InvoiceMetaData metaData = shippingInvoiceService.makeCompleteInvoice(param);
             return Result.OK(metaData);
         } catch (UserException e) {
             return Result.error(e.getMessage());

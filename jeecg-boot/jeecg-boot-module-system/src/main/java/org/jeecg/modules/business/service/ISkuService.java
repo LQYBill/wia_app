@@ -64,7 +64,7 @@ public interface ISkuService extends IService<Sku> {
      * Batch update stock
      * @param list List of stock update
      */
-    void batchUpdateStock(List<StockUpdate> list);
+    void batchUpdateSku(List<SkuUpdate> list);
 
 
     List<SkuMeasure> measureSku(Collection<String> skuIds);
@@ -78,4 +78,6 @@ public interface ISkuService extends IService<Sku> {
     List<SkuChannelHistory> findHistoryBySkuId(String skuId) throws UserException;
 
     List<SkuChannelHistory> findHistoryBySkuIdsAndCountryCode(List<String> skuIds, String countryCode) throws UserException;
+
+    List<Sku> selectByErpCode(Collection<String> erpCodes);
 }

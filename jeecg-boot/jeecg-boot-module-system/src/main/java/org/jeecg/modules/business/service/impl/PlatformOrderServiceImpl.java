@@ -209,6 +209,12 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
     }
 
     @Override
+    public PurchaseConfirmation confirmPurchaseBySkuQuantity(ClientInfo clientInfo, List<SkuQuantity> skuIDQuantityMap) {
+        return new PurchaseConfirmation(clientInfo, searchPurchaseOrderDetail(skuIDQuantityMap),
+                getShippingFeesWaiverMap(skuIDQuantityMap.stream().map(SkuQuantity::getID).collect(toList())));
+    }
+
+    @Override
     public List<OrderContentDetail> searchPurchaseOrderDetail(List<SkuQuantity> skuQuantities) {
         // convert list of (ID, quantity) to map between ID and quantity
         Map<String, Integer> skuQuantity =
@@ -288,10 +294,14 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
         return orderContents.stream().collect(groupingBy(platformOrderContent -> orderMap.get(platformOrderContent.getPlatformOrderId())));
     }
 
-
     @Override
     public String findPreviousInvoice() {
         return platformOrderMap.findPreviousInvoice();
+    }
+
+    @Override
+    public String findPreviousCompleteInvoice() {
+        return platformOrderMap.findPreviousCompleteInvoice();
     }
 
     @Override

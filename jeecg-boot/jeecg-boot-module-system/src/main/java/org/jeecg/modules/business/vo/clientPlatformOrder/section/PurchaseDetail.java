@@ -15,7 +15,8 @@ public class PurchaseDetail {
 
     private final String imageSource;
 
-    private final String product;
+    private final String nameEn;
+    private final String nameZh;
 
     private final int quantity;
 
@@ -23,11 +24,12 @@ public class PurchaseDetail {
 
     private final BigDecimal total;
 
-    public PurchaseDetail(String skuId, String erpCode, String imageSource, String product, int quantity, BigDecimal price) {
+    public PurchaseDetail(String skuId, String erpCode, String imageSource, String nameEn, String nameZh, int quantity, BigDecimal price) {
         this.skuId = skuId;
         this.erpCode = erpCode;
         this.imageSource = imageSource;
-        this.product = product;
+        this.nameEn = nameEn;
+        this.nameZh = nameZh;
         this.quantity = quantity;
         this.price = price;
         this.total = new BigDecimal(quantity).multiply(price);

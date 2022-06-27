@@ -155,6 +155,16 @@
         SELECT shipping_invoice_number
         FROM platform_order
         WHERE shipping_invoice_number IS NOT NULL
+          AND shipping_invoice_number LIKE '%-2%'
+        ORDER BY shipping_invoice_number DESC
+        LIMIT 1
+    </select>
+
+    <select id="findPreviousCompleteInvoice" resultType="java.lang.String">
+        SELECT shipping_invoice_number
+        FROM platform_order
+        WHERE shipping_invoice_number IS NOT NULL
+          AND shipping_invoice_number LIKE '%-7%'
         ORDER BY shipping_invoice_number DESC
         LIMIT 1
     </select>
