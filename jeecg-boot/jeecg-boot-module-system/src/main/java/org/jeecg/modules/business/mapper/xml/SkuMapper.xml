@@ -82,4 +82,11 @@
         </foreach>
     </update>
 
+    <select id="selectByErpCode" parameterType="java.lang.String" resultType="org.jeecg.modules.business.entity.Sku">
+        SELECT *
+        FROM sku
+        WHERE erp_code IN
+        <foreach collection="erpCodes" index="erpCode" item="quantity" open="(" close=")" separator=",">
+            #{erpCode}
+        </foreach>    </select>
 </mapper>

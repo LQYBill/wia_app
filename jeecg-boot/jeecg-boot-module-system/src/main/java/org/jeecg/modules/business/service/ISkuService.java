@@ -78,4 +78,6 @@ public interface ISkuService extends IService<Sku> {
     List<SkuChannelHistory> findHistoryBySkuId(String skuId) throws UserException;
 
     List<SkuChannelHistory> findHistoryBySkuIdsAndCountryCode(List<String> skuIds, String countryCode) throws UserException;
+
+    List<Sku> selectByErpCode(Collection<String> erpCodes);
 }
