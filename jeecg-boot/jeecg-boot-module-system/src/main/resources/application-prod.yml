@@ -184,9 +184,13 @@ jeecg:
     # where to store generated file
     purchaseInvoiceDir: /wia/invoices/purchase
 
-    # purchase invoice template
+    # shipping invoice template
     shippingTemplatePath_EU: /wia/files/Shipping_Invoice_Template_EU.xlsx
     shippingTemplatePath_US: /wia/files/Shipping_Invoice_Template_US.xlsx
+
+    # complete invoice template
+    completeTemplatePath_EU: /wia/files/Complete_Invoice_Template_EU.xlsx
+    completeTemplatePath_US: /wia/files/Complete_Invoice_Template_US.xlsx
     # where to store generated file
     shippingInvoiceDir: /wia/invoices/shipping
     shippingInvoiceDetailDir: /wia/invoices/shippingDetail
@@ -209,7 +213,7 @@ jeecg:
     accessKey: ??
     secretKey: ??
     bucketName: jeecgos
-    staticDomain: https://static.jeecg.com
+    staticDomain: ??
   # ElasticSearch 设置
   elasticsearch:
     cluster-name: jeecg-ES
