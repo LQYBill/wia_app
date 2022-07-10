@@ -108,8 +108,12 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
     }
 
 
-    public BigDecimal totalAmount() {
+    public BigDecimal getTotalAmount() {
         return totalAmount;
+    }
+
+    public void setTotalAmount(BigDecimal totalAmount) {
+        this.totalAmount = totalAmount;
     }
 
     public BigDecimal reducedAmount() {
@@ -121,6 +125,9 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
         return BigDecimal.ZERO;
     }
 
+    public BigDecimal getExchangeRate() {
+        return exchangeRate;
+    }
 
     /**
      * In addition to super's operation, if target client prefer dollar, write the formula of exchange to

@@ -6,14 +6,15 @@ import com.google.common.cache.LoadingCache;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jeecg.modules.business.controller.UserException;
+import org.jeecg.modules.business.domain.codeGeneration.CompleteInvoiceCodeRule;
 import org.jeecg.modules.business.domain.codeGeneration.ShippingInvoiceCodeRule;
+import org.jeecg.modules.business.domain.purchase.invoice.PurchaseInvoiceEntry;
 import org.jeecg.modules.business.entity.*;
 import org.jeecg.modules.business.mapper.*;
-import org.jeecg.modules.business.service.CountryService;
-import org.jeecg.modules.business.service.IPlatformOrderContentService;
-import org.jeecg.modules.business.service.IPlatformOrderService;
-import org.jeecg.modules.business.service.ISkuDeclaredValueService;
+import org.jeecg.modules.business.service.*;
+import org.jeecg.modules.business.vo.PromotionDetail;
 import org.jeecg.modules.business.vo.ShippingFeesEstimation;
+import org.jeecg.modules.business.vo.SkuQuantity;
 import org.jeecg.modules.business.vo.SkuWeightDiscountServiceFees;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
@@ -52,6 +53,10 @@ public class ShippingInvoiceFactory {
     private final CountryService countryService;
 
     private final ExchangeRatesMapper exchangeRatesMapper;
+    private final IPurchaseOrderService purchaseOrderService;
+
+    private final PurchaseOrderContentMapper purchaseOrderContentMapper;
+    private final SkuPromotionHistoryMapper skuPromotionHistoryMapper;
 
     private final SimpleDateFormat SUBJECT_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -78,7 +83,7 @@ public class ShippingInvoiceFactory {
                                   IPlatformOrderContentService platformOrderContentService,
                                   ISkuDeclaredValueService skuDeclaredValueService,
                                   CountryService countryService,
-                                  ExchangeRatesMapper exchangeRatesMapper) {
+                                  ExchangeRatesMapper exchangeRatesMapper, IPurchaseOrderService purchaseOrderService, PurchaseOrderContentMapper purchaseOrderContentMapper, SkuPromotionHistoryMapper skuPromotionHistoryMapper) {
 
         this.platformOrderService = platformOrderService;
         this.clientMapper = clientMapper;
@@ -89,6 +94,9 @@ public class ShippingInvoiceFactory {
         this.skuDeclaredValueService = skuDeclaredValueService;
         this.countryService = countryService;
         this.exchangeRatesMapper = exchangeRatesMapper;
+        this.purchaseOrderService = purchaseOrderService;
+        this.purchaseOrderContentMapper = purchaseOrderContentMapper;
+        this.skuPromotionHistoryMapper = skuPromotionHistoryMapper;
     }
 
     /**
@@ -104,6 +112,7 @@ public class ShippingInvoiceFactory {
      * <li>Update invoiced their orders and contents to DB</li>
      * </ol>
      *
+     * @param username current username
      * @param customerId the customer id
      * @param ordersIds  the list of order IDs
      * @return the generated invoice
@@ -111,7 +120,7 @@ public class ShippingInvoiceFactory {
      *                       channel price, this exception will be thrown.
      */
     @Transactional
-    public ShippingInvoice createPreShippingInvoice(String customerId, List<String> ordersIds) throws UserException {
+    public ShippingInvoice createPreShippingInvoice(String username, String customerId, List<String> ordersIds) throws UserException {
         log.info("Creating a invoice with arguments:\n client ID: {}, order IDs: {}]", customerId, ordersIds);
         // find orders and their contents of the invoice
         Map<PlatformOrder, List<PlatformOrderContent>> uninvoicedOrderToContent = platformOrderService.fetchOrderData(ordersIds);
@@ -122,6 +131,105 @@ public class ShippingInvoiceFactory {
                 .collect(Collectors.toList());
         log.info("Orders to be invoiced: {}", uninvoicedOrderToContent);
         return createInvoice(customerId, shopIds, uninvoicedOrderToContent, "Pre-Shipping fees", true);
+    }
+
+
+    /**
+     * Creates a complete pre-shipping (purchase + shipping) invoice for a client
+     * <p>
+     * To generate an invoice, it
+     * <ol>
+     * <li>Search orders and their contents by IDs</li>
+     * <li>Generate a new invoice code</li>
+     * <li>Find propre logistic channel price for each order </li>
+     * <li>Update prices of orders and their contents</li>
+     * <li>Generate a invoice</li>
+     * <li>Update invoiced their orders and contents to DB</li>
+     * </ol>
+     *
+     * @param username current username
+     * @param customerId the customer id
+     * @param ordersIds  the list of order IDs
+     * @return the generated invoice
+     * @throws UserException if package used by the invoice can not or find more than 1 logistic
+     *                       channel price, this exception will be thrown.
+     */
+    @Transactional
+    public CompleteInvoice createCompletePreShippingInvoice(String username, String customerId, List<String> ordersIds) throws UserException {
+        log.info("Creating a complete invoice for \n client ID: {}, order IDs: {}]", customerId, ordersIds);
+        // find orders and their contents of the invoice
+        Map<PlatformOrder, List<PlatformOrderContent>> uninvoicedOrderToContent = platformOrderService.fetchOrderData(ordersIds);
+        Set<PlatformOrder> platformOrders = uninvoicedOrderToContent.keySet();
+        List<String> shopIds = platformOrders.stream()
+                .map(PlatformOrder::getShopId)
+                .distinct()
+                .collect(Collectors.toList());
+        log.info("Orders to be invoiced: {}", uninvoicedOrderToContent);
+
+        return createInvoice(username, customerId, shopIds, uninvoicedOrderToContent, "Purchase and pre-Shipping fees");
+    }
+
+
+    /**
+     * Creates an invoice based for a client, a list of shops, a date range.
+     * <p>
+     * To generate an invoice, it
+     * <ol>
+     * <li>Search orders and their contents based on shop and date range</li>
+     * <li>Generate a new invoice code</li>
+     * <li>Find propre logistic channel price for each order </li>
+     * <li>Update prices of orders and their contents</li>
+     * <li>Generate a invoice</li>
+     * <li>Update invoiced their orders and contents to DB</li>
+     * </ol>
+     *
+     * @param username Current username
+     * @param customerId Customer ID
+     * @param shopIds    Shop IDs
+     * @param subject    Invoice subject
+     * @return the generated invoice
+     * @throws UserException if package used by the invoice can not or find more than 1 logistic
+     *                       channel price, this exception will be thrown.
+     */
+    @Transactional
+    public CompleteInvoice createInvoice(String username, String customerId, List<String> shopIds,
+                                         Map<PlatformOrder, List<PlatformOrderContent>> orderAndContent,
+                                         String subject) throws UserException {
+        Client client = clientMapper.selectById(customerId);
+        log.info("User {} is creating a complete invoice for customer {}", username, client.getInternalCode());
+
+        log.info("Orders to be invoiced: {}", orderAndContent);
+        if (orderAndContent == null) {
+            throw new UserException("No platform order in the selected period!");
+        }
+        Map<String, BigDecimal> skuRealWeights = new HashMap<>();
+        Map<String, BigDecimal> skuServiceFees = new HashMap<>();
+        skuDataPreparation(skuRealWeights, skuServiceFees);
+        List<Country> countryList = countryService.findAll();
+        Map<LogisticChannel, List<LogisticChannelPrice>> channelPriceMap = getChannelPriceMap(orderAndContent, true);
+        List<SkuDeclaredValue> latestDeclaredValues = skuDeclaredValueService.getLatestDeclaredValues();
+
+
+        List<Shop> shops = shopMapper.selectBatchIds(shopIds);
+        Map<String, BigDecimal> shopServiceFeeMap = new HashMap<>();
+        shops.forEach(shop -> shopServiceFeeMap.put(shop.getId(), shop.getOrderServiceFee()));
+        String invoiceCode = generateCompleteInvoiceCode();
+        log.info("New invoice code: {}", invoiceCode);
+        calculateFees(orderAndContent, channelPriceMap, countryList, skuRealWeights, skuServiceFees,
+                latestDeclaredValues, client, shopServiceFeeMap, invoiceCode);
+        BigDecimal eurToUsd = exchangeRatesMapper.getLatestExchangeRate("EUR", "USD");
+
+        List<String> orderIds = orderAndContent.keySet().stream().map(PlatformOrder::getId).collect(toList());
+        List<SkuQuantity> skuQuantities = platformOrderContentService.searchOrderContent(orderIds);
+        String purchaseID = purchaseOrderService.addPurchase(username, client, invoiceCode, skuQuantities, orderAndContent);
+
+        List<PurchaseInvoiceEntry> purchaseOrderSkuList = purchaseOrderContentMapper.selectInvoiceDataByID(purchaseID);
+        List<PromotionDetail> promotionDetails = skuPromotionHistoryMapper.selectPromotionByPurchase(purchaseID);
+
+        updateOrdersAndContentsInDb(orderAndContent);
+
+        return new CompleteInvoice(client, invoiceCode, subject, orderAndContent,
+                purchaseOrderSkuList, promotionDetails, eurToUsd);
     }
 
     private void calculateAndUpdateContentFees(Map<String, BigDecimal> skuRealWeights, Map<String, BigDecimal> skuServiceFees, PlatformOrder uninvoicedOrder, BigDecimal contentWeight, BigDecimal totalShippingFee, BigDecimal clientVatPercentage, Map<PlatformOrderContent, BigDecimal> contentDeclaredValueMap, BigDecimal totalDeclaredValue, BigDecimal totalVAT, boolean vatApplicable, PlatformOrderContent content) {
@@ -222,7 +330,7 @@ public class ShippingInvoiceFactory {
                                          String subject, boolean skipShippingTimeComparing) throws UserException {
         log.info("Orders to be invoiced: {}", orderAndContent);
         if (orderAndContent == null) {
-            throw new UserException("None platform order in the selected period!");
+            throw new UserException("No platform order in the selected period!");
         }
         Map<String, BigDecimal> skuRealWeights = new HashMap<>();
         Map<String, BigDecimal> skuServiceFees = new HashMap<>();
@@ -237,7 +345,8 @@ public class ShippingInvoiceFactory {
         shops.forEach(shop -> shopServiceFeeMap.put(shop.getId(), shop.getOrderServiceFee()));
         String invoiceCode = generateInvoiceCode();
         log.info("New invoice code: {}", invoiceCode);
-        calculateFees(orderAndContent, channelPriceMap, countryList, skuRealWeights, skuServiceFees, latestDeclaredValues, client, shopServiceFeeMap, invoiceCode);
+        calculateFees(orderAndContent, channelPriceMap, countryList, skuRealWeights, skuServiceFees,
+                latestDeclaredValues, client, shopServiceFeeMap, invoiceCode);
         BigDecimal eurToUsd = exchangeRatesMapper.getLatestExchangeRate("EUR", "USD");
         ShippingInvoice invoice = new ShippingInvoice(client, invoiceCode, subject, orderAndContent, eurToUsd);
         updateOrdersAndContentsInDb(orderAndContent);
@@ -389,7 +498,7 @@ public class ShippingInvoiceFactory {
             if (channelPriceMapCandidate.isPresent()) {
                 Optional<LogisticChannelPrice> priceCandidate = channelPriceMapCandidate.get().getValue().stream()
                         .filter(channelPrice -> channelPrice.getEffectiveCountry().equals(foundCountry.get().getCode()))
-                        .filter(channelPrice -> channelPrice.getWeightRangeEnd() > contentWeight.intValue()
+                        .filter(channelPrice -> channelPrice.getWeightRangeEnd() >= contentWeight.intValue()
                                 && channelPrice.getWeightRangeStart() < contentWeight.intValue())
                         .filter(channelPrice -> channelPrice.getEffectiveDate().before(shippingTime))
                         .max(Comparator.comparing(LogisticChannelPrice::getEffectiveDate));
@@ -434,6 +543,21 @@ public class ShippingInvoiceFactory {
         return rule.next(lastInvoiceCode);
     }
 
+    /**
+     * Generate a new invoice code, it is generated based on latest invoice's code.
+     * <p>
+     * If there is no invoice this month, the new code will be N°yyyy-MM-2001,
+     * otherwise, the new code will be N°yyyy-MM-No, where "No" is the "No" part of last invoice's code + 1.
+     *
+     * @return the invoice code.
+     */
+    private String generateCompleteInvoiceCode() {
+        String lastInvoiceCode = platformOrderService.findPreviousCompleteInvoice();
+
+        CompleteInvoiceCodeRule rule = new CompleteInvoiceCodeRule();
+        return rule.next(lastInvoiceCode);
+    }
+
     public List<ShippingFeesEstimation> getEstimations(List<String> errorMessages) {
         List<ShippingFeesEstimation> estimations = new ArrayList<>();
         Map<String, Map<PlatformOrder, List<PlatformOrderContent>>> uninvoicedOrdersByShopId = platformOrderService.findUninvoicedOrders();
@@ -468,12 +592,12 @@ public class ShippingInvoiceFactory {
                 shopServiceFeeMap.put(shop.getId(), shop.getOrderServiceFee());
                 Map<PlatformOrder, List<PlatformOrderContent>> orders = uninvoicedOrdersByShopId.get(shop.getId());
                 try {
-                    calculateFees(orders, channelPriceMap, countryList, skuRealWeights, skuServiceFees, latestDeclaredValues, client, shopServiceFeeMap, null);
+                    calculateFees(orders, channelPriceMap, countryList, skuRealWeights, skuServiceFees,
+                            latestDeclaredValues, client, shopServiceFeeMap, null);
                     BigDecimal eurToUsd = exchangeRatesMapper.getLatestExchangeRate("EUR", "USD");
                     ShippingInvoice invoice = new ShippingInvoice(client, "", "", orders, eurToUsd);
-                    invoice.tableData();
                     estimations.add(new ShippingFeesEstimation(
-                            client.getInternalCode(), shop.getErpCode(), 0, orders.entrySet().size(), invoice.totalAmount()));
+                            client.getInternalCode(), shop.getErpCode(), 0, orders.entrySet().size(), invoice.getTotalAmount()));
                 } catch (UserException e) {
                     log.error("Couldn't calculate all fees for shop {} for following reason {}", shop.getErpCode(), e.getMessage());
                     errorMessages.add(e.getMessage());

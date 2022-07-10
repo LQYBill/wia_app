@@ -78,7 +78,9 @@
                  javaType="String"/>
             <arg column="image_source"
                  javaType="String"/>
-            <arg column="product_name"
+            <arg column="name_en"
+                 javaType="String"/>
+            <arg column="name_zh"
                  javaType="String"/>
             <arg javaType="org.jeecg.modules.business.entity.SkuPrice"
                  resultMap="skuPriceResultMap"/>
@@ -134,4 +136,81 @@
             po.shipping_invoice_number IS NULL
         AND poc.erp_status = 3
     </select>
+
+    <update id="batchUpdateForPurchase">
+        UPDATE platform_order_content poc
+        SET po.update_by = 'mabang api',
+        po.update_time = NOW(),
+        shop_id =
+        case id
+        <foreach collection="orders" separator=" " open="" close="" index="index" item="item">
+            when #{item.id} then shopErpToId(#{item.shopErpCode})
+        </foreach>
+        end,
+        logistic_channel_name = case id
+        <foreach collection="orders" separator=" " open="" close="" index="index" item="item">
+            when #{item.id} then #{item.logisticChannelName}
+        </foreach>
+        end,
+        platform_order_id = case id
+        <foreach collection="orders" separator=" " open="" close="" index="index" item="item">
+            when #{item.id} then #{item.platformOrderId}
+        </foreach>
+        end,
+        platform_order_number = case id
+        <foreach collection="orders" separator=" " open="" close="" index="index" item="item">
+            when #{item.id} then #{item.platformOrderNumber}
+        </foreach>
+        end,
+        erp_order_id = case id
+        <foreach collection="orders" separator=" " open="" close="" index="index" item="item">
+            when #{item.id} then #{item.erpOrderId}
+        </foreach>
+        end,
+        tracking_number = case id
+        <foreach collection="orders" separator=" " open="" close="" index="index" item="item">
+            when #{item.id} then #{item.trackingNumber}
+        </foreach>
+        end,
+        internal_tracking_number = case id
+        <foreach collection="orders" separator=" " open="" close="" index="index" item="item">
+            when #{item.id} then #{item.trackingNumber1}
+        </foreach>
+        end,
+        order_time = case id
+        <foreach collection="orders" separator=" " open="" close="" index="index" item="item">
+            when #{item.id} then #{item.orderTime}
+        </foreach>
+        end,
+        shipping_time = case id
+        <foreach collection="orders" separator=" " open="" close="" index="index" item="item">
+            when #{item.id} then #{item.shippingTime}
+        </foreach>
+        end,
+        recipient = case id
+        <foreach collection="orders" separator=" " open="" close="" index="index" item="item">
+            when #{item.id} then #{item.recipient}
+        </foreach>
+        end,
+        country = case id
+        <foreach collection="orders" separator=" " open="" close="" index="index" item="item">
+            when #{item.id} then #{item.country}
+        </foreach>
+        end,
+        postcode = case id
+        <foreach collection="orders" separator=" " open="" close="" index="index" item="item">
+            when #{item.id} then #{item.postcode}
+        </foreach>
+        end,
+        erp_status = case id
+        <foreach collection="orders" separator=" " open="" close="" index="index" item="item">
+            when #{item.id} then #{item.status}
+        </foreach>
+        end
+        where id in
+        <foreach collection="orders" separator="," open="(" close=")" index="index" item="item">
+            #{item.id}
+        </foreach>
+
+    </update>
 </mapper>

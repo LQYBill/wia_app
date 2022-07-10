@@ -1,12 +1,9 @@
 package org.jeecg.modules.business.service;
 
-import cn.hutool.core.io.resource.FileResource;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.jeecg.modules.business.domain.purchase.invoice.InvoiceData;
-import org.jeecg.modules.business.entity.PurchaseOrder;
-import org.jeecg.modules.business.entity.PurchaseOrderSku;
-import org.jeecg.modules.business.entity.SkuPromotionHistory;
+import org.jeecg.modules.business.entity.*;
 import org.jeecg.modules.business.vo.SkuQuantity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,9 +11,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -73,6 +67,8 @@ public interface IPurchaseOrderService extends IService<PurchaseOrder> {
     @Transactional
     String addPurchase(List<SkuQuantity> SkuQuantity, List<String> orderIDs);
 
+    @Transactional
+    String addPurchase(String username, Client client, String invoiceNumber, List<SkuQuantity> skuQuantities, Map<PlatformOrder, List<PlatformOrderContent>> platformOrderIDs);
 
     void savePaymentDocumentForPurchase(String purchaseID, MultipartFile in) throws IOException;
 

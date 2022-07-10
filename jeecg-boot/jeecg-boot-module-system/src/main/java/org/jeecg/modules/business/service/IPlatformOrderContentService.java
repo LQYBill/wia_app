@@ -3,6 +3,7 @@ package org.jeecg.modules.business.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.jeecg.modules.business.controller.UserException;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
+import org.jeecg.modules.business.vo.SkuQuantity;
 import org.jeecg.modules.business.vo.SkuWeightDiscountServiceFees;
 
 import java.math.BigDecimal;
@@ -31,4 +32,6 @@ public interface IPlatformOrderContentService extends IService<PlatformOrderCont
      * @return
      */
     List<SkuWeightDiscountServiceFees> getAllSKUWeightsDiscountsServiceFees();
+
+    List<SkuQuantity> searchOrderContent(List<String> orderIDList);
 }

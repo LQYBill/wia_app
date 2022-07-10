@@ -1,47 +1,45 @@
 package org.jeecg.modules.business.controller.admin;
 
-import java.io.*;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
+import org.jeecg.common.api.vo.Result;
+import org.jeecg.common.aspect.annotation.AutoLog;
+import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.common.util.oConvertUtils;
 import org.jeecg.modules.business.domain.purchase.invoice.InvoiceData;
+import org.jeecg.modules.business.entity.*;
+import org.jeecg.modules.business.service.*;
+import org.jeecg.modules.business.vo.InventoryImport;
 import org.jeecg.modules.business.vo.PromotionCouple;
+import org.jeecg.modules.business.vo.PurchaseOrderPage;
+import org.jeecg.modules.business.vo.SkuQuantity;
+import org.jeecg.modules.business.vo.clientPlatformOrder.PurchaseConfirmation;
+import org.jeecg.modules.business.vo.clientPlatformOrder.section.ClientInfo;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
 import org.jeecgframework.poi.excel.entity.ExportParams;
 import org.jeecgframework.poi.excel.entity.ImportParams;
-import org.jeecg.common.api.vo.Result;
-import org.jeecg.common.system.query.QueryGenerator;
-import org.jeecg.modules.business.entity.PurchaseOrderSku;
-import org.jeecg.modules.business.entity.PurchaseOrder;
-import org.jeecg.modules.business.vo.PurchaseOrderPage;
-import org.jeecg.modules.business.service.IPurchaseOrderService;
-import org.jeecg.modules.business.service.IPurchaseOrderSkuService;
-import org.jeecg.modules.business.service.ISkuPromotionHistoryService;
 import org.jeecgframework.poi.excel.view.JeecgEntityExcelView;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import lombok.extern.slf4j.Slf4j;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import org.jeecg.common.aspect.annotation.AutoLog;
+import org.springframework.web.servlet.ModelAndView;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @Description: API Handler related admin purchase order
@@ -57,14 +55,23 @@ public class PurchaseOrderController {
     private final IPurchaseOrderService purchaseOrderService;
     private final IPurchaseOrderSkuService purchaseOrderSkuService;
     private final ISkuPromotionHistoryService skuPromotionHistoryService;
+    private final ISkuService skuService;
+    private final IImportedInventoryService importedInventoryService;
+    private final IClientService clientService;
+    private final IPlatformOrderService platformOrderService;
 
     @Autowired
     public PurchaseOrderController(IPurchaseOrderService purchaseOrderService,
                                    IPurchaseOrderSkuService purchaseOrderSkuService,
-                                   ISkuPromotionHistoryService skuPromotionHistoryService) {
+                                   ISkuPromotionHistoryService skuPromotionHistoryService, ISkuService skuService,
+                                   IImportedInventoryService importedInventoryService, IClientService clientService, IPlatformOrderService platformOrderService) {
         this.purchaseOrderService = purchaseOrderService;
         this.purchaseOrderSkuService = purchaseOrderSkuService;
         this.skuPromotionHistoryService = skuPromotionHistoryService;
+        this.skuService = skuService;
+        this.importedInventoryService = importedInventoryService;
+        this.clientService = clientService;
+        this.platformOrderService = platformOrderService;
     }
 
     /**
@@ -347,5 +354,82 @@ public class PurchaseOrderController {
         return purchaseOrderService.getInvoiceByte(invoiceCode);
     }
 
+    /**
+     * 通过excel导入采购清单
+     *
+     * @param request
+     * @param response
+     * @return
+     */
+    @RequestMapping(value = "/admin/importInventory", method = RequestMethod.POST)
+    public Result<?> importInventory(HttpServletRequest request, HttpServletResponse response) {
+        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+        LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+        Map<String, MultipartFile> fileMap = multipartRequest.getFileMap();
+        for (Map.Entry<String, MultipartFile> entity : fileMap.entrySet()) {
+            MultipartFile file = entity.getValue();// 获取上传文件对象
+            ImportParams params = new ImportParams();
+            params.setHeadRows(1);
+            params.setNeedSave(true);
+            String clientId = request.getParameter("clientId");
+            if (clientId == null) {
+                return Result.error("Missing value: clientId");
+            }
+            try {
+                List<InventoryImport> list = ExcelImportUtil.importExcel(file.getInputStream(), InventoryImport.class, params);
+                Map<String, Integer> skuQuantityMap = list.stream()
+                        .collect(Collectors.toMap(InventoryImport::getErpCode, InventoryImport::getQuantity));
+                Set<String> erpCodes = skuQuantityMap.keySet();
+                Map<String, String> erpCodeToIdMap = skuService.selectByErpCode(erpCodes).stream()
+                        .collect(Collectors.toMap(Sku::getErpCode, Sku::getId));
+                List<SkuQuantity> skuQuantities = skuQuantityMap.entrySet()
+                        .stream()
+                        .map(entry -> new SkuQuantity(erpCodeToIdMap.get(entry.getKey()), entry.getValue()))
+                        .collect(Collectors.toList());
+                List<ImportedInventory> importedInventoryList = new ArrayList<>();
+                for (SkuQuantity skuQuantity : skuQuantities) {
+                    ImportedInventory importedInventory = new ImportedInventory();
+                    importedInventory.setId(IdWorker.getIdStr(importedInventory));
+                    importedInventory.setCreateBy(sysUser.getUsername());
+                    importedInventory.setCreateTime(new Date());
+                    importedInventory.setClientId(clientId);
+                    importedInventory.setSkuId(skuQuantity.getID());
+                    importedInventory.setQuantity(skuQuantity.getQuantity());
+                    importedInventoryList.add(importedInventory);
+                }
+                importedInventoryService.saveBatch(importedInventoryList);
+                return Result.OK("采购清单导入成功！数据行数:" + list.size());
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+                return Result.error("文件导入失败:" + e.getMessage());
+            } finally {
+                try {
+                    file.getInputStream().close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return Result.OK("文件导入失败！");
+    }
 
+    /**
+     * 加载当前客户采购清单
+     *
+     * @param clientId
+     * @return
+     */
+    @AutoLog(value = "商品采购清单-通过客户id查询")
+    @RequestMapping(value = "/admin/loadInventory")
+    public Result<?> loadInventory(@RequestParam(name = "id") String clientId) {
+        Client client = clientService.getById(clientId);
+        ClientInfo clientInfo = new ClientInfo(client);
+        List<ImportedInventory> importedInventories = importedInventoryService.selectByClientId(clientId);
+        Map<String, Integer> skuQuantitiesMap = importedInventories.stream()
+                .collect(Collectors.toMap(ImportedInventory::getSkuId, ImportedInventory::getQuantity));
+        List<SkuQuantity> skuQuantities = new ArrayList<>();
+        skuQuantitiesMap.forEach((s, integer) -> skuQuantities.add(new SkuQuantity(s, integer)));
+        PurchaseConfirmation d = platformOrderService.confirmPurchaseBySkuQuantity(clientInfo, skuQuantities);
+        return Result.OK(d);
+    }
 }

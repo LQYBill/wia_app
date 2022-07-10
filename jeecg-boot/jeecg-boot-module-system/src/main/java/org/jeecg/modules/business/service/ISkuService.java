@@ -64,7 +64,7 @@ public interface ISkuService extends IService<Sku> {
      * Batch update stock
      * @param list List of stock update
      */
-    void batchUpdateStock(List<StockUpdate> list);
+    void batchUpdateSku(List<SkuUpdate> list);
 
 
     List<SkuMeasure> measureSku(Collection<String> skuIds);

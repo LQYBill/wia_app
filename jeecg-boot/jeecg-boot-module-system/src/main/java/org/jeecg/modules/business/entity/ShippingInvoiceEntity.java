@@ -59,12 +59,13 @@ public class ShippingInvoiceEntity {
     }
 
     public static ShippingInvoiceEntity of(
+            String username,
             String invoiceNumber,
             BigDecimal totalAmount,
             BigDecimal discountAmount,
             BigDecimal paidAmount
     ) {
-        return new ShippingInvoiceEntity(null, "admin", new Date(), "admin", new Date(),
+        return new ShippingInvoiceEntity(null, username, new Date(), username, new Date(),
                 invoiceNumber, totalAmount, discountAmount, totalAmount.subtract(discountAmount), paidAmount);
     }
 
