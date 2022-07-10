@@ -48,6 +48,9 @@ public class FactureDetail {
     @TableField("`Quantité`")
     private final String quantity;
 
+    @TableField("`Frais d'achat`")
+    private final BigDecimal purchaseFee;
+
     @TableField("`Frais de FRET`")
     private final BigDecimal fretFee;
 
