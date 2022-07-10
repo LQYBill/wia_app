@@ -28,7 +28,7 @@ public class PurchaseConfirmation {
         this.data = OrdersStatisticData.makeData(details, shippingFeesWaiverMap);
         this.voPurchaseDetails = details.stream().map(
                 d -> (new PurchaseDetail(d.getSkuDetail().getSkuId(), d.getSkuDetail().getErpCode(),
-                        d.getSkuDetail().getImageSource(), d.getSkuDetail().getProduct(), d.getQuantity(), d.unitPrice()))
+                        d.getSkuDetail().getImageSource(), d.getSkuDetail().getNamEn(), d.getSkuDetail().getNameZh(), d.getQuantity(), d.unitPrice()))
         ).collect(Collectors.toList());
     }
 
