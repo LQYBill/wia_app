@@ -90,7 +90,7 @@ export default {
         },
         {
           title: 'Product Name',
-          dataIndex: 'product',
+          dataIndex: 'nameEn',
         },
         {
           title: 'Unit Price',
