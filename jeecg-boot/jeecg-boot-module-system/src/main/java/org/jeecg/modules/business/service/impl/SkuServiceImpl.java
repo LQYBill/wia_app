@@ -363,4 +363,9 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
         }
         return histories;
     }
+
+    @Override
+    public List<Sku> selectByErpCode(Collection<String> erpCodes) {
+        return skuMapper.selectByErpCode(erpCodes);
+    }
 }

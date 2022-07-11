@@ -47,7 +47,6 @@ public class PlatformOrderShippingInvoiceService {
     ISkuDeclaredValueService skuDeclaredValueService;
     @Autowired
     FactureDetailMapper factureDetailMapper;
-
     @Autowired
     IPlatformOrderService platformOrderService;
     @Autowired
@@ -92,6 +91,7 @@ public class PlatformOrderShippingInvoiceService {
             "SKU",
             "Nom produits",
             "Quantité",
+            "Frais d'achat",
             "Frais de FRET",
             "Frais de livraison",
             "Frais de service",
@@ -320,6 +320,8 @@ public class PlatformOrderShippingInvoiceService {
             sheetManager.write(detail.getProductName());
             sheetManager.nextCol();
             sheetManager.write(detail.getQuantity());
+            sheetManager.nextCol();
+            sheetManager.write(detail.getPurchaseFee());
             sheetManager.nextCol();
             sheetManager.write(detail.getFretFee());
             sheetManager.nextCol();

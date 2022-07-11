@@ -41,4 +41,5 @@ public interface SkuMapper extends BaseMapper<Sku> {
      */
     void batchUpdateStock(@Param("list") List<StockUpdate> list);
 
+    List<Sku> selectByErpCode(Collection<String> erpCodes);
 }

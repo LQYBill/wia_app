@@ -16,6 +16,7 @@ public class PurchaseDetail {
     private final String imageSource;
 
     private final String nameEn;
+
     private final String nameZh;
 
     private final int quantity;

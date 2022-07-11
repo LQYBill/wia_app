@@ -65,7 +65,8 @@ public class CompleteInvoice extends ShippingInvoice {
                         )
                 ).collect(Collectors.toList())
         );
-        return rows;
+        res.addAll(rows);
+        return res;
     }
 
     /**

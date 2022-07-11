@@ -444,7 +444,7 @@ export default {
                   }
                   postAction(self.url.checkSkuPrices, param)
                     .then(res => {
-                      self.purchasePricesAvailable = res.code === '200';
+                      self.purchasePricesAvailable = res.code === 200;
                       console.log(res.code)
                       if (res.message) {
                         this.$message.warning(res.message)
