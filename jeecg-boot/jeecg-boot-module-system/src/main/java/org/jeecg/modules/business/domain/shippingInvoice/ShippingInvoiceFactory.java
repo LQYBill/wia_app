@@ -596,6 +596,8 @@ public class ShippingInvoiceFactory {
                             latestDeclaredValues, client, shopServiceFeeMap, null);
                     BigDecimal eurToUsd = exchangeRatesMapper.getLatestExchangeRate("EUR", "USD");
                     ShippingInvoice invoice = new ShippingInvoice(client, "", "", orders, eurToUsd);
+                    // Calculate total amounts
+                    invoice.tableData();
                     estimations.add(new ShippingFeesEstimation(
                             client.getInternalCode(), shop.getErpCode(), 0, orders.entrySet().size(), invoice.getTotalAmount()));
                 } catch (UserException e) {
