@@ -256,7 +256,20 @@
           {
             title:'开票物流渠道名称',
             align:"center",
-            dataIndex: 'invoiceLogisticChannelName'
+            dataIndex: 'invoiceLogisticChannelName',
+            sorter: true
+          },
+          {
+            title: '物流内部单号',
+            align: "center",
+            dataIndex: 'internalTrackingNumber',
+            sorter: true
+          },
+          {
+            title: '有货（1=有，0=没有）',
+            align: "center",
+            dataIndex: 'productAvailable',
+            sorter: true
           },
           {
             title: '操作',
@@ -318,6 +331,8 @@
         fieldList.push({type:'string',value:'target',text:'合并订单目标订单ID',dictCode:''})
         fieldList.push({type:'string',value:'erpStatus',text:'ERP中状态',dictCode:''})
         fieldList.push({type:'string',value:'invoiceLogisticChannelName',text:'开票物流渠道名称',dictCode:''})
+        fieldList.push({type: 'string', value: 'internalTrackingNumber', text: '物流内部单号', dictCode: ''})
+        fieldList.push({type: 'string', value: 'productAvailable', text: '有货（1=有，0=没有）', dictCode: 'yn'})
         this.superFieldList = fieldList
       }
     }

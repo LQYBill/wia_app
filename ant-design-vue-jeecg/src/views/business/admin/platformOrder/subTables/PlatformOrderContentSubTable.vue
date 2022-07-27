@@ -102,6 +102,11 @@
             align: 'center',
             dataIndex: 'erpStatus',
           },
+          {
+            title: '有货（1=有，0=没有）',
+            align: 'center',
+            dataIndex: 'productAvailable',
+          },
         ],
         url: {
           listByMainId: '/business/platformOrder/queryPlatformOrderContentByMainId',
