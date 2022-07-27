@@ -12,16 +12,14 @@ import org.jeecgframework.poi.excel.annotation.Excel;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Date;
 import java.util.Objects;
 
 /**
  * @Description: 平台订单内容
  * @Author: jeecg-boot
- * @Date: 2021-06-29
- * @Version: V1.1
+ * @Date: 2022-07-26
+ * @Version: V1.2
  */
 @ApiModel(value = "platform_order对象", description = "平台订单表")
 @Data
@@ -115,7 +113,14 @@ public class PlatformOrderContent implements Serializable {
      */
     @Excel(name = "ERP中状态", width = 15)
     @ApiModelProperty(value = "ERP中状态")
-    private java.lang.String erpStatus;
+    private String erpStatus;
+
+    /**
+     * 有货（1=有，0=没有）
+     */
+    @Excel(name = "有货（1=有，0=没有）", width = 15)
+    @ApiModelProperty(value = "有货（1=有，0=没有）")
+    private String productAvailable;
 
     @Override
     public boolean equals(Object o) {
