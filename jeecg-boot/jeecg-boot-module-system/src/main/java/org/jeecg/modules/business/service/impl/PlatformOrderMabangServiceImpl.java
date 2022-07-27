@@ -141,19 +141,21 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
         }
     }
 
-    private List<OrderItem> prepareItems(ArrayList<Order> oldOrders) {
-        List<OrderItem> allNewItemsOfOldItems = new ArrayList<>();
-        for (Order order : oldOrders) {
+    private List<OrderItem> prepareItems(ArrayList<Order> orders) {
+        List<OrderItem> orderItems = new ArrayList<>();
+        for (Order order : orders) {
             order.resolveStatus();
+            order.resolveProductAvailability();
             order.getOrderItems().forEach(
                     item -> {
                         item.setPlatformOrderId(order.getId());
                         item.resolveStatus(order.getStatus());
+                        item.resolveProductAvailability();
                     }
             );
-            allNewItemsOfOldItems.addAll(order.getOrderItems());
+            orderItems.addAll(order.getOrderItems());
         }
-        return allNewItemsOfOldItems;
+        return orderItems;
     }
 
     @Override
