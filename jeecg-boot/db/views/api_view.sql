@@ -4,7 +4,7 @@ SELECT p.country, p.third_bill_code as trackingNumber,
                        JSON_OBJECT(
                                'scanType', scan_type,
                                'scanTime', scan_time,
-                               'description', description_en
+                               'description', IF(description_en IS NOT NULL, description_en, description)
                            ))
         FROM parcel_trace pt
         WHERE p.id = pt.parcel_id
