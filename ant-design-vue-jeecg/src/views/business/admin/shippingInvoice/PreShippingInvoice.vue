@@ -162,7 +162,17 @@
             :key="erpStatus"
             :color="erpStatus === '1' ? 'volcano' : 'green'"
           >
-            {{ erpStatus }}
+            {{ erpStatus === '1' ? '待处理' : '配货中'}}
+          </a-tag>
+        </template>
+
+        <template slot="productAvailability" slot-scope="record">
+          <a-tag
+            v-for="productAvailable in record"
+            :key="productAvailable"
+            :color="productAvailable === '1' ? 'green' : 'volcano'"
+          >
+            {{productAvailable === '1' ? '有货' : '缺货'}}
           </a-tag>
         </template>
 
@@ -277,18 +287,20 @@ export default {
           sorter: true
         },
         {
-          title: '订单收件人邮编',
-          align: 'center',
-          dataIndex: 'postcode',
-          sorter: true
-        },
-        {
           title: 'ERP中状态',
           align: 'center',
           dataIndex: 'erpStatus',
           sorter: true,
           scopedSlots: { customRender : 'erpStatus' }
-        }
+        },
+
+        {
+          title: '是否有货',
+          align: "center",
+          dataIndex: 'productAvailable',
+          sorter: true,
+          scopedSlots: { customRender : 'productAvailability' }
+        },
       ],
       pagination: {
         current: 1,
