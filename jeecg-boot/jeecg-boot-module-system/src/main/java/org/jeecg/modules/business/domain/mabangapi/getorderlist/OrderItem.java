@@ -25,6 +25,16 @@ public class OrderItem {
     private String originOrderId;
 
     /**
+     * 1 = 有货
+     * 2 = 缺货
+     * 3 = 缺货
+     */
+    @JSONField(name = "hasGoods")
+    private String hasGoods;
+
+    private String productAvailable;
+
+    /**
      * Status :
      * 2 = Normal
      * 4 = Removed
@@ -44,6 +54,14 @@ public class OrderItem {
             this.erpStatus = OrderStatus.Obsolete.getCode();
         } else {
             this.erpStatus = orderStatus;
+        }
+    }
+
+    public void resolveProductAvailability() {
+        if (hasGoods.equalsIgnoreCase("2")) {
+            productAvailable = "0";
+        } else {
+            productAvailable = "1";
         }
     }
 }

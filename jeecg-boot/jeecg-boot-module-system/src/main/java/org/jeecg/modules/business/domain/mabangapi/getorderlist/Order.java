@@ -30,7 +30,7 @@ public class Order {
     private String id = IdWorker.getIdStr();
 
     /**
-     * Shop name is correspondent the shop erp code in our data base
+     * Shop name is correspondent the shop erp code in our database
      */
     @JSONField(name = "shopName")
     private String shopErpCode;
@@ -102,6 +102,19 @@ public class Order {
     @JSONField(name = "isNewOrder")
     private String isNewOrder;
 
+    /**
+     * 1 = 有货
+     * 2 = 缺货
+     * 3 = 已补货
+     */
+    @JSONField(name = "hasGoods")
+    private String hasGoods;
+
+    /**
+     * Product available = 1, unavailable = 0
+     */
+    private String productAvailable;
+
     @JSONField(name = "orderItem")
     @TableField(exist = false)
     private List<OrderItem> orderItems;
@@ -168,6 +181,14 @@ public class Order {
             this.status = OrderStatus.Pending.getCode();
         } else if (isPreparing()) {
             this.status = OrderStatus.Preparing.getCode();
+        }
+    }
+
+    public void resolveProductAvailability() {
+        if (hasGoods.equalsIgnoreCase("2")) {
+            productAvailable = "0";
+        } else {
+            productAvailable = "1";
         }
     }
 }
