@@ -6,6 +6,8 @@ import org.jeecg.modules.business.domain.equickapi.EQuickResponse;
 import org.jeecg.modules.business.domain.equickapi.EQuickTraceData;
 import org.jeecg.modules.business.domain.jtapi.JTParcelTrace;
 import org.jeecg.modules.business.domain.jtapi.JTParcelTraceDetail;
+import org.jeecg.modules.business.domain.ydapi.YDTraceData;
+import org.jeecg.modules.business.domain.ydapi.YDTraceDetail;
 import org.jeecg.modules.business.entity.Parcel;
 import org.jeecg.modules.business.entity.ParcelTrace;
 import org.jeecg.modules.business.mapper.ParcelMapper;
@@ -165,6 +167,50 @@ public class ParcelServiceImpl extends ServiceImpl<ParcelMapper, Parcel> impleme
         }
         if (!tracesToInsert.isEmpty()) {
             parcelTraceMapper.insertOrIgnoreEQTraces(tracesToInsert);
+        }
+        log.info("Finished inserting {} parcels and their traces into DB.", parcelTraces.size());
+    }
+
+    @Override
+    @Transactional
+    public void saveYDParcelAndTraces(List<YDTraceData> parcelTraces) {
+        if (parcelTraces.isEmpty()) {
+            return;
+        }
+        log.info("Started inserting {} YD parcels and their traces into DB.", parcelTraces.size() );
+        List<String> parcelBillCodes = parcelTraces.stream()
+                .map(YDTraceData::getThirdBillCode)
+                .collect(Collectors.toList());
+        List<Parcel> existingParcels = parcelMapper.searchByBillCode(parcelBillCodes);
+        Map<String, Parcel> billCodeToExistingParcels = existingParcels.stream().collect(
+                Collectors.toMap(Parcel::getBillCode, Function.identity())
+        );
+
+        List<YDTraceData> parcelToInsert = new ArrayList<>();
+        List<YDTraceDetail> tracesToInsert = new ArrayList<>();
+        for (YDTraceData parcelAndTrace : parcelTraces) {
+            List<YDTraceDetail> traceDetails = parcelAndTrace.getTraceDetails();
+            // Equivalent of order number is in any trace detail
+            YDTraceDetail ydTraceDetail = traceDetails.get(0);
+            parcelAndTrace.setCountry(parcelAndTrace.getCountry());
+            parcelAndTrace.setThirdBillCode(parcelAndTrace.getThirdBillCode());
+            parcelAndTrace.setOrderNo(ydTraceDetail.getOrderNo());
+            parcelAndTrace.setProductCode(ydTraceDetail.getProductCode());
+            Parcel existingParcel = billCodeToExistingParcels.get(parcelAndTrace.getThirdBillCode());
+            if (existingParcel == null) {
+                parcelToInsert.add(parcelAndTrace);
+                traceDetails.forEach(trace -> trace.setParcelId(parcelAndTrace.getId()));
+            } else {
+                traceDetails.forEach(trace -> trace.setParcelId(existingParcel.getId()));
+            }
+            tracesToInsert.addAll(new ArrayList<>(traceDetails));
+        }
+        log.info("After filtering, {} parcels will be inserted into the DB.", parcelToInsert.size());
+        if (!parcelToInsert.isEmpty()) {
+            parcelMapper.insertOrIgnoreYDParcels(parcelToInsert);
+        }
+        if (!tracesToInsert.isEmpty()) {
+            parcelTraceMapper.insertOrIgnoreYDTraces(tracesToInsert);
         }
         log.info("Finished inserting {} parcels and their traces into DB.", parcelTraces.size());
     }

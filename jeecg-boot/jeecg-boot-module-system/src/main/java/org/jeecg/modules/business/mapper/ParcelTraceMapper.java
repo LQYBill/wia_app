@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
 import org.jeecg.modules.business.domain.equickapi.EQuickTraceData;
 import org.jeecg.modules.business.domain.jtapi.JTParcelTraceDetail;
+import org.jeecg.modules.business.domain.ydapi.YDTraceData;
+import org.jeecg.modules.business.domain.ydapi.YDTraceDetail;
 import org.jeecg.modules.business.entity.ParcelTrace;
 import org.springframework.stereotype.Repository;
 
@@ -25,4 +27,6 @@ public interface ParcelTraceMapper extends BaseMapper<ParcelTrace> {
     void insertOrIgnoreJTTraces(@Param("traces") List<JTParcelTraceDetail> traceDetails);
 
     void insertOrIgnoreEQTraces(@Param("traces") List<EQuickTraceData> traceDetails);
+
+    void insertOrIgnoreYDTraces(@Param("traces") List<YDTraceDetail> traceDetails);
 }

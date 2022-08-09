@@ -56,4 +56,26 @@
             )
         </foreach>
     </insert>
+
+    <insert id="insertOrIgnoreYDTraces" parameterType="list">
+        INSERT IGNORE INTO parcel_trace(id, create_by, create_time, update_by, update_time, parcel_id, scan_time,
+        description, description_en, trace_location, trace_status, trace_code)
+        VALUES
+        <foreach collection="traces" separator="," open="" close="" item="trace" index="index">
+            (
+            UUID(),
+            'yd api',
+            NOW(),
+            'yd api',
+            NOW(),
+            #{trace.parcelId},
+            #{trace.scanTime},
+            #{trace.descriptionCn},
+            #{trace.descriptionEn},
+            #{trace.traceLocation},
+            #{trace.traceStatus},
+            #{trace.traceCode}
+            )
+        </foreach>
+    </insert>
 </mapper>

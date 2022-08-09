@@ -46,4 +46,24 @@
             )
         </foreach>
     </insert>
+
+    <insert id="insertOrIgnoreYDParcels" parameterType="list">
+        INSERT IGNORE INTO parcel(id, create_by, create_time, update_by, update_time, bill_code, country,
+        third_bill_code, order_no, product_code)
+        VALUES
+        <foreach collection="parcels" separator="," open="" close="" item="parcel" index="index">
+            (
+            #{parcel.id},
+            'yd api',
+            NOW(),
+            'yd api',
+            NOW(),
+            #{parcel.thirdBillCode},
+            #{parcel.country},
+            #{parcel.thirdBillCode},
+            #{parcel.orderNo},
+            #{parcel.productCode}
+            )
+        </foreach>
+    </insert>
 </mapper>
