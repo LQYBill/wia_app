@@ -10,6 +10,7 @@ import org.apache.http.util.EntityUtils;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.jeecg.modules.business.domain.equickapi.EQuickResponse;
 import org.jeecg.modules.business.domain.ydapi.YDRequest;
 import org.jeecg.modules.business.domain.ydapi.YDResponse;
 import org.jeecg.modules.business.domain.ydapi.YDTraceData;
@@ -27,6 +28,10 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class YDJob implements Job {
@@ -37,6 +42,8 @@ public class YDJob implements Job {
     private IPlatformOrderService platformOrderService;
 
     private static final Integer DEFAULT_NUMBER_OF_DAYS = 10;
+    private static final Integer DEFAULT_NUMBER_OF_THREADS = 10;
+    private static final Integer DEFAULT_MAXIMUM_NUMBER_OF_PARCELS_PER_TRANSACTION = 800;
     private static final List<String> DEFAULT_TRANSPORTERS = Arrays.asList("义速宝Colissmo特快专线", "义速宝法邮普货", "义速宝法邮膏体", "德国超级经济(普货)");
 
     @Override
@@ -89,23 +96,37 @@ public class YDJob implements Job {
         List<List<String>> billCodeLists = Lists.partition(billCodes, 20);
         log.info("Requests will be divided in to {} parts", billCodeLists.size());
         List<YDTraceData> parcelTraces = new ArrayList<>();
-        try {
-            for (List<String> billCodeList : billCodeLists) {
-                YDRequest ydRequest = new YDRequest(billCodeList);
-                HttpResponse response = ydRequest.send();
-                HttpEntity entity = response.getEntity();
-                // String of the response
-                String responseString = EntityUtils.toString(entity, "UTF-8");
-                YDResponse ydResponse = mapper.readValue(responseString, YDResponse.class);
-                List<YDTraceData> tracesList = ydResponse.getTraceDataList();
-                parcelTraces.addAll(tracesList);
-                log.info("{} parcels added to the queue to be inserted into DB.", tracesList.size());
-            }
-        } catch (IOException e) {
-            log.error("Error while parsing response into String", e);
+        List<YDRequest> ydRequests = new ArrayList<>();
+        billCodeLists.forEach(billcodeList -> {
+            YDRequest ydRequest = new YDRequest(billcodeList);
+            ydRequests.add(ydRequest);
+        });
+        ExecutorService executor = Executors.newFixedThreadPool(DEFAULT_NUMBER_OF_THREADS);
+        List<CompletableFuture<Boolean>> futures = ydRequests.stream()
+                .map(request -> CompletableFuture.supplyAsync(() -> {
+                    boolean success = false;
+                    HttpEntity entity = request.send().getEntity();
+                    try {
+                        // String of the response
+                        String responseString = EntityUtils.toString(entity, "UTF-8");
+                        YDResponse ydResponse = mapper.readValue(responseString, YDResponse.class);
+                        parcelTraces.addAll(ydResponse.getTraceDataList());
+                        success = true;
+                    } catch (IOException e) {
+                        log.error("Error while parsing response into String", e);
+                    }
+                    log.info("{} parcel added to the queue to be inserted into DB.", parcelTraces.size());
+                    return success;
+                }, executor))
+                .collect(Collectors.toList());
+        List<Boolean> results = futures.stream().map(CompletableFuture::join).collect(Collectors.toList());
+        long nbSuccesses = results.stream().filter(b -> b).count();
+        log.info("{}/{} lots of 20 parcel traces have been retrieved.", nbSuccesses, ydRequests.size());
+
+        List<List<YDTraceData>> parcelTraceList = Lists.partition(parcelTraces, DEFAULT_MAXIMUM_NUMBER_OF_PARCELS_PER_TRANSACTION);
+        for (List<YDTraceData> parcelTracesPerTransaction : parcelTraceList) {
+            parcelService.saveYDParcelAndTraces(parcelTracesPerTransaction);
         }
-        log.info("{} parcels have been retrieved.", parcelTraces.size());
-        parcelService.saveYDParcelAndTraces(parcelTraces);
     }
 
 }
