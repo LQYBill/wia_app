@@ -13,6 +13,9 @@ import org.codehaus.jettison.json.JSONObject;
 import org.jeecg.modules.business.domain.jtapi.JTParcelTrace;
 import org.jeecg.modules.business.domain.jtapi.JTRequest;
 import org.jeecg.modules.business.domain.jtapi.JTResponse;
+import org.jeecg.modules.business.domain.ydapi.YDRequest;
+import org.jeecg.modules.business.domain.ydapi.YDResponse;
+import org.jeecg.modules.business.domain.ydapi.YDTraceData;
 import org.jeecg.modules.business.service.IParcelService;
 import org.jeecg.modules.business.service.IPlatformOrderService;
 import org.quartz.Job;
@@ -27,6 +30,10 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class JTJob implements Job {
@@ -37,6 +44,10 @@ public class JTJob implements Job {
     private IPlatformOrderService platformOrderService;
 
     private static final Integer DEFAULT_NUMBER_OF_DAYS = 10;
+
+    private static final Integer DEFAULT_NUMBER_OF_THREADS = 10;
+
+    private static final Integer DEFAULT_MAXIMUM_NUMBER_OF_PARCELS_PER_TRANSACTION = 800;
     private static final List<String> DEFAULT_TRANSPORTERS = Arrays.asList("法国专线普货", "珠海E邮宝-比利时", "珠海E邮宝-法国");
 
     @Override
@@ -89,23 +100,38 @@ public class JTJob implements Job {
         List<List<String>> billCodeLists = Lists.partition(billCodes, 50);
         log.info("Requests will be divided in to {} parts", billCodeLists.size());
         List<JTParcelTrace> parcelTraces = new ArrayList<>();
-        try {
-            for (List<String> billCodeList : billCodeLists) {
-                JTRequest JTRequest = new JTRequest(billCodeList);
-                HttpResponse response = JTRequest.send();
-                HttpEntity entity = response.getEntity();
-                // String of the response
-                String responseString = EntityUtils.toString(entity, "UTF-8");
-                JTResponse jtResponse = mapper.readValue(responseString, JTResponse.class);
-                List<JTParcelTrace> tracesList = jtResponse.getResponseItems().get(0).getTracesList();
-                parcelTraces.addAll(tracesList);
-                log.info("{} parcels added to the queue to be inserted into DB.", tracesList.size());
-            }
-        } catch (IOException e) {
-            log.error("Error while parsing response into String", e);
+        List<JTRequest> jtRequests = new ArrayList<>();
+        billCodeLists.forEach(billcodeList -> {
+            JTRequest ydRequest = new JTRequest(billcodeList);
+            jtRequests.add(ydRequest);
+        });
+
+        ExecutorService executor = Executors.newFixedThreadPool(DEFAULT_NUMBER_OF_THREADS);
+        List<CompletableFuture<Boolean>> futures = jtRequests.stream()
+                .map(request -> CompletableFuture.supplyAsync(() -> {
+                    boolean success = false;
+                    HttpEntity entity = request.send().getEntity();
+                    try {
+                        // String of the response
+                        String responseString = EntityUtils.toString(entity, "UTF-8");
+                        JTResponse jtResponse = mapper.readValue(responseString, JTResponse.class);
+                        parcelTraces.addAll(jtResponse.getResponseItems().get(0).getTracesList());
+                        success = true;
+                    } catch (IOException e) {
+                        log.error("Error while parsing response into String", e);
+                    }
+                    log.info("{} parcel added to the queue to be inserted into DB.", parcelTraces.size());
+                    return success;
+                }, executor))
+                .collect(Collectors.toList());
+        List<Boolean> results = futures.stream().map(CompletableFuture::join).collect(Collectors.toList());
+        long nbSuccesses = results.stream().filter(b -> b).count();
+        log.info("{}/{} lots of 50 parcel traces have been retrieved.", nbSuccesses, jtRequests.size());
+
+        List<List<JTParcelTrace>> parcelTraceList = Lists.partition(parcelTraces, DEFAULT_MAXIMUM_NUMBER_OF_PARCELS_PER_TRANSACTION);
+        for (List<JTParcelTrace> parcelTracesPerTransaction : parcelTraceList) {
+            parcelService.saveJTParcelAndTraces(parcelTracesPerTransaction);
         }
-        log.info("{} parcels have been retrieved.", parcelTraces.size());
-        parcelService.saveJTParcelAndTraces(parcelTraces);
     }
 
 }
