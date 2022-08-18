@@ -13,7 +13,6 @@ import org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderStatus;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.entity.Shop;
-import org.jeecg.modules.business.entity.SkuPrice;
 import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
 import org.jeecg.modules.business.service.IShopService;
@@ -25,7 +24,10 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -42,7 +44,6 @@ public class InvoiceController {
     private PlatformOrderShippingInvoiceService shippingInvoiceService;
     @Autowired
     private PlatformOrderMapper platformOrderMapper;
-
     @Autowired
     private PlatformOrderContentMapper platformOrderContentMap;
 

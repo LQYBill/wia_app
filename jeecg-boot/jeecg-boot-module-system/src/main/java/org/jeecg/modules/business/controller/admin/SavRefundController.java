@@ -11,9 +11,9 @@ import org.jeecg.common.aspect.annotation.AutoLog;
 import org.jeecg.common.system.base.controller.JeecgController;
 import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.modules.business.entity.SavRefund;
-import org.jeecg.modules.business.entity.SavRefundWithShopCode;
+import org.jeecg.modules.business.entity.SavRefundWithDetail;
 import org.jeecg.modules.business.service.ISavRefundService;
-import org.jeecg.modules.business.service.ISavRefundWithShopCodeService;
+import org.jeecg.modules.business.service.ISavRefundWithDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
@@ -38,7 +38,7 @@ public class SavRefundController extends JeecgController<SavRefund, ISavRefundSe
     private ISavRefundService savRefundService;
 
     @Autowired
-    private ISavRefundWithShopCodeService savRefundWithShopCodeService;
+    private ISavRefundWithDetailService savRefundWithShopCodeService;
 
     /**
      * 分页列表查询
@@ -52,14 +52,13 @@ public class SavRefundController extends JeecgController<SavRefund, ISavRefundSe
     @AutoLog(value = "售后退款-分页列表查询")
     @ApiOperation(value = "售后退款-分页列表查询", notes = "售后退款-分页列表查询")
     @GetMapping(value = "/list")
-    @Cacheable(cacheNames="savRefundList")
-    public Result<?> queryPageList(SavRefundWithShopCode savRefund,
+    public Result<?> queryPageList(SavRefundWithDetail savRefund,
                                    @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
                                    @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
                                    HttpServletRequest req) {
-        QueryWrapper<SavRefundWithShopCode> queryWrapper = QueryGenerator.initQueryWrapper(savRefund, req.getParameterMap());
-        Page<SavRefundWithShopCode> page = new Page<>(pageNo, pageSize);
-        IPage<SavRefundWithShopCode> pageList = savRefundWithShopCodeService.page(page, queryWrapper);
+        QueryWrapper<SavRefundWithDetail> queryWrapper = QueryGenerator.initQueryWrapper(savRefund, req.getParameterMap());
+        Page<SavRefundWithDetail> page = new Page<>(pageNo, pageSize);
+        IPage<SavRefundWithDetail> pageList = savRefundWithShopCodeService.page(page, queryWrapper);
         return Result.OK(pageList);
     }
 

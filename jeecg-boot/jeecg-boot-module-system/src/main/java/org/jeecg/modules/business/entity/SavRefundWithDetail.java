@@ -14,19 +14,21 @@ import org.jeecgframework.poi.excel.annotation.Excel;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * @Description: 售后退款
  * @Author: jeecg-boot
- * @Date: 2022-08-16
- * @Version: V1.0
+ * @Date: 2022-08-17
+ * @Version: V1.1
  */
 @Data
-@TableName("sav_refund_with_shop_code")
+@TableName("sav_refund_with_detail")
 @Accessors(chain = true)
 @EqualsAndHashCode(callSuper = false)
-@ApiModel(value = "sav_refund_with_shop_code对象", description = "带店铺代码售后退款")
-public class SavRefundWithShopCode implements Serializable {
+@ApiModel(value = "sav_refund_with_detail对象", description = "带细节售后退款")
+public class SavRefundWithDetail implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
@@ -46,7 +48,7 @@ public class SavRefundWithShopCode implements Serializable {
     @JsonFormat(timezone = "GMT+2", pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @ApiModelProperty(value = "创建日期")
-    private java.util.Date createTime;
+    private Date createTime;
     /**
      * 更新人
      */
@@ -58,7 +60,7 @@ public class SavRefundWithShopCode implements Serializable {
     @JsonFormat(timezone = "GMT+2", pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @ApiModelProperty(value = "更新日期")
-    private java.util.Date updateTime;
+    private Date updateTime;
     /**
      * 平台订单ID
      */
@@ -77,7 +79,7 @@ public class SavRefundWithShopCode implements Serializable {
      */
     @Excel(name = "采购退款金额", width = 15)
     @ApiModelProperty(value = "采购退款金额")
-    private java.math.BigDecimal purchaseRefundAmount;
+    private BigDecimal purchaseRefundAmount;
     /**
      * 运费退款
      */
@@ -85,12 +87,11 @@ public class SavRefundWithShopCode implements Serializable {
     @ApiModelProperty(value = "运费退款")
     private String shippingRefund;
     /**
-     * 退款发票ID
+     * 退款发票号
      */
-    @Excel(name = "退款发票ID", width = 15, dictTable = "shipping_invoice", dicText = "invoice_number", dicCode = "id")
-    @Dict(dictTable = "shipping_invoice", dicText = "invoice_number", dicCode = "id")
-    @ApiModelProperty(value = "退款发票ID")
-    private java.lang.String invoiceId;
+    @Excel(name = "退款发票号", width = 15)
+    @ApiModelProperty(value = "退款发票号")
+    private String invoiceNumber;
     /**
      * 退款日期
      */
@@ -98,9 +99,35 @@ public class SavRefundWithShopCode implements Serializable {
     @JsonFormat(timezone = "GMT+2", pattern = "yyyy-MM-dd")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     @ApiModelProperty(value = "退款日期")
-    private java.util.Date refundDate;
+    private Date refundDate;
+    /**
+     * 实际退款总金额
+     */
+    @Excel(name = "实际退款总金额", width = 15)
+    @ApiModelProperty(value = "实际退款总金额")
+    private BigDecimal totalRefundAmount;
     /**
      * 店铺代码
      */
     private String erpCode;
+    /**
+     * 订单交易号
+     */
+    private String platformOrderNumber;
+    /**
+     * 挂号费
+     */
+    private BigDecimal fretFee;
+    /**
+     * 运费
+     */
+    private BigDecimal shippingFee;
+    /**
+     * TVA
+     */
+    private BigDecimal vat;
+    /**
+     * 服务费
+     */
+    private BigDecimal serviceFee;
 }
