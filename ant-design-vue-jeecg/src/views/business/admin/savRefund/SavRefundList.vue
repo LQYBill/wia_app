@@ -147,6 +147,12 @@
             dataIndex: 'platformOrderId_dictText'
           },
           {
+            title:'平台交易号',
+            align:"center",
+            sorter: true,
+            dataIndex: 'platformOrderNumber'
+          },
+          {
             title:'采购退款',
             align:"center",
             sorter: true,
@@ -166,10 +172,36 @@
             customRender: (text) => (text ? filterMultiDictText(this.dictOptions['shippingRefund'], text) : ''),
           },
           {
-            title:'退款发票ID',
+            title:'挂号费应退款金额',
+            align:"center",
+            dataIndex: 'fretFee'
+          },
+          {
+            title:'运费应退款金额',
+            align:"center",
+            dataIndex: 'shippingFee'
+          },
+          {
+            title:'TVA应退款金额',
+            align:"center",
+            dataIndex: 'vat'
+          },
+          {
+            title:'服务费应退款金额',
+            align:"center",
+            dataIndex: 'serviceFee'
+          },
+          {
+            title:'退款发票号',
             align:"center",
             sorter: true,
-            dataIndex: 'invoiceId_dictText'
+            dataIndex: 'invoiceNumber'
+          },
+          {
+            title:'实际退款总金额',
+            align:"center",
+            sorter: true,
+            dataIndex: 'totalRefundAmount'
           },
           {
             title:'退款日期',
@@ -222,7 +254,7 @@
         fieldList.push({type:'switch',value:'purchaseRefund',text:'采购退款'})
         fieldList.push({type:'BigDecimal',value:'purchaseRefundAmount',text:'采购退款金额',dictCode:''})
         fieldList.push({type:'switch',value:'shippingRefund',text:'运费退款'})
-        fieldList.push({type:'string',value:'invoiceId',text:'退款发票ID',dictTable:'shipping_invoice', dictText:'invoice_number', dictCode:'id'})
+        fieldList.push({type:'string',value:'invoiceNumber',text:'退款发票号'})
         fieldList.push({type:'date',value:'refundDate',text:'退款日期'})
         this.superFieldList = fieldList
       }
