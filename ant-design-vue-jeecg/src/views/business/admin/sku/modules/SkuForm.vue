@@ -6,7 +6,7 @@
          <a-row>
           <a-col :xs="24" :sm="12">
             <a-form-model-item label="商品ID" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="productId">
-              <j-search-select-tag v-model="model.productId" dict="product,code,id" />
+              <j-search-select-tag v-model="model.productId" dict="product,code,id" :async="true"/>
             </a-form-model-item>
           </a-col>
           <a-col :xs="24" :sm="12">
