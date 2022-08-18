@@ -59,6 +59,10 @@ public class PlatformOrderShippingInvoiceService {
     SkuPromotionHistoryMapper skuPromotionHistoryMapper;
     @Autowired
     ExchangeRatesMapper exchangeRatesMapper;
+    @Autowired
+    ISavRefundWithDetailService savRefundWithDetailService;
+    @Autowired
+    ISavRefundService savRefundService;
 
     @Value("${jeecg.path.shippingTemplatePath_EU}")
     private String SHIPPING_INVOICE_TEMPLATE_EU;
@@ -119,18 +123,9 @@ public class PlatformOrderShippingInvoiceService {
     public InvoiceMetaData makeInvoice(PreShippingInvoiceParam param) throws UserException, ParseException, IOException {
         // Creates factory
         ShippingInvoiceFactory factory = new ShippingInvoiceFactory(
-                platformOrderService,
-                clientMapper,
-                shopMapper,
-                logisticChannelMapper,
-                logisticChannelPriceMapper,
-                platformOrderContentService,
-                skuDeclaredValueService,
-                countryService,
-                exchangeRatesMapper,
-                purchaseOrderService,
-                purchaseOrderContentMapper,
-                skuPromotionHistoryMapper);
+                platformOrderService, clientMapper, shopMapper, logisticChannelMapper, logisticChannelPriceMapper,
+                platformOrderContentService, skuDeclaredValueService, countryService, exchangeRatesMapper,
+                purchaseOrderService, purchaseOrderContentMapper, skuPromotionHistoryMapper, savRefundService, savRefundWithDetailService);
         String username = ((LoginUser) SecurityUtils.getSubject().getPrincipal()).getUsername();
         // Creates invoice by factory
         ShippingInvoice invoice = factory.createPreShippingInvoice(username, param.clientID(), param.orderIds());
@@ -151,18 +146,9 @@ public class PlatformOrderShippingInvoiceService {
     public InvoiceMetaData makeCompleteInvoice(PreShippingInvoiceParam param) throws UserException, ParseException, IOException {
         // Creates factory
         ShippingInvoiceFactory factory = new ShippingInvoiceFactory(
-                platformOrderService,
-                clientMapper,
-                shopMapper,
-                logisticChannelMapper,
-                logisticChannelPriceMapper,
-                platformOrderContentService,
-                skuDeclaredValueService,
-                countryService,
-                exchangeRatesMapper,
-                purchaseOrderService,
-                purchaseOrderContentMapper,
-                skuPromotionHistoryMapper);
+                platformOrderService, clientMapper, shopMapper, logisticChannelMapper, logisticChannelPriceMapper,
+                platformOrderContentService, skuDeclaredValueService, countryService, exchangeRatesMapper,
+                purchaseOrderService, purchaseOrderContentMapper, skuPromotionHistoryMapper, savRefundService, savRefundWithDetailService);
         String username = ((LoginUser) SecurityUtils.getSubject().getPrincipal()).getUsername();
         // Creates invoice by factory
         CompleteInvoice invoice = factory.createCompletePreShippingInvoice(username, param.clientID(), param.orderIds());
@@ -220,18 +206,9 @@ public class PlatformOrderShippingInvoiceService {
     public InvoiceMetaData makeInvoice(ShippingInvoiceParam param) throws UserException, ParseException, IOException {
         // Creates factory
         ShippingInvoiceFactory factory = new ShippingInvoiceFactory(
-                platformOrderService,
-                clientMapper,
-                shopMapper,
-                logisticChannelMapper,
-                logisticChannelPriceMapper,
-                platformOrderContentService,
-                skuDeclaredValueService,
-                countryService,
-                exchangeRatesMapper,
-                purchaseOrderService,
-                purchaseOrderContentMapper,
-                skuPromotionHistoryMapper);
+                platformOrderService, clientMapper, shopMapper, logisticChannelMapper, logisticChannelPriceMapper,
+                platformOrderContentService, skuDeclaredValueService, countryService, exchangeRatesMapper,
+                purchaseOrderService, purchaseOrderContentMapper, skuPromotionHistoryMapper, savRefundService, savRefundWithDetailService);
         String username = ((LoginUser) SecurityUtils.getSubject().getPrincipal()).getUsername();
         // Creates invoice by factory
         ShippingInvoice invoice = factory.createInvoice(param.clientID(),
@@ -253,17 +230,9 @@ public class PlatformOrderShippingInvoiceService {
     public List<ShippingFeesEstimation> getShippingFeesEstimation(List<String> errorMessages) {
         // Creates factory
         ShippingInvoiceFactory factory = new ShippingInvoiceFactory(
-                platformOrderService,
-                clientMapper,
-                shopMapper,
-                logisticChannelMapper,
-                logisticChannelPriceMapper,
-                platformOrderContentService,
-                skuDeclaredValueService,
-                countryService,
-                exchangeRatesMapper, purchaseOrderService,
-                purchaseOrderContentMapper,
-                skuPromotionHistoryMapper);
+                platformOrderService, clientMapper, shopMapper, logisticChannelMapper, logisticChannelPriceMapper,
+                platformOrderContentService, skuDeclaredValueService, countryService, exchangeRatesMapper,
+                purchaseOrderService, purchaseOrderContentMapper, skuPromotionHistoryMapper, savRefundService, savRefundWithDetailService);
         return factory.getEstimations(errorMessages);
     }
 

@@ -17,6 +17,7 @@ import org.jeecg.modules.business.vo.ShippingFeesEstimation;
 import org.jeecg.modules.business.vo.SkuQuantity;
 import org.jeecg.modules.business.vo.SkuWeightDiscountServiceFees;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.BeanUtils;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,26 +38,19 @@ import static java.util.stream.Collectors.*;
 public class ShippingInvoiceFactory {
 
     private final IPlatformOrderService platformOrderService;
-
     private final ClientMapper clientMapper;
-
     private final ShopMapper shopMapper;
-
     private final LogisticChannelPriceMapper logisticChannelPriceMapper;
-
     private final LogisticChannelMapper logisticChannelMapper;
-
     private final IPlatformOrderContentService platformOrderContentService;
-
     private final ISkuDeclaredValueService skuDeclaredValueService;
-
     private final CountryService countryService;
-
     private final ExchangeRatesMapper exchangeRatesMapper;
     private final IPurchaseOrderService purchaseOrderService;
-
     private final PurchaseOrderContentMapper purchaseOrderContentMapper;
     private final SkuPromotionHistoryMapper skuPromotionHistoryMapper;
+    private final ISavRefundService savRefundService;
+    private final ISavRefundWithDetailService savRefundWithDetailService;
 
     private final SimpleDateFormat SUBJECT_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -76,15 +70,15 @@ public class ShippingInvoiceFactory {
                         }
                     });
 
-    public ShippingInvoiceFactory(IPlatformOrderService platformOrderService,
-                                  ClientMapper clientMapper, ShopMapper shopMapper,
-                                  LogisticChannelMapper logisticChannelMapper,
+    public ShippingInvoiceFactory(IPlatformOrderService platformOrderService, ClientMapper clientMapper,
+                                  ShopMapper shopMapper, LogisticChannelMapper logisticChannelMapper,
                                   LogisticChannelPriceMapper logisticChannelPriceMapper,
                                   IPlatformOrderContentService platformOrderContentService,
-                                  ISkuDeclaredValueService skuDeclaredValueService,
-                                  CountryService countryService,
-                                  ExchangeRatesMapper exchangeRatesMapper, IPurchaseOrderService purchaseOrderService, PurchaseOrderContentMapper purchaseOrderContentMapper, SkuPromotionHistoryMapper skuPromotionHistoryMapper) {
-
+                                  ISkuDeclaredValueService skuDeclaredValueService, CountryService countryService,
+                                  ExchangeRatesMapper exchangeRatesMapper, IPurchaseOrderService purchaseOrderService,
+                                  PurchaseOrderContentMapper purchaseOrderContentMapper,
+                                  SkuPromotionHistoryMapper skuPromotionHistoryMapper, ISavRefundService savRefundService,
+                                  ISavRefundWithDetailService savRefundWithDetailService) {
         this.platformOrderService = platformOrderService;
         this.clientMapper = clientMapper;
         this.shopMapper = shopMapper;
@@ -97,6 +91,8 @@ public class ShippingInvoiceFactory {
         this.purchaseOrderService = purchaseOrderService;
         this.purchaseOrderContentMapper = purchaseOrderContentMapper;
         this.skuPromotionHistoryMapper = skuPromotionHistoryMapper;
+        this.savRefundService = savRefundService;
+        this.savRefundWithDetailService = savRefundWithDetailService;
     }
 
     /**
@@ -130,7 +126,7 @@ public class ShippingInvoiceFactory {
                 .distinct()
                 .collect(Collectors.toList());
         log.info("Orders to be invoiced: {}", uninvoicedOrderToContent);
-        return createInvoice(customerId, shopIds, uninvoicedOrderToContent, "Pre-Shipping fees", true);
+        return createInvoice(customerId, shopIds, uninvoicedOrderToContent, null, "Pre-Shipping fees", true);
     }
 
 
@@ -295,12 +291,13 @@ public class ShippingInvoiceFactory {
         );
         // find orders and their contents of the invoice
         Map<PlatformOrder, List<PlatformOrderContent>> uninvoicedOrderToContent = platformOrderService.findUninvoicedOrders(shopIds, begin, end);
+        List<SavRefundWithDetail> savRefunds = savRefundWithDetailService.findUnprocessedRefundsByClient(customerId);
         String subject = String.format(
                 "Shipping fees from %s to %s",
                 SUBJECT_FORMAT.format(begin),
                 SUBJECT_FORMAT.format(end)
         );
-        return createInvoice(customerId, shopIds, uninvoicedOrderToContent, subject, false);
+        return createInvoice(customerId, shopIds, uninvoicedOrderToContent, savRefunds, subject, false);
     }
 
     /**
@@ -319,6 +316,8 @@ public class ShippingInvoiceFactory {
      * @param customerId                Customer ID
      * @param shopIds                   Shop IDs
      * @param subject                   Invoice subject
+     * @param orderAndContent           Map between PlatformOrder and their contents
+     * @param savRefunds                List of SAV refunds
      * @param skipShippingTimeComparing Skip comparing shipping time, true for Pre-shipping, false otherwise
      * @return the generated invoice
      * @throws UserException if package used by the invoice can not or find more than 1 logistic
@@ -327,6 +326,7 @@ public class ShippingInvoiceFactory {
     @Transactional
     public ShippingInvoice createInvoice(String customerId, List<String> shopIds,
                                          Map<PlatformOrder, List<PlatformOrderContent>> orderAndContent,
+                                         List<SavRefundWithDetail> savRefunds,
                                          String subject, boolean skipShippingTimeComparing) throws UserException {
         log.info("Orders to be invoiced: {}", orderAndContent);
         if (orderAndContent == null) {
@@ -348,7 +348,8 @@ public class ShippingInvoiceFactory {
         calculateFees(orderAndContent, channelPriceMap, countryList, skuRealWeights, skuServiceFees,
                 latestDeclaredValues, client, shopServiceFeeMap, invoiceCode);
         BigDecimal eurToUsd = exchangeRatesMapper.getLatestExchangeRate("EUR", "USD");
-        ShippingInvoice invoice = new ShippingInvoice(client, invoiceCode, subject, orderAndContent, eurToUsd);
+        updateSavRefundsInDb(savRefunds, invoiceCode);
+        ShippingInvoice invoice = new ShippingInvoice(client, invoiceCode, subject, orderAndContent, savRefunds, eurToUsd);
         updateOrdersAndContentsInDb(orderAndContent);
         return invoice;
     }
@@ -445,6 +446,29 @@ public class ShippingInvoiceFactory {
                 .stream()
                 .flatMap(List::stream)
                 .collect(Collectors.toList()));
+    }
+
+    private void updateSavRefundsInDb(List<SavRefundWithDetail> savRefunds, String invoiceCode) {
+        List<SavRefund> savRefundList = new ArrayList<>();
+        savRefunds.forEach(savRefundWithDetail -> {
+            savRefundWithDetail.setInvoiceNumber(invoiceCode);
+            if (savRefundWithDetail.getShippingRefund().equalsIgnoreCase("Y")) {
+                savRefundWithDetail.setTotalRefundAmount(savRefundWithDetail.getFretFee()
+                        .add(savRefundWithDetail.getShippingFee())
+                        .add(savRefundWithDetail.getVat())
+                        .add(savRefundWithDetail.getServiceFee())
+                );
+            }
+            if (savRefundWithDetail.getPurchaseRefund().equalsIgnoreCase("Y")) {
+                savRefundWithDetail.setTotalRefundAmount(savRefundWithDetail.getTotalRefundAmount()
+                        .add(savRefundWithDetail.getPurchaseRefundAmount()));
+            }
+            savRefundWithDetail.setRefundDate(new Date());
+            SavRefund target = new SavRefund();
+            BeanUtils.copyProperties(savRefundWithDetail, target);
+            savRefundList.add(target);
+        });
+        savRefundService.updateBatchById(savRefundList);
     }
 
     private BigDecimal calculateTotalVat(BigDecimal totalDeclaredValue, BigDecimal clientVatPercentage,
@@ -595,7 +619,7 @@ public class ShippingInvoiceFactory {
                     calculateFees(orders, channelPriceMap, countryList, skuRealWeights, skuServiceFees,
                             latestDeclaredValues, client, shopServiceFeeMap, null);
                     BigDecimal eurToUsd = exchangeRatesMapper.getLatestExchangeRate("EUR", "USD");
-                    ShippingInvoice invoice = new ShippingInvoice(client, "", "", orders, eurToUsd);
+                    ShippingInvoice invoice = new ShippingInvoice(client, "", "", orders, null, eurToUsd);
                     // Calculate total amounts
                     invoice.tableData();
                     estimations.add(new ShippingFeesEstimation(

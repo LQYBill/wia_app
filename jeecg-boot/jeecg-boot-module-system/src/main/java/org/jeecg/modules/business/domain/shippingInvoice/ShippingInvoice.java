@@ -3,9 +3,7 @@ package org.jeecg.modules.business.domain.shippingInvoice;
 import org.jeecg.modules.business.domain.invoice.AbstractInvoice;
 import org.jeecg.modules.business.domain.invoice.InvoiceStyleFactory;
 import org.jeecg.modules.business.domain.invoice.Row;
-import org.jeecg.modules.business.entity.Client;
-import org.jeecg.modules.business.entity.PlatformOrder;
-import org.jeecg.modules.business.entity.PlatformOrderContent;
+import org.jeecg.modules.business.entity.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -20,6 +18,8 @@ import java.util.stream.Collectors;
 public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Object, BigDecimal> {
     private final Map<PlatformOrder, List<PlatformOrderContent>> ordersToContent;
 
+    private final List<SavRefundWithDetail> savRefunds;
+
     private final BigDecimal exchangeRate;
 
     private BigDecimal totalAmount;
@@ -29,9 +29,10 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
     public ShippingInvoice(Client targetClient, String code,
                            String subject,
                            Map<PlatformOrder, List<PlatformOrderContent>> ordersToContent,
-                           BigDecimal exchangeRate) {
+                           List<SavRefundWithDetail> savRefunds, BigDecimal exchangeRate) {
         super(targetClient, code, subject);
         this.ordersToContent = ordersToContent;
+        this.savRefunds = savRefunds;
         this.exchangeRate = exchangeRate;
         totalAmount = BigDecimal.ZERO;
     }
@@ -103,6 +104,21 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
                 totalServiceFees
         );
         rows.add(serviceFeeRow);
+        if (savRefunds != null) {
+            for (SavRefundWithDetail savRefund : savRefunds) {
+                BigDecimal refundForOrder = BigDecimal.ZERO
+                        .subtract(savRefund.getTotalRefundAmount());
+                Row<String, Object, Integer, Object, BigDecimal> savRefundRow = new Row<>(
+                        String.format("Refund for order %s", savRefund.getPlatformOrderNumber()),
+                        null,
+                        null,
+                        null,
+                        refundForOrder
+                );
+                rows.add(savRefundRow);
+                totalAmount = totalAmount.add(refundForOrder);
+            }
+        }
         totalAmount = totalAmount.add(vatForEU);
         return rows;
     }
