@@ -23,6 +23,11 @@
               <j-switch v-model="model.shippingRefund"  ></j-switch>
             </a-form-model-item>
           </a-col>
+          <a-col :span="24">
+            <a-form-model-item label="退款原因" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="refundReason">
+              <a-textarea v-model="model.refundReason" rows="4" placeholder="请输入退款原因" />
+            </a-form-model-item>
+          </a-col>
         </a-row>
       </a-form-model>
     </j-form-container>

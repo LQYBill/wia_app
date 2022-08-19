@@ -141,7 +141,7 @@
             dataIndex: 'erpCode'
           },
           {
-            title:'平台订单ID',
+            title:'平台订单ID(马帮订单号)',
             align:"center",
             sorter: true,
             dataIndex: 'platformOrderId_dictText'
@@ -202,6 +202,11 @@
             align:"center",
             sorter: true,
             dataIndex: 'totalRefundAmount'
+          },
+          {
+            title: '退款原因',
+            align: "center",
+            dataIndex: 'refundReason'
           },
           {
             title:'退款日期',

@@ -20,8 +20,8 @@ import java.util.Date;
 /**
  * @Description: 售后退款
  * @Author: jeecg-boot
- * @Date: 2022-08-17
- * @Version: V1.1
+ * @Date: 2022-08-19
+ * @Version: V1.2
  */
 @Data
 @TableName("sav_refund_with_detail")
@@ -106,6 +106,12 @@ public class SavRefundWithDetail implements Serializable {
     @Excel(name = "实际退款总金额", width = 15)
     @ApiModelProperty(value = "实际退款总金额")
     private BigDecimal totalRefundAmount;
+    /**
+     * 退款原因
+     */
+    @Excel(name = "退款原因", width = 15)
+    @ApiModelProperty(value = "退款原因")
+    private String refundReason;
     /**
      * 店铺代码
      */
