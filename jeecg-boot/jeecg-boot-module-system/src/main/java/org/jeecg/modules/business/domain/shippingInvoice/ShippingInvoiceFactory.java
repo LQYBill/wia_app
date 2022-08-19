@@ -348,7 +348,9 @@ public class ShippingInvoiceFactory {
         calculateFees(orderAndContent, channelPriceMap, countryList, skuRealWeights, skuServiceFees,
                 latestDeclaredValues, client, shopServiceFeeMap, invoiceCode);
         BigDecimal eurToUsd = exchangeRatesMapper.getLatestExchangeRate("EUR", "USD");
-        updateSavRefundsInDb(savRefunds, invoiceCode);
+        if (savRefunds != null) {
+            updateSavRefundsInDb(savRefunds, invoiceCode);
+        }
         ShippingInvoice invoice = new ShippingInvoice(client, invoiceCode, subject, orderAndContent, savRefunds, eurToUsd);
         updateOrdersAndContentsInDb(orderAndContent);
         return invoice;
