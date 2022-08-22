@@ -66,6 +66,10 @@
             下载
           </a-button>
         </template>
+        <template slot="refundStatus" slot-scope="text">
+          <a-tag v-if="text === null" color="yellow">未退款</a-tag>
+          <a-tag v-else color="green">已退款 {{text}}</a-tag>
+        </template>
 
         <span slot="action" slot-scope="text, record">
           <a @click="handleEdit(record)">编辑</a>
@@ -118,6 +122,7 @@
             key:'rowIndex',
             width:60,
             align:"center",
+            fixed: 'left',
             customRender:function (t,r,index) {
               return parseInt(index)+1;
             }
@@ -126,31 +131,44 @@
             title:'创建人',
             align:"center",
             sorter: true,
-            dataIndex: 'createBy'
+            dataIndex: 'createBy',
+            fixed: 'left'
           },
           {
             title:'创建日期',
             align:"center",
             sorter: true,
-            dataIndex: 'createTime'
+            dataIndex: 'createTime',
+            fixed: 'left'
           },
           {
             title:'店铺',
             align:"center",
             sorter: true,
-            dataIndex: 'erpCode'
+            dataIndex: 'erpCode',
+            fixed: 'left'
           },
           {
             title:'平台订单ID(马帮订单号)',
             align:"center",
             sorter: true,
-            dataIndex: 'platformOrderId_dictText'
+            dataIndex: 'platformOrderId_dictText',
+            fixed: 'left'
           },
           {
             title:'平台交易号',
             align:"center",
             sorter: true,
-            dataIndex: 'platformOrderNumber'
+            dataIndex: 'platformOrderNumber',
+            fixed: 'left'
+          },
+          {
+            title:'退款状态',
+            align:"center",
+            sorter: true,
+            dataIndex: 'invoiceNumber',
+            fixed: 'left',
+            scopedSlots: { customRender : 'refundStatus' }
           },
           {
             title:'采购退款',
@@ -190,12 +208,6 @@
             title:'服务费应退款金额',
             align:"center",
             dataIndex: 'serviceFee'
-          },
-          {
-            title:'退款发票号',
-            align:"center",
-            sorter: true,
-            dataIndex: 'invoiceNumber'
           },
           {
             title:'实际退款总金额',
