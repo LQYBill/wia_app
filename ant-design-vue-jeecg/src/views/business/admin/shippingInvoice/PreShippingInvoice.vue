@@ -583,7 +583,7 @@ export default {
     },
     getCheckboxProps: record => ({
       props: {
-        disabled: record.logisticChannelName === '',
+        disabled: record.logisticChannelName === null && record.invoiceLogisticChannelName === null,
         name: record.logisticChannelName,
       },
     }),
