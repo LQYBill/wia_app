@@ -211,4 +211,21 @@ public class InvoiceController {
         }
     }
 
+    /**
+     * Get an estimate of shipping fees for selected orders
+     * @param param Parameters for creating a pre-shipping invoice
+     * @return One ShippingFeesEstimation
+     */
+    @PostMapping(value = "/estimate")
+    public Result<?> getShippingFeesEstimateByOrders(@RequestBody PreShippingInvoiceParam param) {
+        List<String> errorMessages = new ArrayList<>();
+        List<ShippingFeesEstimation> shippingFeesEstimations = shippingInvoiceService.getShippingFeesEstimation(param.clientID(),
+                param.orderIds(), errorMessages);
+        if (!errorMessages.isEmpty()){
+            return Result.error(errorMessages.toString());
+        } else {
+            return Result.OK(errorMessages.toString(), shippingFeesEstimations);
+        }
+    }
+
 }

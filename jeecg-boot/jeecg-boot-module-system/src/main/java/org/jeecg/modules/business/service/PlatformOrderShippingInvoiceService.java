@@ -128,7 +128,7 @@ public class PlatformOrderShippingInvoiceService {
                 purchaseOrderService, purchaseOrderContentMapper, skuPromotionHistoryMapper, savRefundService, savRefundWithDetailService);
         String username = ((LoginUser) SecurityUtils.getSubject().getPrincipal()).getUsername();
         // Creates invoice by factory
-        ShippingInvoice invoice = factory.createPreShippingInvoice(username, param.clientID(), param.orderIds());
+        ShippingInvoice invoice = factory.createPreShippingInvoice(param.clientID(), param.orderIds());
         return getInvoiceMetaData(username, invoice);
     }
 
@@ -234,6 +234,21 @@ public class PlatformOrderShippingInvoiceService {
                 platformOrderContentService, skuDeclaredValueService, countryService, exchangeRatesMapper,
                 purchaseOrderService, purchaseOrderContentMapper, skuPromotionHistoryMapper, savRefundService, savRefundWithDetailService);
         return factory.getEstimations(errorMessages);
+    }
+
+    /**
+     * Get an estimation of selected orders that are yet to be shipped
+     *
+     * @return List of shipping fees estimations.
+     * @param errorMessages List of error messages to be filled
+     */
+    public List<ShippingFeesEstimation> getShippingFeesEstimation(String clientId, List<String> orderIds,List<String> errorMessages) {
+        // Creates factory
+        ShippingInvoiceFactory factory = new ShippingInvoiceFactory(
+                platformOrderService, clientMapper, shopMapper, logisticChannelMapper, logisticChannelPriceMapper,
+                platformOrderContentService, skuDeclaredValueService, countryService, exchangeRatesMapper,
+                purchaseOrderService, purchaseOrderContentMapper, skuPromotionHistoryMapper, savRefundService, savRefundWithDetailService);
+        return factory.getEstimations(clientId, orderIds, errorMessages);
     }
 
     /**

@@ -108,7 +108,6 @@ public class ShippingInvoiceFactory {
      * <li>Update invoiced their orders and contents to DB</li>
      * </ol>
      *
-     * @param username current username
      * @param customerId the customer id
      * @param ordersIds  the list of order IDs
      * @return the generated invoice
@@ -116,7 +115,7 @@ public class ShippingInvoiceFactory {
      *                       channel price, this exception will be thrown.
      */
     @Transactional
-    public ShippingInvoice createPreShippingInvoice(String username, String customerId, List<String> ordersIds) throws UserException {
+    public ShippingInvoice createPreShippingInvoice(String customerId, List<String> ordersIds) throws UserException {
         log.info("Creating a invoice with arguments:\n client ID: {}, order IDs: {}]", customerId, ordersIds);
         // find orders and their contents of the invoice
         Map<PlatformOrder, List<PlatformOrderContent>> uninvoicedOrderToContent = platformOrderService.fetchOrderData(ordersIds);
@@ -143,7 +142,7 @@ public class ShippingInvoiceFactory {
      * <li>Update invoiced their orders and contents to DB</li>
      * </ol>
      *
-     * @param username current username
+     * @param username   current username
      * @param customerId the customer id
      * @param ordersIds  the list of order IDs
      * @return the generated invoice
@@ -179,7 +178,7 @@ public class ShippingInvoiceFactory {
      * <li>Update invoiced their orders and contents to DB</li>
      * </ol>
      *
-     * @param username Current username
+     * @param username   Current username
      * @param customerId Customer ID
      * @param shopIds    Shop IDs
      * @param subject    Invoice subject
@@ -635,5 +634,53 @@ public class ShippingInvoiceFactory {
         return estimations.stream()
                 .sorted(Comparator.comparing(ShippingFeesEstimation::getDueForProcessedOrders).reversed())
                 .collect(Collectors.toList());
+    }
+
+    public List<ShippingFeesEstimation> getEstimations(String clientId, List<String> orderIds, List<String> errorMessages) {
+        List<ShippingFeesEstimation> estimations = new ArrayList<>();
+        Map<PlatformOrder, List<PlatformOrderContent>> ordersMap = platformOrderService.fetchOrderData(orderIds);
+        Set<PlatformOrder> orderSet = ordersMap.keySet();
+        Map<String, PlatformOrder> orderMap = orderSet.stream().collect(toMap(PlatformOrder::getId, Function.identity()));
+        Map<String, String> orderMapByShopId = orderSet.stream().collect(toMap(PlatformOrder::getId, PlatformOrder::getShopId));
+        List<PlatformOrderContent> orderContents = ordersMap.values().stream().flatMap(Collection::stream).collect(toList());
+        Map<String, Map<PlatformOrder, List<PlatformOrderContent>>> uninvoicedOrdersByShopId = orderContents.stream()
+                .collect(
+                        groupingBy(
+                                platformOrderContent -> orderMapByShopId.get(platformOrderContent.getPlatformOrderId()),
+                                groupingBy(platformOrderContent -> orderMap.get(platformOrderContent.getPlatformOrderId()))
+                        )
+                );
+        Collection<String> shopIds = orderMapByShopId.values();
+        Client client = clientMapper.selectById(clientId);
+        List<Shop> shops = shopMapper.selectBatchIds(shopIds);
+
+        List<Country> countryList = countryService.findAll();
+        List<SkuDeclaredValue> latestDeclaredValues = skuDeclaredValueService.getLatestDeclaredValues();
+
+        Map<String, BigDecimal> skuRealWeights = new HashMap<>();
+        Map<String, BigDecimal> skuServiceFees = new HashMap<>();
+        skuDataPreparation(skuRealWeights, skuServiceFees);
+
+        Map<LogisticChannel, List<LogisticChannelPrice>> channelPriceMap = getChannelPriceMap(ordersMap, true);
+
+        for (Shop shop : shops) {
+            Map<String, BigDecimal> shopServiceFeeMap = new HashMap<>();
+            shopServiceFeeMap.put(shop.getId(), shop.getOrderServiceFee());
+            Map<PlatformOrder, List<PlatformOrderContent>> orders = uninvoicedOrdersByShopId.get(shop.getId());
+            try {
+                calculateFees(orders, channelPriceMap, countryList, skuRealWeights, skuServiceFees,
+                        latestDeclaredValues, client, shopServiceFeeMap, null);
+                BigDecimal eurToUsd = exchangeRatesMapper.getLatestExchangeRate("EUR", "USD");
+                ShippingInvoice invoice = new ShippingInvoice(client, "", "", orders, null, eurToUsd);
+                // Calculate total amounts
+                invoice.tableData();
+                estimations.add(new ShippingFeesEstimation(
+                        client.getInternalCode(), shop.getErpCode(), 0, orders.entrySet().size(), invoice.getTotalAmount()));
+            } catch (UserException e) {
+                log.error("Couldn't calculate all fees for shop {} for following reason {}", shop.getErpCode(), e.getMessage());
+                errorMessages.add(e.getMessage());
+            }
+        }
+        return estimations;
     }
 }
