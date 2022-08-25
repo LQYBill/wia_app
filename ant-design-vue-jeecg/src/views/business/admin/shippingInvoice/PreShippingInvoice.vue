@@ -114,13 +114,25 @@
             </a-col>
           </span>
         </a-row>
+        <a-row>
+          <a-card :bordered='true' title='当前已选择订单预计物流费用' :loading='!estimatesReady'>
+            <p v-if='shippingFeesEstimates.length === 0'>尚未选择订单</p>
+            <a-card-grid v-for='item in shippingFeesEstimates' style='width:20%;text-align:center'>
+              <a-statistic :title='item.shop' :value='item.dueForProcessedOrders' style='margin-right: 50px'>
+                <template #suffix>
+                  <span>€</span>
+                </template>
+              </a-statistic>
+            </a-card-grid>
+          </a-card>
+        </a-row>
       </a-form-model>
     </div>
 
     <!-- table区域 begin -->
     <div>
 
-      <a-alert type='info' showIcon style='margin-bottom: 16px;'>
+      <a-alert type='info' showIcon style='margin-bottom: 16px; margin-top: 16px'>
         <template slot='message'>
           <span>已选择</span>
           <a style='font-weight: 600;padding: 0 4px;'>{{ selectedRowKeys.length }}</a>
@@ -156,23 +168,23 @@
         </template>
         <!-- 内嵌table区域 end -->
 
-        <template slot="erpStatus" slot-scope="record">
+        <template slot='erpStatus' slot-scope='record'>
           <a-tag
-            v-for="erpStatus in record"
-            :key="erpStatus"
+            v-for='erpStatus in record'
+            :key='erpStatus'
             :color="erpStatus === '1' ? 'volcano' : 'green'"
           >
-            {{ erpStatus === '1' ? '待处理' : '配货中'}}
+            {{ erpStatus === '1' ? '待处理' : '配货中' }}
           </a-tag>
         </template>
 
-        <template slot="productAvailability" slot-scope="record">
+        <template slot='productAvailability' slot-scope='record'>
           <a-tag
-            v-for="productAvailable in record"
-            :key="productAvailable"
+            v-for='productAvailable in record'
+            :key='productAvailable'
             :color="productAvailable === '1' ? 'green' : 'volcano'"
           >
-            {{productAvailable === '1' ? '有货' : '缺货'}}
+            {{ productAvailable === '1' ? '有货' : '缺货' }}
           </a-tag>
         </template>
 
@@ -228,7 +240,8 @@ export default {
         checkSkuPrices: '/shippingInvoice/preShipping/checkSkuPrices',
         makeCompleteInvoice: '/shippingInvoice/preShipping/makeComplete',
         downloadInvoice: '/shippingInvoice/download',
-        invoiceDetail: '/shippingInvoice/invoiceDetail'
+        invoiceDetail: '/shippingInvoice/invoiceDetail',
+        estimateShippingFees: '/shippingInvoice/estimate'
       },
       columns: [
         {
@@ -291,16 +304,16 @@ export default {
           align: 'center',
           dataIndex: 'erpStatus',
           sorter: true,
-          scopedSlots: { customRender : 'erpStatus' }
+          scopedSlots: { customRender: 'erpStatus' }
         },
 
         {
           title: '是否有货',
-          align: "center",
+          align: 'center',
           dataIndex: 'productAvailable',
           sorter: true,
-          scopedSlots: { customRender : 'productAvailability' }
-        },
+          scopedSlots: { customRender: 'productAvailability' }
+        }
       ],
       pagination: {
         current: 1,
@@ -314,9 +327,9 @@ export default {
         total: 0
       },
       /* 排序参数 */
-      isorter:{
+      isorter: {
         column: 'order_time',
-        order: 'desc',
+        order: 'desc'
       },
       invoiceLoading: false,
       findOrdersLoading: false,
@@ -326,7 +339,9 @@ export default {
       completeInvoiceDisable: true,
       invoiceDisable: true,
       dataDisable: true,
-      orderListLoading: false
+      orderListLoading: false,
+      shippingFeesEstimates: [],
+      estimatesReady: true
     }
   },
   created() {
@@ -368,6 +383,7 @@ export default {
       this.pagination.total = 0
       this.invoiceDisable = true
       this.completeInvoiceDisable = true
+      this.shippingFeesEstimates = []
     },
     handleShopChange(value) {
       // value returned is array of shop
@@ -430,7 +446,7 @@ export default {
               pageSize: self.pagination.pageSize
             }
             if (Object.keys(self.isorter).length > 0) {
-              requestParam.order = self.isorter.order;
+              requestParam.order = self.isorter.order
               requestParam.column = self.isorter.column
             }
             this.findOrdersLoading = true
@@ -451,12 +467,12 @@ export default {
                     orderIdList.push(order.id)
                   })
                   let param = {
-                    clientID : self.customerId,
-                    orderIds : orderIdList
+                    clientID: self.customerId,
+                    orderIds: orderIdList
                   }
                   postAction(self.url.checkSkuPrices, param)
                     .then(res => {
-                      self.purchasePricesAvailable = res.code === 200;
+                      self.purchasePricesAvailable = res.code === 200
                       console.log(res.code)
                       if (res.message) {
                         this.$message.warning(res.message)
@@ -480,7 +496,7 @@ export default {
       let param = {
         clientID: this.customerId,
         orderIds: this.selectedRowKeys
-      };
+      }
       self.invoiceDisable = true
       self.findOrdersLoading = true
       self.orderListLoading = true
@@ -522,7 +538,7 @@ export default {
       let param = {
         clientID: this.customerId,
         orderIds: this.selectedRowKeys
-      };
+      }
       self.invoiceDisable = true
       self.findOrdersLoading = true
       self.orderListLoading = true
@@ -575,23 +591,48 @@ export default {
       this.loadOrders()
     },
     onSelectChange(selectedRowKeys, selectionRows) {
+      this.estimatesReady = false
       this.selectedRowKeys = selectedRowKeys
       this.selectionRows = selectionRows
       // No selected row, no invoice
       this.invoiceDisable = this.selectionRows.length === 0
       this.completeInvoiceDisable = this.selectionRows.length === 0 || !this.purchasePricesAvailable
+      if (this.selectedRowKeys.length > 0) {
+        let param = {
+          clientID: this.customerId,
+          orderIds: this.selectedRowKeys
+        }
+        postAction(this.url.estimateShippingFees, param)
+          .then(
+            res => {
+              if (!res.success) {
+                this.$message.error(res.message, 10)
+              } else {
+                if (res.message !== "[]") {
+                  this.$message.info(res.message, 10)
+                }
+                this.shippingFeesEstimates = res.result
+                this.estimatesReady = true
+              }
+            }
+          )
+      } else {
+        this.shippingFeesEstimates = []
+        this.estimatesReady = true
+      }
     },
     getCheckboxProps: record => ({
       props: {
-        disabled: record.logisticChannelName === null && record.invoiceLogisticChannelName === null,
-        name: record.logisticChannelName,
-      },
+        disabled: (record.logisticChannelName === '' || record.logisticChannelName === null) && record.invoiceLogisticChannelName === null,
+        name: record.logisticChannelName
+      }
     }),
     onClearSelected() {
       this.selectedRowKeys = []
       this.selectionRows = []
       this.invoiceDisable = true
       this.completeInvoiceDisable = true
+      this.shippingFeesEstimates = []
     },
     downloadDetailFile(invoiceNumber) {
       const param = {
