@@ -5,7 +5,6 @@ import org.jeecg.modules.business.domain.mabangapi.RequestBody;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 import java.util.List;
 import java.util.function.Function;
 
@@ -17,12 +16,13 @@ public class OrderListRequestBody implements RequestBody {
     private DateType datetimeType;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
-    private String canSend;
+    // 1.Normal 2.Abnormal 3.All
+    private final static String CAN_SEND = "3";
     private Integer page = 1;
 
     @Override
-    public String action() {
-        return "get-order-list";
+    public String api() {
+        return "order-get-order-list";
     }
 
     @Override
@@ -30,11 +30,11 @@ public class OrderListRequestBody implements RequestBody {
         JSONObject json = new JSONObject();
         putNonNull(json, "status", status, OrderStatus::getCode);
         putNonNull(json, "platformOrderIds", platformOrderIds, (ids) -> String.join(",", ids));
-        if(datetimeType != null){
+        if(datetimeType != null && platformOrderIds != null){
             putNonNull(json, datetimeType.text() + "Start", startDate, formatter::format);
             putNonNull(json, datetimeType.text() + "End", endDate, formatter::format);
         }
-        putNonNull(json, "canSend", canSend);
+        putNonNull(json, "canSend", CAN_SEND);
         putNonNull(json, "page", page);
         return json;
     }
@@ -70,11 +70,6 @@ public class OrderListRequestBody implements RequestBody {
 
     public OrderListRequestBody setEndDate(LocalDateTime endDate) {
         this.endDate = endDate;
-        return this;
-    }
-
-    public OrderListRequestBody setCanSend(String canSend) {
-        this.canSend = canSend;
         return this;
     }
 

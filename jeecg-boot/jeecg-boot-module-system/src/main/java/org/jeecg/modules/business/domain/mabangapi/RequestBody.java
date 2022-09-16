@@ -12,7 +12,7 @@ public interface RequestBody {
      *
      * @return action name
      */
-    String action();
+    String api();
 
 
     /**

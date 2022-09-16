@@ -1,6 +1,7 @@
 package org.jeecg.modules.business.domain.mabangapi;
 
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
@@ -24,10 +25,10 @@ import static java.lang.Thread.sleep;
  */
 @Slf4j
 public abstract class Request {
-    private final static String URL = "http://openapi.mabangerp.com";
+    private final static String URL = "https://gwapi.mabangerp.com/api/v2";
     private static final HttpMethod METHOD = HttpMethod.POST;
-    private static final String DEV_KEY = "3763ccb7a9f9c1449a56a00dc013900d";
-    private static final int DEV_ID = 100490;
+    private static final String APP_KEY = "87a1a0c46df86eb2683e74776894dae9";
+    private static final String DEV_ID = "200809";
 
     private final RequestBody body;
 
@@ -71,7 +72,7 @@ public abstract class Request {
         byte[] hmacSha256;
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
-            SecretKeySpec secretKeySpec = new SecretKeySpec(DEV_KEY.getBytes(), "HmacSHA256");
+            SecretKeySpec secretKeySpec = new SecretKeySpec(APP_KEY.getBytes(), "HmacSHA256");
             mac.init(secretKeySpec);
             hmacSha256 = mac.doFinal(body.getBytes());
         } catch (Exception e) {
@@ -88,10 +89,11 @@ public abstract class Request {
      * @return json string
      */
     private static String generateJsonBodyString(RequestBody body) {
-        JSONObject param = new JSONObject(body.parameters());
-        param.put("developerId", DEV_ID);
+        JSONObject param = new JSONObject();
+        param.put("appkey", DEV_ID);
         param.put("timestamp", new Date().getTime() / 1000);
-        param.put("action", body.action());
+        param.put("api", body.api());
+        param.put("data", body.parameters());
         return param.toJSONString();
     }
 }

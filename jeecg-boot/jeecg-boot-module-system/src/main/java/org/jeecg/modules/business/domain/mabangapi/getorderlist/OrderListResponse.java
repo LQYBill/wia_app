@@ -47,11 +47,12 @@ public class OrderListResponse extends Response {
         if (code.equals(Code.ERROR.value))
             throw new OrderListRequestErrorException(json.getString("message"));
 
-        int pageCount = Integer.parseInt(json.getString("pageCount"));
-        int dataCount = Integer.parseInt(json.getString("dataCount"));
-        JSONArray data = json.getJSONArray("data");
-        log.info("Constructed response: data contained {}, total page {}, total data {}", data.size(), pageCount, dataCount);
-        return new OrderListResponse(Code.SUCCESS, pageCount, dataCount, data, json);
+        JSONObject data = json.getJSONObject("data");
+        int pageCount = Integer.parseInt(data.getString("pageCount"));
+        int dataCount = Integer.parseInt(data.getString("dataCount"));
+        JSONArray realData = data.getJSONArray("data");
+        log.info("Constructed response: data contained {}, total page {}, total data {}", realData.size(), pageCount, dataCount);
+        return new OrderListResponse(Code.SUCCESS, pageCount, dataCount, realData, json);
     }
 
     public int getTotalPage() {

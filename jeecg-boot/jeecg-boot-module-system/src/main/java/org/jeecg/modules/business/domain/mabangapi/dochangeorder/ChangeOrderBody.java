@@ -15,7 +15,7 @@ public class ChangeOrderBody implements RequestBody {
     }
 
     @Override
-    public String action() {
+    public String api() {
         return "do-change-order";
     }
 
