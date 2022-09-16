@@ -12,6 +12,7 @@ import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrderQuantity;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -112,4 +113,6 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
     List<PlatformOrderQuantity> monthOrderNumber();
 
     List<String> fetchBillCodesOfParcelsWithoutTrace(Date startDate, Date endDate, List<String> transporters);
+
+    List<String> fetchUninvoicedOrdersForShops(LocalDateTime startDate, LocalDateTime endDate, List<String> shops);
 }

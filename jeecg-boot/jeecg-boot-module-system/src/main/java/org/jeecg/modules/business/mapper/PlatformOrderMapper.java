@@ -8,6 +8,7 @@ import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrderQuantity;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -135,4 +136,8 @@ public interface PlatformOrderMapper extends BaseMapper<PlatformOrder> {
 
     List<String> fetchBillCodesOfParcelsWithoutTrace(@Param("startDate") Date startDate, @Param("endDate") Date endDate,
                                                      @Param("transporters") List<String> transporters);
+
+    List<String> fetchUninvoicedOrdersForShops(@Param("startDateTime") LocalDateTime startDateTime,
+                                               @Param("endDateTime") LocalDateTime endDateTime,
+                                               @Param("shops") List<String> shops);
 }

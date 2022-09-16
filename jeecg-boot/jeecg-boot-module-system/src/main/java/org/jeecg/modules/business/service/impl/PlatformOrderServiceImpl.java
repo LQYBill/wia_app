@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.function.Function;
@@ -337,5 +338,10 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
     @Override
     public List<String> fetchBillCodesOfParcelsWithoutTrace(Date startDate, Date endDate, List<String> transporters) {
         return platformOrderMap.fetchBillCodesOfParcelsWithoutTrace(startDate, endDate, transporters);
+    }
+
+    @Override
+    public List<String> fetchUninvoicedOrdersForShops(LocalDateTime startDate, LocalDateTime endDate, List<String> shops) {
+        return platformOrderMap.fetchUninvoicedOrdersForShops(startDate, endDate, shops);
     }
 }
