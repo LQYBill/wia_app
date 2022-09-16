@@ -97,13 +97,13 @@ public class JTJob implements Job {
         List<String> billCodes = platformOrderService.fetchBillCodesOfParcelsWithoutTrace(
                 Date.valueOf(startDate), Date.valueOf(endDate), transporters);
         log.info("{} parcels without trace in total", billCodes.size());
-        List<List<String>> billCodeLists = Lists.partition(billCodes, 50);
+        List<List<String>> billCodeLists = Lists.partition(billCodes, 10);
         log.info("Requests will be divided in to {} parts", billCodeLists.size());
         List<JTParcelTrace> parcelTraces = new ArrayList<>();
         List<JTRequest> jtRequests = new ArrayList<>();
         billCodeLists.forEach(billcodeList -> {
-            JTRequest ydRequest = new JTRequest(billcodeList);
-            jtRequests.add(ydRequest);
+            JTRequest jtRequest = new JTRequest(billcodeList);
+            jtRequests.add(jtRequest);
         });
 
         ExecutorService executor = Executors.newFixedThreadPool(DEFAULT_NUMBER_OF_THREADS);
