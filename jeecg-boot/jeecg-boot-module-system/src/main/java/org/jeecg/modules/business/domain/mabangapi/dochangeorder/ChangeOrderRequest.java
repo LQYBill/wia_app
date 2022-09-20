@@ -4,7 +4,7 @@ import org.jeecg.modules.business.domain.mabangapi.Request;
 import org.jeecg.modules.business.domain.mabangapi.RequestBody;
 
 public class ChangeOrderRequest extends Request {
-    public ChangeOrderRequest(ChangeOrderBody body) {
+    public ChangeOrderRequest(ChangeOrderRequestBody body) {
         super(body);
     }
 

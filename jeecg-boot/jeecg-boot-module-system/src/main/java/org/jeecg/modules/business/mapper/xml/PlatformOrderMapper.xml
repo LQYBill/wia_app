@@ -302,7 +302,8 @@
         </foreach>
         AND order_time &gt;= #{startDateTime}
         AND order_time &lt;= #{endDateTime}
-        AND shipping_invoice_number IS NULL AND erp_status IN (1,2);
+        AND shipping_invoice_number IS NULL
+        AND erp_status IN (1,2);
     </select>
 
 </mapper>

@@ -2,22 +2,43 @@ package org.jeecg.modules.business.domain.mabangapi.dochangeorder;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jeecg.modules.business.domain.mabangapi.RequestBody;
 
-import java.util.Map;
+import java.util.HashSet;
 import java.util.function.Function;
 
 public class ChangeOrderRequestBody implements RequestBody {
 
     private String platformOrderId;
 
-    private Map<String, Integer> stockMap;
+    private final HashSet<Pair<String, Integer>> oldSkuData;
+
+    private final HashSet<Pair<String, Integer>> newSkuData;
 
     private final static String DEFAULT_WAREHOUSE_NAME = "SZBA宝安仓";
 
+    public enum OperationType {
+        MODIFY(1),
+        REMOVE(2),
+        ADD(3);
+        private final Integer code;
+
+        OperationType(Integer code) {
+            this.code = code;
+        }
+    }
+
+    public ChangeOrderRequestBody(String platformOrderId, HashSet<Pair<String, Integer>> oldSkuData,
+                                  HashSet<Pair<String, Integer>> newSkuData) {
+        this.platformOrderId = platformOrderId;
+        this.oldSkuData = oldSkuData;
+        this.newSkuData = newSkuData;
+    }
+
     @Override
     public String api() {
-        return "do-change-order";
+        return "order-do-change-order";
     }
 
     @Override
@@ -25,12 +46,23 @@ public class ChangeOrderRequestBody implements RequestBody {
         JSONObject json = new JSONObject();
         putNonNull(json, "platformOrderId", platformOrderId);
         JSONArray stockDataArray = new JSONArray();
-        for (Map.Entry<String, Integer> entry : stockMap.entrySet()) {
+        if (!oldSkuData.isEmpty()) {
+            for (Pair<String, Integer> oldSkuDatum : oldSkuData) {
+                JSONObject stockData = new JSONObject();
+                stockData.put("warehouseName", DEFAULT_WAREHOUSE_NAME);
+                stockData.put("stockSku", oldSkuDatum.getKey());
+                stockData.put("quantity", oldSkuDatum.getValue());
+                stockData.put("type", OperationType.REMOVE.code);
+                stockDataArray.add(stockData);
+            }
+
+        }
+        for (Pair<String, Integer> newSkuDatum : newSkuData) {
             JSONObject stockData = new JSONObject();
             stockData.put("warehouseName", DEFAULT_WAREHOUSE_NAME);
-            stockData.put("stockSku", entry.getKey());
-            stockData.put("quantity", entry.getValue());
-            stockData.put("type", "1");
+            stockData.put("stockSku", newSkuDatum.getKey());
+            stockData.put("quantity", newSkuDatum.getValue());
+            stockData.put("type", OperationType.ADD.code);
             stockDataArray.add(stockData);
         }
         json.put("stockData", stockDataArray.toJSONString());
@@ -43,14 +75,6 @@ public class ChangeOrderRequestBody implements RequestBody {
 
     public void setPlatformOrderId(String platformOrderId) {
         this.platformOrderId = platformOrderId;
-    }
-
-    public Map<String, Integer> getStockMap() {
-        return stockMap;
-    }
-
-    public void setStockMap(Map<String, Integer> stockMap) {
-        this.stockMap = stockMap;
     }
 
     private <E> void putNonNull(JSONObject json, String key, E value) {

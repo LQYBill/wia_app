@@ -22,8 +22,9 @@ public class ChangeOrderResponse extends Response {
         JSONObject jsonObject = JSON.parseObject(json);
         String code = jsonObject.getString("code");
         String message = jsonObject.getString("message");
-        if (code.equals("000")) {
-            String orderId = jsonObject.getString("orderId");
+        if (code.equals("200")) {
+            JSONObject data = jsonObject.getJSONObject("data");
+            String orderId = data.getString("orderId");
             return new ChangeOrderResponse(Code.SUCCESS, message, orderId);
         } else {
             return new ChangeOrderResponse(Code.ERROR, message, null);

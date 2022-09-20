@@ -4,7 +4,7 @@ public abstract class Response {
 
     public enum Code {
         ERROR("999"),
-        SUCCESS("000");
+        SUCCESS("200");
 
         public final String value;
 
