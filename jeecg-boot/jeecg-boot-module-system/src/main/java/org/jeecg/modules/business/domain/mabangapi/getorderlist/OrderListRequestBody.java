@@ -30,7 +30,7 @@ public class OrderListRequestBody implements RequestBody {
         JSONObject json = new JSONObject();
         putNonNull(json, "status", status, OrderStatus::getCode);
         putNonNull(json, "platformOrderIds", platformOrderIds, (ids) -> String.join(",", ids));
-        if(datetimeType != null && platformOrderIds != null){
+        if(datetimeType != null && platformOrderIds == null){
             putNonNull(json, datetimeType.text() + "Start", startDate, formatter::format);
             putNonNull(json, datetimeType.text() + "End", endDate, formatter::format);
         }
