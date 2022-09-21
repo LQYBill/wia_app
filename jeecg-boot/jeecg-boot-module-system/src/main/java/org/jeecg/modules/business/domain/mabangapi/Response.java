@@ -3,7 +3,7 @@ package org.jeecg.modules.business.domain.mabangapi;
 public abstract class Response {
 
     public enum Code {
-        ERROR("999"),
+        ERROR("0"),
         SUCCESS("200");
 
         public final String value;
