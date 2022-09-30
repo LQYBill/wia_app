@@ -60,6 +60,7 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
         ArrayList<Order> newOrders = new ArrayList<>();
         ArrayList<Order> oldOrders = new ArrayList<>();
         ArrayList<Order> ordersFromShippedToCompleted = new ArrayList<>();
+        ArrayList<Order> invoicedShippedOrders = new ArrayList<>();
         ArrayList<Order> obsoleteOrders = new ArrayList<>();
         for (Order retrievedOrder : orders) {
             PlatformOrder orderInDatabase = platformOrderIDToExistOrders.get(retrievedOrder.getPlatformOrderId());
@@ -76,6 +77,17 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
                             || orderInDatabase.getErpStatus().equals(OrderStatus.Pending.getCode())
                     ) {
                         ordersFromShippedToCompleted.add(retrievedOrder);
+                    }
+                } else if (retrievedOrder.getStatus().equals(OrderStatus.Shipped.getCode())) {
+                    if (orderInDatabase.getErpStatus().equals(OrderStatus.Preparing.getCode())
+                            || orderInDatabase.getErpStatus().equals(OrderStatus.Pending.getCode())
+                    ) {
+                        // If order wasn't invoiced pre-shipping, we can remove and re-insert contents
+                        if (orderInDatabase.getShippingInvoiceNumber() == null) {
+                            oldOrders.add(retrievedOrder);
+                        } else {
+                            invoicedShippedOrders.add(retrievedOrder);
+                        }
                     }
                 } else {
                     // If order is shipped or already has shipping invoice number(pre-shipping), don't update anything,
@@ -123,6 +135,14 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
                 platformOrderMabangMapper.batchUpdateErpStatusByMainId(
                         ordersFromShippedToCompleted.stream().map(Order::getId).collect(toList()),
                         OrderStatus.Completed.getCode());
+            }
+            if (invoicedShippedOrders.size() != 0) {
+                log.info("{} orders to be updated from Pending/Preparing to Shipped.", invoicedShippedOrders.size());
+                platformOrderMabangMapper.batchUpdateById(invoicedShippedOrders);
+                log.info("Contents of {} orders to be updated from Pending/Preparing to Shipped.", invoicedShippedOrders.size());
+                platformOrderMabangMapper.batchUpdateErpStatusByMainId(
+                        invoicedShippedOrders.stream().map(Order::getId).collect(toList()),
+                        OrderStatus.Shipped.getCode());
             }
             if (obsoleteOrders.size() != 0) {
                 log.info("{} orders to become obsolete.", obsoleteOrders.size());
