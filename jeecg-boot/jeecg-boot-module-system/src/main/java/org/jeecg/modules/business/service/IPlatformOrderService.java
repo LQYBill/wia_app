@@ -115,4 +115,14 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
     List<String> fetchBillCodesOfParcelsWithoutTrace(Date startDate, Date endDate, List<String> transporters);
 
     List<String> fetchUninvoicedOrdersForShops(LocalDateTime startDate, LocalDateTime endDate, List<String> shops);
+
+    /**
+     * Fetch platformOrderId of shipped AND invoiced orders, from startDatetime to endDatetime, excluding orders from
+     * shops whose codes are in shopCodes
+     * @param startDatetime Start date time
+     * @param endDatetime End date time
+     * @param shopCodes Codes for shops which are to be excluded from request
+     * @return List of PlatformOrderIDs
+     */
+    List<String> fetchInvoicedShippedOrdersNotInShops(LocalDateTime startDatetime, LocalDateTime endDatetime, List<String> shopCodes);
 }

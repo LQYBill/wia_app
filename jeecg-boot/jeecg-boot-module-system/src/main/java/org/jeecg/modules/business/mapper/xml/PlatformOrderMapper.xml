@@ -306,4 +306,24 @@
         AND erp_status IN (1,2);
     </select>
 
+    <select id="fetchInvoicedShippedOrdersNotInShops" resultType="java.lang.String">
+        SELECT platform_order_id
+        FROM platform_order po join shop s ON po.shop_id = s.id
+        WHERE erp_code NOT IN
+        <foreach
+                collection="shops"
+                separator=","
+                open="("
+                close=")"
+                index="index"
+                item="shop"
+        >
+            #{shop}
+        </foreach>
+        AND shipping_time &gt;= #{startDateTime}
+        AND shipping_time &lt;= #{endDateTime}
+        AND shipping_invoice_number IS NOT NULL
+        AND erp_status = 3;
+    </select>
+
 </mapper>

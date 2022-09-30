@@ -140,4 +140,8 @@ public interface PlatformOrderMapper extends BaseMapper<PlatformOrder> {
     List<String> fetchUninvoicedOrdersForShops(@Param("startDateTime") LocalDateTime startDateTime,
                                                @Param("endDateTime") LocalDateTime endDateTime,
                                                @Param("shops") List<String> shops);
+
+    List<String> fetchInvoicedShippedOrdersNotInShops(@Param("startDateTime") LocalDateTime startDatetime,
+                                                      @Param("endDateTime") LocalDateTime endDatetime,
+                                                      @Param("shops") List<String> shopCodes);
 }

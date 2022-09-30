@@ -344,4 +344,9 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
     public List<String> fetchUninvoicedOrdersForShops(LocalDateTime startDate, LocalDateTime endDate, List<String> shops) {
         return platformOrderMap.fetchUninvoicedOrdersForShops(startDate, endDate, shops);
     }
+
+    @Override
+    public List<String> fetchInvoicedShippedOrdersNotInShops(LocalDateTime startDatetime, LocalDateTime endDatetime, List<String> shopCodes) {
+        return platformOrderMap.fetchInvoicedShippedOrdersNotInShops(startDatetime, endDatetime, shopCodes);
+    }
 }
