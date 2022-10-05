@@ -22,8 +22,6 @@ public class CompleteInvoice extends ShippingInvoice {
 
     private final List<PromotionDetail> promotions;
 
-    private final static String DOLLAR_LOCATION = "H46";
-
     public CompleteInvoice(Client targetClient, String code,
                            String subject,
                            Map<PlatformOrder, List<PlatformOrderContent>> ordersToContent,
@@ -65,20 +63,5 @@ public class CompleteInvoice extends ShippingInvoice {
         );
         res.addAll(rows);
         return res;
-    }
-
-    /**
-     * In addition to super's operation, if target client prefer dollar, write the formula of exchange to
-     * a specific cell.
-     *
-     * @param factory factory that provide style
-     */
-    @Override
-    protected void fillTable(InvoiceStyleFactory factory) {
-        super.fillTable(factory);
-        if (targetClient.getCurrency().equals("USD")) {
-            String formula = "H45 *" + getExchangeRate();
-            writer.getCell(DOLLAR_LOCATION).setCellFormula(formula);
-        }
     }
 }

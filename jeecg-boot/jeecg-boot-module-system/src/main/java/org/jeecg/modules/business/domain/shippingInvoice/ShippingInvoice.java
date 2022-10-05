@@ -24,7 +24,7 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
 
     private BigDecimal totalAmount;
 
-    private final static String DOLLAR_LOCATION = "H43";
+    private final static String DOLLAR_LOCATION = "H46";
 
     public ShippingInvoice(Client targetClient, String code,
                            String subject,
@@ -155,7 +155,7 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
     protected void fillTable(InvoiceStyleFactory factory) {
         super.fillTable(factory);
         if (targetClient.getCurrency().equals("USD")) {
-            String formula = "H42 *" + exchangeRate;
+            String formula = "H45 *" + exchangeRate;
             writer.getCell(DOLLAR_LOCATION).setCellFormula(formula);
         }
     }
