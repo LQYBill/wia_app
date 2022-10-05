@@ -369,7 +369,9 @@ public class ShippingInvoiceFactory {
             latestShippingTime = sortedList.get(0).getShippingTime() == null ? now().toSqlDate() : sortedList.get(0).getShippingTime();
         }
         List<String> distinctCountries = sortedList.stream().map(PlatformOrder::getCountry).distinct().collect(toList());
-        List<String> distinctChannelNames = sortedList.stream().map(PlatformOrder::getLogisticChannelName).distinct().collect(toList());
+        List<String> distinctChannelNames = sortedList.stream()
+                .map(order -> order.getInvoiceLogisticChannelName() == null ? order.getLogisticChannelName() : order.getInvoiceLogisticChannelName())
+                .distinct().collect(toList());
         Map<String, LogisticChannel> logisticChannelMapById = logisticChannelMapper.getAll().stream()
                 .collect(toMap(LogisticChannel::getId, Function.identity()));
         List<LogisticChannelPrice> allEligiblePrices = logisticChannelPriceMapper.findPricesBy(latestShippingTime,
