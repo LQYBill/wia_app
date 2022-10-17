@@ -36,7 +36,7 @@
                  JOIN client c ON s.owner_id = c.id
         WHERE c.id = #{clientId}
     </sql>
-    <insert id="insertFromMabangOrder" parameterType="org.jeecg.modules.business.domain.mabangapi.getorderlist.Order">
+    <insert id="insertFromMabangOrder" parameterType="org.jeecg.modules.business.domain.api.mabang.getorderlist.Order">
         INSERT INTO platform_order(id, create_by,
                                    create_time, update_by,
                                    update_time, shop_id,

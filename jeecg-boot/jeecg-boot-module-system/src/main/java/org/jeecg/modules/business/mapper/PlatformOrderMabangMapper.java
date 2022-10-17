@@ -2,8 +2,8 @@ package org.jeecg.modules.business.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
-import org.jeecg.modules.business.domain.mabangapi.getorderlist.Order;
-import org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderItem;
+import org.jeecg.modules.business.domain.api.mabang.getorderlist.Order;
+import org.jeecg.modules.business.domain.api.mabang.getorderlist.OrderItem;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import org.springframework.stereotype.Repository;
 

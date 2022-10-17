@@ -2,12 +2,12 @@ package org.jeecg.modules.business.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
-import org.jeecg.modules.business.domain.equickapi.EQuickResponse;
-import org.jeecg.modules.business.domain.equickapi.EQuickTraceData;
-import org.jeecg.modules.business.domain.jtapi.JTParcelTrace;
-import org.jeecg.modules.business.domain.jtapi.JTParcelTraceDetail;
-import org.jeecg.modules.business.domain.ydapi.YDTraceData;
-import org.jeecg.modules.business.domain.ydapi.YDTraceDetail;
+import org.jeecg.modules.business.domain.api.equick.EQuickResponse;
+import org.jeecg.modules.business.domain.api.equick.EQuickTraceData;
+import org.jeecg.modules.business.domain.api.jt.JTParcelTrace;
+import org.jeecg.modules.business.domain.api.jt.JTParcelTraceDetail;
+import org.jeecg.modules.business.domain.api.yd.YDTraceData;
+import org.jeecg.modules.business.domain.api.yd.YDTraceDetail;
 import org.jeecg.modules.business.entity.Parcel;
 import org.jeecg.modules.business.entity.ParcelTrace;
 import org.jeecg.modules.business.mapper.ParcelMapper;

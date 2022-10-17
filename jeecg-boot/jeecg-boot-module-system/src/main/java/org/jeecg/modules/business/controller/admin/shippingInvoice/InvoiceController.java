@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.modules.business.controller.UserException;
-import org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderStatus;
+import org.jeecg.modules.business.domain.api.mabang.getorderlist.OrderStatus;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.entity.Shop;

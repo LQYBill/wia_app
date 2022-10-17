@@ -1,9 +1,9 @@
 package org.jeecg.modules.business.org.jeecg.modules.business.domain.mabangapi.getorderlist;
 
-import org.jeecg.modules.business.domain.mabangapi.getorderlist.DateType;
-import org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderListRawStream;
-import org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderListRequestBody;
-import org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderListResponse;
+import org.jeecg.modules.business.domain.api.mabang.getorderlist.DateType;
+import org.jeecg.modules.business.domain.api.mabang.getorderlist.OrderListRawStream;
+import org.jeecg.modules.business.domain.api.mabang.getorderlist.OrderListRequestBody;
+import org.jeecg.modules.business.domain.api.mabang.getorderlist.OrderListResponse;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;

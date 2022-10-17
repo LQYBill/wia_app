@@ -1,9 +1,8 @@
 package org.jeecg.modules.business.org.jeecg.modules.business.domain.mabangapi.getorderlist;
 
-import org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderListRequestErrorException;
-import org.jeecg.modules.business.domain.mabangapi.getorderlist.RetrieveOrderListJob;
+import org.jeecg.modules.business.domain.api.mabang.getorderlist.OrderListRequestErrorException;
+import org.jeecg.modules.business.domain.api.mabang.getorderlist.RetrieveOrderListJob;
 import org.jeecg.modules.business.service.impl.PlatformOrderMabangServiceImpl;
-import org.junit.Before;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;

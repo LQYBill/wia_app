@@ -2,15 +2,10 @@ package org.jeecg.modules.business.mapper;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.ibatis.annotations.Param;
-import org.jeecg.modules.business.domain.mabangapi.getorderlist.Order;
-import org.jeecg.modules.business.entity.OrderContentDetail;
-import org.jeecg.modules.business.entity.Promotion;
 import org.jeecg.modules.business.entity.PurchaseOrder;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.jeecg.modules.business.vo.PurchaseOrderPage;
 import org.springframework.stereotype.Repository;
 
 /**

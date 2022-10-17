@@ -1,7 +1,7 @@
 package org.jeecg.modules.business.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import org.jeecg.modules.business.domain.mabangapi.getorderlist.Order;
+import org.jeecg.modules.business.domain.api.mabang.getorderlist.Order;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;

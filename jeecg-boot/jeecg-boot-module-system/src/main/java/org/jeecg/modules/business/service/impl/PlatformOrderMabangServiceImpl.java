@@ -2,9 +2,9 @@ package org.jeecg.modules.business.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
-import org.jeecg.modules.business.domain.mabangapi.getorderlist.Order;
-import org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderItem;
-import org.jeecg.modules.business.domain.mabangapi.getorderlist.OrderStatus;
+import org.jeecg.modules.business.domain.api.mabang.getorderlist.Order;
+import org.jeecg.modules.business.domain.api.mabang.getorderlist.OrderItem;
+import org.jeecg.modules.business.domain.api.mabang.getorderlist.OrderStatus;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.mapper.PlatformOrderMabangMapper;
 import org.jeecg.modules.business.service.IPlatformOrderMabangService;

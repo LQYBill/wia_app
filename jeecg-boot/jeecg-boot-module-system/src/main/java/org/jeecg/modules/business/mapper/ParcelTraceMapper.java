@@ -2,10 +2,9 @@ package org.jeecg.modules.business.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
-import org.jeecg.modules.business.domain.equickapi.EQuickTraceData;
-import org.jeecg.modules.business.domain.jtapi.JTParcelTraceDetail;
-import org.jeecg.modules.business.domain.ydapi.YDTraceData;
-import org.jeecg.modules.business.domain.ydapi.YDTraceDetail;
+import org.jeecg.modules.business.domain.api.equick.EQuickTraceData;
+import org.jeecg.modules.business.domain.api.jt.JTParcelTraceDetail;
+import org.jeecg.modules.business.domain.api.yd.YDTraceDetail;
 import org.jeecg.modules.business.entity.ParcelTrace;
 import org.springframework.stereotype.Repository;
 

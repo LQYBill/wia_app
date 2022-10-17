@@ -1,6 +1,6 @@
 package org.jeecg.modules.business.org.jeecg.modules.business.domain.mabangapi.getorderlist;
 
-import org.jeecg.modules.business.domain.mabangapi.getorderlist.*;
+import org.jeecg.modules.business.domain.api.mabang.getorderlist.*;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
