@@ -144,4 +144,6 @@ public interface PlatformOrderMapper extends BaseMapper<PlatformOrder> {
     List<String> fetchInvoicedShippedOrdersNotInShops(@Param("startDateTime") LocalDateTime startDatetime,
                                                       @Param("endDateTime") LocalDateTime endDatetime,
                                                       @Param("shops") List<String> shopCodes);
+
+    List<PlatformOrderShopSync> fetchOrderInShopsReadyForShopifySync(@Param("shops") List<String> shopCodes);
 }

@@ -125,4 +125,6 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
      * @return List of PlatformOrderIDs
      */
     List<String> fetchInvoicedShippedOrdersNotInShops(LocalDateTime startDatetime, LocalDateTime endDatetime, List<String> shopCodes);
+
+    List<PlatformOrderShopSync> fetchOrderInShopsReadyForShopifySync(List<String> shopCodes);
 }
