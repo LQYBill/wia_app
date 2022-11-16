@@ -39,7 +39,7 @@ public class JTJob implements Job {
     @Autowired
     private IPlatformOrderService platformOrderService;
 
-    private static final Integer DEFAULT_NUMBER_OF_DAYS = 10;
+    private static final Integer DEFAULT_NUMBER_OF_DAYS = 15;
 
     private static final Integer DEFAULT_NUMBER_OF_THREADS = 10;
 

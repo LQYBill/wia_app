@@ -39,7 +39,7 @@ public class YDJob implements Job {
     @Autowired
     private IPlatformOrderService platformOrderService;
 
-    private static final Integer DEFAULT_NUMBER_OF_DAYS = 10;
+    private static final Integer DEFAULT_NUMBER_OF_DAYS = 15;
     private static final Integer DEFAULT_NUMBER_OF_THREADS = 10;
     private static final Integer DEFAULT_MAXIMUM_NUMBER_OF_PARCELS_PER_TRANSACTION = 800;
     private static final List<String> DEFAULT_TRANSPORTERS = Arrays.asList("义速宝Colissmo特快专线", "义速宝法邮普货", "义速宝法邮膏体", "德国超级经济(普货)");

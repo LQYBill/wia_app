@@ -35,7 +35,7 @@ public class EQuickJob implements Job {
     @Autowired
     private IPlatformOrderService platformOrderService;
 
-    private static final Integer DEFAULT_NUMBER_OF_DAYS = 10;
+    private static final Integer DEFAULT_NUMBER_OF_DAYS = 15;
     private static final Integer DEFAULT_NUMBER_OF_THREADS = 10;
     private static final List<String> DEFAULT_TRANSPORTERS = Arrays.asList("EQ快速专线小包（D）", "EQ快速专线小包（带电）", "EQ美国快速专线小包",
             "Equick快速专线小包（AT/CZ/SK/HU/BG/GR/RO/SI）", "Equick欧美速递专线", "Equick法国快速专线小包");
