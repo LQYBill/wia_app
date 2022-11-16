@@ -59,7 +59,7 @@
 
     <insert id="insertOrIgnoreYDTraces" parameterType="list">
         INSERT IGNORE INTO parcel_trace(id, create_by, create_time, update_by, update_time, parcel_id, scan_time,
-        description, description_en, trace_location, trace_status, trace_code)
+        description, description_en, trace_location, trace_status, trace_code, scan_type)
         VALUES
         <foreach collection="traces" separator="," open="" close="" item="trace" index="index">
             (
@@ -74,7 +74,8 @@
             #{trace.descriptionEn},
             #{trace.traceLocation},
             #{trace.traceStatus},
-            #{trace.traceCode}
+            #{trace.traceCode},
+            #{trace.scanType}
             )
         </foreach>
     </insert>

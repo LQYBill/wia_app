@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import static org.jeecg.modules.business.domain.api.ScanType.*;
+
 @Slf4j
 @Data
 public class JTParcelTraceDetail {
@@ -96,26 +98,26 @@ public class JTParcelTraceDetail {
                 case "已签收":
                 case "MD006":
                 case DANS_BOITE_POSTALE:
-                    setScanType("End Delivered");
+                    setScanType(END_DELIVERED.getDesc());
                     break;
                 case "末端收件":
                 case "MD001":
-                    setScanType("End Received");
+                    setScanType(END_RECEIVED.getDesc());
                     break;
                 case "等待签收":
                 case "MD009":
-                    setScanType("End Delivery");
+                    setScanType(END_DELIVERY.getDesc());
                     break;
                 case "MD007":
-                    setScanType("Return");
+                    setScanType(RETURN.getDesc());
                     setDescriptionEn("The parcel will be returned to sender.");
                     break;
                 case COLIS_REFUSE:
-                    setScanType("Return");
+                    setScanType(RETURN.getDesc());
                     break;
                 case "MD1011":
                 case "1011":
-                    setScanType("End Arrived");
+                    setScanType(END_ARRIVED.getDesc());
                     setDescriptionEn("The parcel is being routed towards its final destination.");
                     break;
                 case PROBLEME_ADRESSAGE:
@@ -128,7 +130,7 @@ public class JTParcelTraceDetail {
                 case NO_DELIVERY_TODAY:
                 case DELIVERY_NEXT_BUSINESS_DAY:
                 case NO_DELIVERY_TODAY_FR:
-                    setScanType("End Abnormal");
+                    setScanType(END_ABNORMAL.getDesc());
                     break;
             }
         }

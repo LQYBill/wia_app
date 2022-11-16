@@ -190,6 +190,9 @@ public class ParcelServiceImpl extends ServiceImpl<ParcelMapper, Parcel> impleme
         List<YDTraceDetail> tracesToInsert = new ArrayList<>();
         for (YDTraceData parcelAndTrace : parcelTraces) {
             List<YDTraceDetail> traceDetails = parcelAndTrace.getTraceDetails();
+            if (traceDetails.isEmpty()) {
+                break;
+            }
             // Equivalent of order number is in any trace detail
             YDTraceDetail ydTraceDetail = traceDetails.get(0);
             parcelAndTrace.setCountry(parcelAndTrace.getCountry());
@@ -199,9 +202,9 @@ public class ParcelServiceImpl extends ServiceImpl<ParcelMapper, Parcel> impleme
             Parcel existingParcel = billCodeToExistingParcels.get(parcelAndTrace.getThirdBillCode());
             if (existingParcel == null) {
                 parcelToInsert.add(parcelAndTrace);
-                traceDetails.forEach(trace -> trace.setParcelId(parcelAndTrace.getId()));
+                traceDetails.forEach(trace -> trace.parcelTraceProcess(parcelAndTrace.getId()));
             } else {
-                traceDetails.forEach(trace -> trace.setParcelId(existingParcel.getId()));
+                traceDetails.forEach(trace -> trace.parcelTraceProcess(existingParcel.getId()));
             }
             tracesToInsert.addAll(new ArrayList<>(traceDetails));
         }
