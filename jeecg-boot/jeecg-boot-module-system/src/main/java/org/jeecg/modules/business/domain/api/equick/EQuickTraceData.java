@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
+import static org.jeecg.modules.business.domain.api.ScanType.*;
+
 @Slf4j
 @Data
 public class EQuickTraceData {
@@ -94,40 +96,57 @@ public class EQuickTraceData {
         setParcelId(parcelId);
         switch (traceKind) {
             case 111:
-                setScanType("Order Placed");
+                setScanType(ORDER_PLACED.getDesc());
                 break;
             case 112:
-                setScanType("Waiting for Delivery");
+                setScanType(WAITING_FOR_DELIVERY.getDesc());
                 break;
             case 123:
-                setScanType("Received by Consolidation Warehouse");
+                setScanType(FACILITY_ARRIVED.getDesc());
                 break;
             case 131:
-                setScanType("Consolidation Center Outbound");
+                setScanType(FACILITY_OUTBOUND.getDesc());
                 break;
             case 141:
-                setScanType("Consolidation Center Dispatch");
+                setScanType(FACILITY_DEPARTURE.getDesc());
                 setTraceContent("Arrived at carrier operation center");
                 break;
             case 151:
-                setScanType("Aviation Stowage");
+                setScanType(FLIGHT_PREPARING.getDesc());
                 setTraceContent("Departed from carrier operation center");
                 break;
             case 161:
-                setScanType("Arrived at Port");
+                setScanType(ARRIVED_PORT.getDesc());
                 break;
             case 164:
-                setScanType("Flight Departure");
+                setScanType(FLIGHT_DEPARTURE.getDesc());
                 break;
             case 168:
-                setScanType("Flight Arrived");
+            case 169:
+                setScanType(FLIGHT_ARRIVED.getDesc());
                 break;
             case 200:
             case 232:
-                setScanType("Customs Clearance Completed");
+                setScanType(CUSTOMS_CLEARANCE_COMPLETED.getDesc());
                 break;
             case 210:
-                setScanType("End Received");
+                setScanType(END_RECEIVED.getDesc());
+                break;
+            case 251:
+                setScanType(END_ARRIVED.getDesc());
+                break;
+            case 285:
+                setScanType(END_DELIVERY.getDesc());
+                break;
+            case 290:
+                setScanType(END_ABNORMAL.getDesc());
+                break;
+            case 295:
+            case 298:
+                setScanType(RETURN.getDesc());
+                break;
+            case 299:
+                setScanType(END_DELIVERED.getDesc());
                 break;
         }
     }

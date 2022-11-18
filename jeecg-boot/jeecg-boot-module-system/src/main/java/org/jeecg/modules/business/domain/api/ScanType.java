@@ -12,8 +12,12 @@ public enum ScanType {
     FLIGHT_DELAY("Flight Delayed"),
     FACILITY_ARRIVED("Received by Consolidation Warehouse"),
     FACILITY_DEPARTURE("Consolidation Center Dispatch"),
+    FACILITY_OUTBOUND("Consolidation Center Outbound"),
     CUSTOMS_CLEARANCE_COMPLETED("Customs Clearance Completed"),
     ORDER_PLACED("Order Placed"),
+    WAITING_FOR_DELIVERY("Waiting for Delivery"),
+    ARRIVED_PORT("Arrived at Port"),
+    FLIGHT_PREPARING("Flight Preparing"),
     CN_CUSTOMS_INSPECTION("Customs Inspection");
 
     private final String desc;

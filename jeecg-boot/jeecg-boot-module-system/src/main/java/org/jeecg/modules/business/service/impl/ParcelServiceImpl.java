@@ -152,18 +152,19 @@ public class ParcelServiceImpl extends ServiceImpl<ParcelMapper, Parcel> impleme
             parcelAndTrace.setProductCode(anyTraceOfParcel.getQuickType());
             parcelAndTrace.setBillCode(anyTraceOfParcel.getTraceLabelNo());
             parcelAndTrace.setThirdBillCode(firstThirdBillCode.orElse(parcelAndTrace.getEquickWBNo()));
+            parcelToInsert.add(parcelAndTrace);
             Parcel existingParcel = billCodeToExistingParcels.get(anyTraceOfParcel.getTraceLabelNo());
             if (existingParcel == null) {
-                parcelToInsert.add(parcelAndTrace);
                 traceDataSet.forEach(trace -> trace.parcelTraceProcess(parcelAndTrace.getId()));
             } else {
+                parcelAndTrace.setId(existingParcel.getId());
                 traceDataSet.forEach(trace -> trace.parcelTraceProcess(existingParcel.getId()));
             }
             tracesToInsert.addAll(new ArrayList<>(traceDataSet));
         }
         log.info("After filtering, {} parcels will be inserted into the DB.", parcelToInsert.size());
         if (!parcelToInsert.isEmpty()) {
-            parcelMapper.insertOrIgnoreEQParcels(parcelToInsert);
+            parcelMapper.insertOrUpdateEQParcels(parcelToInsert);
         }
         if (!tracesToInsert.isEmpty()) {
             parcelTraceMapper.insertOrIgnoreEQTraces(tracesToInsert);

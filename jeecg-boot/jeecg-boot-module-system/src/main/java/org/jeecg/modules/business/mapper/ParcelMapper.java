@@ -22,7 +22,7 @@ public interface ParcelMapper extends BaseMapper<Parcel> {
 
     List<Parcel> searchByBillCode(List<String> billCodes);
 
-    void insertOrIgnoreEQParcels(List<EQuickResponse> parcels);
+    void insertOrUpdateEQParcels(List<EQuickResponse> parcels);
 
     void insertOrIgnoreYDParcels(List<YDTraceData> parcels);
 }
