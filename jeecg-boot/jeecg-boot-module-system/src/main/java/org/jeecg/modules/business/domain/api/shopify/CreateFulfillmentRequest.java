@@ -17,11 +17,13 @@ public class CreateFulfillmentRequest extends ShopifyRequest {
         SWISS_POST("https://service.post.ch/ekp-web/ui/entry/search/%s", "Swiss Post", "[0-9]{18}"),
         DHL_PACKET("https://www.dhl.de/en/privatkunden/pakete-empfangen/verfolgen.html?piececode=%s", "DHL Packet", "[0-9]{20}"),
         GLS_NL("https://www.gls-info.nl/tracking", "GLS", "[0-9]{20}"),
+        GLS_IT("https://gls-group.com/IT/it/servizi-online/ricerca-spedizioni.html?match=%s&type=NAT", "GLS", "LT[0-9]{9}"),
         COLIS_PRIVE_BE_LU("https://colisprive.com/moncolis/pages/detailColis.aspx?numColis=%s", "Colis Privé", "Q[0-9]{11}[BL][0-9]{4}"),
         COLIS_PRIVE_FR("https://colisprive.com/moncolis/pages/detailColis.aspx?numColis=%s", "Colis Privé", "Q[0-9]{16}"),
         POSTI("https://www.posti.fi/fi/seuranta#/lahetys/%s", "Posti", "SP[0-9]{9}FI"),
         USPS("https://tools.usps.com/go/TrackConfirmAction?qtc_tLabels1=%s", "USPS", "[0-9]{22}"),
         EARLY_BIRD("https://earlybird.se/", "Early Bird", "[0-9]{19}"),
+        POSTE_ITALIANE("https://www.poste.it/cerca/index.html#/risultati-spedizioni/%s", "Poste Italiane", "5P[0-9]{2}[A-Z][0-9]{8}"),
         ;
 
         private final String trackingUrl;
