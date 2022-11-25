@@ -167,7 +167,7 @@ public class ParcelServiceImpl extends ServiceImpl<ParcelMapper, Parcel> impleme
             parcelMapper.insertOrUpdateEQParcels(parcelToInsert);
         }
         if (!tracesToInsert.isEmpty()) {
-            parcelTraceMapper.insertOrIgnoreEQTraces(tracesToInsert);
+            parcelTraceMapper.insertOrUpdateEQTraces(tracesToInsert);
         }
         log.info("Finished inserting {} parcels and their traces into DB.", parcelTraces.size());
     }

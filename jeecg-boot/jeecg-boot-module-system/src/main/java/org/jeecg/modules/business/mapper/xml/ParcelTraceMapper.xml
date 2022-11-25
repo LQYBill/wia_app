@@ -35,8 +35,8 @@
         </foreach>
     </insert>
 
-    <insert id="insertOrIgnoreEQTraces" parameterType="list">
-        INSERT IGNORE INTO parcel_trace(id, create_by, create_time, update_by, update_time, parcel_id, scan_time,
+    <insert id="insertOrUpdateEQTraces" parameterType="list">
+        INSERT INTO parcel_trace(id, create_by, create_time, update_by, update_time, parcel_id, scan_time,
         scan_type, description_en, trace_location, trace_status, trace_code)
         VALUES
         <foreach collection="traces" separator="," open="" close="" item="trace" index="index">
@@ -55,6 +55,7 @@
             #{trace.traceKind}
             )
         </foreach>
+        ON DUPLICATE KEY UPDATE scan_type = values(scan_type), UPDATE_TIME = NOW()
     </insert>
 
     <insert id="insertOrIgnoreYDTraces" parameterType="list">

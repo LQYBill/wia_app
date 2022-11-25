@@ -25,7 +25,7 @@ public interface ParcelTraceMapper extends BaseMapper<ParcelTrace> {
 
     void insertOrIgnoreJTTraces(@Param("traces") List<JTParcelTraceDetail> traceDetails);
 
-    void insertOrIgnoreEQTraces(@Param("traces") List<EQuickTraceData> traceDetails);
+    void insertOrUpdateEQTraces(@Param("traces") List<EQuickTraceData> traceDetails);
 
     void insertOrIgnoreYDTraces(@Param("traces") List<YDTraceDetail> traceDetails);
 }

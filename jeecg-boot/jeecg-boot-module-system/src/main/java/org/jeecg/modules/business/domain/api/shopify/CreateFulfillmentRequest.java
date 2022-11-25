@@ -24,6 +24,7 @@ public class CreateFulfillmentRequest extends ShopifyRequest {
         USPS("https://tools.usps.com/go/TrackConfirmAction?qtc_tLabels1=%s", "USPS", "[0-9]{22}"),
         EARLY_BIRD("https://earlybird.se/", "Early Bird", "[0-9]{19}"),
         POSTE_ITALIANE("https://www.poste.it/cerca/index.html#/risultati-spedizioni/%s", "Poste Italiane", "5P[0-9]{2}[A-Z][0-9]{8}"),
+        DAO("https://www.dao.as/privat/find-din-pakke?stregkode=%s", "DAO", "00057151271[0-9]{9}"),
         ;
 
         private final String trackingUrl;
