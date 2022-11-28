@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Description: SKU申报价格
@@ -25,4 +26,8 @@ public interface SkuDeclaredValueMapper extends BaseMapper<SkuDeclaredValue> {
 	List<SkuDeclaredValue> getLatestSkuDeclaredValues();
 
 	BigDecimal getDeclaredValueForDate(@Param("skuId") String skuId, @Param("date") Date date);
+
+	List<Map<String, BigDecimal>> getLatestDeclaredValues();
+
+	void insertNewDeclaredValues(@Param("items") List<SkuDeclaredValue> items);
 }

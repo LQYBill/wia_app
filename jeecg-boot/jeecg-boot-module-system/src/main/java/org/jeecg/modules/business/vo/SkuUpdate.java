@@ -7,6 +7,7 @@ import lombok.Data;
 import org.jeecgframework.poi.excel.annotation.Excel;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -16,8 +17,8 @@ import java.util.Date;
  * @Version: V1.0
  */
 @Data
-@ApiModel(value = "库存更新对象", description = "SKU表")
-public class StockUpdate {
+@ApiModel(value = "SKU更新对象", description = "SKU表")
+public class SkuUpdate {
     /**
      * 更新人
      */
@@ -48,4 +49,15 @@ public class StockUpdate {
     @Excel(name = "在途数量", width = 15)
     @ApiModelProperty(value = "在途数量")
     private Integer purchasingAmount;
+    /**
+     * 申报价格
+     */
+    @Excel(name = "申报价格", width = 15)
+    @ApiModelProperty(value = "申报价格")
+    private BigDecimal declaredValue;
+
+    @JsonFormat(timezone = "GMT+2", pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @ApiModelProperty(value = "生效日期")
+    private Date effectiveDate;
 }

@@ -22,7 +22,7 @@ import org.jeecg.modules.business.service.ISkuPriceService;
 import org.jeecg.modules.business.service.ISkuService;
 import org.jeecg.modules.business.vo.SkuName;
 import org.jeecg.modules.business.vo.SkuPage;
-import org.jeecg.modules.business.vo.StockUpdate;
+import org.jeecg.modules.business.vo.SkuUpdate;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
 import org.jeecgframework.poi.excel.entity.ExportParams;
@@ -320,12 +320,12 @@ public class SkuController {
             params.setHeadRows(1);
             params.setNeedSave(true);
             try {
-                List<StockUpdate> list = ExcelImportUtil.importExcel(file.getInputStream(), StockUpdate.class, params);
-                for (StockUpdate stock : list) {
-                    stock.setUpdateBy(sysUser.getUsername());
-                    stock.setUpdateTime(new Date());
+                List<SkuUpdate> list = ExcelImportUtil.importExcel(file.getInputStream(), SkuUpdate.class, params);
+                for (SkuUpdate sku : list) {
+                    sku.setUpdateBy(sysUser.getUsername());
+                    sku.setUpdateTime(new Date());
                 }
-                skuService.batchUpdateStock(list);
+                skuService.batchUpdateSku(list);
                 return Result.OK("文件导入成功！数据行数:" + list.size());
             } catch (Exception e) {
                 log.error(e.getMessage(), e);

@@ -202,8 +202,26 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
 
     @Override
     @Transactional
-    public void batchUpdateStock(List<StockUpdate> list) {
+    public void batchUpdateSku(List<SkuUpdate> list) {
         skuMapper.batchUpdateStock(list);
+        LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+        List<SkuDeclaredValue> newDeclaredValues = new ArrayList<>();
+        Map<String, BigDecimal> latestDeclaredValues = skuDeclaredValueMapper.getLatestDeclaredValues().stream()
+                .flatMap(map -> map.entrySet().stream())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        for (SkuUpdate skuUpdate : list) {
+            BigDecimal latestDeclaredValue = latestDeclaredValues.get(skuUpdate.getErpCode());
+            if (latestDeclaredValue.compareTo(skuUpdate.getDeclaredValue()) != 0) {
+                SkuDeclaredValue skuDeclaredValue = new SkuDeclaredValue();
+                skuDeclaredValue.setCreateBy(sysUser.getId());
+                skuDeclaredValue.setCreateTime(new Date());
+                skuDeclaredValue.setSkuId(skuUpdate.getErpCode());
+                skuDeclaredValue.setDeclaredValue(skuUpdate.getDeclaredValue());
+                skuDeclaredValue.setEffectiveDate(skuUpdate.getEffectiveDate());
+                newDeclaredValues.add(skuDeclaredValue);
+            }
+        }
+        skuDeclaredValueMapper.insertNewDeclaredValues(newDeclaredValues);
     }
 
     @Override
