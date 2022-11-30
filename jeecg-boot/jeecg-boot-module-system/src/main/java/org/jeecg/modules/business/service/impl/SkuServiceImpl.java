@@ -189,6 +189,7 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
                         )
                 );
 
+        // Add surplus of purchased quantity to SKU's "purchasing amount"
         if (!platformOrderIDs.isEmpty()) {
             List<SkuQuantity> used = platformOrderContentMapper.searchOrderContent(platformOrderIDs);
             for (SkuQuantity sq : used) {

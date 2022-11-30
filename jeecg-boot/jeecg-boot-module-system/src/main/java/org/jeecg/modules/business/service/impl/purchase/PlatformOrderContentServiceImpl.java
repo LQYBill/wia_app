@@ -6,7 +6,6 @@ import org.jeecg.modules.business.controller.UserException;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.service.IPlatformOrderContentService;
-import org.jeecg.modules.business.vo.SkuQuantity;
 import org.jeecg.modules.business.vo.SkuWeightDiscountServiceFees;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -47,7 +46,4 @@ public class PlatformOrderContentServiceImpl extends ServiceImpl<PlatformOrderCo
 
     }
 
-    public List<SkuQuantity> searchOrderContent(List<String> orderIDList) {
-        return platformOrderContentMapper.searchOrderContent(orderIDList);
-    }
 }

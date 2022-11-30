@@ -29,6 +29,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static cn.hutool.core.date.DateTime.now;
 import static java.util.stream.Collectors.*;
@@ -204,7 +205,6 @@ public class ShippingInvoiceFactory {
         Map<LogisticChannel, List<LogisticChannelPrice>> channelPriceMap = getChannelPriceMap(orderAndContent, true);
         List<SkuDeclaredValue> latestDeclaredValues = skuDeclaredValueService.getLatestDeclaredValues();
 
-
         List<Shop> shops = shopMapper.selectBatchIds(shopIds);
         Map<String, BigDecimal> shopServiceFeeMap = new HashMap<>();
         shops.forEach(shop -> shopServiceFeeMap.put(shop.getId(), shop.getOrderServiceFee()));
@@ -214,8 +214,18 @@ public class ShippingInvoiceFactory {
                 latestDeclaredValues, client, shopServiceFeeMap, invoiceCode);
         BigDecimal eurToUsd = exchangeRatesMapper.getLatestExchangeRate("EUR", "USD");
 
-        List<String> orderIds = orderAndContent.keySet().stream().map(PlatformOrder::getId).collect(toList());
-        List<SkuQuantity> skuQuantities = platformOrderContentService.searchOrderContent(orderIds);
+        List<SkuQuantity> skuQuantities = new ArrayList<>();
+        List<PlatformOrderContent> list = orderAndContent.values()
+                .stream()
+                .flatMap(Collection::stream)
+                .collect(collectingAndThen(toMap(PlatformOrderContent::getSkuId,
+                        Function.identity(), (left, right) -> {
+                            left.setQuantity(left.getQuantity() + right.getQuantity());
+                            return left;
+                        }), m -> new ArrayList<>(m.values())));
+        list.forEach(platformOrderContent -> skuQuantities.add(
+                new SkuQuantity(platformOrderContent.getSkuId(), platformOrderContent.getQuantity())));
+
         String purchaseID = purchaseOrderService.addPurchase(username, client, invoiceCode, skuQuantities, orderAndContent);
 
         List<PurchaseInvoiceEntry> purchaseOrderSkuList = purchaseOrderContentMapper.selectInvoiceDataByID(purchaseID);
@@ -285,7 +295,7 @@ public class ShippingInvoiceFactory {
     @Transactional
     public ShippingInvoice createInvoice(String customerId, List<String> shopIds, Date begin, Date end) throws UserException {
         log.info(
-                "Creating a invoice with arguments:\n client ID: {}, shop IDs: {}, period:[{} - {}]",
+                "Creating an invoice with arguments:\n client ID: {}, shop IDs: {}, period:[{} - {}]",
                 customerId, shopIds.toString(), begin, end
         );
         // find orders and their contents of the invoice

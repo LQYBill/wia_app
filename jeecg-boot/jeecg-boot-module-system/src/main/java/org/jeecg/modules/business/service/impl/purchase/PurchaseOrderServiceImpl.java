@@ -348,7 +348,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
                         )
                 )
                 .collect(Collectors.toList());
-        purchaseOrderContentMapper.addAll(client.fullName(), purchaseID, entries);
+        purchaseOrderContentMapper.addAll(username, purchaseID, entries);
 
         // 2.1 save extra sku
         skuService.addInventory(skuQuantities, orderAndContent.keySet().stream().map(PlatformOrder::getId).collect(Collectors.toList()));
