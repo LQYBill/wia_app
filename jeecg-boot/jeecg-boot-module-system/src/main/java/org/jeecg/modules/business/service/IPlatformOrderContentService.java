@@ -33,4 +33,5 @@ public interface IPlatformOrderContentService extends IService<PlatformOrderCont
      */
     List<SkuWeightDiscountServiceFees> getAllSKUWeightsDiscountsServiceFees();
 
+    List<SkuQuantity> searchOrderContent(List<String> orderIDList);
 }

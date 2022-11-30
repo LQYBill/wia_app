@@ -129,7 +129,6 @@ public class ShippingInvoiceFactory {
         return createInvoice(customerId, shopIds, uninvoicedOrderToContent, null, "Pre-Shipping fees", true);
     }
 
-
     /**
      * Creates a complete pre-shipping (purchase + shipping) invoice for a client
      * <p>
@@ -214,17 +213,8 @@ public class ShippingInvoiceFactory {
                 latestDeclaredValues, client, shopServiceFeeMap, invoiceCode);
         BigDecimal eurToUsd = exchangeRatesMapper.getLatestExchangeRate("EUR", "USD");
 
-        List<SkuQuantity> skuQuantities = new ArrayList<>();
-        List<PlatformOrderContent> list = orderAndContent.values()
-                .stream()
-                .flatMap(Collection::stream)
-                .collect(collectingAndThen(toMap(PlatformOrderContent::getSkuId,
-                        Function.identity(), (left, right) -> {
-                            left.setQuantity(left.getQuantity() + right.getQuantity());
-                            return left;
-                        }), m -> new ArrayList<>(m.values())));
-        list.forEach(platformOrderContent -> skuQuantities.add(
-                new SkuQuantity(platformOrderContent.getSkuId(), platformOrderContent.getQuantity())));
+        List<String> orderIds = orderAndContent.keySet().stream().map(PlatformOrder::getId).collect(toList());
+        List<SkuQuantity> skuQuantities = platformOrderContentService.searchOrderContent(orderIds);
 
         String purchaseID = purchaseOrderService.addPurchase(username, client, invoiceCode, skuQuantities, orderAndContent);
 
