@@ -25,6 +25,7 @@ public class CreateFulfillmentRequest extends ShopifyRequest {
         EARLY_BIRD("https://earlybird.se/", "Early Bird", "[0-9]{19}"),
         POSTE_ITALIANE("https://www.poste.it/cerca/index.html#/risultati-spedizioni/%s", "Poste Italiane", "5P[0-9]{2}[A-Z][0-9]{8}"),
         DAO("https://www.dao.as/privat/find-din-pakke?stregkode=%s", "DAO", "00057151271[0-9]{9}"),
+        FASTWAY("https://www.fastway.ie/courier-services/track-your-parcel/?l=%s", "Fastway", "3H0001[0-9]{6}"),
         ;
 
         private final String trackingUrl;
