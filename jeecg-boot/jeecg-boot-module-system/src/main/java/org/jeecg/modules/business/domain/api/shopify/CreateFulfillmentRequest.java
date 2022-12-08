@@ -26,6 +26,8 @@ public class CreateFulfillmentRequest extends ShopifyRequest {
         POSTE_ITALIANE("https://www.poste.it/cerca/index.html#/risultati-spedizioni/%s", "Poste Italiane", "5P[0-9]{2}[A-Z][0-9]{8}"),
         DAO("https://www.dao.as/privat/find-din-pakke?stregkode=%s", "DAO", "00057151271[0-9]{9}"),
         FASTWAY("https://www.fastway.ie/courier-services/track-your-parcel/?l=%s", "Fastway", "3H0001[0-9]{6}"),
+        DPD_BE("https://www.dpdgroup.com/be/mydpd/my-parcels/track?parcelNumber=%s", "DPD", "06086316[0-9]{6}"),
+        HERMES_DE("https://www.myhermes.de/empfangen/sendungsverfolgung/sendungsinformation#%s", "Hermes", "H1000810983[0-9]{9}"),
         ;
 
         private final String trackingUrl;
