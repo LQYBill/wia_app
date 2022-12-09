@@ -3,7 +3,6 @@ package org.jeecg.modules.business.domain.api.yd;
 
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
@@ -12,9 +11,7 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
-import org.jeecg.common.util.MD5Util;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,15 +23,17 @@ import java.util.List;
 @Slf4j
 public class YDRequest {
     private final static String URL = "http://oms.ydhex.com/webservice/PublicService.asmx/ServiceInterfaceUTF8";
-    private static final String APP_TOKEN = "y553qci626dds5d6lcughy3ogicvfaxmh";
-    private static final String APP_KEY = "ynpoeds5511hg791mmksg6xccqxhax11j16eqz1itylq7whijki20egl0nmyql5h9";
+    private String appToken;
+    private String appKey;
 
     private static final String SERVICE_METHOD = "gettrack";
     private static final RequestConfig REQUEST_CONFIG = RequestConfig.custom().build();
 
     private final List<String> billCodes;
 
-    public YDRequest(List<String> billCodes) {
+    public YDRequest(String appToken, String appKey, List<String> billCodes) {
+        this.appToken = appToken;
+        this.appKey = appKey;
         this.billCodes = billCodes;
     }
 
@@ -69,8 +68,8 @@ public class YDRequest {
     private List<NameValuePair> generateFormData() {
         List<NameValuePair> pairs = new ArrayList<>();
         String paramsJson = generateJsonString(billCodes);
-        pairs.add(new BasicNameValuePair("appToken", APP_TOKEN));
-        pairs.add(new BasicNameValuePair("appKey", APP_KEY));
+        pairs.add(new BasicNameValuePair("appToken", appToken));
+        pairs.add(new BasicNameValuePair("appKey", appKey));
         pairs.add(new BasicNameValuePair("serviceMethod", SERVICE_METHOD));
         pairs.add(new BasicNameValuePair("paramsJson", paramsJson));
         return pairs;

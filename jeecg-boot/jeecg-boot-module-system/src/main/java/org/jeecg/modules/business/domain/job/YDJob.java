@@ -44,6 +44,9 @@ public class YDJob implements Job {
     private static final Integer DEFAULT_MAXIMUM_NUMBER_OF_PARCELS_PER_TRANSACTION = 800;
     private static final List<String> DEFAULT_TRANSPORTERS = Arrays.asList("义速宝Colissmo特快专线", "义速宝法邮普货", "义速宝法邮膏体", "德国超级经济(普货)");
 
+    private final static String APP_TOKEN = "y553qci626dds5d6lcughy3ogicvfaxmh";
+    private final static String APP_KEY = "ynpoeds5511hg791mmksg6xccqxhax11j16eqz1itylq7whijki20egl0nmyql5h9";
+
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         LocalDate endDate = LocalDate.now();
@@ -96,7 +99,7 @@ public class YDJob implements Job {
         List<YDTraceData> parcelTraces = new ArrayList<>();
         List<YDRequest> ydRequests = new ArrayList<>();
         billCodeLists.forEach(billcodeList -> {
-            YDRequest ydRequest = new YDRequest(billcodeList);
+            YDRequest ydRequest = new YDRequest(APP_TOKEN, APP_KEY, billcodeList);
             ydRequests.add(ydRequest);
         });
         ExecutorService executor = Executors.newFixedThreadPool(DEFAULT_NUMBER_OF_THREADS);
