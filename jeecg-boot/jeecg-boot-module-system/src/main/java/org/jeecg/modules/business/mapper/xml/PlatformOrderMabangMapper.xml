@@ -199,7 +199,8 @@
     <update id="batchUpdateErpStatusByMainId">
         UPDATE platform_order_content
         SET erp_status = #{statusCode}
-        WHERE platform_order_id IN
+        WHERE erp_status &lt;&gt; 5
+        AND platform_order_id IN
         <foreach collection="orderIDs" separator="," open="(" close=")" index="index" item="orderId">
             #{orderId}
         </foreach>
