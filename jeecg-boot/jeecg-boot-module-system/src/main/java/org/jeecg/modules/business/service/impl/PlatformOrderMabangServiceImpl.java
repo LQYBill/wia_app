@@ -81,6 +81,8 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
                 } else if (retrievedOrder.getStatus().equals(OrderStatus.Shipped.getCode())) {
                     if (orderInDatabase.getErpStatus().equals(OrderStatus.Preparing.getCode())
                             || orderInDatabase.getErpStatus().equals(OrderStatus.Pending.getCode())
+                            || (retrievedOrder.getTrackingNumber() != null && orderInDatabase.getTrackingNumber() != null &&
+                                    !retrievedOrder.getTrackingNumber().equalsIgnoreCase(orderInDatabase.getTrackingNumber()))
                     ) {
                         // If order wasn't invoiced pre-shipping, we can remove and re-insert contents
                         if (orderInDatabase.getShippingInvoiceNumber() == null) {
