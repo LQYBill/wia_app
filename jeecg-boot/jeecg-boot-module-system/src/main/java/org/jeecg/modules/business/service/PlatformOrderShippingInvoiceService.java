@@ -8,6 +8,7 @@ import org.jeecg.modules.business.domain.excel.SheetManager;
 import org.jeecg.modules.business.domain.shippingInvoice.CompleteInvoice;
 import org.jeecg.modules.business.domain.shippingInvoice.ShippingInvoice;
 import org.jeecg.modules.business.domain.shippingInvoice.ShippingInvoiceFactory;
+import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.entity.ShippingInvoiceEntity;
 import org.jeecg.modules.business.mapper.*;
 import org.jeecg.modules.business.vo.*;
@@ -25,6 +26,7 @@ import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class PlatformOrderShippingInvoiceService {
@@ -143,7 +145,7 @@ public class PlatformOrderShippingInvoiceService {
      * @throws IOException    exception related to invoice file IO.
      */
     @Transactional
-    public InvoiceMetaData makeCompleteInvoice(PreShippingInvoiceParam param) throws UserException, ParseException, IOException {
+    public InvoiceMetaData makeCompleteInvoice(PreShippingInvoiceParam param, boolean method) throws UserException, ParseException, IOException {
         // Creates factory
         ShippingInvoiceFactory factory = new ShippingInvoiceFactory(
                 platformOrderService, clientMapper, shopMapper, logisticChannelMapper, logisticChannelPriceMapper,
@@ -151,7 +153,34 @@ public class PlatformOrderShippingInvoiceService {
                 purchaseOrderService, purchaseOrderContentMapper, skuPromotionHistoryMapper, savRefundService, savRefundWithDetailService);
         String username = ((LoginUser) SecurityUtils.getSubject().getPrincipal()).getUsername();
         // Creates invoice by factory
-        CompleteInvoice invoice = factory.createCompletePreShippingInvoice(username, param.clientID(), param.orderIds());
+        CompleteInvoice invoice = factory.createCompletePreShippingInvoice(username, param.clientID(), param.orderIds(), method);
+        return getInvoiceMetaData(username, invoice);
+    }
+
+    /**
+     *  Make a complete post-shipping (purchase + shipping)
+     * @param param clientID, shopIPs[], startDate, endDate
+     * @param method true : postShipping, false = preShipping
+     * @return name of the invoice, can be used to in {@code getInvoiceBinary}
+     * @throws UserException
+     * @throws ParseException
+     * @throws IOException
+     */
+    @Transactional
+    public InvoiceMetaData makeCompleteInvoicePostShipping(ShippingInvoiceParam param, boolean method) throws UserException, ParseException, IOException {
+        // Creates factory
+        ShippingInvoiceFactory factory = new ShippingInvoiceFactory(
+                platformOrderService, clientMapper, shopMapper, logisticChannelMapper, logisticChannelPriceMapper,
+                platformOrderContentService, skuDeclaredValueService, countryService, exchangeRatesMapper,
+                purchaseOrderService, purchaseOrderContentMapper, skuPromotionHistoryMapper, savRefundService, savRefundWithDetailService);
+        String username = ((LoginUser) SecurityUtils.getSubject().getPrincipal()).getUsername();
+        //On récupère les commandes entre 2 dates avec un status 3
+        List<PlatformOrder> platformOrderList = platformOrderMapper.fetchInvoicedShippedOrderInShops(param.getStart(), param.getEnd(), param.shopIDs());
+        // on récupère seulement les ID des commandes
+        List<String> orderIds = platformOrderList.stream().map(PlatformOrder::getId).collect(Collectors.toList());
+        PreShippingInvoiceParam args = new PreShippingInvoiceParam(param.clientID(), orderIds);
+        // Creates invoice by factory
+        CompleteInvoice invoice = factory.createCompletePreShippingInvoice(username, param.clientID(), orderIds, method);
         return getInvoiceMetaData(username, invoice);
     }
 

@@ -147,13 +147,59 @@ public class InvoiceController {
     @PostMapping(value = "/preShipping/makeComplete")
     public Result<?> makeCompletePreShippingInvoice(@RequestBody PreShippingInvoiceParam param) {
         try {
-            InvoiceMetaData metaData = shippingInvoiceService.makeCompleteInvoice(param);
+            InvoiceMetaData metaData = shippingInvoiceService.makeCompleteInvoice(param, false);
             return Result.OK(metaData);
         } catch (UserException e) {
             return Result.error(e.getMessage());
         } catch (IOException | ParseException e) {
             log.error(e.getMessage());
             return Result.error("Sorry, server error, please try later");
+        }
+    }
+
+    /**
+     * Same as makeCompletePreShippingInvoice but for post shipping
+     * @param param ClientID, shopIDs[], startDate, endDate
+     * @return
+     */
+    @PostMapping(value = "/postShipping/makeComplete")
+    public Result<?> makeCompletePostShippingInvoice(@RequestBody ShippingInvoiceParam param) {
+        try {
+            InvoiceMetaData metaData = shippingInvoiceService.makeCompleteInvoicePostShipping(param, true);
+            return Result.OK(metaData);
+        } catch (UserException e) {
+            return Result.error(e.getMessage());
+        } catch (IOException | ParseException e) {
+            log.error(e.getMessage());
+            return Result.error("Sorry, server error, please try later");
+        }
+    }
+
+    /**
+     *  Checks if all sku of order from shops between 2 dates are available
+     * @param platformOrder
+     * @param param clientID, shopIDs, start (date), end (date)
+     * @param req
+     * @return sku prices available code : 200 = success
+     */
+    @PostMapping(value = "/postShipping/ordersBetweenDates")
+    public Result<?> getOrdersBetweenDates(PlatformOrder platformOrder, @RequestBody ShippingInvoiceParam param, HttpServletRequest req) {
+        QueryWrapper<PlatformOrder> queryWrapper = QueryGenerator.initQueryWrapper(platformOrder, req.getParameterMap());
+        LambdaQueryWrapper<PlatformOrder> lambdaQueryWrapper = queryWrapper.lambda();
+        log.info("Requesting orders for : " + param.toString());
+        if (param.shopIDs() == null || param.shopIDs().isEmpty()) {
+            return Result.error("Missing shop IDs");
+        } else {
+            log.info("Specified shop IDs : " + param.shopIDs());
+            lambdaQueryWrapper.in(PlatformOrder::getShopId, param.shopIDs());
+            lambdaQueryWrapper.inSql(PlatformOrder::getId, "SELECT id FROM platform_order po WHERE po.erp_status = '3' AND po.shipping_time between '" + param.getStart() + "' AND '" + param.getEnd() + "'" );
+            // on récupère les résultats de la requete
+            List<PlatformOrder> orderID = platformOrderMapper.selectList(lambdaQueryWrapper);
+            // on récupère seulement les ID des commandes
+            List<String> orderIds = orderID.stream().map(PlatformOrder::getId).collect(Collectors.toList());
+            PreShippingInvoiceParam args = new PreShippingInvoiceParam(param.clientID(), orderIds);
+            // on check s'il y a des SKU sans prix
+            return checkSkuPrices(args);
         }
     }
 

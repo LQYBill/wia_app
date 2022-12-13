@@ -29,7 +29,6 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static cn.hutool.core.date.DateTime.now;
 import static java.util.stream.Collectors.*;
@@ -145,12 +144,13 @@ public class ShippingInvoiceFactory {
      * @param username   current username
      * @param customerId the customer id
      * @param ordersIds  the list of order IDs
+     * @param shippingMethod true : postShipping; false : preShipping
      * @return the generated invoice
      * @throws UserException if package used by the invoice can not or find more than 1 logistic
      *                       channel price, this exception will be thrown.
      */
     @Transactional
-    public CompleteInvoice createCompletePreShippingInvoice(String username, String customerId, List<String> ordersIds) throws UserException {
+    public CompleteInvoice createCompletePreShippingInvoice(String username, String customerId, List<String> ordersIds, boolean shippingMethod) throws UserException {
         log.info("Creating a complete invoice for \n client ID: {}, order IDs: {}]", customerId, ordersIds);
         // find orders and their contents of the invoice
         Map<PlatformOrder, List<PlatformOrderContent>> uninvoicedOrderToContent = platformOrderService.fetchOrderData(ordersIds);
@@ -160,8 +160,12 @@ public class ShippingInvoiceFactory {
                 .distinct()
                 .collect(Collectors.toList());
         log.info("Orders to be invoiced: {}", uninvoicedOrderToContent);
-
-        return createInvoice(username, customerId, shopIds, uninvoicedOrderToContent, "Purchase and pre-Shipping fees");
+        if(shippingMethod) {
+            return createInvoice(username, customerId, shopIds, uninvoicedOrderToContent, "Purchase and post-Shipping fees");
+        }
+        else {
+            return createInvoice(username, customerId, shopIds, uninvoicedOrderToContent, "Purchase and pre-Shipping fees");
+        }
     }
 
 

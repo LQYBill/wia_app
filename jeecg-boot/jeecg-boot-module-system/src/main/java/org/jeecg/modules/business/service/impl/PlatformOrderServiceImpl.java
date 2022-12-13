@@ -354,4 +354,9 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
     public List<PlatformOrderShopSync> fetchOrderInShopsReadyForShopifySync(List<String> shopCodes) {
         return platformOrderMap.fetchOrderInShopsReadyForShopifySync(shopCodes);
     }
+
+    @Override
+    public List<PlatformOrder> fetchInvoicedShippedOrderInShops(String startDate, String endDate, List<String> shops) {
+        return platformOrderMap.fetchInvoicedShippedOrderInShops(startDate, endDate, shops);
+    }
 }

@@ -3,7 +3,7 @@
     <!-- 查询区域 -->
     <div class="table-page-search-wrapper">
       <!-- 搜索区域 -->
-      <a-form layout="inline">
+      <a-form layout="inline" ref="searchForm">
         <a-row :gutter="24">
           <a-col
             :md="6"
@@ -60,9 +60,10 @@
             </a-form-item>
           </a-col>
           <a-col
-            :md="8"
-            :sm="10"
+            :md="6"
+            :sm="8"
           >
+            <!-- TODO : on date change => refresh -->
             <a-form-item
               label="开始时间"
               :labelCol="{span: 5}"
@@ -89,6 +90,27 @@
                 :loading="buttonLoading"
                 @click="makeInvoice"
               >生成文件</a-button>
+            </a-col>
+          </span>
+          <!--  Button to make complete bill of both purchases and transport fee AFTER customer receives merchandise
+          - Disabled by default
+          - Active if all SKU have a price (no new SKU)
+          - else warning with list of SKU without price
+          -->
+          <span
+            style='float: left;overflow: hidden;'
+            class='table-page-search-submitButtons'
+          >
+            <a-col
+              :md='6'
+              :sm='24'
+            >
+              <a-button
+                type='danger'
+                :loading='invoiceLoading'
+                @click='makeCompletePostInvoice'
+                :disabled='completeInvoiceDisable'
+              >生成完整（物流收后+采购）发票文件</a-button>
             </a-col>
           </span>
         </a-row>
@@ -124,9 +146,12 @@ export default {
       selectedClient: null,
       startDate: null,
       endDate: null,
+      orderList: [],
       selectedStartDate: "",
       selectedEndDate: "",
       url: {
+        makeCompleteInvoice: '/shippingInvoice/postShipping/makeComplete',
+        checkOrdersBetweenDate: '/shippingInvoice/postShipping/ordersBetweenDates',
         getClientList: "/client/client/all",
         getValidPeriod: "/shippingInvoice/period",
         getShopsByCustomerId: "/shippingInvoice/shopsByClient",
@@ -137,6 +162,9 @@ export default {
       buttonLoading: false,
       shopDisable: true,
       dataDisable: true,
+      invoiceLoading: false,
+      completeInvoiceDisable: true,
+      purchasePricesAvailable: true
     }
   },
   created() {
@@ -257,6 +285,7 @@ export default {
     onDateChange(date, dateString) {
       this.selectedStartDate = dateString[0]
       this.selectedEndDate = dateString[1]
+      this.checkSkuBetweenDate();
     },
 
     datePickerDefaultValue() {
@@ -293,12 +322,12 @@ export default {
               this.downloadInvoice(filename).then(
                 this.$message.info("Download succeed.")
               )
-              this.onClickTestButton(code)
+              this.downloadDetailFile(code)
 
             }
           }
         )
-    },
+    },//end of makeInvoice()
 
     downloadInvoice(filename) {
       const param = {filename: filename}
@@ -312,7 +341,7 @@ export default {
         })
     },
 
-    onClickTestButton(invoiceNumber) {
+    downloadDetailFile(invoiceNumber) {
       const param = {
         invoiceNumber: invoiceNumber
       }
@@ -323,8 +352,85 @@ export default {
           saveAs(res, name)
         }
       )
-    }
-  }
+    },
+    //cette méthode est trigger lorsqu'on change la date
+    // on va checker si tous les sku des commandes entre les dates sont disponibles
+    // si oui, le bouton pour générer les factures complètes post reception s'active
+    checkSkuBetweenDate() {
+      let self = this
+      self.loading = true;
+      if (!this.customerId) {
+        this.$message.warning("请选择客户！Please Select a client")
+        return
+      } else if (!this.selectedStartDate || !self.selectedEndDate) {
+        this.$message.warning("请选择日期！")
+        return
+      }
+      const param = {
+        clientID: this.customerId,
+        shopIDs: this.shopIDs,
+        start: this.selectedStartDate,
+        end: moment(self.selectedEndDate).add(1, 'days').format('YYYY-MM-DD'),
+      }
+      console.log("button disabled for complete invoice before : " + this.completeInvoiceDisable);
+
+      postAction(self.url.checkOrdersBetweenDate, param)
+        .then(res => {
+          console.log("check SKU post shipping available price : " + res.code);
+          self.purchasePricesAvailable = res.code === 200; //200 : success
+          console.log("PurchasesPricesAvailable : " + self.purchasePricesAvailable);
+          if (res.message) {
+            this.$message.warning(res.message);
+          }
+          // if purchasePricesAvailable then enable the red button
+          console.log("button disabled for complete invoice : " + this.completeInvoiceDisable);
+          this.completeInvoiceDisable = !this.purchasePricesAvailable;
+        });
+    }, // end of checkSkuBetweenDate
+    makeCompletePostInvoice() {
+      console.log("Post Shipping");
+      let self = this
+      self.loading = true
+      if (!this.customerId) {
+        this.$message.warning('请选择客户！')
+        return
+      }
+      let param = {
+        clientID: this.customerId,
+        shopIDs: this.shopIDs,
+        start: this.selectedStartDate,
+        end: moment(self.selectedEndDate).add(1, 'days').format('YYYY-MM-DD'),
+      }
+      self.invoiceDisable = true
+      self.findOrdersLoading = true
+      self.orderListLoading = true
+      self.shopDisable = true
+      self.clientDisable = true
+      postAction(this.url.makeCompleteInvoice, param)
+        .then(
+          res => {
+            console.log(res)
+            if (!res.success) {
+              self.$message.error(res.message, 10)
+            } else {
+              let filename = res.result.filename
+              let code = res.result.invoiceCode
+              this.downloadInvoice(filename).then(
+                this.$message.info('Download succeed.')
+              )
+              this.downloadDetailFile(code)
+              this.pagination.current = 1
+              this.loadOrders()
+            }
+            self.clientDisable = false
+            self.shopDisable = false
+            self.completeInvoiceDisable = false
+            self.findOrdersLoading = false
+            self.orderListLoading = false
+          }
+        )
+    } // end of makeCompleteInvoice()
+  } // end of methods
 }
 </script>
 <style scoped>

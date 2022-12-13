@@ -40,6 +40,13 @@ public class ShippingInvoiceParam {
         return format.parse(end);
     }
 
+    public String getStart() {
+        return this.start;
+    }
+
+    public String getEnd() {
+        return this.end;
+    }
     @Override
     public String toString() {
         return "ShippingInvoiceParam{" + clientID +
