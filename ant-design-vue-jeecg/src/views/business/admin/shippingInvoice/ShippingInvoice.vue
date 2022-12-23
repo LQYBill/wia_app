@@ -63,7 +63,6 @@
             :md="6"
             :sm="8"
           >
-            <!-- TODO : on date change => refresh -->
             <a-form-item
               label="开始时间"
               :labelCol="{span: 5}"
@@ -88,6 +87,7 @@
               <a-button
                 type="primary"
                 :loading="buttonLoading"
+                :disabled="makeInvoiceDisable"
                 @click="makeInvoice"
               >生成文件</a-button>
             </a-col>
@@ -164,6 +164,7 @@ export default {
       dataDisable: true,
       invoiceLoading: false,
       completeInvoiceDisable: true,
+      makeInvoiceDisable: true,
       purchasePricesAvailable: true
     }
   },
@@ -185,7 +186,7 @@ export default {
           if (res.success) {
             console.log(res)
             self.customerList = res.result.map(customer => ({
-              text: `${customer.firstName} ${customer.surname}`,
+              text: `${customer.firstName} ${customer.surname} (${customer.internalCode})`,
               value: customer.id,
               client: customer
             }));
@@ -251,7 +252,13 @@ export default {
       if (this.shopIDs.length !== 0) {
         this.loadAvailableDate()
       } else {
-        this.dataDisable = true
+        this.startDate = null;
+        this.endDate = null;
+        this.selectedStartDate = null;
+        this.selectedEndDate = null;
+        this.dataDisable = true;
+        this.completeInvoiceDisable = true;
+        this.makeInvoiceDisable = true;
       }
     },
 
@@ -348,7 +355,7 @@ export default {
       getFile(this.url.invoiceDetail, param).then(
         res => {
           let now = moment().format("yyyyMMDD")
-          let name = "Détail_calcul_de_facture_" + this.client.internalCode + "_" + now + ".xlsx"
+          let name = this.client.internalCode + "_" + invoiceNumber + '_Détail_calcul_de_facture_' + now + '.xlsx'
           saveAs(res, name)
         }
       )
@@ -364,6 +371,9 @@ export default {
         return
       } else if (!this.selectedStartDate || !self.selectedEndDate) {
         this.$message.warning("请选择日期！")
+        this.completeInvoiceDisable = true;
+        this.makeInvoiceDisable = true;
+        this.purchasePricesAvailable = false;
         return
       }
       const param = {
@@ -382,9 +392,10 @@ export default {
           if (res.message) {
             this.$message.warning(res.message);
           }
+          this.completeInvoiceDisable = !this.purchasePricesAvailable;
+          this.makeInvoiceDisable = !this.purchasePricesAvailable;
           // if purchasePricesAvailable then enable the red button
           console.log("button disabled for complete invoice : " + this.completeInvoiceDisable);
-          this.completeInvoiceDisable = !this.purchasePricesAvailable;
         });
     }, // end of checkSkuBetweenDate
     makeCompletePostInvoice() {

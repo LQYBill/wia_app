@@ -178,7 +178,6 @@ public class PlatformOrderShippingInvoiceService {
         List<PlatformOrder> platformOrderList = platformOrderMapper.fetchInvoicedShippedOrderInShops(param.getStart(), param.getEnd(), param.shopIDs());
         // on récupère seulement les ID des commandes
         List<String> orderIds = platformOrderList.stream().map(PlatformOrder::getId).collect(Collectors.toList());
-        PreShippingInvoiceParam args = new PreShippingInvoiceParam(param.clientID(), orderIds);
         // Creates invoice by factory
         CompleteInvoice invoice = factory.createCompletePreShippingInvoice(username, param.clientID(), orderIds, method);
         return getInvoiceMetaData(username, invoice);
@@ -210,14 +209,14 @@ public class PlatformOrderShippingInvoiceService {
             invoice.toExcelFile(out);
         }
         // save to DB
-        ShippingInvoiceEntity shippingInvoiceEntity = ShippingInvoiceEntity.of(
+        org.jeecg.modules.business.entity.ShippingInvoice shippingInvoiceEntity = org.jeecg.modules.business.entity.ShippingInvoice.of(
                 username,
                 invoice.code(),
                 invoice.getTotalAmount(),
                 invoice.reducedAmount(),
                 invoice.paidAmount()
         );
-        shippingInvoiceMapper.save(shippingInvoiceEntity);
+        shippingInvoiceMapper.insert(shippingInvoiceEntity);
         return new InvoiceMetaData(filename, invoice.code());
     }
 

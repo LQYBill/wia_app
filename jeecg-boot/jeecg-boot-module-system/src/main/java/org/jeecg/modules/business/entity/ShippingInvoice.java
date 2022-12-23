@@ -9,9 +9,9 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.jeecgframework.poi.excel.annotation.Excel;
+import org.jeecg.common.aspect.annotation.Dict;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
@@ -24,7 +24,7 @@ import io.swagger.annotations.ApiModelProperty;
 @ApiModel(value = "shipping_invoice对象", description = "物流发票")
 @Data
 @TableName("shipping_invoice")
-public class ShippingInvoiceEntity implements Serializable {
+public class ShippingInvoice implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
@@ -88,17 +88,58 @@ public class ShippingInvoiceEntity implements Serializable {
     @ApiModelProperty(value = "已付金额")
     private java.math.BigDecimal paidAmount;
 
-    @PersistenceConstructor
-    public ShippingInvoiceEntity(String id,
-                           String createBy,
-                           Date createTime,
-                           String updateBy,
-                           Date updateTime,
-                           String invoiceNumber,
-                           BigDecimal totalAmount,
-                           BigDecimal discountAmount,
-                           BigDecimal finalAmount,
-                           BigDecimal paidAmount) {
+    public void setID(String id) {
+        this.id = id;
+    }
+    public void setCreateBy(String user) {
+        this.createBy = user;
+    }
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
+    public void setUpdateBy(String updateBy) {
+        this.updateBy = updateBy;
+    }
+    public void setUpdateTime(Date updateTime) {
+        this.updateTime = updateTime;
+    }
+    public void setInvoiceNumber(String invoiceNumber) {
+        this.invoiceNumber = invoiceNumber;
+    }
+    public void setTotalAmount(java.math.BigDecimal totalAmount) {
+        this.totalAmount = totalAmount;
+    }
+    public void setDiscountAmount(java.math.BigDecimal discountAmount) {
+        this.discountAmount = discountAmount;
+    }
+    public void setFinalAmount(java.math.BigDecimal finalAmount) {
+        this.finalAmount = finalAmount;
+    }
+    public void setPaidAmount(java.math.BigDecimal paidAmount) {
+        this.paidAmount = paidAmount;
+    }
+    public ShippingInvoice() {
+//        this.id = null;
+//        this.createBy = null;
+//        this.createTime = new Date();
+//        this.updateBy = null;
+//        this.updateTime = new Date();
+//        this.invoiceNumber = null;
+//        this.totalAmount = null;
+//        this.discountAmount = null;
+//        this.finalAmount = null;
+//        this.paidAmount = null;
+    }
+    public ShippingInvoice(String id,
+                                 String createBy,
+                                 Date createTime,
+                                 String updateBy,
+                                 Date updateTime,
+                                 String invoiceNumber,
+                                 BigDecimal totalAmount,
+                                 BigDecimal discountAmount,
+                                 BigDecimal finalAmount,
+                                 BigDecimal paidAmount) {
         this.id = id;
         this.createBy = createBy;
         this.createTime = createTime;
@@ -110,15 +151,14 @@ public class ShippingInvoiceEntity implements Serializable {
         this.finalAmount = finalAmount;
         this.paidAmount = paidAmount;
     }
-
-    public static ShippingInvoiceEntity of(
+    public static ShippingInvoice of(
             String username,
             String invoiceNumber,
             BigDecimal totalAmount,
             BigDecimal discountAmount,
             BigDecimal paidAmount
     ) {
-        return new ShippingInvoiceEntity(null, username, new Date(), username, new Date(),
+        return new ShippingInvoice(null, username, new Date(), username, new Date(),
                 invoiceNumber, totalAmount, discountAmount, totalAmount.subtract(discountAmount), paidAmount);
     }
 }

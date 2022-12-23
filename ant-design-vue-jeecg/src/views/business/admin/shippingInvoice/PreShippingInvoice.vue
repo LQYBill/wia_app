@@ -358,7 +358,7 @@ export default {
         .then(res => {
           if (res.success) {
             self.customerList = res.result.map(customer => ({
-              text: `${customer.firstName} ${customer.surname}`,
+              text: `${customer.firstName} ${customer.surname} (${customer.internalCode})`,
               value: customer.id,
               client: customer
             }))
@@ -641,7 +641,7 @@ export default {
       getFile(this.url.invoiceDetail, param).then(
         res => {
           let now = moment().format('yyyyMMDD')
-          let name = 'Détail_calcul_de_facture_' + this.client.internalCode + '_' + now + '.xlsx'
+          let name = this.client.internalCode + "_" + invoiceNumber + '_Détail_calcul_de_facture_' + now + '.xlsx'
           saveAs(res, name)
         })
     }
