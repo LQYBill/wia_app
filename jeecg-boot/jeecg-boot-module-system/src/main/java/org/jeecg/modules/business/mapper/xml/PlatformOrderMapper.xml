@@ -43,7 +43,7 @@
                                    logistic_channel_name, platform_order_id,
                                    platform_order_number, tracking_number,
                                    order_time, shipping_time,
-                                   recipient, country, status)
+                                   recipient, country, status, can_send)
         SELECT #{id},
                'admin',
                NOW(),
@@ -58,7 +58,8 @@
                #{shippingTime},
                #{recipient},
                #{country},
-               #{status}
+               #{status},
+               #{canSend}
         FROM shop
         WHERE erp_code = #{shopErpCode}
     </insert>
@@ -231,7 +232,8 @@
                status,
                target,
                erp_order_id,
-               erp_status
+               erp_status,
+               can_send
         FROM sku_platform_order
         WHERE sku_id = #{id}
     </select>

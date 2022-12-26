@@ -96,6 +96,9 @@ public class Order {
     @JSONField(name = "orderStatus")
     private String status;
 
+    @JSONField(name = "canSend")
+    private String canSend;
+
     @JSONField(name = "isUnion")
     private String isUnion;
 

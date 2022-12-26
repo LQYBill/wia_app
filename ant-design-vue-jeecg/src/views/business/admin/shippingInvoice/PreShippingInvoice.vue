@@ -188,6 +188,16 @@
           </a-tag>
         </template>
 
+        <template slot='toReview' slot-scope='record'>
+          <a-tag
+            v-for='canSend in record'
+            :key='canSend'
+            :color="canSend !== '1' ? canSend === 2 ? 'volcano' : 'yellow' : 'green'"
+          >
+            {{ canSend !== '1' ? canSend === 2 ? '异常订单' : '全部订单 默认正常订单': '正常订单'}}
+          </a-tag>
+        </template>
+
         <template slot='htmlSlot' slot-scope='text'>
           <div v-html='text'></div>
         </template>
@@ -313,6 +323,14 @@ export default {
           dataIndex: 'productAvailable',
           sorter: true,
           scopedSlots: { customRender: 'productAvailability' }
+        },
+
+        {
+          title: '待审核订单',
+          align: 'center',
+          dataIndex: 'canSend',
+          sorter: true,
+          scopedSlots: { customRender: 'toReview' }
         }
       ],
       pagination: {

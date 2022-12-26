@@ -18,8 +18,8 @@ import java.util.Date;
 /**
  * @Description: 平台订单表
  * @Author: jeecg-boot
- * @Date: 2022-07-26
- * @Version: V1.4
+ * @Date:   2022-12-23
+ * @Version: V1.5
  */
 @ApiModel(value = "platform_order对象", description = "平台订单表")
 @Data
@@ -197,4 +197,13 @@ public class PlatformOrder implements Serializable {
     @Excel(name = "有货（1=有，0=没有）", width = 15)
     @ApiModelProperty(value = "有货（1=有，0=没有）")
     private String productAvailable;
+	/**可以同步Shopify（1=可以，0=不可以）*/
+	@Excel(name = "可以同步Shopify（1=可以，0=不可以）", width = 15, dicCode = "yn")
+    @Dict(dicCode = "yn")
+    @ApiModelProperty(value = "可以同步Shopify（1=可以，0=不可以）")
+    private String readyForShopifySync;
+	/**待审核订单 1.否 2.是*/
+	@Excel(name = "待审核订单 1.否 2.是", width = 15)
+    @ApiModelProperty(value = "待审核订单 1.否 2.是")
+    private String canSend;
 }

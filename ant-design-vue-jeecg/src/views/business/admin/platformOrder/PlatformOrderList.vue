@@ -108,7 +108,10 @@
             </a>
             <a-menu slot="overlay">
               <a-menu-item>
-                <a-popconfirm title="确定删除吗?" @confirm="handleDelete(record.id)">
+                <a @click="handleDetail(record)">详情</a>
+              </a-menu-item>
+              <a-menu-item>
+                <a-popconfirm title="确定删除吗?" @confirm="() => handleDelete(record.id)">
                   <a>删除</a>
                 </a-popconfirm>
               </a-menu-item>
@@ -148,10 +151,13 @@
         columns: [
           {
             title: '#',
-            key: 'rowIndex',
-            width: 60,
-            align: 'center',
-            customRender: (t, r, index) => parseInt(index) + 1
+            dataIndex: '',
+            key:'rowIndex',
+            width:60,
+            align:"center",
+            customRender:function (t,r,index) {
+              return parseInt(index)+1;
+            }
           },
           {
             title: '店铺ID',
@@ -272,6 +278,18 @@
             sorter: true
           },
           {
+            title:'可以同步Shopify（1=可以，0=不可以）',
+            align:"center",
+            dataIndex: 'readyForShopifySync_dictText',
+            sorter: true
+          },
+          {
+            title:'待审核订单 1.否 2.是',
+            align:"center",
+            dataIndex: 'canSend',
+            sorter: true
+          },
+          {
             title: '操作',
             dataIndex: 'action',
             align: 'center',
@@ -330,9 +348,10 @@
         fieldList.push({type:'string',value:'status',text:'采购状态',dictCode:''})
         fieldList.push({type:'string',value:'target',text:'合并订单目标订单ID',dictCode:''})
         fieldList.push({type:'string',value:'erpStatus',text:'ERP中状态',dictCode:''})
-        fieldList.push({type:'string',value:'invoiceLogisticChannelName',text:'开票物流渠道名称',dictCode:''})
         fieldList.push({type: 'string', value: 'internalTrackingNumber', text: '物流内部单号', dictCode: ''})
         fieldList.push({type: 'string', value: 'productAvailable', text: '有货（1=有，0=没有）', dictCode: 'yn'})
+        fieldList.push({type:'string',value:'readyForShopifySync',text:'可以同步Shopify（1=可以，0=不可以）',dictCode:'yn'})
+        fieldList.push({type:'string',value:'canSend',text:'待审核订单 1.否 2.是',dictCode:''})
         this.superFieldList = fieldList
       }
     }

@@ -20,8 +20,8 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * @Description: 平台订单表
  * @Author: jeecg-boot
- * @Date: 2022-07-26
- * @Version: V1.4
+ * @Date:   2022-12-23
+ * @Version: V1.5
  */
 @Data
 @ApiModel(value = "platform_orderPage对象", description = "平台订单表")
@@ -188,4 +188,16 @@ public class PlatformOrderPage {
     @ApiModelProperty(value = "平台订单内容")
     private List<PlatformOrderContent> platformOrderContentList;
 
+	/**
+     * 可以同步Shopify（1=可以，0=不可以）
+     * */
+	@Excel(name = "可以同步Shopify（1=可以，0=不可以）", width = 15)
+    @ApiModelProperty(value = "可以同步Shopify（1=可以，0=不可以）")
+    private String readyForShopifySync;
+	/**
+     * 待审核订单 1.否 2.是
+     * */
+	@Excel(name = "待审核订单 1.否 2.是", width = 15)
+	@ApiModelProperty(value = "待审核订单 1.否 2.是")
+    private String canSend;
 }

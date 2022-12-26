@@ -105,6 +105,11 @@
         <foreach collection="orders" separator=" " open="" close="" index="index" item="item">
             when #{item.id} then #{item.productAvailable}
         </foreach>
+        end,
+        canSend = case id
+        <foreach collection="orders" separator=" " open="" close="" index="index" item="item">
+            when #{item.id} then #{canSend}
+        </foreach>
         end
         where id in
         <foreach collection="orders" separator="," open="(" close=")" index="index" item="item">
@@ -152,7 +157,7 @@
         update_time, shop_id, logistic_channel_name,
         platform_order_id, platform_order_number, erp_order_id,
         tracking_number, internal_tracking_number, order_time, shipping_time, recipient,
-        country, postcode, erp_status, product_available)
+        country, postcode, erp_status, product_available, can_send)
         VALUES
         <foreach collection="orders" separator="," open="" close="" item="order" index="index">
             (
@@ -174,7 +179,8 @@
             #{order.country},
             #{order.postcode},
             #{order.status},
-            #{order.productAvailable}
+            #{order.productAvailable},
+            #{order.canSend}
             )
         </foreach>
     </insert>
@@ -183,7 +189,7 @@
         INSERT INTO platform_order_content(
         id, create_by, create_time,
         update_by, update_time, platform_order_id,
-        sku_id, quantity, erp_status, product_available
+        sku_id, quantity, erp_status, product_available, can_send
         )
         VALUES
         <foreach collection="items" separator="," open="" close="" item="item" index="index">
@@ -191,7 +197,7 @@
             UUID(), 'Mabang API', NOW(),
             'Mabang API', NOW(), #{item.platformOrderId},
             skuErpToId(#{item.erpCode}), #{item.quantity}, #{item.erpStatus},
-            #{item.productAvailable}
+            #{item.productAvailable}, #{item.canSend}
             )
         </foreach>
     </insert>
