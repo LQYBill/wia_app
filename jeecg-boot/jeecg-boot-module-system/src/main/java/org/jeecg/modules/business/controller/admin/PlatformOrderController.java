@@ -9,6 +9,10 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import net.sf.saxon.functions.ScalarSystemFunction;
+import org.jeecg.modules.business.domain.api.mabang.getorderlist.OrderStatus;
+import org.jeecg.modules.business.mapper.PlatformOrderMapper;
 import org.jeecg.modules.business.vo.PlatformOrderQuantity;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
@@ -54,10 +58,39 @@ public class PlatformOrderController {
     private final IPlatformOrderService platformOrderService;
 
     @Autowired
+    private PlatformOrderMapper platformOrderMapper;
+    @Autowired
     public PlatformOrderController(IPlatformOrderService platformOrderService) {
         this.platformOrderService = platformOrderService;
     }
 
+
+    /**
+     * Fetchs all orders with erp_status = 1, no logicistic channel and product available
+     *
+     * @param platformOrder
+     * @param pageNo
+     * @param pageSize
+     * @param req
+     * @return
+     */
+    @AutoLog(value = "平台订单表-分页列表查询")
+    @ApiOperation(value = "平台订单表-分页列表查询", notes = "平台订单表-分页列表查询")
+    @GetMapping(value = "/errorList")
+    public Result<?> queryPageErrorList(PlatformOrder platformOrder,
+                                        @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
+                                        @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
+                                        HttpServletRequest req) {
+        QueryWrapper<PlatformOrder> queryWrapper = QueryGenerator.initQueryWrapper(platformOrder, req.getParameterMap());
+        LambdaQueryWrapper<PlatformOrder> lambdaQueryWrapper = queryWrapper.lambda();
+        lambdaQueryWrapper.in(PlatformOrder::getErpStatus, OrderStatus.Pending.getCode());
+        lambdaQueryWrapper.in(PlatformOrder::getProductAvailable, 1);
+        lambdaQueryWrapper.in(PlatformOrder::getLogisticChannelName, "");
+        lambdaQueryWrapper.inSql(PlatformOrder::getId, "SELECT po.id FROM platform_order po");
+        Page<PlatformOrder> page = new Page<>(pageNo, pageSize);
+        IPage<PlatformOrder> pageList = platformOrderService.page(page, lambdaQueryWrapper);
+        return Result.OK(pageList);
+    }
 
     /**
      * 分页列表查询
@@ -178,6 +211,46 @@ public class PlatformOrderController {
         page.setRecords(platformOrderContentList);
         page.setTotal(platformOrderContentList.size());
         return Result.OK(page);
+    }
+
+    /**
+     * Export pending orders that have products in stock, but no logistic channel to a excel file
+     *
+     * @param request       a request that contains the condition
+     * @param platformOrder a model and view
+     * @return
+     */
+    @RequestMapping(value = "/exportErrorXls")
+    public ModelAndView exportErrorXls(HttpServletRequest request, PlatformOrder platformOrder) {
+        LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+        // On récupère la liste de ID des lignes selectionnées
+        String selections = request.getParameter("selections");
+        // Step.1 On fait une requête SQL
+        QueryWrapper<PlatformOrder> queryWrapper = QueryGenerator.initQueryWrapper(platformOrder, request.getParameterMap());
+        LambdaQueryWrapper<PlatformOrder> lambdaQueryWrapper = queryWrapper.lambda();
+        lambdaQueryWrapper.in(PlatformOrder::getErpStatus, OrderStatus.Pending.getCode()); // On récupère commandes avec un statut 1
+        lambdaQueryWrapper.in(PlatformOrder::getProductAvailable, 1); // produits de la commande en stock
+        lambdaQueryWrapper.in(PlatformOrder::getLogisticChannelName, ""); // sans ligne de logistique
+        lambdaQueryWrapper.inSql(PlatformOrder::getId, "SELECT po.id FROM platform_order po");
+
+        //Step.2 获取导出数据
+        List<PlatformOrder> queryList = platformOrderMapper.selectList(lambdaQueryWrapper);
+        List<PlatformOrder> platformOrderList;
+        if (oConvertUtils.isEmpty(selections)) {
+            platformOrderList = queryList;
+        } else {
+            List<String> selectionList = Arrays.asList(selections.split(","));
+            // on récupère les commandes correspondants aux ID de la selection
+            platformOrderList = queryList.stream().filter(item -> selectionList.contains(item.getId())).collect(Collectors.toList());
+        }
+
+        // Step.4 AutoPoi 导出Excel
+        ModelAndView mv = new ModelAndView(new JeecgEntityExcelView());
+        mv.addObject(NormalExcelConstants.FILE_NAME, "有货未配单订表列表");
+        mv.addObject(NormalExcelConstants.CLASS, PlatformOrder.class); // modèle à partir du quel on va créer l'excel
+        mv.addObject(NormalExcelConstants.PARAMS, new ExportParams("有货未配单订表数据", "导出人:" + sysUser.getRealname(), "有货未配单订表"));
+        mv.addObject(NormalExcelConstants.DATA_LIST, platformOrderList);
+        return mv;
     }
 
     /**
