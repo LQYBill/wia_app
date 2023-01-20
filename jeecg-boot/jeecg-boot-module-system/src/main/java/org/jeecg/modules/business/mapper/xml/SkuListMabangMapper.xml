@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.jeecg.modules.business.mapper.SkuListMabangMapper">
+
+    <select id="searchExistence" resultType="org.jeecg.modules.business.entity.Sku">
+        SELECT *
+        FROM sku
+        WHERE erp_code
+        IN
+        <foreach collection="skuErpCode" open="(" close=")" separator="," index="index" item="item">
+            #{item}
+        </foreach>
+    </select>
+    <select id="searchProductExistence" resultType="org.jeecg.modules.business.entity.Product">
+        SELECT *
+        FROM sku
+        WHERE code
+        IN
+        <foreach collection="productCode" open="(" close=")" separator="," index="index" item="item">
+            #{item}
+        </foreach>
+    </select>
+    <insert id="insertSkusFromMabang" parameterType="list">
+        INSERT INTO sku(id, create_by, create_time, update_by, update_time, product_id, erp_code,
+        available_amount, purchasing_amount, image_source, shipping_discount, service_fee)
+        VALUES
+        <foreach collection="newSkus" separator="," open="" close="" item="sku" index="index">
+            (
+            #{sku.id},
+            'mabang api',
+            NOW(),
+            'mabang api',
+            NOW(),
+            shopErpToId(#{sku.productId}),
+            #{sku.erpCode},
+            #{sku.availableAmount},
+            #{sku.purchasingAmount},
+            #{sku.stockPicture},
+            #{sku.shippingDiscount},
+            #{sku.serviceFee}
+            )
+        </foreach>
+    </insert>
+    <insert id="insertProductsFromMabang" parameterType="list">
+        INSERT INTO product(id, code, zh_name, en_name, invoice_name, weight, volume,
+        moq, sensitive_attribute_id, create_by, create_time, update_time, update_by)
+        VALUES
+        <foreach collection="newProducts" separator="," open="" close="" item="product" index="index">
+            (
+            #{product},
+            #{product.code},
+            #{product.zhName},
+            #{product.enName},
+            #{product.invoiceName},
+            #{product.weight},
+            null,
+            null,
+            #{product.ensitiveAttributeId},
+            'mabang api',
+            NOW(),
+            'mabang api',
+            NOW()
+            )
+        </foreach>
+    </insert>
+</mapper>
