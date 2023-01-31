@@ -6,47 +6,58 @@ import org.jeecg.modules.business.domain.api.mabang.doSearchSkuList.SkuData;
 import org.jeecg.modules.business.domain.api.mabang.doSearchSkuList.SkuListRequestErrorException;
 import org.jeecg.modules.business.entity.Product;
 import org.jeecg.modules.business.entity.Sku;
+import org.jeecg.modules.business.entity.SkuDeclaredValue;
+import org.jeecg.modules.business.entity.SkuPrice;
 import org.jeecg.modules.business.mapper.SkuListMabangMapper;
-import org.jeecg.modules.business.service.ISkuListMabangService;
+import org.jeecg.modules.business.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static java.lang.Integer.parseInt;
+import static java.lang.Math.ceil;
 import static java.util.stream.Collectors.toList;
 
 @Service
 @Slf4j
 public class SkuListMabangServiceImpl extends ServiceImpl<SkuListMabangMapper, SkuData> implements ISkuListMabangService {
-
     private final SkuListMabangMapper skuListMabangMapper;
+    private final IProductService productService;
+    private final ISkuService skuService;
+    private final ISkuPriceService skuPriceService;
+    private final ISkuDeclaredValueService skuDeclaredValueService;
 
     @Autowired
-    public SkuListMabangServiceImpl(SkuListMabangMapper skuListMabangMapper) {
+    public SkuListMabangServiceImpl(SkuListMabangMapper skuListMabangMapper, IProductService productService,
+                                    ISkuService skuService, ISkuPriceService skuPriceService, ISkuDeclaredValueService skuDeclaredValueService) {
         this.skuListMabangMapper = skuListMabangMapper;
+        this.productService = productService;
+        this.skuService = skuService;
+        this.skuPriceService = skuPriceService;
+        this.skuDeclaredValueService = skuDeclaredValueService;
     }
 
     /**
      * Save skus to DB from mabang api.
      *
-     * @param skuDatas skus to save.
+     * @param skuDataList skus to save.
      */
     @Override
     @Transactional
-    public void saveSkuFromMabang(List<SkuData> skuDatas) {
-        if (skuDatas.isEmpty()) {
-            return;
+    public Map<Sku, String> saveSkuFromMabang(List<SkuData> skuDataList) {
+        List<Sku> newSkus;
+        Map<Sku, String> newSkusMap = new HashMap<>();
+
+        if (skuDataList.isEmpty()) {
+            return newSkusMap;
         }
         // we collect all erpCode
-        List<String> allSkuErpCode = skuDatas.stream()
+        List<String> allSkuErpCode = skuDataList.stream()
                 .map(SkuData::getErpCode)
                 .collect(toList());
         // find Skus that already exist in DB
@@ -59,54 +70,65 @@ public class SkuListMabangServiceImpl extends ServiceImpl<SkuListMabangMapper, S
                         )
                 );
 
-        ArrayList<SkuData> newSkus = new ArrayList<>();
-        for (SkuData retrievedSkuData : skuDatas) {
+        ArrayList<SkuData> newSkuDatas = new ArrayList<>();
+        for (SkuData retrievedSkuData : skuDataList) {
             Sku skuInDatabase = existingSkusIDMap.get(retrievedSkuData.getErpCode());
-            // the current SkuData's erpCode is not in DB, so we add it to the list of newSkus
+            // the current SkuData's erpCode is not in DB, so we add it to the list of newSkuDatas
             if (skuInDatabase == null) {
-                newSkus.add(retrievedSkuData);
+                newSkuDatas.add(retrievedSkuData);
             }
-//            else {
-//                // re-affect retrieved orders with ID in database
-//                // because SkuDatas ID are automatically generated and their ID's is different from DB's ones
-//                retrievedSkuData.setId(skuInDatabase.getId());
-//            }
         }
-        skuDatas.clear();
 
-        /* for new skus, insert them to DB */
+        /* for new skuDatas, insert them to DB */
         try {
-            if (newSkus.size() != 0) {
-                // we need to check if the product exists, for that we are going to parse the Sku erpCode in to product code
+            if (newSkuDatas.size() != 0) {
+                // we need to check if the product associated with the sku exists, for that we are going to parse the Sku erpCode into product code
                 // check if the product code exists in DB, if not we create a new entry in DB and fill all the infos.
                 // then we can finally add the new Sku, product has to be created first if it doesn't exist, since we need to fill productID in Sku table
                 // we can now proceed to create new sku_declare_value associated with the new Sku and also sku_price
-                int nbNewProducts = saveProductFromMabang(newSkus);
-                log.info("{} products to be inserted/updated.", nbNewProducts);
-                log.info("{} skus to be inserted/updated.", newSkus.size());
+                Map<String, String> productNeedTreatment = saveProductFromMabang(newSkuDatas);
+                int nbNewProducts = productNeedTreatment.size();
+                log.info("{} products need manual treatment.", nbNewProducts);
+                log.info("{} skus to be inserted.", newSkuDatas.size());
 
+                //create a new sku for each sku data
+                newSkus = createSkus(newSkuDatas);
+                skuService.saveBatch(newSkus);
 
-                //TODO : Inject all SkuDatas info in different tables (Sku, Sku_price, Sku_declare_value, product)
-                // for product, check if magnetic or hasBattery
+                // adding the additional information to List and pairing it to a sku with the associated product code
+                List<String> productIdInMap = new ArrayList<>();
+                for(Sku sku : newSkus) {
+                    // checking if the sku parsed into productCode exists in the map and if information about the productCode has already been added
+                    if(productNeedTreatment.containsKey(parseSkuToProduct(sku.getErpCode())) && !productIdInMap.contains(sku.getProductId())) {
+                        newSkusMap.put(sku, productNeedTreatment.get(sku.getErpCode()));
+                        productIdInMap.add(sku.getProductId());
+                    }
+                    else {
+                        newSkusMap.put(sku, "");
+                    }
+                }
 
-                //TODO : Before inserting the sku we need to get the product id
-                skuListMabangMapper.insertSkusFromMabang(newSkus);
+                //we insert sku_prices and sku_declared_values associated with the new skus
+                saveSkuPrices(newSkuDatas);
+                saveSkuDeclaredValues(newSkuDatas);
             }
         } catch (RuntimeException e) {
             log.error(e.getLocalizedMessage());
         }
+        return newSkusMap;
     }
 
     /**
      * Save products to DB from mabang api.
      *
-     * @param newSkus we save the new product code of the new skus
-     * @return return the number of new products to be inserted in DB
+     * @param skuDataList we save the new product code of the new skus
+     * @return return a map with products with extra info that need manual review
      */
-    public int saveProductFromMabang(List<SkuData> newSkus) {
-        List<String> allProductCodes = parseSkuListToProductCodeList(newSkus);
-        // we create a product object for each new sku, so we can check if the product exists or not
-        List<Product> allProducts = createProducts(newSkus);
+    public Map<String, String> saveProductFromMabang(List<SkuData> skuDataList) {
+        List<String> allProductCodes = parseSkuListToProductCodeList(skuDataList);
+        // we create a map with product as key and as value it may contain further information about the product that needs manual information treatment
+        Map<Product, String> allProductsMap = createProductMap(skuDataList);
+
         List< Product> existingProduct = skuListMabangMapper.searchProductExistence(allProductCodes);
         Map<String, Product> existingProductsIDMap = existingProduct.stream()
                 .collect(
@@ -114,37 +136,79 @@ public class SkuListMabangServiceImpl extends ServiceImpl<SkuListMabangMapper, S
                                 Product::getCode, Function.identity()
                         )
                 );
-        ArrayList<Product> newProducts = new ArrayList<>();
-        for (Product retrievedProduct : allProducts) {
-            Product productInDB = existingProductsIDMap.get(retrievedProduct.getCode());
+        // List is used for inserting products in DB
+        List<Product> newProducts = new ArrayList<>();
+        Map<String, String> productsWithInfoMap = new HashMap<>();
+        for (Map.Entry<Product, String> entry : allProductsMap.entrySet()) {
+            Product productInDB = existingProductsIDMap.get(entry.getKey().getCode());
             // the current product code is not in DB, so we add it to the list of newProducts
             if (productInDB == null) {
-                newProducts.add(retrievedProduct);
+                newProducts.add(entry.getKey());
+                // checking if the product needs manual info treatment
+                if(!entry.getValue().equals("")) {
+                    productsWithInfoMap.put(entry.getKey().getCode(), entry.getValue());
+                }
             }
-//            else {
-//                retrievedProduct.setId(productInDB.getId());
-//            }
         }
-        skuListMabangMapper.insertProductsFromMabang(newProducts);
-        return allProductCodes.size();
+        if(newProducts.size() > 0) {
+            productService.saveBatch(newProducts);
+        }
+        return productsWithInfoMap;
+    }
+
+    public void saveSkuPrices(List<SkuData> newSkus) {
+        List<SkuPrice> l = new ArrayList<>();
+        for(SkuData skuData : newSkus) {
+            SkuPrice sp = new SkuPrice();
+            sp.setCreateBy("mabang api");
+            sp.setPrice(skuData.getSalePrice());
+            sp.setSkuId( skuListMabangMapper.searchSkuId(skuData.getErpCode()));
+            l.add(sp);
+        }
+        skuPriceService.saveBatch(l);
+    }
+
+    /**
+     * Creates SkuDeclaredValue objects from Skudatas and insert them into DB
+     * @param skuDataList
+     */
+    public void saveSkuDeclaredValues(List<SkuData> skuDataList) {
+        Calendar cal = Calendar.getInstance();
+        //set time to 00:00:00
+        cal.set(Calendar.HOUR_OF_DAY,0);
+        cal.set(Calendar.MINUTE,0);
+        cal.set(Calendar.SECOND,0);
+        cal.set(Calendar.MILLISECOND,0);
+        Date date = cal.getTime();
+
+        List<SkuDeclaredValue> l = new ArrayList<>();
+        for(SkuData skuData : skuDataList) {
+            SkuDeclaredValue sdv = new SkuDeclaredValue();
+            sdv.setCreateBy("mabang api");
+            sdv.setDeclaredValue(skuData.getDeclareValue());
+            sdv.setSkuId(skuListMabangMapper.searchSkuId(skuData.getErpCode()));
+            sdv.setEffectiveDate(date);
+            l.add(sdv);
+        }
+        skuDeclaredValueService.saveBatch(l);
     }
 
     /**
      *  Parse the product code from Sku erpCode
-     * @param skuData List of Sku erpCodes in format XXXXXXXX-XX
+     * @param skuDataList List of Sku erpCodes in format XXXXXXXX-XX
      * @return productCodeList in format XXXXXXXX
      * @throws SkuListRequestErrorException
      */
-    public List<String> parseSkuListToProductCodeList(List<SkuData> skuData) throws SkuListRequestErrorException {
+    public List<String> parseSkuListToProductCodeList(List<SkuData> skuDataList) throws SkuListRequestErrorException {
         List<String> productCodeList = new ArrayList<>();
-        Pattern p = Pattern.compile("^([a-zA-Z0-9]+)-[a-zA-Z]{0,4}$");
-        for(SkuData sku : skuData) {
+        Pattern p = Pattern.compile("^(.+)-[a-zA-Z]{0,5}$");
+        for(SkuData sku : skuDataList) {
             Matcher m = p.matcher(sku.getErpCode());
             if(m.matches()) {
                 productCodeList.add(m.group(1));
             }
             else {
-                throw new SkuListRequestErrorException("Erp Code : "+sku.getErpCode()+" is not a valid Sku code or is obsolete");
+                productCodeList.add(sku.getErpCode());
             }
         }
         return productCodeList;
@@ -152,52 +216,117 @@ public class SkuListMabangServiceImpl extends ServiceImpl<SkuListMabangMapper, S
 
     /**
      *
-     * @param skuData List of Sku erpCodes in format XXXXXXXX-XX
+     * @param erpCode Sku erpCode in format XXXXXXXX-XX
      * @return
      * @throws SkuListRequestErrorException
      */
-    public String parseSkuToProduct(SkuData skuData) throws SkuListRequestErrorException {
+    public String parseSkuToProduct(String erpCode) throws SkuListRequestErrorException {
 
-        Pattern p = Pattern.compile("^([a-zA-Z0-9]+)-[a-zA-Z]{0,4}$");
-        Matcher m = p.matcher(skuData.getErpCode());
+        Pattern p = Pattern.compile("^(.+)-[a-zA-Z]{0,5}$");
+        Matcher m = p.matcher(erpCode);
         if(m.matches()) {
             return m.group(1);
         }
         else {
-            throw new SkuListRequestErrorException("Erp Code : "+skuData.getErpCode()+" is not a valid Sku code or is obsolete");
+            return erpCode;
         }
     }
 
     /**
-     * Create a product object from skuDatas
-     * @param skusDatas
-     * @return productList the list of products created from skuDatas
+     * Create a map of product as key and a string that contains additional information about the product.
+     * @param skuDataList
+     * @return returns a map of product with additional info if available
      */
-    public List<Product> createProducts(List<SkuData> skusDatas) {
-        List<Product> productList = new ArrayList<>();
-        String electric = "Electronic/Electric";
-        String electroMag = "Electro-magnetic";
-        for(SkuData sku : skusDatas) {
-            Product p = new Product();
-            p.setCode(parseSkuToProduct(sku));
-            p.setZhName(sku.getNameCN());
-            p.setEnName(sku.getNameEN());
-            if(sku.getHasBattery() == 1) {
-                if(sku.getMagnetic() == 1)
-                    p.setSensitiveAttributeId(electroMag);
-                else
-                    p.setSensitiveAttributeId(electric);
+    public Map<Product, String> createProductMap(List<SkuData> skuDataList) {
+        Map<Product, String> productMap = new HashMap<>();
+
+        final String electroMagSensitiveAttributeId = skuListMabangMapper.searchSensitiveAttributeId("Electro-magnetic");
+        final String electricSensitiveAttributeId = skuListMabangMapper.searchSensitiveAttributeId("Electronic/Electric");
+        // In NameCN field on top of the product name we also get the customer code in the beginning of the string : "XX Description of the product"
+        final Pattern cnNamePattern = Pattern.compile("^([a-zA-Z]{2,5})\\s(.*)$");
+        // IN saleRemark sometimes not only the product weight provided, we can get extra information such as service_fee (eg : "15每件服务费0.2")
+        final Pattern saleRemarkPattern = Pattern.compile("^([0-9]*)(.*)$");
+        // we are stocking product codes, so we don't get duplicates which causes error
+        List<String> productCode = new ArrayList<>();
+
+        for(SkuData sku : skuDataList) {
+            String code = parseSkuToProduct(sku.getErpCode());
+            // checking for duplicated entries
+            if(!productCode.contains(code))
+            {
+                productCode.add(code);
+                Product p = new Product();
+
+                p.setCode(code);
+                p.setCreateBy("mabang api");
+                // Removing the customer code from the product CN name
+                if (!sku.getNameCN().equals("") && sku.getNameCN()!= null) {
+                    Matcher cnNameMatcher = cnNamePattern.matcher(sku.getNameCN());
+                    if (cnNameMatcher.matches() && !cnNameMatcher.group(2).equals("")) {
+                        p.setZhName(cnNameMatcher.group(2));
+                    }
+                    else {
+                        p.setZhName(sku.getNameCN());
+                    }
+                }
+                p.setEnName(sku.getNameEN());
+                // hasBattery : 1 = yes ; 2 = no
+                if (sku.getHasBattery() == 1) {
+                    // magnetic : 1 = yes ; 2 = no
+                    if (sku.getMagnetic() == 1)
+                        p.setSensitiveAttributeId(electroMagSensitiveAttributeId);
+                    else
+                        p.setSensitiveAttributeId(electricSensitiveAttributeId);
+                } else {
+                    // magnetic : 1 = yes ; 2 = no
+                    if (sku.getMagnetic() == 1)
+                        p.setSensitiveAttributeId(electroMagSensitiveAttributeId);
+                    else
+                        p.setSensitiveAttributeId("");
+                }
+                p.setInvoiceName(sku.getNameEN());
+                if (sku.getSaleRemark() != null && !sku.getSaleRemark().equals("")) {
+                    Matcher saleRemarkMatcher = saleRemarkPattern.matcher(sku.getSaleRemark());
+                    if(saleRemarkMatcher.matches() && !saleRemarkMatcher.group(1).equals("")) {
+                        String saleRemark = saleRemarkMatcher.group(1);
+                        int weight = (int) ceil(Double.parseDouble(saleRemark));
+                        p.setWeight(weight);
+                        if(!saleRemarkMatcher.group(2).equals("")) {
+                            productMap.put(p, saleRemarkMatcher.group(2));
+                        }
+                        else
+                            productMap.put(p, "");
+                    }
+
+                } else {
+                    productMap.put(p, "");
+                }
+            }
+        }
+        return productMap;
+    }
+
+    /**
+     *  Creates sku objects from Skudatas
+     * @param skuDataList
+     * @return
+     */
+    public List<Sku> createSkus(List<SkuData> skuDataList) {
+        List<Sku> skuList = new ArrayList<>();
+        for(SkuData skuData : skuDataList) {
+            Sku s = new Sku();
+            String productId = skuListMabangMapper.searchProductId(parseSkuToProduct(skuData.getErpCode()));
+            s.setProductId(productId);
+            s.setErpCode(skuData.getErpCode());
+            s.setCreateBy("mabang api");
+            if(skuData.getStockPicture().equals("") || skuData.getStockPicture() == null) {
+                s.setImageSource(skuData.getSalePicture());
             }
             else {
-                p.setSensitiveAttributeId("");
+                s.setImageSource(skuData.getStockPicture());
             }
-            p.setInvoiceName(sku.getNameEN());
-            if(sku.getSaleRemark() != null)
-                p.setWeight(parseInt(sku.getSaleRemark()));
-            else
-                p.setWeight(null);
-            productList.add(p);
+            skuList.add(s);
         }
-        return productList;
+        return skuList;
     }
 }

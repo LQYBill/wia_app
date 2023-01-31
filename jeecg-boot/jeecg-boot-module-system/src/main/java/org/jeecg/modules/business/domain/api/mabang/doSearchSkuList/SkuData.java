@@ -58,7 +58,7 @@ public class SkuData {
     @JSONField(name="height")
     private String height;
     @JSONField(name="weight")
-    private Integer weight;
+    private double weight;
     /**
      * saleRemark contains the weight
      */
@@ -91,8 +91,7 @@ public class SkuData {
                 "\nStock Picture : " + this.stockPicture +
                 "\nsale Picture : " + this.salePicture +
                 "\nBattery : " + this.hasBattery +
-                "\nMagnetic : " + this.magnetic +
-                "\nWeight : " + this.weight
+                "\nMagnetic : " + this.magnetic
                 ;
     }
 }

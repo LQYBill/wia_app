@@ -63,7 +63,12 @@ public class SkuListResponse extends Response {
         int rowPerPage = Integer.parseInt(data.getString("rowsPerPage"));
         int total = Integer.parseInt(data.getString("total"));
         JSONArray realData = data.getJSONArray("data");
-        log.info("Constructed response: data contained {}, total page {}, rows per page {} total data {}", realData.size(), totalPage, rowPerPage,  total);
+        if(realData != null) {
+            log.info("Constructed response: data contained {}, total page {}, rows per page {} total data {}", realData.size(), totalPage, rowPerPage, total);
+        }
+        else {
+            log.info("Data is null");
+        }
         return new SkuListResponse(Code.SUCCESS, page, totalPage, rowPerPage, total, realData, json);
     }
 

@@ -49,16 +49,10 @@ public class SkuListStream implements NetworkDataStream<SkuData> {
         if (firstElement.getStatus().equals(SkuStatus.Normal)) {
             res.add(firstElement);
         }
-        else {
-            System.out.println("##/!\\ First item is not of status 3 /!\\ ##");
-        }
         while (hasNext()) {
             SkuData nextSku = next();
             if(nextSku.getStatus().equals(SkuStatus.Normal)) {
                 res.add(nextSku);
-            }
-            else {
-                System.out.println("##/!\\ Next item is not of status 3 /!\\ ##");
             }
         }
         return res;

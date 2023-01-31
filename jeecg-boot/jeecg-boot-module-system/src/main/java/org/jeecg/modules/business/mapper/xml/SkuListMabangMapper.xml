@@ -13,54 +13,27 @@
     </select>
     <select id="searchProductExistence" resultType="org.jeecg.modules.business.entity.Product">
         SELECT *
-        FROM sku
+        FROM product
         WHERE code
         IN
         <foreach collection="productCode" open="(" close=")" separator="," index="index" item="item">
             #{item}
         </foreach>
     </select>
-    <insert id="insertSkusFromMabang" parameterType="list">
-        INSERT INTO sku(id, create_by, create_time, update_by, update_time, product_id, erp_code,
-        available_amount, purchasing_amount, image_source, shipping_discount, service_fee)
-        VALUES
-        <foreach collection="newSkus" separator="," open="" close="" item="sku" index="index">
-            (
-            #{sku.id},
-            'mabang api',
-            NOW(),
-            'mabang api',
-            NOW(),
-            shopErpToId(#{sku.productId}),
-            #{sku.erpCode},
-            #{sku.availableAmount},
-            #{sku.purchasingAmount},
-            #{sku.stockPicture},
-            #{sku.shippingDiscount},
-            #{sku.serviceFee}
-            )
-        </foreach>
-    </insert>
-    <insert id="insertProductsFromMabang" parameterType="list">
-        INSERT INTO product(id, code, zh_name, en_name, invoice_name, weight, volume,
-        moq, sensitive_attribute_id, create_by, create_time, update_time, update_by)
-        VALUES
-        <foreach collection="newProducts" separator="," open="" close="" item="product" index="index">
-            (
-            #{product},
-            #{product.code},
-            #{product.zhName},
-            #{product.enName},
-            #{product.invoiceName},
-            #{product.weight},
-            null,
-            null,
-            #{product.ensitiveAttributeId},
-            'mabang api',
-            NOW(),
-            'mabang api',
-            NOW()
-            )
-        </foreach>
-    </insert>
+    <select id="searchProductId" resultType="java.lang.String">
+        SELECT id
+        FROM product
+        WHERE code = #{productCode}
+    </select>
+    <select id="searchSkuId" resultType="java.lang.String">
+        SELECT id
+        FROM sku
+        WHERE erp_code = #{erpCode}
+    </select>
+    <select id="searchSensitiveAttributeId" resultType="java.lang.String">
+        SELECT id
+        FROM sensitive_attribute
+        WHERE en_name = #{enName}
+    </select>
+
 </mapper>
