@@ -409,7 +409,12 @@ public class ShippingInvoiceFactory {
             log.info("Calculating price for {} of order {}", contents, uninvoicedOrder);
             Map<String, Integer> contentMap = new HashMap<>();
             for (PlatformOrderContent content : contents) {
-                contentMap.put(content.getSkuId(), content.getQuantity());
+                String skuId = content.getSkuId();
+                if (contentMap.containsKey(skuId)) {
+                    contentMap.put(skuId, contentMap.get(skuId) + content.getQuantity());
+                } else {
+                    contentMap.put(skuId, content.getQuantity());
+                }
             }
 
             // calculate weight of an order
