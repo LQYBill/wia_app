@@ -74,8 +74,8 @@ public class PlatformOrderController {
      * @param req
      * @return
      */
-    @AutoLog(value = "平台订单表-分页列表查询")
-    @ApiOperation(value = "平台订单表-分页列表查询", notes = "平台订单表-分页列表查询")
+     @AutoLog(value = "平台订单有货未交运-分页列表查询")
+    @ApiOperation(value = "平台订单有货未交运-分页列表查询", notes = "平台订单有货未交运-分页列表查询")
     @GetMapping(value = "/errorList")
     public Result<?> queryPageErrorList(PlatformOrder platformOrder,
                                         @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
@@ -86,7 +86,6 @@ public class PlatformOrderController {
         lambdaQueryWrapper.in(PlatformOrder::getErpStatus, OrderStatus.Pending.getCode());
         lambdaQueryWrapper.in(PlatformOrder::getProductAvailable, 1);
         lambdaQueryWrapper.in(PlatformOrder::getLogisticChannelName, "");
-        lambdaQueryWrapper.inSql(PlatformOrder::getId, "SELECT po.id FROM platform_order po");
         Page<PlatformOrder> page = new Page<>(pageNo, pageSize);
         IPage<PlatformOrder> pageList = platformOrderService.page(page, lambdaQueryWrapper);
         return Result.OK(pageList);
