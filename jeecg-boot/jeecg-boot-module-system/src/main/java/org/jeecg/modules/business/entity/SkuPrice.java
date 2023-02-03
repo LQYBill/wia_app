@@ -79,6 +79,26 @@ public class SkuPrice implements Serializable {
     @Getter
     private Date date;
 
+    /**创建人*/
+    @ApiModelProperty(value = "创建人")
+    private String createBy;
+
+    /**创建日期*/
+    @JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
+    @ApiModelProperty(value = "创建日期")
+    private Date createTime;
+
+    /**更新日期*/
+    @JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
+    @ApiModelProperty(value = "更新日期")
+    private Date updateTime;
+
+    /**更新人*/
+    @ApiModelProperty(value = "更新人")
+    private String updateBy;
+
     /**
      * The price of a sku depends on its quantity, Given a quantity here, return the correspondent price.
      *

@@ -1,27 +1,46 @@
 <template>
-  <div>
-    <index-chart></index-chart>
+  <div class="home">
+    <div class="banner">
+      <a-divider>
+        <a-avatar className="avatar" size="large" :src="getAvatar()" />
+      </a-divider>
+      <h1 style="margin-top: 1rem">Welcome to WIA App<br>
+        <span style="color: #0c8fcf">{{ nickname() }}</span>
+      </h1>
+    </div>
   </div>
 </template>
 
 <script>
-  import IndexChart from './IndexChart'
+import { mapGetters } from 'vuex'
+import { getFileAccessHttpUrl } from '@api/manage'
 
-  export default {
-    name: "Analysis",
-    components: {
-      IndexChart,
-    },
-    data() {
-      return {
-
-      }
-    },
-    created() {
-
-    },
-    methods: {
-
+export default {
+  name: 'Analysis',
+  components: {},
+  data() {
+    return {
     }
+  },
+  methods: {
+    ...mapGetters(["nickname", "avatar", "userInfo"]),
+    getAvatar() {
+      return getFileAccessHttpUrl(this.avatar())
+    },
   }
+}
 </script>
+
+<style scoped>
+.home {
+  width: 80%;
+  margin: 0 auto;
+  padding: 25px 0;
+}
+
+.home > .banner {
+  text-align: center;
+  padding: 25px 0;
+  margin: 25px 0;
+}
+</style>
