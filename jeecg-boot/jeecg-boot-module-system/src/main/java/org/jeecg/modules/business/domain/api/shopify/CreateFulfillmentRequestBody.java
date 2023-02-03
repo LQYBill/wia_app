@@ -15,16 +15,20 @@ public class CreateFulfillmentRequestBody extends ShopifyRequestBody {
     @Getter
     private final String trackingNumber;
 
+     @Getter
+    private final String postcode;
+
     public CreateFulfillmentRequestBody(String sitePrefix, BigInteger fulfillmentId, String shopToken,
-                                        String trackingNumber) {
+                                        String trackingNumber, String postcode) {
         super(sitePrefix, shopToken);
         this.fulfillmentId = fulfillmentId;
         this.trackingNumber = trackingNumber;
+        this.postcode = postcode;
     }
 
     public CreateFulfillmentRequestBody(BigInteger fulfillmentId, PlatformOrderShopSync platformOrderShopSync) {
         this(platformOrderShopSync.getShopifyPrefix(), fulfillmentId, platformOrderShopSync.getShopifyToken(),
-                platformOrderShopSync.getTrackingNumber());
+                platformOrderShopSync.getTrackingNumber(), platformOrderShopSync.getPostcode());
     }
 
     @Override

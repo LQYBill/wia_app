@@ -13,12 +13,15 @@ public class CreateFulfillmentRequest extends ShopifyRequest {
     private final static String OTHER = "Other";
 
     private enum TransportCompany {
-        LA_POSTE("https://www.laposte.fr/outils/suivre-vos-envois?code=%s", "La Poste", "6[A-Z]{1}[0-9]{11}"),
+        LA_POSTE("https://www.laposte.fr/outils/suivre-vos-envois?code=%s", "La Poste", "[69][A-Z]{1}[0-9]{11}"),
         SWISS_POST("https://service.post.ch/ekp-web/ui/entry/search/%s", "Swiss Post", "[0-9]{18}"),
         DHL_PACKET("https://www.dhl.de/en/privatkunden/pakete-empfangen/verfolgen.html?piececode=%s", "DHL Packet", "0034[0-9]{16}"),
+        DHL_PACKET_WIA("https://www.dhl.de/en/privatkunden/pakete-empfangen/verfolgen.html?piececode=%s", "DHL Packet", "CD[0-9]{9}DE"),
+        DHL_PARCEL_WIA_NL("https://my.dhlparcel.nl/home/tracktrace/%s/%s?lang=nl_NL", "DHL Parcel", "3S[A-Z]{4}[0-9]{9}"),
         GLS_NL("https://www.gls-info.nl/tracking", "GLS", "[0-9]{20}"),
         GLS_IT("https://gls-group.com/IT/it/servizi-online/ricerca-spedizioni.html?match=%s&type=NAT", "GLS", "LT[0-9]{9}"),
         COLIS_PRIVE_BE_LU("https://colisprive.com/moncolis/pages/detailColis.aspx?numColis=%s", "Colis Privé", "Q[0-9]{11}[BL][0-9]{4}"),
+        COLIS_PRIVE_BE_WIA("https://colisprive.com/moncolis/pages/detailColis.aspx?numColis=%s%s", "Colis Privé", "LC[0-9]{10}"),
         COLIS_PRIVE_FR("https://colisprive.com/moncolis/pages/detailColis.aspx?numColis=%s", "Colis Privé", "Q[0-9]{16}"),
         POSTI("https://www.posti.fi/fi/seuranta#/lahetys/%s", "Posti", "SP[0-9]{9}FI"),
         USPS("https://tools.usps.com/go/TrackConfirmAction?qtc_tLabels1=%s", "USPS", "[0-9]{22}"),
@@ -27,7 +30,10 @@ public class CreateFulfillmentRequest extends ShopifyRequest {
         DAO("https://www.dao.as/privat/find-din-pakke?stregkode=%s", "DAO", "00057151271[0-9]{9}"),
         FASTWAY("https://www.fastway.ie/courier-services/track-your-parcel/?l=%s", "Fastway", "3H0001[0-9]{6}"),
         DPD_BE("https://www.dpdgroup.com/be/mydpd/my-parcels/track?parcelNumber=%s", "DPD", "06086316[0-9]{6}"),
-        HERMES_DE("https://www.myhermes.de/empfangen/sendungsverfolgung/sendungsinformation#%s", "Hermes", "H1000810983[0-9]{9}"),
+        HERMES_DE("https://www.myhermes.de/empfangen/sendungsverfolgung/sendungsinformation#%s", "Hermes", "H1000810[0-9]{12}"),
+        AUSTRIAN_POST("https://www.post.at/s/sendungsdetails?snr=%s", "Austrian Post", "15828030053[0-9]{13}"),
+        EVRI("https://www.evri.com/track/parcel/%s/details", "Evri", "H03CEA[0-9]{10}"),
+        YODEL("https://www.yodel.co.uk/tracking/%s/%s", "Yodel", "JD[0-9]{16}"),
         ;
 
         private final String trackingUrl;
@@ -53,10 +59,11 @@ public class CreateFulfillmentRequest extends ShopifyRequest {
 
         JSONObject trackingInfo = new JSONObject();
         String trackingNumber = ((CreateFulfillmentRequestBody) body).getTrackingNumber();
+        String postcode = ((CreateFulfillmentRequestBody) body).getPostcode();
         trackingInfo.put("number", trackingNumber);
         TransportCompany transportCompany = resolveTransportCompany(trackingNumber);
         String trackingUrl = transportCompany == null ? AFTERSHIP : transportCompany.trackingUrl;
-        trackingInfo.put("url", String.format(trackingUrl, trackingNumber));
+        trackingInfo.put("url", String.format(trackingUrl, trackingNumber, postcode.replace(" ", "")));
         String trackingCompanyName = transportCompany == null ? OTHER : transportCompany.name;
         trackingInfo.put("company", String.format(trackingCompanyName, trackingNumber));
         fulfillment.put("tracking_info", trackingInfo);
