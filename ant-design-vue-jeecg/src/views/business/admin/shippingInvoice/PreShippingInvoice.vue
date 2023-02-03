@@ -192,9 +192,9 @@
           <a-tag
             v-for='canSend in record'
             :key='canSend'
-            :color="canSend !== '1' ? canSend === 2 ? 'volcano' : 'yellow' : 'green'"
+            :color="canSend === '2' ? 'volcano' : 'green'"
           >
-            {{ canSend !== '1' ? canSend === 2 ? '异常订单' : '全部订单 默认正常订单': '正常订单'}}
+            {{ canSend === '2' ? '异常订单' : '正常订单'}}
           </a-tag>
         </template>
 
