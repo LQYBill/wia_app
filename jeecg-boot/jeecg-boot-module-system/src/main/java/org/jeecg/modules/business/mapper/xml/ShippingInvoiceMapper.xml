@@ -9,4 +9,19 @@
             JOIN platform_order po on s.id = po.shop_id
         WHERE po.shipping_invoice_number = #{invoiceNumber}
     </select>
+    <select id="fetchShippingInvoice" resultType="org.jeecg.modules.business.entity.ShippingInvoice">
+        SELECT *
+        FROM shipping_invoice s
+        WHERE s.invoice_number = #{invoiceNumber}
+    </select>
+    <select id="fetchPlatformOrder" resultType="org.jeecg.modules.business.entity.PlatformOrder">
+        SELECT *
+        FROM platform_order p
+        WHERE p.shipping_invoice_number = #{invoiceNumber}
+    </select>
+    <select id="fetchPlatformOrderContent" resultType="org.jeecg.modules.business.entity.PlatformOrderContent">
+        SELECT *
+        FROM platform_order_content p
+        WHERE p.platform_order_id = #{platformOrderId}
+    </select>
 </mapper>

@@ -1,6 +1,8 @@
 package org.jeecg.modules.business.service;
 
 import org.jeecg.modules.business.entity.Client;
+import org.jeecg.modules.business.entity.PlatformOrder;
+import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.entity.ShippingInvoice;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -37,4 +39,8 @@ public interface IShippingInvoiceService extends IService<ShippingInvoice> {
     public void delBatchMain(Collection<? extends Serializable> idList);
 
     public Client getShopOwnerNameFromInvoiceNumber(String invoiceNumber);
+
+    public ShippingInvoice getShippingInvoice(String invoiceNumber);
+    public List<PlatformOrder> getPlatformOrder(String invoiceNumber);
+    public List<PlatformOrderContent> getPlatformOrderContent(String platformOrderId);
 }

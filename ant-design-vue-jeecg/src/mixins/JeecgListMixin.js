@@ -98,8 +98,9 @@ export const JeecgListMixin = {
             this.$message.warning(res.message)
           }
         }
-        if(res.code===510){
+        else{
           this.$message.warning(res.message)
+          console.error(res.message);
         }
         this.loading = false;
       })

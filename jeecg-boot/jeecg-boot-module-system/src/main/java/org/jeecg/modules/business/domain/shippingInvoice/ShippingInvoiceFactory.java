@@ -496,8 +496,15 @@ public class ShippingInvoiceFactory {
             String skuId = content.getSkuId();
             Optional<SkuDeclaredValue> declaredValueForSKU = latestDeclaredValues.stream()
                     .filter(sdv -> sdv.getSkuId().equals(skuId)).findFirst();
-            BigDecimal contentDeclaredValue = declaredValueForSKU.get().getDeclaredValue()
-                    .multiply(BigDecimal.valueOf(content.getQuantity()));
+
+            BigDecimal contentDeclaredValue;
+            try {
+                contentDeclaredValue = declaredValueForSKU.get().getDeclaredValue()
+                        .multiply(BigDecimal.valueOf(content.getQuantity()));
+            }
+            catch(Exception e) {
+                throw new RuntimeException("No declared value for SKU ID : " + skuId);
+            }
             contentDeclaredValueMap.put(content, contentDeclaredValue);
             totalDeclaredValue = totalDeclaredValue.add(contentDeclaredValue);
         }

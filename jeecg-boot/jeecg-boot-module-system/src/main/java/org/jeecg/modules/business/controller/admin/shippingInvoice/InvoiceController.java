@@ -12,22 +12,23 @@ import org.jeecg.modules.business.controller.UserException;
 import org.jeecg.modules.business.domain.api.mabang.getorderlist.OrderStatus;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
+import org.jeecg.modules.business.entity.ShippingInvoice;
 import org.jeecg.modules.business.entity.Shop;
 import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
+import org.jeecg.modules.business.service.IShippingInvoiceService;
 import org.jeecg.modules.business.service.IShopService;
 import org.jeecg.modules.business.service.PlatformOrderShippingInvoiceService;
 import org.jeecg.modules.business.vo.*;
+import org.jeecg.modules.message.entity.SysMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -47,6 +48,8 @@ public class InvoiceController {
     @Autowired
     private PlatformOrderContentMapper platformOrderContentMap;
 
+    @Autowired
+    private IShippingInvoiceService iShippingInvoiceService;
 
     @GetMapping(value = "/shopsByClient")
     public Result<List<Shop>> getShopsByClient(@RequestParam("clientID") String clientID) {
@@ -274,4 +277,33 @@ public class InvoiceController {
         }
     }
 
+    // TODO : here
+    @GetMapping(value = "/invoiceData")
+    public Result<?> getInvoiceData(@RequestParam("invoiceNumber") String invoiceNumber) {
+        InvoiceDatas invoiceDatas;
+        List<PlatformOrder> platformOrderList = new ArrayList<>();
+        List<PlatformOrderContent> platformOrderContentList = new ArrayList<>();
+        ShippingInvoice invoice;
+        List<String> CountryList = new ArrayList<>();
+        Map<String, BigDecimal> totalPerItems = new HashMap<>();
+        Map<String, BigDecimal> shippingFeePerCountry = new HashMap<>();
+        Integer serviceFee;
+        try {
+            invoice = iShippingInvoiceService.getShippingInvoice(invoiceNumber);
+            if(invoice != null) {
+                platformOrderList = iShippingInvoiceService.getPlatformOrder(invoiceNumber);
+                for(PlatformOrder p : platformOrderList) {
+                    platformOrderContentList.addAll(iShippingInvoiceService.getPlatformOrderContent(p.getId()));
+                }
+                System.out.println("Invoice Exists : " + invoiceNumber);
+            }
+            else {
+                System.out.println("Invoice doesn't exist : " + invoiceNumber);
+            }
+        }
+        catch(Exception e) {
+            throw new RuntimeException();
+        }
+        return Result.OK(invoice);
+    }
 }
