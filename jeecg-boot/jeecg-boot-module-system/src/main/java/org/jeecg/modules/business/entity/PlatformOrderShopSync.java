@@ -12,4 +12,6 @@ public class PlatformOrderShopSync {
     private final String shopifyPrefix;
 
     private final String shopifyToken;
+
+    private final String postcode;
 }
