@@ -190,7 +190,7 @@
           exportXlsUrl: "/generated/shippingInvoice/exportXls",
           importExcelUrl: "generated/shippingInvoice/importExcel",
           downloadCompleteInvoiceExcel: "/generated/shippingInvoice/downloadCompleteInvoiceExcel",
-          getInvoiceShopOwner: "/generated/shippingInvoice/getInvoiceShopOwner"
+          getInvoiceEntity: "/generated/shippingInvoice/getInvoiceEntity"
         },
         dictOptions:{},
         superFieldList:[],
@@ -222,31 +222,6 @@
          fieldList.push({type:'BigDecimal',value:'paidAmount',text:'已付金额',dictCode:''})
         this.superFieldList = fieldList
       },
-      // async requestDownloadInvoiceExcel() {
-      //   await this.downloadInvoiceExcel().then(function(){
-      //     if(this.data.failedOwnerList.length === 0 && this.data.failedExcelList.length === 0) {
-      //       this.$message.success("All invoices downloaded successfully !");
-      //     }
-      //     //there were some errors
-      //     else {
-      //       console.log("There was some failures : ");
-      //       if (this.data.failedExcelList.length > 0) {
-      //         let errMessage = this.errorMessage;
-      //         console.log("Failed to find file for : " + this.data.failedExcelList);
-      //         errMessage += (" : [" + this.data.failedExcelList + "]");
-      //         this.$message.error(errMessage);
-      //       }
-      //       if (this.data.failedOwnerList.length > 0) {
-      //         let errMessage = "Failed to fetch the shop owner for invoices : ";
-      //         console.log("failed to fetch owner for : " + this.data.failedOwnerList);
-      //         errMessage+=("[" + this.data.failedOwnerList + "]");
-      //         this.$message.error(errMessage);
-      //       }
-      //     }
-      //   });
-      //   console.log("download request fished");
-      //   console.log("THE END !")
-      // }, //end requestDownloadInvoiceExcel
       downloadInvoiceExcel(e) {
         if (this.selectedRowKeys === 0) {
           this.downloadCompleteInvoiceExcelVisible = true;
@@ -259,18 +234,18 @@
             invoiceNumber: invoice_number,
             filetype: e
           }
-          getAction(this.url.getInvoiceShopOwner, param)
+          getAction(this.url.getInvoiceEntity, param)
             .then(res => {
               if (res.success) {
-                let owner = res.result;
-                console.log("Shop Owner name : " + owner);
+                let invoiceEntity = res.result;
+                console.log("Invoice entity : " + invoiceEntity);
                 getFile(this.url.downloadCompleteInvoiceExcel, param)
                   //téléchargement du fichier
                   .then(res => {
                     console.log("Excel res :" + res);
                     let filename = "";
                     if(e === "invoice") {
-                      filename = "Invoice N°" + invoice_number + " (" + owner + ").xlsx";
+                      filename = "Invoice N°" + invoice_number + " (" + invoiceEntity + ").xlsx";
                     }
                     else {
                       filename = "Détail_calcul_de_facture_"+ invoice_number +".xlsx";

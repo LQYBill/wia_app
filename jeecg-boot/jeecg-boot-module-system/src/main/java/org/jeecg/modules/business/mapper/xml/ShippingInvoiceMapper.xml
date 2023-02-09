@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.jeecg.modules.business.mapper.ShippingInvoiceMapper">
 
-    <select id="fetchShopOwnerNameFromInvoiceNumber" resultType="org.jeecg.modules.business.entity.Client">
+    <select id="fetchShopOwnerFromInvoiceNumber" resultType="org.jeecg.modules.business.entity.Client">
         SELECT distinct c.*
         FROM client c
             JOIN shop s ON c.id = s.owner_id

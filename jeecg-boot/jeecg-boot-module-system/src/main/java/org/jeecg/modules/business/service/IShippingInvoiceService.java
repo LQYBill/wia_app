@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @Description: 物流发票
@@ -36,5 +35,5 @@ public interface IShippingInvoiceService extends IService<ShippingInvoice> {
      */
     public void delBatchMain(Collection<? extends Serializable> idList);
 
-    public Client getShopOwnerNameFromInvoiceNumber(String invoiceNumber);
+    public Client getShopOwnerFromInvoiceNumber(String invoiceNumber);
 }

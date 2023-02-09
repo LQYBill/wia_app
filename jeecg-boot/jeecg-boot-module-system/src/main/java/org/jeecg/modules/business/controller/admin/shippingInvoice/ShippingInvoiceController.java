@@ -25,7 +25,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -253,12 +252,8 @@ public class ShippingInvoiceController {
         }
         return Result.OK("文件导入失败！");
     }
-    /****
-     *      TESTING DOWNLOAD
-     *
-     */
 
-    /** Finds the absolute path of invoice file by recursivly walking the directory and it's subdirectories
+    /** Finds the absolute path of invoice file by recursively walking the directory and it's subdirectories
      *
      * @param dirPath
      * @param invoiceNumber
@@ -288,23 +283,25 @@ public class ShippingInvoiceController {
      * @return String returns the path of the invoice file
      */
     public String getInvoiceList(String invoiceNumber, String filetype) {
-        System.out.println("invoice number : " + invoiceNumber);
+        log.info("Invoice number : " + invoiceNumber);
         List<Path> pathList = new ArrayList<>();
         //TODO : change PATH and add IFs
         if(filetype.equals("invoice")) {
-            System.out.println("File asked is of type invoice");
+            log.info("File asked is of type invoice");
             pathList = getPath(INVOICE_LOCATION, invoiceNumber);
         }
         if(filetype.equals("detail")) {
-            System.out.println("File asked is of type invoice detail");
+            log.info("File asked is of type invoice detail");
             pathList = getPath(INVOICE_DETAIL_LOCATION, invoiceNumber);
         }
         if(pathList.isEmpty()) {
-            System.out.println("NO INVOICE FILE FOUND : " + invoiceNumber);
+            log.error("NO INVOICE FILE FOUND : " + invoiceNumber);
             return "ERROR";
         }
         else {
-            pathList.forEach(System.out::println);
+            for (Path path : pathList) {
+                log.info(path.toString());
+            }
             return pathList.get(0).toString();
         }
     }
@@ -319,13 +316,11 @@ public class ShippingInvoiceController {
     @GetMapping(value = "/downloadCompleteInvoiceExcel")
     public ResponseEntity<?> download(@RequestParam("invoiceNumber") String invoiceNumber, @RequestParam("filetype") String filetype) throws IOException {
 
-        //TODO : replace test with correct variable
-        String invoiceNumberTest = "2022-12-2060";
-        String filename = getInvoiceList(invoiceNumberTest, filetype);
+        String filename = getInvoiceList(invoiceNumber, filetype);
         if(!filename.equals("ERROR")) {
             File file = new File(filename);
 
-            System.out.println("filename : " + file);
+            log.info("Filename : {}", file);
 
             HttpHeaders header = new HttpHeaders();
             header.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename);
@@ -335,7 +330,7 @@ public class ShippingInvoiceController {
 
             Path path = Paths.get(file.getAbsolutePath());
 
-            System.out.println("Absolute Path : " + path + "\nLength : " + file.length());
+            log.info("Absolute Path : {} \nLength : {}", path, file.length());
             ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(path));
 
             return ResponseEntity.ok()
@@ -345,8 +340,7 @@ public class ShippingInvoiceController {
                     .body(resource);
         }
         else {
-            // TODO : finish bad request resource return
-            System.out.println("Couldn't find the invoice file for : " + invoiceNumber);
+            log.error("Couldn't find the invoice file for : " + invoiceNumber);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .contentType(MediaType.TEXT_PLAIN)
                     .body("Couldn't find the invoice file for : " + invoiceNumber);
@@ -354,20 +348,20 @@ public class ShippingInvoiceController {
     }
 
     /**
-     * Fetches the shop owner's first name and surname via SQL and return the full name or null
-     * @param invoiceNumber
-     * @return if fetch successful returns full name of owner, else will return error
-     * @throws IOException
+     * Fetches the shop owner's invoice entity or null via SQL
+     * @param invoiceNumber Invoice number
+     * @return if fetch successful returns invoice entity, else will return error
      */
-    @GetMapping(value = "/getInvoiceShopOwner")
+    @GetMapping(value = "/getInvoiceEntity")
     public Result<?> getShopOwnerNameFromInvoice(@RequestParam("invoiceNumber") String invoiceNumber) {
-        System.out.println("Invoice Number : " + invoiceNumber);
-        Client shopOwnerName =  shippingInvoiceService.getShopOwnerNameFromInvoiceNumber(invoiceNumber);
-        if(shopOwnerName == null) {
-            System.out.println("SHOP OWNER FETCH : NULL");
+        log.info("Invoice Number : " + invoiceNumber);
+        Client client =  shippingInvoiceService.getShopOwnerFromInvoiceNumber(invoiceNumber);
+        if(client == null) {
+            log.error("Couldn't find shop owner from invoice number");
+            return Result.error("Couldn't find shop owner from invoice number");
         }
-        String fullname = shopOwnerName.fullName();
-        System.out.println("client full name : "+fullname);
-        return Result.OK(fullname);
+        String invoiceEntity = client.getInvoiceEntity();
+        log.info("Client's invoice entity : " + invoiceEntity);
+        return Result.OK(invoiceEntity);
     }
 }

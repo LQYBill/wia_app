@@ -15,5 +15,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ShippingInvoiceMapper extends BaseMapper<ShippingInvoice> {
 
-    Client fetchShopOwnerNameFromInvoiceNumber(@Param("invoiceNumber") String invoiceNumber);
+    Client fetchShopOwnerFromInvoiceNumber(@Param("invoiceNumber") String invoiceNumber);
 }
