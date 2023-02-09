@@ -231,7 +231,11 @@ public class ShippingInvoiceFactory {
                 purchaseOrderSkuList, promotionDetails, eurToUsd);
     }
 
-    private void calculateAndUpdateContentFees(Map<String, BigDecimal> skuRealWeights, Map<String, BigDecimal> skuServiceFees, PlatformOrder uninvoicedOrder, BigDecimal contentWeight, BigDecimal totalShippingFee, BigDecimal clientVatPercentage, Map<PlatformOrderContent, BigDecimal> contentDeclaredValueMap, BigDecimal totalDeclaredValue, BigDecimal totalVAT, boolean vatApplicable, PlatformOrderContent content) {
+    private void calculateAndUpdateContentFees(Map<String, BigDecimal> skuRealWeights, Map<String, BigDecimal> skuServiceFees,
+                                               PlatformOrder uninvoicedOrder, BigDecimal contentWeight, BigDecimal totalShippingFee,
+                                               BigDecimal clientVatPercentage, Map<PlatformOrderContent, BigDecimal> contentDeclaredValueMap,
+                                               BigDecimal totalDeclaredValue, BigDecimal totalVAT, boolean vatApplicable,
+                                               BigDecimal pickingFeePerItem, PlatformOrderContent content) {
         String skuId = content.getSkuId();
         BigDecimal realWeight = skuRealWeights.get(skuId);
         // Each content will share the total shipping fee proportionally, because minimum price and unit price
@@ -243,6 +247,10 @@ public class ShippingInvoiceFactory {
                         .setScale(2, RoundingMode.UP)
         );
         content.setServiceFee(skuServiceFees.get(skuId)
+                .multiply(BigDecimal.valueOf(content.getQuantity()))
+                .setScale(2, RoundingMode.UP)
+        );
+        content.setPickingFee(pickingFeePerItem
                 .multiply(BigDecimal.valueOf(content.getQuantity()))
                 .setScale(2, RoundingMode.UP)
         );
@@ -429,6 +437,7 @@ public class ShippingInvoiceFactory {
             uninvoicedOrder.setOrderServiceFee(shopServiceFeeMap.get(uninvoicedOrder.getShopId()));
             uninvoicedOrder.setShippingInvoiceNumber(invoiceCode);
             BigDecimal totalShippingFee = price.calculateShippingPrice(contentWeight);
+            BigDecimal pickingFeePerItem = price.getPickingFeePerItem();
             BigDecimal clientVatPercentage = client.getVatPercentage();
             Map<PlatformOrderContent, BigDecimal> contentDeclaredValueMap = new HashMap<>();
             BigDecimal totalDeclaredValue = calculateTotalDeclaredValue(contents, contentDeclaredValueMap, latestDeclaredValues);
@@ -446,7 +455,7 @@ public class ShippingInvoiceFactory {
             for (PlatformOrderContent content : contents) {
                 calculateAndUpdateContentFees(skuRealWeights, skuServiceFees, uninvoicedOrder, contentWeight,
                         totalShippingFee, clientVatPercentage, contentDeclaredValueMap, totalDeclaredValue, totalVAT,
-                        vatApplicable, content);
+                        vatApplicable, pickingFeePerItem, content);
             }
         }
     }
