@@ -34,6 +34,7 @@ public class CreateFulfillmentRequest extends ShopifyRequest {
         AUSTRIAN_POST("https://www.post.at/s/sendungsdetails?snr=%s", "Austrian Post", "15828030053[0-9]{13}"),
         EVRI("https://www.evri.com/track/parcel/%s/details", "Evri", "H03CEA[0-9]{10}"),
         YODEL("https://www.yodel.co.uk/tracking/%s/%s", "Yodel", "JD[0-9]{16}"),
+        CANADA_POST("https://www.canadapost-postescanada.ca/track-reperage/en#/search?searchFor=%s", "Canada Post", "(201255|732131)[0-9]{10}"),
         ;
 
         private final String trackingUrl;
