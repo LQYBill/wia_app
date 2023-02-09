@@ -18,8 +18,8 @@ import java.util.Objects;
 /**
  * @Description: 平台订单内容
  * @Author: jeecg-boot
- * @Date: 2022-07-26
- * @Version: V1.2
+ * @Date: 2023-02-09
+ * @Version: V1.3
  */
 @ApiModel(value = "platform_order对象", description = "平台订单表")
 @Data
@@ -121,7 +121,12 @@ public class PlatformOrderContent implements Serializable {
     @Excel(name = "有货（1=有，0=没有）", width = 15)
     @ApiModelProperty(value = "有货（1=有，0=没有）")
     private String productAvailable;
-
+    /**
+     * 海外仓操作费
+     */
+    @Excel(name = "海外仓操作费", width = 15)
+    @ApiModelProperty(value = "海外仓操作费")
+    private java.math.BigDecimal pickingFee;
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

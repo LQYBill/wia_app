@@ -18,8 +18,8 @@ import java.util.Date;
 /**
  * @Description: 物流渠道价格
  * @Author: jeecg-boot
- * @Date: 2021-07-08
- * @Version: V1.1
+ * @Date: 2023-02-09
+ * @Version: V1.2
  */
 @ApiModel(value = "logistic_channel对象", description = "物流渠道")
 @Data
@@ -130,6 +130,12 @@ public class LogisticChannelPrice implements Serializable {
     @Excel(name = "包裹最低申报值", width = 15)
     @ApiModelProperty(value = "包裹最低申报值")
     private java.math.BigDecimal minimumDeclaredValue;
+    /**
+     * 海外仓每件产品操作费
+     */
+    @Excel(name = "海外仓每件产品操作费", width = 15)
+    @ApiModelProperty(value = "海外仓每件产品操作费")
+    private java.math.BigDecimal pickingFeePerItem;
     /**
      * Calculate shipping price based on weight.
      *
