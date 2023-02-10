@@ -434,6 +434,7 @@ public class ShippingInvoiceFactory {
             LogisticChannelPrice price = findAppropriatePrice(countryList, channelPriceMap, uninvoicedOrder, contentWeight);
             // update attributes of orders and theirs content
             uninvoicedOrder.setFretFee(price.getRegistrationFee());
+            uninvoicedOrder.setPickingFee(price.getAdditionalCost());
             uninvoicedOrder.setOrderServiceFee(shopServiceFeeMap.get(uninvoicedOrder.getShopId()));
             uninvoicedOrder.setShippingInvoiceNumber(invoiceCode);
             BigDecimal totalShippingFee = price.calculateShippingPrice(contentWeight);
