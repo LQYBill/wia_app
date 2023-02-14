@@ -22,7 +22,7 @@ public class CreateFulfillmentRequest extends ShopifyRequest {
         GLS_IT("https://gls-group.com/IT/it/servizi-online/ricerca-spedizioni.html?match=%s&type=NAT", "GLS", "LT[0-9]{9}"),
         COLIS_PRIVE_BE_LU("https://colisprive.com/moncolis/pages/detailColis.aspx?numColis=%s", "Colis Privé", "Q[0-9]{11}[BL][0-9]{4}"),
         COLIS_PRIVE_BE_WIA("https://colisprive.com/moncolis/pages/detailColis.aspx?numColis=%s%s", "Colis Privé", "LC[0-9]{10}"),
-        COLIS_PRIVE_FR("https://colisprive.com/moncolis/pages/detailColis.aspx?numColis=%s", "Colis Privé", "Q[0-9]{16}"),
+        COLIS_PRIVE_FR("https://colisprive.com/moncolis/pages/detailColis.aspx?numColis=%s", "Colis Privé", "(D|Q)[0-9]{16}"),
         POSTI("https://www.posti.fi/fi/seuranta#/lahetys/%s", "Posti", "SP[0-9]{9}FI"),
         USPS("https://tools.usps.com/go/TrackConfirmAction?qtc_tLabels1=%s", "USPS", "[0-9]{22,34}"),
         EARLY_BIRD("https://earlybird.se/", "Early Bird", "[0-9]{19}"),
