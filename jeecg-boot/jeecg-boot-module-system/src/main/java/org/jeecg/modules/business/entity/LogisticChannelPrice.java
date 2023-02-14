@@ -155,6 +155,7 @@ public class LogisticChannelPrice implements Serializable {
         } else {
             BigDecimal calUnitBigDecimal = BigDecimal.valueOf(calUnit);
             return weight
+                    .setScale(0, RoundingMode.UP)
                     .subtract(min)
                     .divide(calUnitBigDecimal, RoundingMode.UP)
                     .multiply(calUnitPrice)
