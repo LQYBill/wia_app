@@ -444,7 +444,9 @@ public class ShippingInvoiceFactory {
             BigDecimal totalDeclaredValue = calculateTotalDeclaredValue(contents, contentDeclaredValueMap, latestDeclaredValues);
             BigDecimal totalVAT = BigDecimal.ZERO;
             boolean vatApplicable = clientVatPercentage.compareTo(BigDecimal.ZERO) > 0
-                    && EU_COUNTRY_LIST.contains(uninvoicedOrder.getCountry());
+                    && EU_COUNTRY_LIST.contains(uninvoicedOrder.getCountry())
+                    // If picking fee per item = 0, it means the package was sent from China so VAT applicable
+                    && price.getPickingFeePerItem().compareTo(BigDecimal.ZERO) == 0;
             // In case where VAT is applicable, and the transport line has a minimum declared value (MDV) per PACKAGE
             // We need to first calculate the total declared value and compare it to the MDV
             // If the total declared value is below the MDV, then the VAT should be calculated with the MDV and
