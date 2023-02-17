@@ -352,16 +352,15 @@ public class ShippingInvoiceController {
      * @param invoiceNumber Invoice number
      * @return if fetch successful returns invoice entity, else will return error
      */
-    @GetMapping(value = "/getInvoiceEntity")
-    public Result<?> getShopOwnerNameFromInvoice(@RequestParam("invoiceNumber") String invoiceNumber) {
+    @GetMapping(value = "/getClient")
+    public Result<?> getShopOwnerFromInvoice(@RequestParam("invoiceNumber") String invoiceNumber) {
         log.info("Invoice Number : " + invoiceNumber);
         Client client =  shippingInvoiceService.getShopOwnerFromInvoiceNumber(invoiceNumber);
         if(client == null) {
             log.error("Couldn't find shop owner from invoice number");
             return Result.error("Couldn't find shop owner from invoice number");
         }
-        String invoiceEntity = client.getInvoiceEntity();
-        log.info("Client's invoice entity : " + invoiceEntity);
-        return Result.OK(invoiceEntity);
+        log.info("Found client for invoice {} : {}", invoiceNumber, client.fullName());
+        return Result.OK(client);
     }
 }
