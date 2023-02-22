@@ -66,8 +66,8 @@ public class ShippingInvoiceServiceImpl extends ServiceImpl<ShippingInvoiceMappe
 
     @Override
     @Transactional
-    public Client getShopOwnerNameFromInvoiceNumber(String invoiceNumber) {
-        return shippingInvoiceMapper.fetchShopOwnerNameFromInvoiceNumber(invoiceNumber);
+    public Client getShopOwnerFromInvoiceNumber(String invoiceNumber) {
+        return shippingInvoiceMapper.fetchShopOwnerFromInvoiceNumber(invoiceNumber);
     }
 
     @Override

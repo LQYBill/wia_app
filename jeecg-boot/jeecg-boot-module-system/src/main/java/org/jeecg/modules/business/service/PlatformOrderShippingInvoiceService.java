@@ -101,6 +101,7 @@ public class PlatformOrderShippingInvoiceService {
             "Frais de FRET",
             "Frais de livraison",
             "Frais de service",
+            "Frais de préparation",
             "TVA",
             "N° de facture"
     };
@@ -340,6 +341,8 @@ public class PlatformOrderShippingInvoiceService {
             sheetManager.write(detail.getLivraisonFee());
             sheetManager.nextCol();
             sheetManager.write(detail.getServiceFee());
+            sheetManager.nextCol();
+            sheetManager.write(detail.getPickingFee());
             sheetManager.nextCol();
             sheetManager.write(detail.getTVA());
             sheetManager.nextCol();

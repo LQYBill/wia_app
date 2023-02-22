@@ -15,6 +15,7 @@ SELECT s.name                                      AS 'Boutique',
        po.fret_fee                                 AS 'Frais de FRET',
        SUM(poc.shipping_fee)                       AS 'Frais de livraison',
        po.order_service_fee + SUM(poc.service_fee) AS 'Frais de service',
+       po.picking_fee + SUM(poc.picking_fee)       AS 'Frais de préparation',
        SUM(poc.vat)                                AS 'TVA',
        po.shipping_invoice_number                  AS 'N° de facture'
 FROM platform_order po
@@ -22,6 +23,7 @@ FROM platform_order po
          RIGHT JOIN platform_order_content poc ON po.id = poc.platform_order_id
          JOIN sku ON poc.sku_id = sku.id
          JOIN product p ON sku.product_id = p.id
-WHERE shipping_invoice_number IS NOT NULL AND poc.erp_status <> 5
+WHERE shipping_invoice_number IS NOT NULL
+  AND poc.erp_status <> 5
 GROUP BY po.id, s.name, po.order_time
 ORDER BY s.name, po.order_time;

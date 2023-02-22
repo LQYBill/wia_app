@@ -20,11 +20,32 @@
                :data-source="dataSource"
                :pagination="ipagination"
                :rowKey="(record)=>record['id']"
-               :loading="dataTableLoading"
+               :loading="loading"
                :rowSelection="{selectedRowKeys, onChange: onSelectChange}"
                bordered
                @change="handleTableChange"
       >
+
+        <template slot='erpStatus' slot-scope='record'>
+          <a-tag
+            v-for='erpStatus in record'
+            :key='erpStatus'
+            :color="erpStatus === '1' ? 'volcano' : 'green'"
+          >
+            {{ erpStatus === '1' ? '待处理' : '配货中' }}
+          </a-tag>
+        </template>
+
+        <template slot='toReview' slot-scope='record'>
+          <a-tag
+            v-for='canSend in record'
+            :key='canSend'
+            :color="canSend === '2' ? 'volcano' : 'green'"
+          >
+            {{ canSend === '2' ? '异常订单' : '正常订单'}}
+          </a-tag>
+        </template>
+
       </a-table>
     </div>
   </a-card>
@@ -103,35 +124,19 @@ export default {
           sorter: true
         },
         {
-          title:'待审核订单 1.否 2.是',
+          title:'待审核订单',
           align:"center",
           dataIndex: 'canSend',
-          sorter: true
+          sorter: true,
+          scopedSlots: { customRender: 'toReview' }
         },
         {
           title: 'ERP中状态',
           align: 'center',
           dataIndex: 'erpStatus',
-          sorter: true
-        },
-        {
-          title: '有货（1=有，0=没有）',
-          align: "center",
-          dataIndex: 'productAvailable',
-          sorter: true
-        },
-        {
-          title: '物流跟踪号',
-          align: 'center',
-          dataIndex: 'trackingNumber',
-          sorter: true
-        },
-        {
-          title: '物流渠道',
-          align: 'center',
-          dataIndex: 'logisticChannelName_dictText',
-          sorter: true
-        },
+          sorter: true,
+          scopedSlots: { customRender: 'erpStatus' }
+        }
       ],
       // 字典选项
       dictOptions: {},
@@ -139,8 +144,7 @@ export default {
         list: '/business/platformOrder/errorList',
         exportXlsUrl: '/business/platformOrder/exportErrorXls',
       },
-      superFieldList:[],
-      dataTableLoading: false
+      superFieldList:[]
     }
   },
 

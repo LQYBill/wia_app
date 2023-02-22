@@ -285,7 +285,7 @@ public class InvoiceController {
         // if invoice exists
         if(invoiceNumber != null) {
             // if user is a customer, we check if he's the owner of the shops
-            Client client = iShippingInvoiceService.getShopOwnerNameFromInvoiceNumber(invoiceNumber);
+            Client client = iShippingInvoiceService.getShopOwnerFromInvoiceNumber(invoiceNumber);
             customerFullName = client.fullName();
             String destEmail;
             if(orgCode.contains("A04")) {
@@ -340,7 +340,6 @@ public class InvoiceController {
             BigDecimal shippingFee = p.getFretFee() == null ? BigDecimal.ZERO : p.getFretFee(); // po.fret_fee + poc.shipping_fee
             serviceFee = p.getOrderServiceFee() == null ? serviceFee : serviceFee.add(p.getOrderServiceFee()) ;
             pickingFee = p.getPickingFee() == null ? pickingFee : pickingFee.add(p.getPickingFee());
-            System.out.println("PO ID : " + p.getId());
             List<PlatformOrderContent> poc = iShippingInvoiceService.getPlatformOrderContent(p.getId());
             // le contenu des commandes pour la vat, service_fee, quantity et picking_fee
             for(PlatformOrderContent pc : poc) {
@@ -354,7 +353,6 @@ public class InvoiceController {
             // sinon on ajoute juste à la map
             if(!feeAndQtyPerCountry.containsKey(country)) {
                 feeAndQtyPerCountry.put(country, new AbstractMap.SimpleEntry<>(1, shippingFee));
-                System.out.println("## PUT : " + feeAndQtyPerCountry);
             }
             else {
                 BigDecimal existingGlobalFee = feeAndQtyPerCountry.get(country).getValue();
@@ -386,8 +384,6 @@ public class InvoiceController {
         invoiceDatas.setFinalAmountEur(invoice.getFinalAmount());
         invoiceDatas.setServiceFee(serviceFee.add(pickingFee));
         invoiceDatas.setFeeAndQtyPerCountry(feeAndQtyPerCountry);
-
-        System.out.println("#### Invoice Datas collected : " + invoiceDatas);
 
         return Result.OK(invoiceDatas);
     }

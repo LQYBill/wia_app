@@ -18,8 +18,8 @@ import java.util.Date;
 /**
  * @Description: 平台订单表
  * @Author: jeecg-boot
- * @Date:   2022-12-23
- * @Version: V1.5
+ * @Date: 2023-02-10
+ * @Version: V1.6
  */
 @ApiModel(value = "platform_order对象", description = "平台订单表")
 @Data
@@ -197,13 +197,23 @@ public class PlatformOrder implements Serializable {
     @Excel(name = "有货（1=有，0=没有）", width = 15)
     @ApiModelProperty(value = "有货（1=有，0=没有）")
     private String productAvailable;
-	/**可以同步Shopify（1=可以，0=不可以）*/
-	@Excel(name = "可以同步Shopify（1=可以，0=不可以）", width = 15, dicCode = "yn")
+    /**
+     * 可以同步Shopify（1=可以，0=不可以）
+     */
+    @Excel(name = "可以同步Shopify（1=可以，0=不可以）", width = 15, dicCode = "yn")
     @Dict(dicCode = "yn")
     @ApiModelProperty(value = "可以同步Shopify（1=可以，0=不可以）")
     private String readyForShopifySync;
-	/**待审核订单 1.否 2.是*/
-	@Excel(name = "待审核订单 1.否 2.是", width = 15)
-    @ApiModelProperty(value = "待审核订单 1.否 2.是")
-    private String canSend;
+    /**
+     * 待审核订单（1=正常订单，2=异常订单）
+     */
+    @Excel(name = "待审核订单（1=正常订单，2=异常订单）", width = 15)
+    @ApiModelProperty(value = "待审核订单（1=正常订单，2=异常订单）")
+    private java.lang.String canSend;
+    /**
+     * 海外仓操作费
+     */
+    @Excel(name = "海外仓操作费", width = 15)
+    @ApiModelProperty(value = "海外仓操作费")
+    private java.math.BigDecimal pickingFee;
 }

@@ -60,6 +60,9 @@ public class FactureDetail {
     @TableField("`Frais de service`")
     private final BigDecimal serviceFee;
 
+    @TableField("`Frais de préparation`")
+    private final BigDecimal pickingFee;
+
     @TableField("`TVA`")
     private final BigDecimal TVA;
 

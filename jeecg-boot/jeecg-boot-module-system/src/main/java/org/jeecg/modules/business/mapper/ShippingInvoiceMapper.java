@@ -18,10 +18,9 @@ import java.util.List;
  */
 @Repository
 public interface ShippingInvoiceMapper extends BaseMapper<ShippingInvoice> {
-
-    Client fetchShopOwnerNameFromInvoiceNumber(@Param("invoiceNumber") String invoiceNumber);
     String fetchShippingInvoiceNumber(@Param("invoiceID") String invoiceID);
     ShippingInvoice fetchShippingInvoice(@Param("invoiceNumber") String invoiceNumber);
     List<PlatformOrder> fetchPlatformOrder(@Param("invoiceNumber") String invoiceNumber);
     List<PlatformOrderContent> fetchPlatformOrderContent(@Param("platformOrderId") String platformOrderId);
+    Client fetchShopOwnerFromInvoiceNumber(@Param("invoiceNumber") String invoiceNumber);
 }

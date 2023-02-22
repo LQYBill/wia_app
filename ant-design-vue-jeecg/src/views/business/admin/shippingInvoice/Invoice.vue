@@ -136,11 +136,9 @@ export default {
         getAction(this.url.checkInvoiceValidity, param).then(res=>{
           if(res.success){
             this.$message.success("Permission granted.");
-            console.log('Data : ' + JSON.stringify(res.result));
             this.invoice_number = res.result.invoiceNumber;
             this.customer = res.result.name;
             this.email = res.result.email;
-            console.log("dest email : " + this.email);
             this.hasEmail = !(this.email === "" || this.email === null);
             this.invoice_entity = res.result.invoiceEntity;
             let currency = res.result.currency;
@@ -155,7 +153,6 @@ export default {
               this.currency = "RMB";
               this.currency = "¥";
             }
-            console.log(this.invoice_number);
             this.loadInvoice();
           }
           else {
@@ -175,17 +172,14 @@ export default {
         originalCurrency: "EUR",
         targetCurrency: this.currency
       };
-      console.log("LoadInvoice param : " + param.invoiceNumber);
       // on identifie le type de facture (1 : purchase, 2: shipping, 7: purchase + shipping
       this.invoice_type = this.getInvoiceType();
-      console.log("type = " + this.invoice_type);
       if(this.invoice_type == null) {
         return;
       }
       getAction(this.url.invoiceData, param).then(res=>{
         this.invoiceContentLoading = true;
         if(res.success) {
-          console.log("Res : " + JSON.stringify(res.result));
           if(res.result !== null) {
             this.downloadReady = true;
             for(let i in res.result.feeAndQtyPerCountry) {
@@ -260,7 +254,6 @@ export default {
       }
       getFile(this.url.downloadCompleteInvoicePdf, param)
         .then(res => {
-          console.log("PDF res :" + res);
           let filename = "Invoice N°" + this.invoice_number + " (" + this.customer + ").pdf";
           saveAs(res, filename);
         })
@@ -294,11 +287,9 @@ export default {
         });
     },
     getInvoiceType() {
-      console.log("Invoice type (" + this.invoice_number + ")");
       let re = new RegExp('^[0-9]{4}-[0-9]{2}-([0-9])[0-9]{3}$');
       if (re.test(this.invoice_number)) {
         let match = re.exec(this.invoice_number);
-        console.log("Invoice type : " + match[1]);
         return match[1];
       }
       else {

@@ -37,11 +37,9 @@ public interface IShippingInvoiceService extends IService<ShippingInvoice> {
      * 批量删除一对多
      */
     public void delBatchMain(Collection<? extends Serializable> idList);
-
-    public Client getShopOwnerNameFromInvoiceNumber(String invoiceNumber);
-
     public String getShippingInvoiceNumber(String invoiceID);
     public ShippingInvoice getShippingInvoice(String invoiceNumber);
     public List<PlatformOrder> getPlatformOrder(String invoiceNumber);
     public List<PlatformOrderContent> getPlatformOrderContent(String platformOrderId);
+    public Client getShopOwnerFromInvoiceNumber(String invoiceNumber);
 }

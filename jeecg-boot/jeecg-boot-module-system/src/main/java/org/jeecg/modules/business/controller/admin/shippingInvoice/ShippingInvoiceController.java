@@ -265,7 +265,7 @@ public class ShippingInvoiceController {
         return Result.OK("文件导入失败！");
     }
 
-    /** Finds the absolute path of invoice file by recursivly walking the directory and it's subdirectories
+    /** Finds the absolute path of invoice file by recursively walking the directory and it's subdirectories
      *
      * @param dirPath
      * @param invoiceNumber
@@ -275,7 +275,6 @@ public class ShippingInvoiceController {
         List<Path> pathList = new ArrayList<>();
         //Recursively list all files
         //The walk() method returns a Stream by walking the file tree beginning with a given starting file/directory in a depth-first manner.
-        System.out.println(dirPath);
         try (Stream<Path> stream = Files.walk(Paths.get(dirPath))) {
             pathList = stream.map(Path::normalize)
                     .filter(Files::isRegularFile) // directories, hidden files and files without extension are not included
@@ -296,22 +295,24 @@ public class ShippingInvoiceController {
      * @return String returns the path of the invoice file
      */
     public String getInvoiceList(String invoiceNumber, String filetype) {
-        System.out.println("invoice number : " + invoiceNumber);
+        log.info("Invoice number : " + invoiceNumber);
         List<Path> pathList = new ArrayList<>();
         if(filetype.equals("invoice")) {
-            System.out.println("File asked is of type invoice");
+            log.info("File asked is of type invoice");
             pathList = getPath(INVOICE_LOCATION, invoiceNumber);
         }
         if(filetype.equals("detail")) {
-            System.out.println("File asked is of type invoice detail");
+            log.info("File asked is of type invoice detail");
             pathList = getPath(INVOICE_DETAIL_LOCATION, invoiceNumber);
         }
         if(pathList.isEmpty()) {
-            System.out.println("NO INVOICE FILE FOUND : " + invoiceNumber);
+            log.error("NO INVOICE FILE FOUND : " + invoiceNumber);
             return "ERROR";
         }
         else {
-            pathList.forEach(System.out::println);
+            for (Path path : pathList) {
+                log.info(path.toString());
+            }
             return pathList.get(0).toString();
         }
     }
@@ -329,7 +330,7 @@ public class ShippingInvoiceController {
         if(!filename.equals("ERROR")) {
             File file = new File(filename);
 
-            System.out.println("filename : " + file);
+            log.info("Filename : {}", file);
 
             HttpHeaders header = new HttpHeaders();
             header.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename);
@@ -339,7 +340,7 @@ public class ShippingInvoiceController {
 
             Path path = Paths.get(file.getAbsolutePath());
 
-            System.out.println("Absolute Path : " + path + "\nLength : " + file.length());
+            log.info("Absolute Path : {} \nLength : {}", path, file.length());
             ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(path));
 
             return ResponseEntity.ok()
@@ -349,7 +350,7 @@ public class ShippingInvoiceController {
                     .body(resource);
         }
         else {
-            System.out.println("Couldn't find the invoice file for : " + invoiceNumber);
+            log.error("Couldn't find the invoice file for : " + invoiceNumber);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .contentType(MediaType.TEXT_PLAIN)
                     .body("Couldn't find the invoice file for : " + invoiceNumber);
@@ -391,7 +392,6 @@ public class ShippingInvoiceController {
         String pdfFilePath = convertToPdf(invoiceNumber, "invoice");
         if(!pdfFilePath.equals("ERROR")) {
             File file = new File(pdfFilePath);
-            System.out.println("file : " + file);
             HttpHeaders header = new HttpHeaders();
             header.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + pdfFilePath);
             header.add("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -400,7 +400,6 @@ public class ShippingInvoiceController {
 
             Path path = Paths.get(file.getAbsolutePath());
 
-            System.out.println("Absolute Path : " + path + "\nLength : " + file.length());
             ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(path));
 
             return ResponseEntity.ok()
@@ -409,7 +408,6 @@ public class ShippingInvoiceController {
                     .contentType(MediaType.parseMediaType("application/pdf"))
                     .body(resource);
         }
-        System.out.println("Couldn't find the invoice file for : " + invoiceNumber);
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .contentType(MediaType.TEXT_PLAIN)
                 .body("Couldn't find the invoice file for : " + invoiceNumber);
@@ -420,7 +418,6 @@ public class ShippingInvoiceController {
                                         @RequestParam("email") String email,
                                         @RequestParam("invoiceEntity") String invoiceEntity) throws Exception {
         String filePath = getInvoiceList(invoiceNumber, "detail");
-        System.out.println("Attachment file path : " + filePath);
 
         Properties prop = new Properties();
         prop.put("mail.smtp.auth", env.getProperty("spring.mail.properties.mail.smtp.auth"));
@@ -428,7 +425,6 @@ public class ShippingInvoiceController {
         prop.put("mail.smtp.host", env.getProperty("spring.mail.host"));
         prop.put("mail.smtp.port", "587");
         prop.put("mail.debug", "true");
-        System.out.println("Prop : " + prop);
         Session session = Session.getInstance(prop, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
@@ -554,20 +550,19 @@ public class ShippingInvoiceController {
     }
 
     /**
-     * Fetches the shop owner's first name and surname via SQL and return the full name or null
-     * @param invoiceNumber
-     * @return if fetch successful returns full name of owner, else will return error
-     * @throws IOException
+     * Fetches the shop owner's invoice entity or null via SQL
+     * @param invoiceNumber Invoice number
+     * @return if fetch successful returns invoice entity, else will return error
      */
-    @GetMapping(value = "/getInvoiceShopOwner")
-    public Result<?> getShopOwnerNameFromInvoice(@RequestParam("invoiceNumber") String invoiceNumber) {
-        System.out.println("Invoice Number : " + invoiceNumber);
-        Client shopOwnerName =  shippingInvoiceService.getShopOwnerNameFromInvoiceNumber(invoiceNumber);
-        if(shopOwnerName == null) {
-            System.out.println("SHOP OWNER FETCH : NULL");
+    @GetMapping(value = "/getClient")
+    public Result<?> getShopOwnerFromInvoice(@RequestParam("invoiceNumber") String invoiceNumber) {
+        log.info("Invoice Number : " + invoiceNumber);
+        Client client =  shippingInvoiceService.getShopOwnerFromInvoiceNumber(invoiceNumber);
+        if(client == null) {
+            log.error("Couldn't find shop owner from invoice number");
+            return Result.error("Couldn't find shop owner from invoice number");
         }
-        String fullname = shopOwnerName.fullName();
-        System.out.println("client full name : "+fullname);
-        return Result.OK(fullname);
+        log.info("Found client for invoice {} : {}", invoiceNumber, client.fullName());
+        return Result.OK(client);
     }
 }

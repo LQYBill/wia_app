@@ -114,6 +114,7 @@
   import '@assets/less/TableExpand.less';
   import { getAction, getFile } from '@api/manage'
   import {saveAs} from 'file-saver';
+  import moment from 'moment/moment'
 
   export default {
     name: "ShippingInvoiceList",
@@ -190,7 +191,7 @@
           exportXlsUrl: "/generated/shippingInvoice/exportXls",
           importExcelUrl: "generated/shippingInvoice/importExcel",
           downloadCompleteInvoiceExcel: "/generated/shippingInvoice/downloadCompleteInvoiceExcel",
-          getInvoiceShopOwner: "/generated/shippingInvoice/getInvoiceShopOwner"
+          getClient: "/generated/shippingInvoice/getClient"
         },
         dictOptions:{},
         superFieldList:[],
@@ -234,21 +235,22 @@
             invoiceNumber: invoice_number,
             filetype: e
           }
-          getAction(this.url.getInvoiceShopOwner, param)
+          getAction(this.url.getClient, param)
             .then(res => {
               if (res.success) {
-                let owner = res.result;
-                console.log("Shop Owner name : " + owner);
+                let client = res.result;
+                console.log("Invoice entity : " + client.invoiceEntity);
                 getFile(this.url.downloadCompleteInvoiceExcel, param)
                   //téléchargement du fichier
                   .then(res => {
                     console.log("Excel res :" + res);
                     let filename = "";
                     if(e === "invoice") {
-                      filename = "Invoice N°" + invoice_number + " (" + owner + ").xlsx";
+                      filename = "Invoice N°" + invoice_number + " (" + client.invoiceEntity + ").xlsx";
                     }
                     else {
-                      filename = "Détail_calcul_de_facture_"+ invoice_number +".xlsx";
+                      let now = moment().format("yyyyMMDD")
+                      filename = client.internalCode + "_" + invoice_number + '_Détail_calcul_de_facture_' + now + '.xlsx';
                     }
                     saveAs(res, filename);
                   })

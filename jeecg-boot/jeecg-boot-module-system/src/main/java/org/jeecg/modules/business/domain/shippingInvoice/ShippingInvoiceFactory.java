@@ -231,7 +231,11 @@ public class ShippingInvoiceFactory {
                 purchaseOrderSkuList, promotionDetails, eurToUsd);
     }
 
-    private void calculateAndUpdateContentFees(Map<String, BigDecimal> skuRealWeights, Map<String, BigDecimal> skuServiceFees, PlatformOrder uninvoicedOrder, BigDecimal contentWeight, BigDecimal totalShippingFee, BigDecimal clientVatPercentage, Map<PlatformOrderContent, BigDecimal> contentDeclaredValueMap, BigDecimal totalDeclaredValue, BigDecimal totalVAT, boolean vatApplicable, PlatformOrderContent content) {
+    private void calculateAndUpdateContentFees(Map<String, BigDecimal> skuRealWeights, Map<String, BigDecimal> skuServiceFees,
+                                               PlatformOrder uninvoicedOrder, BigDecimal contentWeight, BigDecimal totalShippingFee,
+                                               BigDecimal clientVatPercentage, Map<PlatformOrderContent, BigDecimal> contentDeclaredValueMap,
+                                               BigDecimal totalDeclaredValue, BigDecimal totalVAT, boolean vatApplicable,
+                                               BigDecimal pickingFeePerItem, PlatformOrderContent content) {
         String skuId = content.getSkuId();
         BigDecimal realWeight = skuRealWeights.get(skuId);
         // Each content will share the total shipping fee proportionally, because minimum price and unit price
@@ -243,6 +247,10 @@ public class ShippingInvoiceFactory {
                         .setScale(2, RoundingMode.UP)
         );
         content.setServiceFee(skuServiceFees.get(skuId)
+                .multiply(BigDecimal.valueOf(content.getQuantity()))
+                .setScale(2, RoundingMode.UP)
+        );
+        content.setPickingFee(pickingFeePerItem
                 .multiply(BigDecimal.valueOf(content.getQuantity()))
                 .setScale(2, RoundingMode.UP)
         );
@@ -426,15 +434,19 @@ public class ShippingInvoiceFactory {
             LogisticChannelPrice price = findAppropriatePrice(countryList, channelPriceMap, uninvoicedOrder, contentWeight);
             // update attributes of orders and theirs content
             uninvoicedOrder.setFretFee(price.getRegistrationFee());
+            uninvoicedOrder.setPickingFee(price.getAdditionalCost());
             uninvoicedOrder.setOrderServiceFee(shopServiceFeeMap.get(uninvoicedOrder.getShopId()));
             uninvoicedOrder.setShippingInvoiceNumber(invoiceCode);
             BigDecimal totalShippingFee = price.calculateShippingPrice(contentWeight);
+            BigDecimal pickingFeePerItem = price.getPickingFeePerItem();
             BigDecimal clientVatPercentage = client.getVatPercentage();
             Map<PlatformOrderContent, BigDecimal> contentDeclaredValueMap = new HashMap<>();
             BigDecimal totalDeclaredValue = calculateTotalDeclaredValue(contents, contentDeclaredValueMap, latestDeclaredValues);
             BigDecimal totalVAT = BigDecimal.ZERO;
             boolean vatApplicable = clientVatPercentage.compareTo(BigDecimal.ZERO) > 0
-                    && EU_COUNTRY_LIST.contains(uninvoicedOrder.getCountry());
+                    && EU_COUNTRY_LIST.contains(uninvoicedOrder.getCountry())
+                    // If picking fee per item = 0, it means the package was sent from China so VAT applicable
+                    && price.getPickingFeePerItem().compareTo(BigDecimal.ZERO) == 0;
             // In case where VAT is applicable, and the transport line has a minimum declared value (MDV) per PACKAGE
             // We need to first calculate the total declared value and compare it to the MDV
             // If the total declared value is below the MDV, then the VAT should be calculated with the MDV and
@@ -446,7 +458,7 @@ public class ShippingInvoiceFactory {
             for (PlatformOrderContent content : contents) {
                 calculateAndUpdateContentFees(skuRealWeights, skuServiceFees, uninvoicedOrder, contentWeight,
                         totalShippingFee, clientVatPercentage, contentDeclaredValueMap, totalDeclaredValue, totalVAT,
-                        vatApplicable, content);
+                        vatApplicable, pickingFeePerItem, content);
             }
         }
     }
