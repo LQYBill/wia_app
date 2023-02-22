@@ -6,6 +6,8 @@
       </a-divider>
       <h1 style="margin-top: 1rem">Welcome to WIA App<br>
         <span style="color: #0c8fcf">{{ nickname() }}</span>
+        <span style="color: #0c8fcf">user info : {{ userInfo() }}</span>
+
       </h1>
     </div>
   </div>
@@ -14,6 +16,7 @@
 <script>
 import { mapGetters } from 'vuex'
 import { getFileAccessHttpUrl } from '@api/manage'
+import { userInfo } from 'os'
 
 export default {
   name: 'Analysis',
@@ -23,6 +26,7 @@ export default {
     }
   },
   methods: {
+    userInfo,
     ...mapGetters(["nickname", "avatar", "userInfo"]),
     getAvatar() {
       return getFileAccessHttpUrl(this.avatar())

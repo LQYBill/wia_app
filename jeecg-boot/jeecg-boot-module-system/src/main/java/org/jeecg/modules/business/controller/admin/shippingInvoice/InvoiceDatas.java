@@ -1,16 +1,28 @@
 package org.jeecg.modules.business.controller.admin.shippingInvoice;
 
+import com.alibaba.fastjson.annotation.JSONField;
+import lombok.Data;
+
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Map;
 
+@Data
 public class InvoiceDatas {
-    private String Id;
+    @JSONField(name = "invoiceNumber")
     private String invoiceNumber;
-    private Integer quantity;
+    @JSONField(name = "feeAndQtyPerCountry")
+    private Map<String, Map.Entry<Integer, BigDecimal>> feeAndQtyPerCountry;
+    @JSONField(name = "vat")
+    private BigDecimal vat;
+    @JSONField(name = "serviceFee")
+    private BigDecimal serviceFee;
+    @JSONField(name = "discount")
     private BigDecimal discount;
+    @JSONField(name = "refund")
+    private BigDecimal refund;
+    @JSONField(name = "finalAmountEur")
+    private BigDecimal finalAmountEur;
+    @JSONField(name = "finalAmount")
     private BigDecimal finalAmount;
-    private BigDecimal paidAmount;
-    private List<String> platformOrderIdList;
-    private Map<String,BigDecimal> totalPerCountry;
+
 }

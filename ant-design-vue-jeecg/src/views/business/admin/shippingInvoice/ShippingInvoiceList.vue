@@ -222,31 +222,6 @@
          fieldList.push({type:'BigDecimal',value:'paidAmount',text:'已付金额',dictCode:''})
         this.superFieldList = fieldList
       },
-      // async requestDownloadInvoiceExcel() {
-      //   await this.downloadInvoiceExcel().then(function(){
-      //     if(this.data.failedOwnerList.length === 0 && this.data.failedExcelList.length === 0) {
-      //       this.$message.success("All invoices downloaded successfully !");
-      //     }
-      //     //there were some errors
-      //     else {
-      //       console.log("There was some failures : ");
-      //       if (this.data.failedExcelList.length > 0) {
-      //         let errMessage = this.errorMessage;
-      //         console.log("Failed to find file for : " + this.data.failedExcelList);
-      //         errMessage += (" : [" + this.data.failedExcelList + "]");
-      //         this.$message.error(errMessage);
-      //       }
-      //       if (this.data.failedOwnerList.length > 0) {
-      //         let errMessage = "Failed to fetch the shop owner for invoices : ";
-      //         console.log("failed to fetch owner for : " + this.data.failedOwnerList);
-      //         errMessage+=("[" + this.data.failedOwnerList + "]");
-      //         this.$message.error(errMessage);
-      //       }
-      //     }
-      //   });
-      //   console.log("download request fished");
-      //   console.log("THE END !")
-      // }, //end requestDownloadInvoiceExcel
       downloadInvoiceExcel(e) {
         if (this.selectedRowKeys === 0) {
           this.downloadCompleteInvoiceExcelVisible = true;

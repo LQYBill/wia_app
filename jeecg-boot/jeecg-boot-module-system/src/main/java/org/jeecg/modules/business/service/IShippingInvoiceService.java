@@ -40,6 +40,7 @@ public interface IShippingInvoiceService extends IService<ShippingInvoice> {
 
     public Client getShopOwnerNameFromInvoiceNumber(String invoiceNumber);
 
+    public String getShippingInvoiceNumber(String invoiceID);
     public ShippingInvoice getShippingInvoice(String invoiceNumber);
     public List<PlatformOrder> getPlatformOrder(String invoiceNumber);
     public List<PlatformOrderContent> getPlatformOrderContent(String platformOrderId);

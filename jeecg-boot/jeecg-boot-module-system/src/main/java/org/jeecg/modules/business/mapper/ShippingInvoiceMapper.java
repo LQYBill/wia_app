@@ -20,6 +20,7 @@ import java.util.List;
 public interface ShippingInvoiceMapper extends BaseMapper<ShippingInvoice> {
 
     Client fetchShopOwnerNameFromInvoiceNumber(@Param("invoiceNumber") String invoiceNumber);
+    String fetchShippingInvoiceNumber(@Param("invoiceID") String invoiceID);
     ShippingInvoice fetchShippingInvoice(@Param("invoiceNumber") String invoiceNumber);
     List<PlatformOrder> fetchPlatformOrder(@Param("invoiceNumber") String invoiceNumber);
     List<PlatformOrderContent> fetchPlatformOrderContent(@Param("platformOrderId") String platformOrderId);
