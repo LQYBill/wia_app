@@ -174,7 +174,8 @@ export default {
       };
       // on identifie le type de facture (1 : purchase, 2: shipping, 7: purchase + shipping
       this.invoice_type = this.getInvoiceType();
-      if(this.invoice_type == null) {
+      if(this.invoice_type == null || this.invoice_type !== '2') {
+        this.$message.error("Access refused : Invalid type.")
         return;
       }
       getAction(this.url.invoiceData, param).then(res=>{
