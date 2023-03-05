@@ -32,7 +32,7 @@ public class CreateFulfillmentRequest extends ShopifyRequest {
         DPD_BE("https://www.dpdgroup.com/be/mydpd/my-parcels/track?parcelNumber=%s", "DPD", "06086316[0-9]{6}"),
         HERMES_DE("https://www.myhermes.de/empfangen/sendungsverfolgung/sendungsinformation#%s", "Hermes", "H100081[0-9]{13}"),
         AUSTRIAN_POST("https://www.post.at/s/sendungsdetails?snr=%s", "Austrian Post", "15828030053[0-9]{13}"),
-        EVRI("https://www.evri.com/track/parcel/%s/details", "Evri", "H03CEA[0-9]{10}"),
+        EVRI("https://www.evri.com/track/parcel/%s/details", "Evri", "H[0-9A-Z]{5}[0-9]{10}"),
         YODEL("https://www.yodel.co.uk/tracking/%s/%s", "Yodel", "JD[0-9]{16}"),
         CANADA_POST("https://www.canadapost-postescanada.ca/track-reperage/en#/search?searchFor=%s", "Canada Post", "(201255|732131)[0-9]{10}"),
         UK_ROYAL_MAIL("https://www.royalmail.com/track-your-item#/tracking-results/%s", "Royal Mail", "FJ002[0-9]{6}GB"),
