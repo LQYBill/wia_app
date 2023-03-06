@@ -36,6 +36,7 @@ public class CreateFulfillmentRequest extends ShopifyRequest {
         YODEL("https://www.yodel.co.uk/tracking/%s/%s", "Yodel", "JD[0-9]{16}"),
         CANADA_POST("https://www.canadapost-postescanada.ca/track-reperage/en#/search?searchFor=%s", "Canada Post", "(201255|732131)[0-9]{10}"),
         UK_ROYAL_MAIL("https://www.royalmail.com/track-your-item#/tracking-results/%s", "Royal Mail", "FJ002[0-9]{6}GB"),
+        POST_NL("https://postnl.post/", "PostNL International Mail", "LS[0-9]{9}NL"),
         ;
 
         private final String trackingUrl;
