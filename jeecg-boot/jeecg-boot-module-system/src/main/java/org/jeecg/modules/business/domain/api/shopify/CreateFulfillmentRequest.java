@@ -15,6 +15,7 @@ public class CreateFulfillmentRequest extends ShopifyRequest {
     private enum TransportCompany {
         LA_POSTE("https://www.laposte.fr/outils/suivre-vos-envois?code=%s", "La Poste", "[69][A-Z]{1}[0-9]{11}"),
         DPD_BE("https://www.dpdgroup.com/be/mydpd/my-parcels/track?parcelNumber=%s", "DPD", "06086316[0-9]{6}"),
+        DPD_AT("https://www.mydpd.at/meine-pakete", "DPD", "06215167[0-9]{6}"),
         CANADA_POST("https://www.canadapost-postescanada.ca/track-reperage/en#/search?searchFor=%s", "Canada Post", "(201255|732131)[0-9]{10}"),
         SWISS_POST("https://service.post.ch/ekp-web/ui/entry/search/%s", "Swiss Post", "[0-9]{18}"),
         EARLY_BIRD("https://earlybird.se/", "Early Bird", "[0-9]{19}"),
