@@ -6,14 +6,14 @@
                 type='primary'
                 icon="download"
                 @click='downloadPdf()'
-      >download invoice</a-button>
+      >{{$t("invoice.downloadInvoice")}}</a-button>
 
       <!-- button to download invoice details -->
       <a-button v-if="downloadReady && hasEmail"
                 type='primary'
                 icon="mail"
                 @click='sendEmail()'
-      >receive details by email</a-button>
+      >{{$t("invoice.receiveDetailsByEmail")}}</a-button>
     </div>
     <section>
       <a-table  v-if="invoice_type === '2'"
@@ -30,16 +30,16 @@
         <template #title>
           <h1 style='font-size: 2em'>{{customer}} <span style='font-weight: 200'>({{invoice_entity}})</span></h1>
           <a-row type="flex" justify='space-between' align-items='center'>
-            <h2 >Invoice n. : {{invoice_number}}</h2>
-            <h3>Currency : {{currency}}/{{currencySymbol}}</h3>
+            <h2 >{{$t("Invoice")}} n. : {{invoice_number}}</h2>
+            <h3>{{$t("client.Currency")}} : {{currency}}/{{currencySymbol}}</h3>
           </a-row>
         </template>
         <template #footer>
           <a-row type="flex">
-            <a-col :span="12"><h2>Total</h2></a-col>
-            <a-col :span="3"><h2 class='center'>Quantity : </h2></a-col>
+            <a-col :span="12"><h2>{{$t("invoice.total")}}</h2></a-col>
+            <a-col :span="3"><h2 class='center'>{{$t("invoice.quantity")}} : </h2></a-col>
             <a-col :span="3"><div class='center' style='font-size: 1.5em;'>{{total_quantity}}</div></a-col>
-            <a-col :span="3"><h2 class='center'>Total amount : </h2></a-col>
+            <a-col :span="3"><h2 class='center'>{{$t("invoice.totalAmount")}} : </h2></a-col>
             <a-col :span="3">
               <div class='center'  style='font-size: 1.5em;'>€{{final_total_euro}} EUR</div>
               <div class='center' v-if='currency !== "EUR"'>({{currencySymbol}}{{final_total_customer_curr}} {{currency}})</div>
@@ -97,18 +97,18 @@ export default {
           customRender: (t, r, index) => parseInt(index) + 1
         },
         {
-          title: 'Description',
+          title: this.$t("invoice.description"),
           align: 'left',
           className: 'column_description',
           dataIndex: 'description',
         },
         {
-          title: 'Order Quantity',
+          title: this.$t("invoice.orderQty"),
           align: 'center',
           dataIndex: 'quantity',
         },
         {
-          title: 'Sub-total',
+          title: this.$t("invoice.subTotal"),
           align: 'center',
           dataIndex: 'total_amount',
         }
@@ -123,7 +123,7 @@ export default {
   },
   methods: {
     ...mapGetters(["nickname", "userInfo"]),
-    checkInvoice() { //2022-12-2004, 1587806418814332930
+    checkInvoice() {
       let email = this.userInfo().email;
       let orgCode = this.userInfo().orgCode;
       console.log("User : " + email + " " + orgCode);
@@ -190,7 +190,7 @@ export default {
                 this.total_quantity += Number(key);
                 this.dataSource.push({
                   key: this.keyNumber,
-                  description: "Total shipping cost for " + i,
+                  description: "Total shipping cost for " + this.$t("country."+i),
                   quantity: key,
                   total_amount: subtotal,
                 });
@@ -201,7 +201,7 @@ export default {
             // VAT
             this.dataSource.push({
               key: this.keyNumber,
-              description: "Total VAT fee for EU",
+              description: "Total VAT fee for " + this.$t("continent.EuropeanUnion"),
               quantity: null,
               total_amount: res.result.vat
             });

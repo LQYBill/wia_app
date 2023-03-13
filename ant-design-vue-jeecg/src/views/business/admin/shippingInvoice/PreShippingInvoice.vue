@@ -10,14 +10,14 @@
             :sm='8'
           >
             <a-form-model-item
-              label='客户'
+              :label='$t("invoice.customer")'
               :labelCol='{span: 5}'
               :wrapperCol='{span: 18}'
               prop='clientId'
             >
               <a-select
                 show-search
-                placeholder='输入客户进行搜索'
+                :placeholder='$t("invoice.clientInputSearch")'
                 option-filter-prop='children'
                 :filter-option='customerFilterOption'
                 @change='handleClientChange'
@@ -39,7 +39,7 @@
             :sm='8'
           >
             <a-form-model-item
-              label='店铺'
+              :label='$t("invoice.shop")'
               :labelCol='{span: 5}'
               :wrapperCol='{span: 18}'
               prop='shopIDs'
@@ -47,7 +47,7 @@
               <a-select
                 mode='multiple'
                 style='width: 100%'
-                placeholder='不选默认所有店铺'
+                :placeholder='$t("invoice.defaultAllShopSelected")'
                 @change='handleShopChange'
                 :allowClear=true
                 v-model='shopIDs'
@@ -77,7 +77,7 @@
                 htmlType='submit'
                 @click='loadOrders'
                 :loading='findOrdersLoading'
-              >搜索</a-button>
+              >{{$t("search")}}</a-button>
             </a-col>
           </span>
 
@@ -94,7 +94,7 @@
                 :loading='invoiceLoading'
                 @click='makeInvoice'
                 :disabled='invoiceDisable'
-              >生成物流发票文件</a-button>
+              >{{$t("invoice.generateDocument")}}</a-button>
             </a-col>
           </span>
           <span
@@ -110,13 +110,13 @@
                 :loading='invoiceLoading'
                 @click='makeCompleteInvoice'
                 :disabled='completeInvoiceDisable'
-              >生成完整（物流+采购）发票文件</a-button>
+              >{{$t("invoice.generateInvoice7pre")}}</a-button>
             </a-col>
           </span>
         </a-row>
         <a-row>
-          <a-card :bordered='true' title='当前已选择订单预计物流费用' :loading='!estimatesReady'>
-            <p v-if='shippingFeesEstimates.length === 0'>尚未选择订单</p>
+          <a-card :bordered='true' :title='$t("invoice.shippingFeesEstimationForSelectedOrders")' :loading='!estimatesReady'>
+            <p v-if='shippingFeesEstimates.length === 0'>{{$t("invoice.noOrdersSelected")}}</p>
             <a-card-grid v-for='item in shippingFeesEstimates' style='width:20%;text-align:center'>
               <a-statistic :title='item.shop' :value='item.dueForProcessedOrders' style='margin-right: 50px'>
                 <template #suffix>
@@ -134,10 +134,10 @@
 
       <a-alert type='info' showIcon style='margin-bottom: 16px; margin-top: 16px'>
         <template slot='message'>
-          <span>已选择</span>
+          <span>{{$t("operation.selected")}}</span>
           <a style='font-weight: 600;padding: 0 4px;'>{{ selectedRowKeys.length }}</a>
-          <span>项</span>
-          <a style='margin-left: 24px' @click='onClearSelected'>清空</a>
+          <span>{{$t("operation.item")}}</span>
+          <a style='margin-left: 24px' @click='onClearSelected'>{{$t("operation.clear")}}</a>
         </template>
       </a-alert>
 
@@ -174,7 +174,7 @@
             :key='erpStatus'
             :color="erpStatus === '1' ? 'volcano' : 'green'"
           >
-            {{ erpStatus === '1' ? '待处理' : '配货中' }}
+            {{ erpStatus === '1' ? $t("order.pending") : $t("order.shipped") }}
           </a-tag>
         </template>
 
@@ -184,7 +184,7 @@
             :key='productAvailable'
             :color="productAvailable === '1' ? 'green' : 'volcano'"
           >
-            {{ productAvailable === '1' ? '有货' : '缺货' }}
+            {{ productAvailable === '1' ? $t("order.inStock") : $t("order.outOfStock") }}
           </a-tag>
         </template>
 
@@ -194,7 +194,7 @@
             :key='canSend'
             :color="canSend === '2' ? 'volcano' : 'green'"
           >
-            {{ canSend === '2' ? '异常订单' : '正常订单'}}
+            {{ canSend === '2' ? $t("order.abnormalOrder") : $t("order.normalOrder")}}
           </a-tag>
         </template>
 
@@ -262,55 +262,55 @@ export default {
           customRender: (t, r, index) => parseInt(index) + 1
         },
         {
-          title: '店铺ID',
+          title: this.$t('invoice.shopID'),
           align: 'center',
           dataIndex: 'shopId_dictText',
           sorter: true
         },
         {
-          title: '物流渠道',
+          title: this.$t('invoice.logisticChannel'),
           align: 'center',
           dataIndex: 'logisticChannelName_dictText',
           sorter: true
         },
         {
-          title: '平台订单号码',
+          title: this.$t('invoice.platformOrderID'),
           align: 'center',
           dataIndex: 'platformOrderId',
           sorter: true
         },
         {
-          title: '平台订单交易号',
+          title: this.$t('invoice.platformOrderNumber'),
           align: 'center',
           dataIndex: 'platformOrderNumber',
           sorter: true
         },
         {
-          title: '物流跟踪号',
+          title: this.$t('invoice.trackingNumber'),
           align: 'center',
           dataIndex: 'trackingNumber',
           sorter: true
         },
         {
-          title: '订单交易时间',
+          title: this.$t('invoice.orderTime'),
           align: 'center',
           dataIndex: 'orderTime',
           sorter: true
         },
         {
-          title: '订单收件人',
+          title: this.$t('invoice.recipient'),
           align: 'center',
           dataIndex: 'recipient',
           sorter: true
         },
         {
-          title: '订单收件人国家',
+          title: this.$t('invoice.country'),
           align: 'center',
           dataIndex: 'country',
           sorter: true
         },
         {
-          title: 'ERP中状态',
+          title: this.$t('invoice.erpStatus'),
           align: 'center',
           dataIndex: 'erpStatus',
           sorter: true,
@@ -318,7 +318,7 @@ export default {
         },
 
         {
-          title: '是否有货',
+          title: this.$t('invoice.productAvailable'),
           align: 'center',
           dataIndex: 'productAvailable',
           sorter: true,
@@ -326,7 +326,7 @@ export default {
         },
 
         {
-          title: '待审核订单',
+          title: this.$t('invoice.toReview'),
           align: 'center',
           dataIndex: 'canSend',
           sorter: true,

@@ -184,4 +184,6 @@ public class SysUser implements Serializable {
 
     /**设备id uniapp推送用*/
     private String clientId;
+
+    private String language;
 }
