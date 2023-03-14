@@ -146,7 +146,9 @@
 </script>
 
 <style scoped>
-  .anty-img-wrap {
+@import '../../../assets/less/index.less';
+
+.anty-img-wrap {
     height: 25px;
     position: relative;
   }
@@ -159,5 +161,4 @@
     margin-top: 20px;
   }
 
-  @import '../../../assets/less/index.less';
 </style>
