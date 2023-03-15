@@ -72,14 +72,12 @@
       </a-table>
     </div>
 
-    <shipping-invoice-modal ref="modalForm" @ok="modalFormOk"/>
   </a-card>
 </template>
 
 <script>
 
   import { JeecgListMixin } from '@/mixins/JeecgListMixin';
-  import ShippingInvoiceModal from './modules/ShippingInvoiceModal';
   import '@assets/less/TableExpand.less';
   import { getAction, getFile } from '@api/manage'
   import {saveAs} from 'file-saver';
@@ -88,9 +86,6 @@
   export default {
     name: "ShippingInvoiceList",
     mixins:[JeecgListMixin],
-    components: {
-      ShippingInvoiceModal
-    },
     data () {
       return {
         description: '物流发票管理页面',
