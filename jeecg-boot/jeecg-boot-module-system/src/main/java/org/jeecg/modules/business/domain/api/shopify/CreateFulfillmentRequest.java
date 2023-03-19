@@ -13,7 +13,7 @@ public class CreateFulfillmentRequest extends ShopifyRequest {
     private final static String OTHER = "Other";
 
     private enum TransportCompany {
-        LA_POSTE("https://www.laposte.fr/outils/suivre-vos-envois?code=%s", "La Poste", "[69][A-Z]{1}[0-9]{11}"),
+        LA_POSTE("https://www.laposte.fr/outils/suivre-vos-envois?code=%s", "La Poste", "[69][A-Z]{1}[0-9]{11}|LP[0-9]{9}FR"),
         DPD_BE("https://www.dpdgroup.com/be/mydpd/my-parcels/track?parcelNumber=%s", "DPD", "06086316[0-9]{6}"),
         DPD_DE("https://www.dpd.com/de/de/", "DPD", "0150534[0-9]{7}"),
         DPD_AT("https://www.mydpd.at", "DPD", "06215167[0-9]{6}"),
@@ -39,8 +39,9 @@ public class CreateFulfillmentRequest extends ShopifyRequest {
         HERMES_GB("https://www.hermesworld.com/en/our-services/distribution/parcel-delivery/parcel-tracking/?trackingNo=%s", "Hermes", "T00D7A[0-9]{10}"),
         EVRI("https://www.evri.com/track/parcel/%s/details", "Evri", "H[0-9A-Z]{5}[0-9]{10}"),
         YODEL("https://www.yodel.co.uk/tracking/%s/%s", "Yodel", "JD[0-9]{16}"),
-        UK_ROYAL_MAIL("https://www.royalmail.com/track-your-item#/tracking-results/%s", "Royal Mail", "FJ002[0-9]{6}GB"),
+        UK_ROYAL_MAIL("https://www.royalmail.com/track-your-item#/tracking-results/%s", "Royal Mail", "(FJ002|WB788)[0-9]{6}GB"),
         POST_NL("https://postnl.post/", "PostNL International Mail", "LS[0-9]{9}NL"),
+        COLI_COLI("https://www.colicoli.fr/trackings?id=%s", "Coli Coli", "CC[0-9]{14}[A-Z]*"),
         ;
 
         private final String trackingUrl;
