@@ -267,9 +267,7 @@ export default {
       console.log(this.shopIDs)
       if (this.shopIDs.length !== 0) {
         this.loadAvailableDate()
-        if (this.shopIDs.length === this.shopList.length) {
-          this.$refs.selectAllCheckbox.checked = true;
-        }
+        this.$refs.selectAllCheckbox.checked = this.shopIDs.length === this.shopList.length;
       } else {
         this.startDate = null;
         this.endDate = null;
@@ -278,6 +276,7 @@ export default {
         this.dataDisable = true;
         this.completeInvoiceDisable = true;
         this.makeInvoiceDisable = true;
+        this.$refs.selectAllCheckbox.checked = false;
       }
     },
     selectAll(e) {
