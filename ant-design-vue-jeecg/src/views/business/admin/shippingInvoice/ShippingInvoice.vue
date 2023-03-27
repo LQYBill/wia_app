@@ -43,12 +43,23 @@
               <a-select
                 mode="multiple"
                 style="width: 100%"
-                placeholder="不选默认所有店铺"
+                placeholder="请选择店铺"
                 @change="handleShopChange"
                 :allowClear=true
                 v-model="shopIDs"
                 :disabled="shopDisable"
               >
+                <div slot='dropdownRender' slot-scope='menu'>
+                  <v-nodes :vnodes='menu' />
+                  <a-divider style='margin: 4px 0;' />
+                  <div
+                    style='padding: 4px 8px 8px 8px; cursor: pointer;'
+                    @mousedown='e => e.preventDefault()'
+                  >
+                    <a-checkbox ref="selectAllCheckbox" @change="selectAll" />
+                    全选
+                  </div>
+                </div>
                 <a-select-option
                   v-for="(item, index) in shopList"
                   :value="item.value"
@@ -128,7 +139,12 @@ import {postAction} from "@api/manage";
 
 export default {
   name: "GetInvoiceFile",
-  components: {},
+  components: {
+    VNodes: {
+      functional: true,
+      render: (h, ctx) => ctx.props.vnodes
+    }
+  },
   data() {
     return {
       queryParam: {},
@@ -251,6 +267,9 @@ export default {
       console.log(this.shopIDs)
       if (this.shopIDs.length !== 0) {
         this.loadAvailableDate()
+        if (this.shopIDs.length === this.shopList.length) {
+          this.$refs.selectAllCheckbox.checked = true;
+        }
       } else {
         this.startDate = null;
         this.endDate = null;
@@ -260,6 +279,18 @@ export default {
         this.completeInvoiceDisable = true;
         this.makeInvoiceDisable = true;
       }
+    },
+    selectAll(e) {
+       let checked = e.target.checked;
+       if (checked) {
+         let shopIds = []
+         this.shopList.map(shop => {
+           shopIds.push(shop.value)
+         })
+         this.handleShopChange(shopIds)
+       } else {
+         this.handleShopChange([])
+       }
     },
 
     /**
