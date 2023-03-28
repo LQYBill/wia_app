@@ -12,6 +12,7 @@ export const DEFAULT_MULTI_PAGE = 'DEFAULT_MULTI_PAGE'
 export const USER_NAME = 'Login_Username'
 export const USER_INFO = 'Login_Userinfo'
 export const USER_AUTH = 'LOGIN_USER_BUTTON_AUTH'
+export const USER_LANG = 'User_language';
 export const SYS_BUTTON_AUTH = 'SYS_BUTTON_AUTH'
 export const ENCRYPTED_STRING = 'ENCRYPTED_STRING'
 export const ENHANCE_PRE = 'enhance_'

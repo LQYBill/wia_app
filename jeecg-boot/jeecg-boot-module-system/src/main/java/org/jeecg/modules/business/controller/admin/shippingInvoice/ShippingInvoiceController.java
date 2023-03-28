@@ -1,5 +1,7 @@
 package org.jeecg.modules.business.controller.admin.shippingInvoice;
 
+import com.aspose.cells.SaveFormat;
+import com.aspose.cells.Workbook;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -24,6 +26,7 @@ import org.jeecgframework.poi.excel.view.JeecgEntityExcelView;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -34,6 +37,11 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.mail.*;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
@@ -41,10 +49,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -61,13 +68,18 @@ import java.util.stream.Stream;
 public class ShippingInvoiceController {
     @Autowired
     private IShippingInvoiceService shippingInvoiceService;
-
     private static final String EXTENSION = ".xlsx";
     @Value("${jeecg.path.shippingInvoiceDir}")
     private String INVOICE_LOCATION;
     @Value("${jeecg.path.shippingInvoiceDetailDir}")
     private String INVOICE_DETAIL_LOCATION;
+    @Value("${jeecg.path.shippingInvoicePdfDir}")
+    private String INVOICE_PDF_LOCATION;
+    @Value("${jeecg.path.shippingInvoiceDetailPdfDir}")
+    private String INVOICE_DETAIL_PDF_LOCAION;
 
+    @Autowired
+    Environment env;
     /**
      * 分页列表查询
      *
@@ -285,7 +297,6 @@ public class ShippingInvoiceController {
     public String getInvoiceList(String invoiceNumber, String filetype) {
         log.info("Invoice number : " + invoiceNumber);
         List<Path> pathList = new ArrayList<>();
-        //TODO : change PATH and add IFs
         if(filetype.equals("invoice")) {
             log.info("File asked is of type invoice");
             pathList = getPath(INVOICE_LOCATION, invoiceNumber);
@@ -315,7 +326,6 @@ public class ShippingInvoiceController {
      */
     @GetMapping(value = "/downloadCompleteInvoiceExcel")
     public ResponseEntity<?> download(@RequestParam("invoiceNumber") String invoiceNumber, @RequestParam("filetype") String filetype) throws IOException {
-
         String filename = getInvoiceList(invoiceNumber, filetype);
         if(!filename.equals("ERROR")) {
             File file = new File(filename);
@@ -344,6 +354,198 @@ public class ShippingInvoiceController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .contentType(MediaType.TEXT_PLAIN)
                     .body("Couldn't find the invoice file for : " + invoiceNumber);
+        }
+    }
+
+    public String convertToPdf(String invoiceNumber, String fileType) throws Exception {
+        String excelFilePath = getInvoiceList(invoiceNumber, fileType);// (C:\PATH\filename.xlsx)
+
+        if(!excelFilePath.equals("ERROR")) {
+            String pdfFilePath= INVOICE_PDF_LOCATION + "/" + invoiceNumber + ".pdf";
+            if(fileType.equals("invoice")){
+                pdfFilePath = INVOICE_PDF_LOCATION + "/Invoice N°" + invoiceNumber + ".pdf";
+            }
+            if(fileType.equals("detail")) {
+                pdfFilePath = INVOICE_DETAIL_PDF_LOCAION + "/Détail_calcul_de_facture_" + invoiceNumber + ".pdf";
+            }
+
+            Pattern p = Pattern.compile("^(.*)[\\/\\\\](.*)(\\.[a-z]+)"); //group(1): "C:\PATH" , group(2) : "filename", group(3): ".xlsx"
+            Matcher m = p.matcher(excelFilePath);
+            if (m.matches()) {
+                pdfFilePath = INVOICE_PDF_LOCATION + "/" + m.group(2) + ".pdf";
+            }
+            // Créé un classeur pour charger le fichier Excel
+            Workbook workbook = new Workbook(excelFilePath);
+            // On enregistre le document au format PDF
+            workbook.save(pdfFilePath, SaveFormat.PDF);
+            return pdfFilePath;
+        }
+        return "ERROR";
+    }
+    /**
+     *
+     * @param invoiceNumber
+     * @return
+     */
+    @GetMapping(value = "/downloadPdf")
+    public ResponseEntity<?> downloadPdf(@RequestParam("invoiceNumber") String invoiceNumber) throws Exception {
+        String pdfFilePath = convertToPdf(invoiceNumber, "invoice");
+        if(!pdfFilePath.equals("ERROR")) {
+            File file = new File(pdfFilePath);
+            HttpHeaders header = new HttpHeaders();
+            header.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + pdfFilePath);
+            header.add("Cache-Control", "no-cache, no-store, must-revalidate");
+            header.add("Pragma", "no-cache");
+            header.add("Expires", "0");
+
+            Path path = Paths.get(file.getAbsolutePath());
+
+            ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(path));
+
+            return ResponseEntity.ok()
+                    .headers(header)
+                    .contentLength(file.length())
+                    .contentType(MediaType.parseMediaType("application/pdf"))
+                    .body(resource);
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .contentType(MediaType.TEXT_PLAIN)
+                .body("Couldn't find the invoice file for : " + invoiceNumber);
+    }
+    @GetMapping(value = "/sendDetailsByEmail")
+    public Result<?> sendDetailsByEmail(@RequestParam("invoiceNumber") String invoiceNumber,
+                                        @RequestParam("invoiceID") String invoiceID,
+                                        @RequestParam("email") String email,
+                                        @RequestParam("invoiceEntity") String invoiceEntity) throws Exception {
+        String filePath = getInvoiceList(invoiceNumber, "detail");
+
+        Properties prop = new Properties();
+        prop.put("mail.smtp.auth", env.getProperty("spring.mail.properties.mail.smtp.auth"));
+        prop.put("mail.smtp.starttls.enable", env.getProperty("spring.mail.properties.mail.smtp.starttls.enable"));
+        prop.put("mail.smtp.host", env.getProperty("spring.mail.host"));
+        prop.put("mail.smtp.port", "587");
+        prop.put("mail.debug", "true");
+        Session session = Session.getInstance(prop, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(env.getProperty("spring.mail.username"), env.getProperty("spring.mail.password"));
+            }
+        });
+        try {
+            Message message = new MimeMessage(session);
+
+            message.setFrom(new InternetAddress(Objects.requireNonNull(env.getProperty("spring.mail.username"))));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(email));
+
+            message.setSubject("Détails de facture N°" + invoiceNumber);
+
+            BodyPart messageBodyPart = new MimeBodyPart();
+            String text = "<!DOCTYPE html>\n" +
+                    "<html>\n" +
+                    "    <body>\n" +
+                    "        <table align=\"center\" cellpadding=\"0\" cellspacing=\"0\" width=\"600\" bgcolor=\"#FFF\" style=\"font-family:Arial,Helvetica,sans-serif;text-align:center;table-layout:fixed;font-size: 16px;border: 1px solid #0B49A6\">\n" +
+                    "            <tbody>\n" +
+                    "                <tr>\n" +
+                    "                    <td width=\"600\" height=\"90\" bgcolor=\"#0B49A6\" valign=\"top\" align=\"center\" style=\"padding:20px 0;table-layout:fixed\">\n" +
+                    "                        <a href=\"http://app.wia-sourcing.com/user/login\">\n" +
+                    "                            <img src=\"https://wia-sourcing.com/wp-content/uploads/2022/10/Fichier-24Icons.png\" alt=\"logo\" width=\"360\" style=\"width:100%;max-width:360px;\">\n" +
+                    "                        </a>\n" +
+                    "                    </td>\n" +
+                    "                </tr>\n" +
+                    "                <tr>\n" +
+                    "                    <td align=\"left\">\n" +
+                    "                        <table width=\"520\" align=\"center\" style=\"color:#000;\">\n" +
+                    "                            <tbody>\n" +
+                    "                                <tr>\n" +
+                    "                                    <td style=\"padding:35px 0;\">Cher Client(e),</td>\n" +
+                    "                                </tr>\n" +
+                    "                                <tr>\n" +
+                    "                                    <td style=\"padding:0 0 35px 0;\">Vous trouverez en pièce-jointe le fichier que vous nous avez demandé :</td>\n" +
+                    "                                </tr>\n" +
+                    "                                <tr>\n" +
+                    "                                    <td style=\"padding:10px 0;\"><b>Type de fichier :</b> Détails de facture</td>\n" +
+                    "                                </tr>\n" +
+                    "                                <tr>\n" +
+                    "                                    <td style=\"padding:10px 0;\"><b>Client :</b> " + invoiceEntity + "</td>\n" +
+                    "                                </tr>\n" +
+                    "                                <tr>\n" +
+                    "                                    <td style=\"padding:10px 0;\"><b>Numéro de facture :</b> <a href=\"http://app.wia-sourcing.com/business/admin/shippingInvoice/Invoice?invoiceID=" + invoiceID + "\">" + invoiceNumber + "</a></td>\n" +
+                    "                                </tr>\n" +
+                    "                                <tr>\n" +
+                    "                                    <td style=\"padding:35px 0 5px 0;\">Merci d’utiliser nos services.</td>\n" +
+                    "                                </tr>\n" +
+                    "                                <tr>\n" +
+                    "                                    <td style=\"padding:5px 0;\">Cordialement</td>\n" +
+                    "                                </tr>\n" +
+                    "                                <tr>\n" +
+                    "                                    <td style=\"padding:5px 0 35px 0;\">L’équipe WIA Sourcing.</td>\n" +
+                    "                                </tr>\n" +
+                    "                            </tbody>\n" +
+                    "                        </table>\n" +
+                    "                    </td>\n" +
+                    "                </tr>\n" +
+                    "                <tr>\n" +
+                    "                    <td align=\"left\" bgcolor=\"#0B49A6\"  width=\"600\">\n" +
+                    "                        <table align=\"center\" width=\"520\">\n" +
+                    "                            <tbody>\n" +
+                    "                                <tr>\n" +
+                    "                                    <td style=\"font-style: italic;padding: 20px 0;\">Ce message a été envoyé automatiquement. Merci de ne pas répondre.Ce message et ainsi que toutes les pièces jointes sont confidentiels.</td>\n" +
+                    "                                </tr>\n" +
+                    "                                <tr>\n" +
+                    "                                    <td style=\"padding: 0 0 20px 0;\">Si vous avec reçu ce message par erreur, merci de nous avertir immédiatement et de détruire ce message.</td>\n" +
+                    "                                </tr>\n" +
+                    "                                <tr>\n" +
+                    "                                    <td>Service client :</td>\n" +
+                    "                                </tr>\n" +
+                    "                                <tr>\n" +
+                    "                                    <td>Pour obtenir plus d’informations concernant nos services, veuillez vous nous contacter à l’adresse ci dessous ou en visitant notre site web.</td>\n" +
+                    "                                </tr>\n" +
+                    "                            </tbody>\n" +
+                    "                        </table>\n" +
+                    "                        <table align=\"center\" width=\"520\" style=\"padding: 15px 0\">\n" +
+                    "                            <tbody>\n" +
+                    "                                <tr>\n" +
+                    "                                    <td width=\"220\" style=\"text-align:center;border-radius:2em;padding:20px 10px 20px 0;;\" bgcolor=\"#EF5A1A\"><a href=\"info@wia-sourcing.com\" style=\"color:white;text-decoration:none\">Nous contacter</a></td>\n" +
+                    "                                    <td width=\"40\"  ></td>\n" +
+                    "                                    <td width=\"220\" style=\"text-align:center;border-radius:2em;padding:20px 0 20px 10px;\" bgcolor=\"#EF5A1A\"><a href=\"https://wia-sourcing.com/\" style=\"color:white;text-decoration:none\">Notre site web</a></td>\n" +
+                    "                                </tr>\n" +
+                    "                            </tbody>\n" +
+                    "                        </table>\n" +
+                    "                        <table align=\"center\" width=\"520\" style=\"padding: 0 0 35px 0;\">\n" +
+                    "                            <tbody>\n" +
+                    "                                <tr>\n" +
+                    "                                    <td style=\"color:#EF5A1A;\">WIA SOURCING</td>\n" +
+                    "                                </tr>\n" +
+                    "                                <tr>\n" +
+                    "                                    <td>© 2018/2023 par WIA Sourcing Agency.</td>\n" +
+                    "                                </tr>\n" +
+                    "                                <tr>\n" +
+                    "                                    <td>TOUS DROITS RÉSERVÉS©</td>\n" +
+                    "                                </tr>\n" +
+                    "                            </tbody>\n" +
+                    "                        </table>\n" +
+                    "                    </td>\n" +
+                    "                </tr>\n" +
+                    "            </tbody>\n" +
+                    "        </table>\n" +
+                    "    </body>\n" +
+                    "</html>";
+            messageBodyPart.setContent(text, "text/html; charset=utf-8");
+
+            MimeBodyPart attachmentPart = new MimeBodyPart();
+            attachmentPart.attachFile(new File(filePath));
+
+            Multipart multipart = new MimeMultipart();
+            multipart.addBodyPart(messageBodyPart);
+            multipart.addBodyPart(attachmentPart);
+
+            message.setContent(multipart);
+            Transport.send(message);
+
+            return Result.OK("Email sent.");
+        }
+        catch(Exception e) {
+            return Result.error("An error occured while trying to send an email.");
         }
     }
 

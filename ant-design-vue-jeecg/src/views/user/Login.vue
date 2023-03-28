@@ -5,13 +5,13 @@
         :activeKey="customActiveKey"
         :tabBarStyle="{ textAlign: 'center', borderBottom: 'unset' }"
         @change="handleTabClick">
-        <a-tab-pane key="tab1" tab="登录">
+        <a-tab-pane key="tab1" :tab="$t('form.SignIn')">
           <a-form-item>
             <a-input
               size="large"
               v-decorator="['username',validatorRules.username,{ validator: this.handleUsernameOrEmail }]"
               type="text"
-              placeholder="请输入帐户名">
+              :placeholder="$t('form.InsertUsername')">
               <a-icon slot="prefix" type="user" :style="{ color: 'rgba(0,0,0,.25)' }"/>
             </a-input>
           </a-form-item>
@@ -22,7 +22,7 @@
               size="large"
               type="password"
               autocomplete="false"
-              placeholder="密码">
+              :placeholder="$t('form.Password')">
               <a-icon slot="prefix" type="lock" :style="{ color: 'rgba(0,0,0,.25)' }"/>
             </a-input>
           </a-form-item>
@@ -48,7 +48,7 @@
           class="login-button"
           :loading="loginBtn"
           @click.stop.prevent="handleSubmit"
-          :disabled="loginBtn">确定
+          :disabled="loginBtn">{{$t('form.Confirm')}}
         </a-button>
       </a-form-item>
     </a-form>
@@ -151,6 +151,7 @@ export default {
           //loginParams.password = encryption(values.password,that.encryptedString.key,that.encryptedString.iv)
           loginParams.password = values.password
           loginParams.remember_me = values.rememberMe
+          loginParams.language = this.$root.$i18n.locale
           // update-begin- --- author:scott ------ date:20190805 ---- for:密码加密逻辑暂时注释掉，有点问题
           console.log("登录参数", loginParams)
           that.Login(loginParams).then((res) => {

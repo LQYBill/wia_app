@@ -4,30 +4,29 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.alibaba.fastjson.JSONObject;
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.modules.business.controller.UserException;
 import org.jeecg.modules.business.domain.api.mabang.getorderlist.OrderStatus;
-import org.jeecg.modules.business.entity.PlatformOrder;
-import org.jeecg.modules.business.entity.PlatformOrderContent;
-import org.jeecg.modules.business.entity.Shop;
+import org.jeecg.modules.business.entity.*;
 import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
-import org.jeecg.modules.business.service.IShopService;
-import org.jeecg.modules.business.service.PlatformOrderShippingInvoiceService;
+import org.jeecg.modules.business.service.*;
 import org.jeecg.modules.business.vo.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -46,7 +45,12 @@ public class InvoiceController {
     private PlatformOrderMapper platformOrderMapper;
     @Autowired
     private PlatformOrderContentMapper platformOrderContentMap;
-
+    @Autowired
+    private IShippingInvoiceService iShippingInvoiceService;
+    @Autowired
+    private ISavRefundService iSavRefundService;
+    @Autowired
+    private IExchangeRatesService iExchangeRatesService;
 
     @GetMapping(value = "/shopsByClient")
     public Result<List<Shop>> getShopsByClient(@RequestParam("clientID") String clientID) {
@@ -274,4 +278,126 @@ public class InvoiceController {
         }
     }
 
+    // TODO : here
+    @GetMapping(value = "/checkInvoiceValidity")
+    public Result<?> checkInvoiceValidity(@RequestParam("invoiceID") String invoiceID, @RequestParam("email") String email, @RequestParam("orgCode") String orgCode) {
+        String invoiceNumber;
+        String customerFullName;
+        invoiceNumber = iShippingInvoiceService.getShippingInvoiceNumber(invoiceID);
+        // if invoice exists
+        if(invoiceNumber != null) {
+            // if user is a customer, we check if he's the owner of the shops
+            Client client = iShippingInvoiceService.getShopOwnerFromInvoiceNumber(invoiceNumber);
+            customerFullName = client.fullName();
+            String destEmail;
+            if(orgCode.contains("A04")) {
+                if(!client.getEmail().equals(email)) {
+                    return Result.error("Not authorized to view this page.");
+                }
+                else {
+                    destEmail = client.getEmail();
+                }
+            }
+            else {
+                destEmail = email;
+            }
+            JSONObject json = new JSONObject();
+            json.put("name", customerFullName);
+            json.put("email", destEmail);
+            json.put("invoiceEntity", client.getInvoiceEntity());
+            json.put("invoiceNumber", invoiceNumber);
+            json.put("currency", client.getCurrency());
+            return Result.OK(json);
+        }
+        return Result.error("Error 404 page not found.");
+    }
+
+    /**
+     *
+     * @param invoiceNumber
+     * @param originalCurrency
+     * @param targetCurrency
+     * @return
+     */
+    @GetMapping(value = "/invoiceData")
+    public Result<?> getInvoiceData(@RequestParam("invoiceNumber") String invoiceNumber,
+                                    @RequestParam("originalCurrency") String originalCurrency,
+                                    @RequestParam("targetCurrency") String targetCurrency
+    ){
+        InvoiceDatas invoiceDatas = new InvoiceDatas();
+
+        ShippingInvoice invoice = iShippingInvoiceService.getShippingInvoice(invoiceNumber);
+        List<PlatformOrder> platformOrderList = iShippingInvoiceService.getPlatformOrder(invoiceNumber);
+
+        List<BigDecimal> refundList = iSavRefundService.getRefundAmount(invoiceNumber);
+        Map<String, Map.Entry<Integer, BigDecimal>> feeAndQtyPerCountry = new HashMap<>(); // it maps number of order and shipping fee per country : <France,<250, 50.30>>, <UK, <10, 2.15>>
+        BigDecimal serviceFee = BigDecimal.ZERO; // po.order_service_fee + poc.service_fee
+        BigDecimal pickingFee = BigDecimal.ZERO; // To be implemented later po.picking_fee + poc.picking_fee
+        BigDecimal vat = BigDecimal.ZERO;
+        BigDecimal refund = BigDecimal.ZERO;
+
+        // on parcours toutes les commandes pour récupérer : country, order_service_fee, fret_fee, picking_fee
+        for(PlatformOrder p : platformOrderList) {
+            String country = countryNameFormatting(p.getCountry());
+
+            BigDecimal shippingFee = p.getFretFee() == null ? BigDecimal.ZERO : p.getFretFee(); // po.fret_fee + poc.shipping_fee
+            serviceFee = p.getOrderServiceFee() == null ? serviceFee : serviceFee.add(p.getOrderServiceFee()) ;
+            pickingFee = p.getPickingFee() == null ? pickingFee : pickingFee.add(p.getPickingFee());
+            List<PlatformOrderContent> poc = iShippingInvoiceService.getPlatformOrderContent(p.getId());
+            // le contenu des commandes pour la vat, service_fee, quantity et picking_fee
+            for(PlatformOrderContent pc : poc) {
+                serviceFee = pc.getServiceFee() == null ? serviceFee : serviceFee.add(pc.getServiceFee());
+                vat = pc.getVat() == null ? vat : vat.add(pc.getVat());
+                pickingFee = pc.getPickingFee() == null ? pickingFee : pickingFee.add(pc.getPickingFee());
+                shippingFee = pc.getShippingFee() == null ? shippingFee : shippingFee.add(pc.getShippingFee());
+            }
+            // On vérifie si on a déjà ce pays dans la map
+            // si oui on additionne la "qty" et "shipping fee"
+            // sinon on ajoute juste à la map
+            if(!feeAndQtyPerCountry.containsKey(country)) {
+                feeAndQtyPerCountry.put(country, new AbstractMap.SimpleEntry<>(1, shippingFee));
+            }
+            else {
+                BigDecimal existingGlobalFee = feeAndQtyPerCountry.get(country).getValue();
+                Integer existingOrderQuantity = feeAndQtyPerCountry.get(country).getKey();
+                existingOrderQuantity ++;
+                existingGlobalFee = existingGlobalFee.add(shippingFee);
+                feeAndQtyPerCountry.remove(country);
+                feeAndQtyPerCountry.put(country, new AbstractMap.SimpleEntry<>(existingOrderQuantity, existingGlobalFee));
+            }
+        }
+        // on fait la somme des remboursements
+        if(!refundList.isEmpty()) {
+            for (BigDecimal amount : refundList) {
+                refund = refund.add(amount);
+            }
+        }
+
+        // si la monnaie utilisé par le client n'est pas l'euro on calcul le total dans sa monnaie
+        if(!targetCurrency.equals(originalCurrency)) {
+            BigDecimal exchangeRate = iExchangeRatesService.getExchangeRate(originalCurrency,targetCurrency);
+            BigDecimal finalAmount = invoice.getFinalAmount().multiply(exchangeRate);
+            finalAmount = finalAmount.setScale(2, RoundingMode.DOWN);
+            invoiceDatas.setFinalAmount(finalAmount);
+        }
+        invoiceDatas.setInvoiceNumber(invoiceNumber);
+        invoiceDatas.setDiscount(invoice.getDiscountAmount());
+        invoiceDatas.setRefund(refund);
+        invoiceDatas.setVat(vat);
+        invoiceDatas.setFinalAmountEur(invoice.getFinalAmount());
+        invoiceDatas.setServiceFee(serviceFee.add(pickingFee));
+        invoiceDatas.setFeeAndQtyPerCountry(feeAndQtyPerCountry);
+
+        return Result.OK(invoiceDatas);
+    }
+
+    public String countryNameFormatting(String country) {
+        Pattern p = Pattern.compile("(\\w*)", Pattern.UNICODE_CHARACTER_CLASS);
+        Matcher m = p.matcher(country);
+        String res = "";
+        while(m.find()) {
+            res = res.concat(m.group(1));
+        }
+        return res;
+    }
 }

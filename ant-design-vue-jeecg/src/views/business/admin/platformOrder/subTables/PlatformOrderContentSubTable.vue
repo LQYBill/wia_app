@@ -58,7 +58,7 @@
         dataSource: [],
         columns: [
           {
-            title: '平台订单ID',
+            title: this.$t("invoice.platformOrderID"),
             align: 'center',
             dataIndex: 'platformOrderId_dictText'
           },
@@ -68,42 +68,42 @@
             dataIndex: 'skuId_dictText'
           },
           {
-            title: 'SKU数量',
+            title: this.$t("invoice.skuQty"),
             align: 'center',
             dataIndex: 'quantity',
           },
           {
-            title: '商品采购总费用',
+            title: this.$t("invoice.purchaseFee"),
             align: 'center',
             dataIndex: 'purchaseFee',
           },
           {
-            title: '物流总费用',
+            title: this.$t("invoice.shippingFee"),
             align: 'center',
             dataIndex: 'shippingFee',
           },
           {
-            title: '服务总费用',
+            title: this.$t("invoice.serviceFee"),
             align: 'center',
             dataIndex: 'serviceFee',
           },
           {
-            title: '增值税',
+            title: this.$t("invoice.vat"),
             align: 'center',
             dataIndex: 'vat',
           },
           {
-            title: 'SKU采购状态',
+            title: this.$t("invoice.skuPurchaseStatus"),
             align: 'center',
             dataIndex: 'status_dictText',
           },
           {
-            title: 'ERP中状态',
+            title: this.$t("invoice.erpStatus"),
             align: 'center',
             dataIndex: 'erpStatus',
           },
           {
-            title: '有货（1=有，0=没有）',
+            title: this.$t("invoice.productAvailable") + '(1='+this.$t("yes")+'，0='+this.$t("no")+'）',
             align: 'center',
             dataIndex: 'productAvailable',
           },

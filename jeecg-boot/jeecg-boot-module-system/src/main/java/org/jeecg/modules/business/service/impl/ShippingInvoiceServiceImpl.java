@@ -3,6 +3,8 @@ package org.jeecg.modules.business.service.impl;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.jeecg.modules.business.entity.Client;
+import org.jeecg.modules.business.entity.PlatformOrder;
+import org.jeecg.modules.business.entity.PlatformOrderContent;
 import org.jeecg.modules.business.entity.ShippingInvoice;
 import org.jeecg.modules.business.mapper.ShippingInvoiceMapper;
 import org.jeecg.modules.business.service.IShippingInvoiceService;
@@ -12,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @Description: 物流发票
@@ -65,6 +68,29 @@ public class ShippingInvoiceServiceImpl extends ServiceImpl<ShippingInvoiceMappe
     @Transactional
     public Client getShopOwnerFromInvoiceNumber(String invoiceNumber) {
         return shippingInvoiceMapper.fetchShopOwnerFromInvoiceNumber(invoiceNumber);
+    }
+
+    @Override
+    @Transactional
+    public String getShippingInvoiceNumber(String invoiceID) {
+        return shippingInvoiceMapper.fetchShippingInvoiceNumber(invoiceID);
+    }
+    @Override
+    @Transactional
+    public ShippingInvoice getShippingInvoice(String invoiceNumber) {
+        return shippingInvoiceMapper.fetchShippingInvoice(invoiceNumber);
+    }
+
+    @Override
+    @Transactional
+    public List<PlatformOrder> getPlatformOrder(String invoiceNumber) {
+        return shippingInvoiceMapper.fetchPlatformOrder(invoiceNumber);
+    }
+
+    @Override
+    @Transactional
+    public List<PlatformOrderContent> getPlatformOrderContent(String platformOrderId) {
+        return shippingInvoiceMapper.fetchPlatformOrderContent(platformOrderId);
     }
 
 }
