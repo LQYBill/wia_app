@@ -2,11 +2,11 @@
   <div class="app_container">
     <div class="change-locale" id="language_picker">
       <span>Change language: </span>
-      <a-radio-group :value="locale" @change="changeLocale">
+      <a-radio-group :default-value="en_US" @change="changeLocale">
         <a-radio-button key="en" :value="en_US">
           English
         </a-radio-button>
-        <a-radio-button key="cn" :value="zh_CN">
+        <a-radio-button :default-checked='false' key="cn" :value="zh_CN">
           中文
         </a-radio-button>
       </a-radio-group>
@@ -127,8 +127,8 @@ export function changeLocale(e) {
     justify-content: space-between;
     align-items: center;
     position: absolute;
-    /*background: #1890FF;*/
-    background: red;
+    color: white;
+    background:  rgb(11, 73, 166);
     width: 200px;
     height: 100px;
     left: 50%;
@@ -138,6 +138,7 @@ export function changeLocale(e) {
     transform: translateY(0.5em);
     transition: all 0.5s ease-in-out;
     border-radius: 0 0 0.5em 0.5em;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   }
   #language_picker.open {
     top: 0;
@@ -153,7 +154,7 @@ export function changeLocale(e) {
     background: rgba(0,0,0,0.2);
   }
   #language_picker #langMenuArrow > i{
-    border: solid black;
+    border: solid white;
     border-width: 0 2px 2px 0;
     display: block;
     margin: auto;

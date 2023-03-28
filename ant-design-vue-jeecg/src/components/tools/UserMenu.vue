@@ -1,16 +1,5 @@
 <template>
   <div class="user-wrapper" :class="theme">
-    <!-- TRANSLATION BUTTONS -->
-    <div class="change-locale" style='float: right'>
-      <a-radio-group :value="locale" @change="changeLocale">
-        <a-radio-button key="en" :value="en_US"> <!-- @click="$emit('languageEvent', 'en_US')-->
-          English
-        </a-radio-button>
-        <a-radio-button key="cn" :value="zh_CN">  <!--@click="$emit('languageEvent', 'zh_CN')"-->
-          中文
-        </a-radio-button>
-      </a-radio-group>
-    </div>
     <!-- update_begin author:zhaoxin date:20191129 for: 做头部菜单栏导航 -->
     <!-- update-begin author:sunjianlei date:20191@20 for: 解决全局样式冲突的问题 -->
     <span class="action" @click="showClick">
@@ -274,22 +263,6 @@
         })
       },
       /*update_end author:liushaoqian date:20200507 for: 刷新缓存*/
-      changeLocale(e) {
-        this.locale = e.target.value;
-        console.log(this.locale);
-        console.log(i18n.locale);
-        switch (e.target.value) {
-          case this.zh_CN:
-            this.$root.$i18n.locale = 'zh_CN';
-            break;
-          case this.en_US:
-            this.$root.$i18n.locale = 'en_US';
-            break;
-          default:
-            console.log("what did you say ?");
-            break;
-        }
-      },
     }
   }
 </script>

@@ -76,7 +76,7 @@ export default {
       final_total_customer_curr: 0,
       keyNumber: 0,
       invoice_type: null,
-      invoiceContentLoading: false,
+      invoiceContentLoading: true,
       downloadReady: false,
       hasEmail: false,
       failedPdfList:[],
