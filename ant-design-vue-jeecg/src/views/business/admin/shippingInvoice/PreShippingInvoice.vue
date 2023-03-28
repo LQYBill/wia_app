@@ -4,7 +4,7 @@
     <div class='table-page-search-wrapper'>
       <!-- 搜索区域 -->
       <a-form-model layout='inline' :model='form' ref='searchForm' :rules='rules'>
-        <a-row :gutter='24'>
+        <a-row :gutter='24' style='height: 100%'>
           <a-col
             :md='6'
             :sm='8'
@@ -52,7 +52,19 @@
                 :allowClear=true
                 v-model='shopIDs'
                 :disabled='shopDisable'
+                maxTagCount = '1'
               >
+                <div slot='dropdownRender' slot-scope='menu'>
+                  <v-nodes :vnodes='menu' />
+                  <a-divider style='margin: 4px 0;' />
+                  <div
+                    style='padding: 4px 8px 8px 8px; cursor: pointer;'
+                    @mousedown='e => e.preventDefault()'
+                  >
+                    <a-checkbox ref="selectAllCheckbox" @change="selectAll" />
+                    全选
+                  </div>
+                </div>
                 <a-select-option
                   v-for='(item, index) in shopList'
                   :value='item.value'
@@ -216,9 +228,13 @@ import moment from 'moment'
 import PlatformOrderContentSubTable from '../platformOrder/subTables/PlatformOrderContentSubTable'
 
 export default {
-  name: 'GetInvoiceFile',
+  name: 'PreShippingInvoice',
   components: {
-    PlatformOrderContentSubTable
+    PlatformOrderContentSubTable,
+    VNodes: {
+      functional: true,
+      render: (h, ctx) => ctx.props.vnodes
+    }
   },
   data() {
     return {
@@ -409,6 +425,19 @@ export default {
       console.log(this.shopIDs)
       if (this.shopIDs.length === 0) {
         this.dataDisable = true
+      }
+      this.$refs.selectAllCheckbox.checked = this.shopIDs.length === this.shopList.length;
+    },
+    selectAll(e) {
+      let checked = e.target.checked;
+      if (checked) {
+        let shopIds = []
+        this.shopList.map(shop => {
+          shopIds.push(shop.value)
+        })
+        this.handleShopChange(shopIds)
+      } else {
+        this.handleShopChange([])
       }
     },
     handleExpand(expanded, record) {
