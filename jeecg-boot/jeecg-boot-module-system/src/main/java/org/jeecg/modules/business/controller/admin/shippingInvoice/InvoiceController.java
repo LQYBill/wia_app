@@ -25,6 +25,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.ParseException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -336,7 +338,8 @@ public class InvoiceController {
 
         // on parcours toutes les commandes pour récupérer : country, order_service_fee, fret_fee, picking_fee
         for(PlatformOrder p : platformOrderList) {
-            String country = p.getCountry();
+            String country = countryNameFormatting(p.getCountry());
+
             BigDecimal shippingFee = p.getFretFee() == null ? BigDecimal.ZERO : p.getFretFee(); // po.fret_fee + poc.shipping_fee
             serviceFee = p.getOrderServiceFee() == null ? serviceFee : serviceFee.add(p.getOrderServiceFee()) ;
             pickingFee = p.getPickingFee() == null ? pickingFee : pickingFee.add(p.getPickingFee());
@@ -386,5 +389,15 @@ public class InvoiceController {
         invoiceDatas.setFeeAndQtyPerCountry(feeAndQtyPerCountry);
 
         return Result.OK(invoiceDatas);
+    }
+
+    public String countryNameFormatting(String country) {
+        Pattern p = Pattern.compile("(\\w*)", Pattern.UNICODE_CHARACTER_CLASS);
+        Matcher m = p.matcher(country);
+        String res = "";
+        while(m.find()) {
+            res = res.concat(m.group(1));
+        }
+        return res;
     }
 }

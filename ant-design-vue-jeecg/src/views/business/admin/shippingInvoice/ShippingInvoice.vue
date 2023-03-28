@@ -10,13 +10,13 @@
             :sm="8"
           >
             <a-form-item
-              label="客户"
+              :label="$t('invoice.customer')"
               :labelCol="{span: 5}"
               :wrapperCol="{span: 18}"
             >
               <a-select
                 show-search
-                placeholder="输入客户进行搜索"
+                :placeholder="$t('invoice.clientInputSearch')"
                 option-filter-prop="children"
                 :filter-option="customerFilterOption"
                 @change="handleClientChange"
@@ -36,14 +36,14 @@
             :sm="8"
           >
             <a-form-item
-              label="店铺"
+              :label="$t('invoice.shop')"
               :labelCol="{span: 5}"
               :wrapperCol="{span: 18}"
             >
               <a-select
                 mode="multiple"
                 style="width: 100%"
-                placeholder="不选默认所有店铺"
+                :placeholder="$t('invoice.defaultAllShopSelected')"
                 @change="handleShopChange"
                 :allowClear=true
                 v-model="shopIDs"
@@ -64,7 +64,7 @@
             :sm="8"
           >
             <a-form-item
-              label="开始时间"
+              :label="$t('startDate')"
               :labelCol="{span: 5}"
               :wrapperCol="{span: 14}"
             >
@@ -89,7 +89,7 @@
                 :loading="buttonLoading"
                 :disabled="makeInvoiceDisable"
                 @click="makeInvoice"
-              >生成文件</a-button>
+              >{{$t("invoice.generateDocument")}}</a-button>
             </a-col>
           </span>
           <!--  Button to make complete bill of both purchases and transport fee AFTER customer receives merchandise
@@ -110,7 +110,7 @@
                 :loading='invoiceLoading'
                 @click='makeCompletePostInvoice'
                 :disabled='completeInvoiceDisable'
-              >生成完整（物流收后+采购）发票文件</a-button>
+              >{{$t("invoice.generateInvoice7post")}}</a-button>
             </a-col>
           </span>
         </a-row>

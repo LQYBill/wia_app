@@ -11,40 +11,28 @@
 
     <!-- 操作按钮区域 -->
     <div class="table-operator">
-      <a-button @click="handleAdd" type="primary" icon="plus">新增</a-button>
-      <a-button type="primary" icon="download" @click="handleExportXls('物流发票')">导出</a-button>
-      <a-upload name="file" :showUploadList="false" :multiple="false" :headers="tokenHeader" :action="importExcelUrl" @change="handleImportExcel">
-        <a-button type="primary" icon="import">导入</a-button>
-      </a-upload>
-      <!-- 高级查询区域 -->
-      <j-super-query :fieldList="superFieldList" ref="superQueryModal" @handleSuperQuery="handleSuperQuery"></j-super-query>
-      <a-dropdown v-if="selectedRowKeys.length > 0">
-        <a-menu slot="overlay">
-          <a-menu-item key="1" @click="batchDel"><a-icon type="delete"/>删除</a-menu-item>
-        </a-menu>
-        <a-button style="margin-left: 8px"> 批量操作 <a-icon type="down" /></a-button>
-      </a-dropdown>
+      <a-button type="primary" icon="download" @click="handleExportXls('物流发票')">{{$t("operation.export")}}</a-button>
       <!-- button to download invoice of selected rows -->
       <a-button v-if="selectedRowKeys.length > 0"
         type='dashed'
         icon="download"
         @click='downloadInvoiceExcel("invoice")'
         :disabled='downloadCompleteInvoiceExcelVisible'
-      >download invoice</a-button>
+      >{{$t("invoice.downloadInvoice")}}</a-button>
       <!-- button to download invoice details of selected rows -->
       <a-button v-if="selectedRowKeys.length > 0"
         type='dashed'
         icon="download"
         @click='downloadInvoiceExcel("detail")'
         :disabled='downloadCompleteInvoiceExcelVisible'
-      >download details</a-button>
+      >{{$t("invoice.downloadDetails")}}</a-button>
     </div>
 
     <!-- table区域-begin -->
     <div>
       <div class="ant-alert ant-alert-info" style="margin-bottom: 16px;">
-        <i class="anticon anticon-info-circle ant-alert-icon"></i> 已选择 <a style="font-weight: 600">{{ selectedRowKeys.length }}</a>项
-        <a style="margin-left: 24px" @click="onClearSelected">清空</a>
+        <i class="anticon anticon-info-circle ant-alert-icon"></i> {{$t("operation.selected")}} <a style="font-weight: 600">{{ selectedRowKeys.length }}</a>{{$t("operation.item")}}
+        <a style="margin-left: 24px" @click="onClearSelected">{{$t("operation.clear")}}</a>
       </div>
 
       <a-table
@@ -81,36 +69,15 @@
           </a-button>
         </template>
 
-        <span slot="action" slot-scope="text, record">
-          <a @click="handleEdit(record)">编辑</a>
-
-          <a-divider type="vertical" />
-          <a-dropdown>
-            <a class="ant-dropdown-link">更多 <a-icon type="down" /></a>
-            <a-menu slot="overlay">
-              <a-menu-item>
-                <a @click="handleDetail(record)">详情</a>
-              </a-menu-item>
-              <a-menu-item>
-                <a-popconfirm title="确定删除吗?" @confirm="() => handleDelete(record.id)">
-                  <a>删除</a>
-                </a-popconfirm>
-              </a-menu-item>
-            </a-menu>
-          </a-dropdown>
-        </span>
-
       </a-table>
     </div>
 
-    <shipping-invoice-modal ref="modalForm" @ok="modalFormOk"/>
   </a-card>
 </template>
 
 <script>
 
   import { JeecgListMixin } from '@/mixins/JeecgListMixin';
-  import ShippingInvoiceModal from './modules/ShippingInvoiceModal';
   import '@assets/less/TableExpand.less';
   import { getAction, getFile } from '@api/manage'
   import {saveAs} from 'file-saver';
@@ -119,9 +86,6 @@
   export default {
     name: "ShippingInvoiceList",
     mixins:[JeecgListMixin],
-    components: {
-      ShippingInvoiceModal
-    },
     data () {
       return {
         description: '物流发票管理页面',
@@ -138,50 +102,42 @@
             }
           },
           {
-            title:'创建人',
+            title: this.$t("invoice.createBy"),
             align:"center",
             sorter: true,
             dataIndex: 'createBy'
           },
           {
-            title:'创建日期',
+            title: this.$t("invoice.createDate"),
             align:"center",
             sorter: true,
             dataIndex: 'createTime'
           },
           {
-            title:'发票号码',
+            title: this.$t("invoice.invoiceNumber"),
             align:"center",
             sorter: true,
             dataIndex: 'invoiceNumber'
           },
           {
-            title:'应付金额',
+            title: this.$t("invoice.totalAmountDue"),
             align:"center",
             dataIndex: 'totalAmount'
           },
           {
-            title:'减免金额',
+            title: this.$t("invoice.discountAmount"),
             align:"center",
             dataIndex: 'discountAmount'
           },
           {
-            title:'最终金额',
+            title: this.$t("invoice.finalAmount"),
             align:"center",
             dataIndex: 'finalAmount'
           },
           {
-            title:'已付金额',
+            title: this.$t("invoice.paidAmount"),
             align:"center",
             dataIndex: 'paidAmount'
-          },
-          {
-            title: '操作',
-            dataIndex: 'action',
-            align:"center",
-            fixed:"right",
-            width:147,
-            scopedSlots: { customRender: 'action' },
           }
         ],
         url: {

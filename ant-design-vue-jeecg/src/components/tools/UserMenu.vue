@@ -102,11 +102,21 @@
   import Vue from 'vue'
   import { UI_CACHE_DB_DICT_DATA } from "@/store/mutation-types"
 
+  import en_US from 'ant-design-vue/lib/locale-provider/en_US'
+  import zh_CN from 'ant-design-vue/es/locale/zh_CN';
+  import moment from 'moment';
+  import 'moment/locale/zh-cn';
+  import i18n from '@/i18n'
+
   export default {
     name: "UserMenu",
     mixins: [mixinDevice],
     data(){
       return{
+        locale: zh_CN,
+        moment,
+        en_US,
+        zh_CN,
         // update-begin author:sunjianlei date:20200219 for: 头部菜单搜索规范命名 --------------
         searchMenuOptions:[],
         searchMenuComp: 'span',
@@ -251,7 +261,7 @@
           this.$message.warn("刷新缓存失败！");
           console.log("刷新失败",e)
         })
-      }
+      },
       /*update_end author:liushaoqian date:20200507 for: 刷新缓存*/
     }
   }
@@ -282,4 +292,11 @@
     color: inherit;
     text-decoration: none;
   }
+</style>
+<style>
+.user-wrapper {
+  display: flex;
+  justify-content: stretch;
+  align-items: center;
+}
 </style>
