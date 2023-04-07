@@ -107,4 +107,10 @@ public class LogisticChannel implements Serializable {
     @Excel(name = "渠道编码", width = 15)
     @ApiModelProperty(value = "渠道编码")
     private String code;
+    /**
+     * 仓库是否在中国
+     */
+    @Excel(name = "中国仓库", width = 15)
+    @ApiModelProperty(value = "中国仓库")
+    private String warehouseInChina;
 }

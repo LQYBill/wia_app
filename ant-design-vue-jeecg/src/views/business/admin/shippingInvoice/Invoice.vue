@@ -215,6 +215,22 @@ export default {
               total_amount: res.result.serviceFee
             });
             this.keyNumber = this.keyNumber+1;
+            // PICKING FEE
+            this.dataSource.push({
+              key: this.keyNumber,
+              description: "Total picking fee",
+              quantity: null,
+              total_amount: res.result.pickingFee
+            });
+            this.keyNumber = this.keyNumber+1;
+            // PACKAGING MATERIAL FEE
+            this.dataSource.push({
+              key: this.keyNumber,
+              description: "Total packaging material fee",
+              quantity: null,
+              total_amount: res.result.packagingMaterialFee
+            });
+            this.keyNumber = this.keyNumber+1;
             // REFUND
             if(res.result.refund > 0) {
               this.dataSource.push({

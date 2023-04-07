@@ -91,4 +91,10 @@ public class Shop implements Serializable {
     @Excel(name = "订单服务费", width = 15)
     @ApiModelProperty(value = "订单服务费")
     private java.math.BigDecimal orderServiceFee;
+    /**
+     * 包材费
+     */
+    @Excel(name = "包材费", width = 15)
+    @ApiModelProperty(value = "包材费")
+    private java.math.BigDecimal packagingMaterialFee;
 }
