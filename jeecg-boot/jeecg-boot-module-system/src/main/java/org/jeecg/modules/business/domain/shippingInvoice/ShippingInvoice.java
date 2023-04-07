@@ -57,7 +57,7 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
         BigDecimal vatForEU = BigDecimal.ZERO;
         BigDecimal totalServiceFees = BigDecimal.ZERO;
         BigDecimal totalPickingFees = BigDecimal.ZERO;
-        BigDecimal countryPackageMatFeePerOrder = null;
+         BigDecimal totalPackageMatFeePerOrder = BigDecimal.ZERO;
         for (Map.Entry<String, List<PlatformOrder>> entry : countryPackageMap.entrySet()) {
             String country = entry.getKey();
             List<PlatformOrder> orders = entry.getValue();
@@ -68,7 +68,7 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
             BigDecimal countryServiceFeesPerSKU = BigDecimal.ZERO;
             BigDecimal countryPickingFeesPerOrder = BigDecimal.ZERO;
             BigDecimal countryPickingFeesPerSKU = BigDecimal.ZERO;
-            countryPackageMatFeePerOrder = BigDecimal.ZERO;
+            BigDecimal countryPackageMatFeePerOrder = BigDecimal.ZERO;
             for (PlatformOrder po : orders) {
                 countryFretFees = countryFretFees.add(po.getFretFee());
                 countryServiceFeesPerOrder = countryServiceFeesPerOrder.add(po.getOrderServiceFee());
@@ -83,6 +83,7 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
             }
             totalServiceFees = totalServiceFees.add(countryServiceFeesPerOrder).add(countryServiceFeesPerSKU);
             totalPickingFees = totalPickingFees.add(countryPickingFeesPerOrder).add(countryPickingFeesPerSKU);
+            totalPackageMatFeePerOrder = totalPackageMatFeePerOrder.add(countryPackageMatFeePerOrder);
             Row<String, Object, Integer, Object, BigDecimal> row = new Row<>(
                     String.format("Total shipping cost for %s", country),
                     null,
@@ -125,11 +126,11 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
         );
         rows.add(pickingFeeRow);
         Row<String, Object, Integer, Object, BigDecimal> packageMatFeeRow = new Row<>(
-                "Total picking fee",
+                "Total packaging material fee",
                 null,
                 null,
                 null,
-                countryPackageMatFeePerOrder
+                totalPackageMatFeePerOrder
         );
         rows.add(packageMatFeeRow);
         if (savRefunds != null) {

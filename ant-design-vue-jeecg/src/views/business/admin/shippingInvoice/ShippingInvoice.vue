@@ -48,6 +48,7 @@
                 :allowClear=true
                 v-model="shopIDs"
                 :disabled="shopDisable"
+                maxTagCount = '1'
               >
                 <div slot='dropdownRender' slot-scope='menu'>
                   <v-nodes :vnodes='menu' />
@@ -406,9 +407,7 @@ export default {
         this.purchasePricesAvailable = false;
         return
       }
-      else {
-        this.makeInvoiceDisable = false;
-      }
+      this.makeInvoiceDisable = false;
       const param = {
         clientID: this.customerId,
         shopIDs: this.shopIDs,

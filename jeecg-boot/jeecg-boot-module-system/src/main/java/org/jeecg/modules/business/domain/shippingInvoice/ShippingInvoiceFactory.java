@@ -444,7 +444,7 @@ public class ShippingInvoiceFactory {
             LogisticChannelPrice price = logisticChannelPair.getRight();
             // update attributes of orders and theirs content
             BigDecimal packageMatFee = shopPackageMatFeeMap.get(uninvoicedOrder.getShopId());
-            if(packageMatFee.compareTo(BigDecimal.ZERO) > 0 && logisticChannelPair.getLeft().getWarehouseInChina().equals("1")) {
+            if(packageMatFee.compareTo(BigDecimal.ZERO) > 0 && logisticChannelPair.getLeft().getWarehouseInChina().equalsIgnoreCase("0")) {
                 uninvoicedOrder.setPackagingMaterialFee(packageMatFee);
             }
             uninvoicedOrder.setFretFee(price.getRegistrationFee());
