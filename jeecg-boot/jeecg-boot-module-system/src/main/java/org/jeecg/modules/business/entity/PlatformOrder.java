@@ -216,4 +216,10 @@ public class PlatformOrder implements Serializable {
     @Excel(name = "海外仓操作费", width = 15)
     @ApiModelProperty(value = "海外仓操作费")
     private java.math.BigDecimal pickingFee;
+    /**
+     * 包材费
+     */
+    @Excel(name = "包材费", width = 15)
+    @ApiModelProperty(value = "包材费")
+    private java.math.BigDecimal packagingMaterialFee;
 }

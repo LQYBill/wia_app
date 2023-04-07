@@ -406,6 +406,9 @@ export default {
         this.purchasePricesAvailable = false;
         return
       }
+      else {
+        this.makeInvoiceDisable = false;
+      }
       const param = {
         clientID: this.customerId,
         shopIDs: this.shopIDs,
@@ -423,7 +426,6 @@ export default {
             this.$message.warning(res.message);
           }
           this.completeInvoiceDisable = !this.purchasePricesAvailable;
-          this.makeInvoiceDisable = !this.purchasePricesAvailable;
           // if purchasePricesAvailable then enable the red button
           console.log("button disabled for complete invoice : " + this.completeInvoiceDisable);
         });

@@ -20,7 +20,7 @@
         WHERE s.invoice_number = #{invoiceNumber}
     </select>
     <select id="fetchPlatformOrder" resultType="org.jeecg.modules.business.entity.PlatformOrder">
-        SELECT id, fret_fee, country, order_service_fee
+        SELECT id, fret_fee, country, order_service_fee, packaging_material_fee
         FROM platform_order p
         WHERE p.shipping_invoice_number = #{invoiceNumber}
     </select>

@@ -16,6 +16,10 @@ public class InvoiceDatas {
     private BigDecimal vat;
     @JSONField(name = "serviceFee")
     private BigDecimal serviceFee;
+    @JSONField(name = "pickingFee")
+    private BigDecimal pickingFee;
+    @JSONField(name = "packagingMaterialFee")
+    private BigDecimal packagingMaterialFee;
     @JSONField(name = "discount")
     private BigDecimal discount;
     @JSONField(name = "refund")

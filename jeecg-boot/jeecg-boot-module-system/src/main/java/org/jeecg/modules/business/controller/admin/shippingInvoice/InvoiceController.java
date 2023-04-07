@@ -332,7 +332,8 @@ public class InvoiceController {
         List<BigDecimal> refundList = iSavRefundService.getRefundAmount(invoiceNumber);
         Map<String, Map.Entry<Integer, BigDecimal>> feeAndQtyPerCountry = new HashMap<>(); // it maps number of order and shipping fee per country : <France,<250, 50.30>>, <UK, <10, 2.15>>
         BigDecimal serviceFee = BigDecimal.ZERO; // po.order_service_fee + poc.service_fee
-        BigDecimal pickingFee = BigDecimal.ZERO; // To be implemented later po.picking_fee + poc.picking_fee
+        BigDecimal pickingFee = BigDecimal.ZERO;
+        BigDecimal packagingMatFee = BigDecimal.ZERO;
         BigDecimal vat = BigDecimal.ZERO;
         BigDecimal refund = BigDecimal.ZERO;
 
@@ -343,6 +344,7 @@ public class InvoiceController {
             BigDecimal shippingFee = p.getFretFee() == null ? BigDecimal.ZERO : p.getFretFee(); // po.fret_fee + poc.shipping_fee
             serviceFee = p.getOrderServiceFee() == null ? serviceFee : serviceFee.add(p.getOrderServiceFee()) ;
             pickingFee = p.getPickingFee() == null ? pickingFee : pickingFee.add(p.getPickingFee());
+            packagingMatFee = p.getPackagingMaterialFee() == null ? packagingMatFee : packagingMatFee.add(p.getPackagingMaterialFee());
             List<PlatformOrderContent> poc = iShippingInvoiceService.getPlatformOrderContent(p.getId());
             // le contenu des commandes pour la vat, service_fee, quantity et picking_fee
             for(PlatformOrderContent pc : poc) {
@@ -385,7 +387,9 @@ public class InvoiceController {
         invoiceDatas.setRefund(refund);
         invoiceDatas.setVat(vat);
         invoiceDatas.setFinalAmountEur(invoice.getFinalAmount());
-        invoiceDatas.setServiceFee(serviceFee.add(pickingFee));
+        invoiceDatas.setServiceFee(serviceFee);
+        invoiceDatas.setPickingFee(pickingFee);
+        invoiceDatas.setPackagingMaterialFee(packagingMatFee);
         invoiceDatas.setFeeAndQtyPerCountry(feeAndQtyPerCountry);
 
         return Result.OK(invoiceDatas);

@@ -16,6 +16,7 @@ SELECT s.name                                      AS 'Boutique',
        SUM(poc.shipping_fee)                       AS 'Frais de livraison',
        po.order_service_fee + SUM(poc.service_fee) AS 'Frais de service',
        po.picking_fee + SUM(poc.picking_fee)       AS 'Frais de préparation',
+       po.packaging_material_fee                   AS 'Frais de matériel d\'emballage',
        SUM(poc.vat)                                AS 'TVA',
        po.shipping_invoice_number                  AS 'N° de facture'
 FROM platform_order po
