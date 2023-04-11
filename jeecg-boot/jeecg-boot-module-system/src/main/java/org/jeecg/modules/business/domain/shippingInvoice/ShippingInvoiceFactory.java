@@ -115,7 +115,7 @@ public class ShippingInvoiceFactory {
      *                       channel price, this exception will be thrown.
      */
     @Transactional
-    public ShippingInvoice createPreShippingInvoice(String customerId, List<String> ordersIds) throws UserException {
+    public ShippingInvoice createShippingInvoice(String customerId, List<String> ordersIds, String type) throws UserException {
         log.info("Creating a invoice with arguments:\n client ID: {}, order IDs: {}]", customerId, ordersIds);
         // find orders and their contents of the invoice
         Map<PlatformOrder, List<PlatformOrderContent>> uninvoicedOrderToContent = platformOrderService.fetchOrderData(ordersIds);
@@ -125,11 +125,16 @@ public class ShippingInvoiceFactory {
                 .distinct()
                 .collect(Collectors.toList());
         log.info("Orders to be invoiced: {}", uninvoicedOrderToContent);
-        return createInvoice(customerId, shopIds, uninvoicedOrderToContent, null, "Pre-Shipping fees", true);
+        if(type.equals("pre-shipping"))
+            return createInvoice(customerId, shopIds, uninvoicedOrderToContent, null, "Pre-Shipping fees", true);
+        else if (type.equals("all"))
+            return createInvoice(customerId, shopIds, uninvoicedOrderToContent, null, "All Shipping fees", true);
+        else
+            throw new UserException("Couldn't create shipping invoice of unknown type.");
     }
 
     /**
-     * Creates a complete pre-shipping (purchase + shipping) invoice for a client
+     * Creates a complete shipping (purchase + shipping) invoice for a client
      * <p>
      * To generate an invoice, it
      * <ol>
@@ -144,13 +149,13 @@ public class ShippingInvoiceFactory {
      * @param username   current username
      * @param customerId the customer id
      * @param ordersIds  the list of order IDs
-     * @param shippingMethod true : postShipping; false : preShipping
+     * @param shippingMethod "post" = postShipping, "pre" = preShipping, "all" = all shipping methods
      * @return the generated invoice
      * @throws UserException if package used by the invoice can not or find more than 1 logistic
      *                       channel price, this exception will be thrown.
      */
     @Transactional
-    public CompleteInvoice createCompletePreShippingInvoice(String username, String customerId, List<String> ordersIds, boolean shippingMethod) throws UserException {
+    public CompleteInvoice createCompleteShippingInvoice(String username, String customerId, List<String> ordersIds, String shippingMethod) throws UserException {
         log.info("Creating a complete invoice for \n client ID: {}, order IDs: {}]", customerId, ordersIds);
         // find orders and their contents of the invoice
         Map<PlatformOrder, List<PlatformOrderContent>> uninvoicedOrderToContent = platformOrderService.fetchOrderData(ordersIds);
@@ -160,11 +165,17 @@ public class ShippingInvoiceFactory {
                 .distinct()
                 .collect(Collectors.toList());
         log.info("Orders to be invoiced: {}", uninvoicedOrderToContent);
-        if(shippingMethod) {
+        if(shippingMethod.equals("post")) {
             return createInvoice(username, customerId, shopIds, uninvoicedOrderToContent, "Purchase and post-Shipping fees");
         }
-        else {
+        else if (shippingMethod.equals("pre-shipping")) {
             return createInvoice(username, customerId, shopIds, uninvoicedOrderToContent, "Purchase and pre-Shipping fees");
+        }
+        else if (shippingMethod.equals("all")) {
+            return createInvoice(username, customerId, shopIds, uninvoicedOrderToContent, "Purchase and all Shipping fees");
+        }
+        else {
+            throw new UserException("Couldn't create complete invoice for unknown shipping method");
         }
     }
 

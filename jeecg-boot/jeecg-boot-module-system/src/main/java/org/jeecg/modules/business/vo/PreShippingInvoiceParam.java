@@ -2,29 +2,13 @@ package org.jeecg.modules.business.vo;
 
 import java.util.List;
 
-public class PreShippingInvoiceParam {
+public class PreShippingInvoiceParam extends AbstractShippingInvoiceParam{
 
-    private final String clientID;
-
-    private final List<String> orderIds;
-
-    public PreShippingInvoiceParam(String clientID, List<String> orderIds) {
-        this.clientID = clientID;
-        this.orderIds = orderIds;
+    private static String type = "pre-shipping";
+    public PreShippingInvoiceParam(String clientID, List<String> orderIds, String type) {
+        super(clientID, orderIds);
+        this.type = type;
     }
+    public String getType() { return this.type; }
 
-    public String clientID() {
-        return clientID;
-    }
-
-    public List<String> orderIds() {
-        return orderIds;
-    }
-
-    @Override
-    public String toString() {
-        return "ShippingInvoiceParam{" + clientID +
-                ", orderIds=" + orderIds +
-                '}';
-    }
 }

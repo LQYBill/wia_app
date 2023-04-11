@@ -4,7 +4,7 @@
     <div class='table-page-search-wrapper'>
       <!-- 搜索区域 -->
       <a-form-model layout='inline' :model='form' ref='searchForm' :rules='rules'>
-        <a-row :gutter='24' style='height: 100%'>
+        <a-row :gutter='24'>
           <a-col
             :md='6'
             :sm='8'
@@ -52,19 +52,7 @@
                 :allowClear=true
                 v-model='shopIDs'
                 :disabled='shopDisable'
-                maxTagCount = '1'
               >
-                <div slot='dropdownRender' slot-scope='menu'>
-                  <v-nodes :vnodes='menu' />
-                  <a-divider style='margin: 4px 0;' />
-                  <div
-                    style='padding: 4px 8px 8px 8px; cursor: pointer;'
-                    @mousedown='e => e.preventDefault()'
-                  >
-                    <a-checkbox ref="selectAllCheckbox" @change="selectAll" />
-                    全选
-                  </div>
-                </div>
                 <a-select-option
                   v-for='(item, index) in shopList'
                   :value='item.value'
@@ -120,9 +108,9 @@
               <a-button
                 type='danger'
                 :loading='invoiceLoading'
-                @click='makeCompleteInvoice'
+                @click='makeCompletePostInvoice'
                 :disabled='completeInvoiceDisable'
-              >{{$t("invoice.generateInvoice7pre")}}</a-button>
+              >{{$t("invoice.generateInvoice7post")}}</a-button>
             </a-col>
           </span>
         </a-row>
@@ -221,20 +209,16 @@
 </template>
 
 <script>
+
 import { getAction, getFile } from '@/api/manage'
 import { saveAs } from 'file-saver'
 import { postAction } from '@api/manage'
 import moment from 'moment'
 import PlatformOrderContentSubTable from '../platformOrder/subTables/PlatformOrderContentSubTable'
-
 export default {
-  name: 'PreShippingInvoice',
+  name: 'AllShippingInvoice.vue',
   components: {
-    PlatformOrderContentSubTable,
-    VNodes: {
-      functional: true,
-      render: (h, ctx) => ctx.props.vnodes
-    }
+    PlatformOrderContentSubTable
   },
   data() {
     return {
@@ -263,8 +247,8 @@ export default {
         getClientList: '/client/client/all',
         getShopsByCustomerId: '/shippingInvoice/shopsByClient',
         makeInvoice: '/shippingInvoice/preShipping/make',
+        makeCompleteInvoice :'/shippingInvoice/allShipping/makeCompleteAllInvoice',
         checkSkuPrices: '/shippingInvoice/preShipping/checkSkuPrices',
-        makeCompleteInvoice: '/shippingInvoice/preShipping/makeComplete',
         downloadInvoice: '/shippingInvoice/download',
         invoiceDetail: '/shippingInvoice/invoiceDetail',
         estimateShippingFees: '/shippingInvoice/estimate'
@@ -370,8 +354,8 @@ export default {
       shopDisable: true,
       clientDisable: false,
       purchasePricesAvailable: true,
-      completeInvoiceDisable: true,
       invoiceDisable: true,
+      completeInvoiceDisable: true,
       dataDisable: true,
       orderListLoading: false,
       shippingFeesEstimates: [],
@@ -379,7 +363,7 @@ export default {
     }
   },
   created() {
-    this.loadClientList()
+    this.loadClientList();
   },
   computed: {},
   methods: {
@@ -387,7 +371,7 @@ export default {
      * Load client list from API
      */
     loadClientList() {
-      let self = this
+      let self = this;
       getAction(this.url.getClientList)
         .then(res => {
           if (res.success) {
@@ -395,62 +379,48 @@ export default {
               text: `${customer.firstName} ${customer.surname} (${customer.internalCode})`,
               value: customer.id,
               client: customer
-            }))
+            }));
           }
-        })
+        });
     },
     handleClientChange(index) {
-      this.customerId = this.customerList[index].client.id
-      this.client = this.customerList[index].client
+      this.customerId = this.customerList[index].client.id;
+      this.client = this.customerList[index].client;
       this.loadShopList(this.customerId)
         .then(
           () =>
             this.shopDisable = false
-        )
+        );
       // clear selected shop IDs
-      this.shopIDs = []
-      this.orderList = []
-      this.selectedRowKeys = []
-      this.selectionRows = []
-      this.pagination.current = 1
-      this.pagination.pageSize = 100
-      this.pagination.total = 0
-      this.invoiceDisable = true
-      this.completeInvoiceDisable = true
-      this.shippingFeesEstimates = []
+      this.shopIDs = [];
+      this.orderList = [];
+      this.selectedRowKeys = [];
+      this.selectionRows = [];
+      this.pagination.current = 1;
+      this.pagination.pageSize = 100;
+      this.pagination.total = 0;
+      this.invoiceDisable = true;
+      this.shippingFeesEstimates = [];
     },
     handleShopChange(value) {
       // value returned is array of shop
-      this.shopIDs = value
-      console.log(this.shopIDs)
+      this.shopIDs = value;
+      console.log(this.shopIDs);
       if (this.shopIDs.length === 0) {
-        this.dataDisable = true
-      }
-      this.$refs.selectAllCheckbox.checked = this.shopIDs.length === this.shopList.length;
-    },
-    selectAll(e) {
-      let checked = e.target.checked;
-      if (checked) {
-        let shopIds = []
-        this.shopList.map(shop => {
-          shopIds.push(shop.value)
-        })
-        this.handleShopChange(shopIds)
-      } else {
-        this.handleShopChange([])
+        this.dataDisable = true;
       }
     },
     handleExpand(expanded, record) {
-      this.expandedRowKeys = []
+      this.expandedRowKeys = [];
       if (expanded === true) {
-        this.expandedRowKeys.push(record.id)
+        this.expandedRowKeys.push(record.id);
       }
     },
     customerFilterOption(input, option) {
       return (
         option.componentOptions.children[0]
           .text.toLowerCase().indexOf(input.toLowerCase()) >= 0
-      )
+      );
     },
     /**
      * Send a request to load shop list by client ID from API.
@@ -462,27 +432,27 @@ export default {
      * @return Promise for following operation to synchronize
      */
     loadShopList(clientID) {
-      let self = this
-      const param = { clientID: clientID }
+      let self = this;
+      const param = { clientID: clientID };
       return getAction(this.url.getShopsByCustomerId, param)
         .then(res => {
           if (res.success) {
             if (res.result.length === 0) {
-              self.$message.warning('没有找到当前客户的相关店铺信息')
+              self.$message.warning('没有找到当前客户的相关店铺信息');
             }
             self.shopList = res.result.map(
               shop => ({
                 text: shop.erpCode,
                 value: shop.id
               })
-            )
+            );
           } else {
-            self.$message.warning('Internal server error. Try later.')
+            self.$message.warning('Internal server error. Try later.');
           }
-        })
+        });
     },
     loadOrders() {
-      let self = this
+      let self = this;
       this.$refs.searchForm.validate(
         (valid) => {
           if (valid) {
@@ -491,186 +461,187 @@ export default {
               shopIds: self.shopIDs,
               pageNo: self.pagination.current,
               pageSize: self.pagination.pageSize,
-              type: "pre-shipping",
+              type: "all"
             }
             if (Object.keys(self.isorter).length > 0) {
-              requestParam.order = self.isorter.order
-              requestParam.column = self.isorter.column
+              requestParam.order = self.isorter.order;
+              requestParam.column = self.isorter.column;
             }
-            this.findOrdersLoading = true
-            this.orderListLoading = true
+            this.findOrdersLoading = true;
+            this.orderListLoading = true;
             getAction(self.url.listOrders, requestParam)
               .then(res => {
-                self.orderList = res.result.records
-                console.log(res.result)
+                self.orderList = res.result.records;
+                console.log(res.result);
 
                 if (res.result.total) {
-                  self.pagination.total = res.result.total
+                  self.pagination.total = res.result.total;
                 } else {
-                  self.pagination.total = 0
+                  self.pagination.total = 0;
                 }
                 if (self.orderList.length > 0) {
-                  let orderIdList = []
+                  let orderIdList = [];
                   self.orderList.map(order => {
                     orderIdList.push(order.id)
-                  })
+                  });
                   let param = {
                     clientID: self.customerId,
                     orderIds: orderIdList,
-                    type: "pre-shipping"
-                  }
+                    type: "all"
+                  };
                   postAction(self.url.checkSkuPrices, param)
                     .then(res => {
-                      self.purchasePricesAvailable = res.code === 200
-                      console.log(res.code)
+                      self.purchasePricesAvailable = res.code === 200;
+                      console.log(res.code);
                       if (res.message) {
-                        this.$message.warning(res.message)
+                        this.$message.warning(res.message);
                       }
-                    })
+                    });
                 }
-                this.findOrdersLoading = false
-                this.orderListLoading = false
-              })
+                this.findOrdersLoading = false;
+                this.orderListLoading = false;
+              });
           }
         }
-      )
+      );
     },
     makeInvoice() {
-      let self = this
-      self.loading = true
+      let self = this;
+      self.loading = true;
       if (!this.customerId) {
-        this.$message.warning('请选择客户！')
-        return
+        this.$message.warning('请选择客户！');
+        return;
       }
       let param = {
         clientID: this.customerId,
         orderIds: this.selectedRowKeys,
-        type: "pre-shipping"
-      }
-      self.invoiceDisable = true
-      self.findOrdersLoading = true
-      self.orderListLoading = true
-      self.shopDisable = true
-      self.clientDisable = true
+        type: "all"
+      };
+      self.invoiceDisable = true;
+      self.findOrdersLoading = true;
+      self.orderListLoading = true;
+      self.shopDisable = true;
+      self.clientDisable = true;
       postAction(this.url.makeInvoice, param)
         .then(
           res => {
             console.log(res)
             if (!res.success) {
-              self.$message.error(res.message, 10)
+              self.$message.error(res.message, 10);
             } else {
-              self.selectionRows = []
-              self.selectedRowKeys = []
-              let filename = res.result.filename
-              let code = res.result.invoiceCode
+              self.selectionRows = [];
+              self.selectedRowKeys = [];
+              let filename = res.result.filename;
+              let code = res.result.invoiceCode;
               this.downloadInvoice(filename).then(
                 this.$message.info('Download succeed.')
-              )
-              this.downloadDetailFile(code)
-              this.pagination.current = 1
-              this.loadOrders()
+              );
+              this.downloadDetailFile(code);
+              this.pagination.current = 1;
+              this.loadOrders();
             }
-            self.clientDisable = false
-            self.shopDisable = false
-            self.invoiceDisable = false
-            self.findOrdersLoading = false
-            self.orderListLoading = false
+            self.clientDisable = false;
+            self.shopDisable = false;
+            self.invoiceDisable = false;
+            self.findOrdersLoading = false;
+            self.orderListLoading = false;
           }
-        )
+        );
     },
-    makeCompleteInvoice() {
-      let self = this
-      self.loading = true
+    makeCompletePostInvoice() {
+      console.log("Post Shipping");
+      let self = this;
+      self.loading = true;
       if (!this.customerId) {
-        this.$message.warning('请选择客户！')
-        return
+        this.$message.warning('请选择客户！');
+        return;
       }
       let param = {
         clientID: this.customerId,
         orderIds: this.selectedRowKeys,
-        type: "pre-shipping"
-      }
-      self.invoiceDisable = true
-      self.findOrdersLoading = true
-      self.orderListLoading = true
-      self.shopDisable = true
-      self.clientDisable = true
+        type: "all"
+      };
+      self.invoiceDisable = true;
+      self.findOrdersLoading = true;
+      self.orderListLoading = true;
+      self.shopDisable = true;
+      self.clientDisable = true;
       postAction(this.url.makeCompleteInvoice, param)
         .then(
           res => {
             console.log(res)
             if (!res.success) {
-              self.$message.error(res.message, 10)
+              self.$message.error(res.message, 10);
             } else {
-              self.selectionRows = []
-              self.selectedRowKeys = []
-              let filename = res.result.filename
-              let code = res.result.invoiceCode
+              self.selectionRows = [];
+              self.selectedRowKeys = [];
+              let filename = res.result.filename;
+              let code = res.result.invoiceCode;
               this.downloadInvoice(filename).then(
                 this.$message.info('Download succeed.')
-              )
-              this.downloadDetailFile(code)
-              this.pagination.current = 1
-              this.loadOrders()
+              );
+              this.downloadDetailFile(code);
+              this.pagination.current = 1;
+              this.loadOrders();
             }
-            self.clientDisable = false
-            self.shopDisable = false
-            self.completeInvoiceDisable = false
-            self.findOrdersLoading = false
-            self.orderListLoading = false
+            self.clientDisable = false;
+            self.shopDisable = false;
+            self.invoiceDisable = false;
+            self.findOrdersLoading = false;
+            self.orderListLoading = false;
           }
         )
     },
     downloadInvoice(filename) {
-      const param = { filename: filename }
-      console.log(filename)
+      const param = { filename: filename };
+      console.log(filename);
       return getFile(this.url.downloadInvoice, param)
         .then(res => {
-          console.log(res)
-          saveAs(res, filename)
-        })
+          console.log(res);
+          saveAs(res, filename);
+        });
     },
     handleTableChange(pagination, filters, sorter) {
       //分页、排序、筛选变化时触发
       //TODO 筛选
-      console.log(pagination)
+      console.log(pagination);
       if (Object.keys(sorter).length > 0) {
-        this.isorter.column = sorter.field
-        this.isorter.order = 'ascend' === sorter.order ? 'asc' : 'desc'
+        this.isorter.column = sorter.field;
+        this.isorter.order = 'ascend' === sorter.order ? 'asc' : 'desc';
       }
-      this.pagination = pagination
-      this.loadOrders()
+      this.pagination = pagination;
+      this.loadOrders();
     },
     onSelectChange(selectedRowKeys, selectionRows) {
-      this.estimatesReady = false
-      this.selectedRowKeys = selectedRowKeys
-      this.selectionRows = selectionRows
+      this.estimatesReady = false;
+      this.selectedRowKeys = selectedRowKeys;
+      this.selectionRows = selectionRows;
       // No selected row, no invoice
-      this.invoiceDisable = this.selectionRows.length === 0
-      this.completeInvoiceDisable = this.selectionRows.length === 0 || !this.purchasePricesAvailable
+      this.invoiceDisable = this.selectionRows.length === 0;
+      this.completeInvoiceDisable = this.selectionRows.length === 0 && !this.purchasePricesAvailable;
       if (this.selectedRowKeys.length > 0) {
         let param = {
           clientID: this.customerId,
           orderIds: this.selectedRowKeys,
-          type: "pre-shipping"
-        }
+          type: "all"
+        };
         postAction(this.url.estimateShippingFees, param)
           .then(
             res => {
               if (!res.success) {
-                this.$message.error(res.message, 10)
+                this.$message.error(res.message, 10);
               } else {
                 if (res.message !== "[]") {
-                  this.$message.info(res.message, 10)
+                  this.$message.info(res.message, 10);
                 }
-                this.shippingFeesEstimates = res.result
-                this.estimatesReady = true
+                this.shippingFeesEstimates = res.result;
+                this.estimatesReady = true;
               }
             }
-          )
+          );
       } else {
-        this.shippingFeesEstimates = []
-        this.estimatesReady = true
+        this.shippingFeesEstimates = [];
+        this.estimatesReady = true;
       }
     },
     getCheckboxProps: record => ({
@@ -680,22 +651,21 @@ export default {
       }
     }),
     onClearSelected() {
-      this.selectedRowKeys = []
-      this.selectionRows = []
-      this.invoiceDisable = true
-      this.completeInvoiceDisable = true
-      this.shippingFeesEstimates = []
+      this.selectedRowKeys = [];
+      this.selectionRows = [];
+      this.invoiceDisable = true;
+      this.shippingFeesEstimates = [];
     },
     downloadDetailFile(invoiceNumber) {
       const param = {
         invoiceNumber: invoiceNumber
-      }
+      };
       getFile(this.url.invoiceDetail, param).then(
         res => {
           let now = moment().format('yyyyMMDD')
           let name = this.client.internalCode + "_" + invoiceNumber + '_Détail_calcul_de_facture_' + now + '.xlsx'
           saveAs(res, name)
-        })
+        });
     }
   }
 }

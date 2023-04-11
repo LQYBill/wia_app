@@ -132,12 +132,12 @@ public class PlatformOrderShippingInvoiceService {
                 purchaseOrderService, purchaseOrderContentMapper, skuPromotionHistoryMapper, savRefundService, savRefundWithDetailService);
         String username = ((LoginUser) SecurityUtils.getSubject().getPrincipal()).getUsername();
         // Creates invoice by factory
-        ShippingInvoice invoice = factory.createPreShippingInvoice(param.clientID(), param.orderIds());
+        ShippingInvoice invoice = factory.createShippingInvoice(param.clientID(), param.orderIds(), param.getType());
         return getInvoiceMetaData(username, invoice);
     }
 
     /**
-     * Make a complete pre-shipping (purchase + shipping) invoice for specified orders
+     * Make an all shipping invoice for specified orders
      *
      * @param param the parameters to make the invoice
      * @return name of the invoice, can be used to in {@code getInvoiceBinary}.
@@ -147,7 +147,7 @@ public class PlatformOrderShippingInvoiceService {
      * @throws IOException    exception related to invoice file IO.
      */
     @Transactional
-    public InvoiceMetaData makeCompleteInvoice(PreShippingInvoiceParam param, boolean method) throws UserException, ParseException, IOException {
+    public InvoiceMetaData makeInvoice(AllShippingInvoiceParam param) throws UserException, ParseException, IOException {
         // Creates factory
         ShippingInvoiceFactory factory = new ShippingInvoiceFactory(
                 platformOrderService, clientMapper, shopMapper, logisticChannelMapper, logisticChannelPriceMapper,
@@ -155,21 +155,45 @@ public class PlatformOrderShippingInvoiceService {
                 purchaseOrderService, purchaseOrderContentMapper, skuPromotionHistoryMapper, savRefundService, savRefundWithDetailService);
         String username = ((LoginUser) SecurityUtils.getSubject().getPrincipal()).getUsername();
         // Creates invoice by factory
-        CompleteInvoice invoice = factory.createCompletePreShippingInvoice(username, param.clientID(), param.orderIds(), method);
+        ShippingInvoice invoice = factory.createShippingInvoice(param.clientID(), param.orderIds(), param.getType());
+        return getInvoiceMetaData(username, invoice);
+    }
+
+    /**
+     * Make a complete pre-shipping (purchase + shipping) invoice for specified orders
+     *
+     * @param param the parameters to make the invoice
+     * @param method "post" = postShipping, "pre" = preShipping, "all" = all shipping methods
+     * @return name of the invoice, can be used to in {@code getInvoiceBinary}.
+     * @throws UserException  exception due to error of user input, message will contain detail
+     * @throws ParseException exception because of format of "start" and "end" date does not follow
+     *                        pattern: "yyyy-MM-dd"
+     * @throws IOException    exception related to invoice file IO.
+     */
+    @Transactional
+    public InvoiceMetaData makeCompleteInvoice(PreShippingInvoiceParam param, String method) throws UserException, ParseException, IOException {
+        // Creates factory
+        ShippingInvoiceFactory factory = new ShippingInvoiceFactory(
+                platformOrderService, clientMapper, shopMapper, logisticChannelMapper, logisticChannelPriceMapper,
+                platformOrderContentService, skuDeclaredValueService, countryService, exchangeRatesMapper,
+                purchaseOrderService, purchaseOrderContentMapper, skuPromotionHistoryMapper, savRefundService, savRefundWithDetailService);
+        String username = ((LoginUser) SecurityUtils.getSubject().getPrincipal()).getUsername();
+        // Creates invoice by factory
+        CompleteInvoice invoice = factory.createCompleteShippingInvoice(username, param.clientID(), param.orderIds(), param.getType());
         return getInvoiceMetaData(username, invoice);
     }
 
     /**
      *  Make a complete post-shipping (purchase + shipping)
      * @param param clientID, shopIPs[], startDate, endDate
-     * @param method true : postShipping, false = preShipping
+     * @param method "post" = postShipping, "pre" = preShipping, "all" = all shipping methods
      * @return name of the invoice, can be used to in {@code getInvoiceBinary}
      * @throws UserException
      * @throws ParseException
      * @throws IOException
      */
     @Transactional
-    public InvoiceMetaData makeCompleteInvoicePostShipping(ShippingInvoiceParam param, boolean method) throws UserException, ParseException, IOException {
+    public InvoiceMetaData makeCompleteInvoicePostShipping(ShippingInvoiceParam param, String method) throws UserException, ParseException, IOException {
         // Creates factory
         ShippingInvoiceFactory factory = new ShippingInvoiceFactory(
                 platformOrderService, clientMapper, shopMapper, logisticChannelMapper, logisticChannelPriceMapper,
@@ -181,10 +205,31 @@ public class PlatformOrderShippingInvoiceService {
         // on récupère seulement les ID des commandes
         List<String> orderIds = platformOrderList.stream().map(PlatformOrder::getId).collect(Collectors.toList());
         // Creates invoice by factory
-        CompleteInvoice invoice = factory.createCompletePreShippingInvoice(username, param.clientID(), orderIds, method);
+        CompleteInvoice invoice = factory.createCompleteShippingInvoice(username, param.clientID(), orderIds, method);
         return getInvoiceMetaData(username, invoice);
     }
 
+    /**
+     *  Make a complete invoice for all shipping method (purchase + pre and post shipping)
+     * @param param clientID, shopIPs[], startDate, endDate
+     * @param method "post" = postShipping, "pre" = preShipping, "all" = all shipping methods
+     * @return name of the invoice, can be used to in {@code getInvoiceBinary}
+     * @throws UserException
+     * @throws ParseException
+     * @throws IOException
+     */
+    @Transactional
+    public InvoiceMetaData makeCompleteInvoiceAllShipping(AllShippingInvoiceParam param) throws UserException, ParseException, IOException {
+        // Creates factory
+        ShippingInvoiceFactory factory = new ShippingInvoiceFactory(
+                platformOrderService, clientMapper, shopMapper, logisticChannelMapper, logisticChannelPriceMapper,
+                platformOrderContentService, skuDeclaredValueService, countryService, exchangeRatesMapper,
+                purchaseOrderService, purchaseOrderContentMapper, skuPromotionHistoryMapper, savRefundService, savRefundWithDetailService);
+        String username = ((LoginUser) SecurityUtils.getSubject().getPrincipal()).getUsername();
+        // Creates invoice by factory
+        CompleteInvoice invoice = factory.createCompleteShippingInvoice(username, param.clientID(), param.orderIds(), param.getType());
+        return getInvoiceMetaData(username, invoice);
+    }
     @NotNull
     private InvoiceMetaData getInvoiceMetaData(String username, ShippingInvoice invoice) throws IOException {
         // Chooses invoice template based on client's preference on currency
