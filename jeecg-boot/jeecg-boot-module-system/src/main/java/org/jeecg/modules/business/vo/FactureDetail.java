@@ -63,7 +63,7 @@ public class FactureDetail {
     @TableField("`Frais de préparation`")
     private final BigDecimal pickingFee;
 
-    @TableField("Frais de matériel d'emballage")
+    @TableField("`Frais de matériel d'emballage`")
     private final BigDecimal packagingMaterialFee;
     @TableField("`TVA`")
     private final BigDecimal TVA;

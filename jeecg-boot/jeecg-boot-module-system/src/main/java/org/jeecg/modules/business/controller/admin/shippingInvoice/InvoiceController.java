@@ -73,10 +73,16 @@ public class InvoiceController {
                                                @RequestParam(name = "shopIds[]", required = false) List<String> shopIDs,
                                                @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
                                                @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
+                                               @RequestParam(name = "type") String type,
                                                HttpServletRequest req) {
         QueryWrapper<PlatformOrder> queryWrapper = QueryGenerator.initQueryWrapper(platformOrder, req.getParameterMap());
         LambdaQueryWrapper<PlatformOrder> lambdaQueryWrapper = queryWrapper.lambda();
-        lambdaQueryWrapper.in(PlatformOrder::getErpStatus, Arrays.asList(OrderStatus.Pending.getCode(), OrderStatus.Preparing.getCode()));
+        if(type.equals("pre-shipping"))
+        {
+            lambdaQueryWrapper.in(PlatformOrder::getErpStatus, Arrays.asList(OrderStatus.Pending.getCode(), OrderStatus.Preparing.getCode()));
+        } else {
+            lambdaQueryWrapper.in(PlatformOrder::getErpStatus, Arrays.asList(OrderStatus.Pending.getCode(), OrderStatus.Preparing.getCode(), OrderStatus.Shipped.getCode()));
+        }
         lambdaQueryWrapper.isNull(PlatformOrder::getShippingInvoiceNumber);
         Page<PlatformOrder> page = new Page<>(pageNo, pageSize);
         IPage<PlatformOrder> pageList;
@@ -151,7 +157,7 @@ public class InvoiceController {
     @PostMapping(value = "/preShipping/makeComplete")
     public Result<?> makeCompletePreShippingInvoice(@RequestBody PreShippingInvoiceParam param) {
         try {
-            InvoiceMetaData metaData = shippingInvoiceService.makeCompleteInvoice(param, false);
+            InvoiceMetaData metaData = shippingInvoiceService.makeCompleteInvoice(param, "pre");
             return Result.OK(metaData);
         } catch (UserException e) {
             return Result.error(e.getMessage());
@@ -169,7 +175,7 @@ public class InvoiceController {
     @PostMapping(value = "/postShipping/makeComplete")
     public Result<?> makeCompletePostShippingInvoice(@RequestBody ShippingInvoiceParam param) {
         try {
-            InvoiceMetaData metaData = shippingInvoiceService.makeCompleteInvoicePostShipping(param, true);
+            InvoiceMetaData metaData = shippingInvoiceService.makeCompleteInvoicePostShipping(param, "post");
             return Result.OK(metaData);
         } catch (UserException e) {
             return Result.error(e.getMessage());
@@ -201,12 +207,50 @@ public class InvoiceController {
             List<PlatformOrder> orderID = platformOrderMapper.selectList(lambdaQueryWrapper);
             // on récupère seulement les ID des commandes
             List<String> orderIds = orderID.stream().map(PlatformOrder::getId).collect(Collectors.toList());
-            PreShippingInvoiceParam args = new PreShippingInvoiceParam(param.clientID(), orderIds);
+            PreShippingInvoiceParam args = new PreShippingInvoiceParam(param.clientID(), orderIds, "postShipping");
             // on check s'il y a des SKU sans prix
             return checkSkuPrices(args);
         }
     }
 
+    /**
+     * Make pre-shipping and post-shipping invoice for specified orders
+     *
+     * @param param Parameters for creating a pre-shipping invoice
+     * @return Result of the generation, in case of error, message will be contained,
+     * in case of success, data will contain filename.
+     */
+    @PostMapping(value = "/allShipping/make")
+    public Result<?> makeAllShippingInvoice(@RequestBody AllShippingInvoiceParam param) {
+        try {
+            InvoiceMetaData metaData = shippingInvoiceService.makeInvoice(param);
+            return Result.OK(metaData);
+        } catch (UserException e) {
+            return Result.error(e.getMessage());
+        } catch (IOException | ParseException e) {
+            log.error(e.getMessage());
+            return Result.error("Sorry, server error, please try later");
+        }
+    }
+    /**
+     * Make complete invoice all shipping (Purchase + shipping) for specified orders
+     *
+     * @param param Parameters for creating a shipping invoice
+     * @return Result of the generation, in case of error, message will be contained,
+     * in case of success, data will contain filename.
+     */
+    @PostMapping(value = "/allShipping/makeCompleteAllInvoice")
+    public Result<?> makeCompleteAllInvoice(@RequestBody AllShippingInvoiceParam param) {
+        try {
+            InvoiceMetaData metaData = shippingInvoiceService.makeCompleteInvoiceAllShipping(param);
+            return Result.OK(metaData);
+        } catch (UserException e) {
+            return Result.error(e.getMessage());
+        } catch (IOException | ParseException e) {
+            log.error(e.getMessage());
+            return Result.error("Sorry, server error, please try later");
+        }
+    }
     /**
      * Make invoice for orders indicated by param.
      *
