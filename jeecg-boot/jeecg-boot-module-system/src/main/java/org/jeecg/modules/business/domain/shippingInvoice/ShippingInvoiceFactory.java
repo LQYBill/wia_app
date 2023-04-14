@@ -244,21 +244,27 @@ public class ShippingInvoiceFactory {
                 purchaseOrderSkuList, promotionDetails, eurToUsd);
     }
 
-    private void calculateAndUpdateContentFees(Map<String, BigDecimal> skuRealWeights, Map<String, BigDecimal> skuServiceFees,
+    private BigDecimal calculateAndUpdateContentFees(Map<String, BigDecimal> skuRealWeights, Map<String, BigDecimal> skuServiceFees,
                                                PlatformOrder uninvoicedOrder, BigDecimal contentWeight, BigDecimal totalShippingFee,
                                                BigDecimal clientVatPercentage, Map<PlatformOrderContent, BigDecimal> contentDeclaredValueMap,
                                                BigDecimal totalDeclaredValue, BigDecimal totalVAT, boolean vatApplicable,
-                                               BigDecimal pickingFeePerItem, PlatformOrderContent content) {
+                                               BigDecimal pickingFeePerItem, PlatformOrderContent content, BigDecimal remainingShippingFee) {
         String skuId = content.getSkuId();
         BigDecimal realWeight = skuRealWeights.get(skuId);
         // Each content will share the total shipping fee proportionally, because minimum price and unit price
         // vary with total weight, so calculating each content's fee with its weight is just wrong
-        content.setShippingFee(realWeight.compareTo(BigDecimal.ZERO) == 0 ? BigDecimal.ZERO :
+        BigDecimal shippingFee = realWeight.compareTo(BigDecimal.ZERO) == 0 ? BigDecimal.ZERO :
                 totalShippingFee.multiply(BigDecimal.valueOf(content.getQuantity()))
                         .multiply(realWeight)
                         .divide(contentWeight, RoundingMode.UP)
-                        .setScale(2, RoundingMode.UP)
-        );
+                        .setScale(2, RoundingMode.UP);
+        if (remainingShippingFee.compareTo(shippingFee) < 0) {
+            content.setShippingFee(remainingShippingFee);
+            remainingShippingFee = BigDecimal.ZERO;
+        } else {
+            content.setShippingFee(shippingFee);
+            remainingShippingFee = remainingShippingFee.subtract(shippingFee);
+        }
         content.setServiceFee(skuServiceFees.get(skuId)
                 .multiply(BigDecimal.valueOf(content.getQuantity()))
                 .setScale(2, RoundingMode.UP)
@@ -284,6 +290,7 @@ public class ShippingInvoiceFactory {
             }
         }
         content.setVat(vat);
+        return remainingShippingFee;
     }
 
     /**
@@ -455,7 +462,7 @@ public class ShippingInvoiceFactory {
             LogisticChannelPrice price = logisticChannelPair.getRight();
             // update attributes of orders and theirs content
             BigDecimal packageMatFee = shopPackageMatFeeMap.get(uninvoicedOrder.getShopId());
-            if(packageMatFee.compareTo(BigDecimal.ZERO) > 0 && logisticChannelPair.getLeft().getWarehouseInChina().equals("1")) {
+            if(packageMatFee.compareTo(BigDecimal.ZERO) > 0 && logisticChannelPair.getLeft().getWarehouseInChina().equalsIgnoreCase("0")) {
                 uninvoicedOrder.setPackagingMaterialFee(packageMatFee);
             }
             uninvoicedOrder.setFretFee(price.getRegistrationFee());
@@ -480,10 +487,14 @@ public class ShippingInvoiceFactory {
             if (vatApplicable && minimumDeclaredValue != null) {
                 totalVAT = calculateTotalVat(totalDeclaredValue, clientVatPercentage, minimumDeclaredValue);
             }
+            // Since we always round up when distributing shipping fees to contents, sometimes the final total sum
+            // is bigger than initial total shipping fee, the remedy is to deduct from the initial total, so we never go
+            // above it
+            BigDecimal remainingShippingFee = totalShippingFee;
             for (PlatformOrderContent content : contents) {
-                calculateAndUpdateContentFees(skuRealWeights, skuServiceFees, uninvoicedOrder, contentWeight,
+                remainingShippingFee = calculateAndUpdateContentFees(skuRealWeights, skuServiceFees, uninvoicedOrder, contentWeight,
                         totalShippingFee, clientVatPercentage, contentDeclaredValueMap, totalDeclaredValue, totalVAT,
-                        vatApplicable, pickingFeePerItem, content);
+                        vatApplicable, pickingFeePerItem, content, remainingShippingFee);
             }
         }
     }

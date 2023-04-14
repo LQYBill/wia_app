@@ -36,7 +36,7 @@
             :sm="8"
           >
             <a-form-item
-              :label="$t('invoice.shop')"
+              label="店铺"
               :labelCol="{span: 5}"
               :wrapperCol="{span: 18}"
             >
@@ -48,7 +48,19 @@
                 :allowClear=true
                 v-model="shopIDs"
                 :disabled="shopDisable"
+                maxTagCount = '1'
               >
+                <div slot='dropdownRender' slot-scope='menu'>
+                  <v-nodes :vnodes='menu' />
+                  <a-divider style='margin: 4px 0;' />
+                  <div
+                    style='padding: 4px 8px 8px 8px; cursor: pointer;'
+                    @mousedown='e => e.preventDefault()'
+                  >
+                    <a-checkbox ref="selectAllCheckbox" @change="selectAll" />
+                    全选
+                  </div>
+                </div>
                 <a-select-option
                   v-for="(item, index) in shopList"
                   :value="item.value"
@@ -128,7 +140,12 @@ import {postAction} from "@api/manage";
 
 export default {
   name: "GetInvoiceFile",
-  components: {},
+  components: {
+    VNodes: {
+      functional: true,
+      render: (h, ctx) => ctx.props.vnodes
+    }
+  },
   data() {
     return {
       queryParam: {},
@@ -251,6 +268,7 @@ export default {
       console.log(this.shopIDs)
       if (this.shopIDs.length !== 0) {
         this.loadAvailableDate()
+        this.$refs.selectAllCheckbox.checked = this.shopIDs.length === this.shopList.length;
       } else {
         this.startDate = null;
         this.endDate = null;
@@ -259,7 +277,20 @@ export default {
         this.dataDisable = true;
         this.completeInvoiceDisable = true;
         this.makeInvoiceDisable = true;
+        this.$refs.selectAllCheckbox.checked = false;
       }
+    },
+    selectAll(e) {
+       let checked = e.target.checked;
+       if (checked) {
+         let shopIds = []
+         this.shopList.map(shop => {
+           shopIds.push(shop.value)
+         })
+         this.handleShopChange(shopIds)
+       } else {
+         this.handleShopChange([])
+       }
     },
 
     /**
@@ -376,9 +407,7 @@ export default {
         this.purchasePricesAvailable = false;
         return
       }
-      else {
-        this.makeInvoiceDisable = false;
-      }
+      this.makeInvoiceDisable = false;
       const param = {
         clientID: this.customerId,
         shopIDs: this.shopIDs,

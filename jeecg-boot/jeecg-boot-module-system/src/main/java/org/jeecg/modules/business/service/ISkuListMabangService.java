@@ -4,12 +4,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import org.jeecg.modules.business.domain.api.mabang.doSearchSkuList.SkuData;
 import org.jeecg.modules.business.entity.Product;
 import org.jeecg.modules.business.entity.Sku;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
 
-@Service
 public interface ISkuListMabangService extends IService<SkuData> {
     /**
      * Save skus to DB from mabang api.

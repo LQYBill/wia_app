@@ -62,7 +62,7 @@ public class SkuListMabangServiceImpl extends ServiceImpl<SkuListMabangMapper, S
                 .collect(toList());
         // find Skus that already exist in DB
         List<Sku> existingSkuList = skuListMabangMapper.searchExistence(allSkuErpCode);
-        // We map all exisiting Skus in DB with erpCode as key
+        // We map all existing Skus in DB with erpCode as key
         Map<String, Sku> existingSkusIDMap = existingSkuList.stream()
                 .collect(
                         Collectors.toMap(

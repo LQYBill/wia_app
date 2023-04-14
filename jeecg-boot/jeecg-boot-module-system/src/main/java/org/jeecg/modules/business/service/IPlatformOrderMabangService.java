@@ -22,7 +22,7 @@ public interface IPlatformOrderMabangService extends IService<Order> {
     /**
      * Update merged platform order date by data from mabang.
      * <p>
-     * This function updates both correspondant platform order and its content.
+     * This function updates both corresponding platform order and its content.
      *
      * @param mergedOrder      order as merge target
      * @param sourceOrderErpId erp IDs of source orders that are merged
