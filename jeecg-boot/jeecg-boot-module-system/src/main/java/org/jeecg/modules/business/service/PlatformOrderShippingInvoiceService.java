@@ -19,10 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
@@ -251,10 +248,8 @@ public class PlatformOrderShippingInvoiceService {
         // Writes invoice content to a new excel file
         String filename = "Invoice N°" + invoice.code() + " (" + invoice.client().getInvoiceEntity() + ").xlsx";
         Path out = Paths.get(INVOICE_DIR, filename);
-        if (!Files.exists(out, LinkOption.NOFOLLOW_LINKS)) {
-            Files.copy(src, out);
-            invoice.toExcelFile(out);
-        }
+        Files.copy(src, out, StandardCopyOption.REPLACE_EXISTING);
+        invoice.toExcelFile(out);
         // save to DB
         org.jeecg.modules.business.entity.ShippingInvoice shippingInvoiceEntity = org.jeecg.modules.business.entity.ShippingInvoice.of(
                 username,

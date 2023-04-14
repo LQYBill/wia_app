@@ -589,6 +589,7 @@ export default {
             self.invoiceDisable = false;
             self.findOrdersLoading = false;
             self.orderListLoading = false;
+            self.completeInvoiceDisable = true;
           }
         )
     },

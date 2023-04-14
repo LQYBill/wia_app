@@ -19,6 +19,10 @@ public class InvoiceStyleFactory {
         this.workbook = workbook;
     }
 
+    public Workbook getWorkbook() {
+        return workbook;
+    }
+
     public CellStyle invoiceCodeStyle() {
         CellStyle style = workbook.createCellStyle();
         style.setBorderBottom(BorderStyle.NONE);

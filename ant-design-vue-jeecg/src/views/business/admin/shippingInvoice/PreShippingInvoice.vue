@@ -586,7 +586,7 @@ export default {
             }
             self.clientDisable = false
             self.shopDisable = false
-            self.completeInvoiceDisable = false
+            self.completeInvoiceDisable = true
             self.findOrdersLoading = false
             self.orderListLoading = false
           }

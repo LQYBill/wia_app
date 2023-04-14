@@ -1,5 +1,6 @@
 package org.jeecg.modules.business.domain.shippingInvoice;
 
+import org.apache.poi.ss.usermodel.*;
 import org.jeecg.modules.business.domain.invoice.AbstractInvoice;
 import org.jeecg.modules.business.domain.invoice.InvoiceStyleFactory;
 import org.jeecg.modules.business.domain.invoice.Row;
@@ -24,7 +25,7 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
 
     private BigDecimal totalAmount;
 
-    private final static String DOLLAR_LOCATION = "H46";
+    private final String DOLLAR_LOCATION = "H"+ this.getTOTAL_ROW()+3;
 
     public ShippingInvoice(Client targetClient, String code,
                            String subject,
@@ -183,8 +184,22 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
     protected void fillTable(InvoiceStyleFactory factory) {
         super.fillTable(factory);
         if (targetClient.getCurrency().equals("USD")) {
-            String formula = "H45 *" + exchangeRate;
-            writer.getCell(DOLLAR_LOCATION).setCellFormula(formula);
+            Sheet sheet = factory.getWorkbook().getSheetAt(0);
+            org.apache.poi.ss.usermodel.Row dollarRow = sheet.getRow(this.getTOTAL_ROW()+5);
+            Cell dollarCell = dollarRow.createCell(7); // column H
+            CellStyle cellStyle = factory.getWorkbook().createCellStyle();
+            DataFormat format = factory.getWorkbook().createDataFormat();
+            Font arial = factory.getWorkbook().createFont();
+            arial.setFontName("Arial");
+            arial.setFontHeightInPoints((short) 12);
+            cellStyle.setBorderRight(BorderStyle.THIN);
+            cellStyle.setAlignment(HorizontalAlignment.RIGHT);
+            cellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            cellStyle.setFont(arial);
+            cellStyle.setDataFormat(format.getFormat("#,##0.00")); // to get decimal format eg : "1234,56" and not "1234,5678" by default
+            dollarCell.setCellStyle(cellStyle);
+            String formula = "H"+ (this.getTOTAL_ROW()+5) +" *" + exchangeRate;
+            dollarRow.getCell(7).setCellFormula(formula);
         }
     }
 }
