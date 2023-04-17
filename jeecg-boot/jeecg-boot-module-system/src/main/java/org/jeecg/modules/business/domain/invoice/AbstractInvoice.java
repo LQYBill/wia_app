@@ -4,14 +4,11 @@ import cn.hutool.poi.excel.ExcelUtil;
 import cn.hutool.poi.excel.ExcelWriter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFClientAnchor;
 import org.apache.poi.xssf.usermodel.XSSFDrawing;
 import org.apache.poi.xssf.usermodel.XSSFPicture;
-import org.apache.poi.xssf.usermodel.XSSFShape;
 import org.jeecg.modules.business.entity.Client;
 
-import javax.swing.border.Border;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.util.Date;
@@ -29,11 +26,14 @@ public abstract class AbstractInvoice<E, F, G, H, I> {
 
     protected ExcelWriter writer;
 
+    private final BigDecimal exchangeRate;
+
     public AbstractInvoice(Client targetClient,
-                           String code, String subject) {
+                           String code, String subject, BigDecimal exchangeRate) {
         this.targetClient = targetClient;
         this.code = code;
         this.subject = subject;
+        this.exchangeRate = exchangeRate;
     }
 
     /* constants of cell location */
@@ -49,7 +49,6 @@ public abstract class AbstractInvoice<E, F, G, H, I> {
     private final static int FIRST_ROW = 20;
     private final static int LAST_ROW = 42;
     private int TOTAL_ROW = LAST_ROW + 1;
-    private final String DOLLAR_LOCATION = "H"+ this.getTOTAL_ROW()+3;
     // the max number of rows in A4 page
     private final static int PAGE_ROW_MAX = 63;
 
@@ -81,8 +80,9 @@ public abstract class AbstractInvoice<E, F, G, H, I> {
         return code;
     }
 
-    public int getTOTAL_ROW() { return TOTAL_ROW; }
-    public void setTOTAL_ROW(int totalRow) { this.TOTAL_ROW = totalRow; }
+    public BigDecimal getExchangeRate() {
+        return exchangeRate;
+    }
 
     /**
      * Methods to set content of table, left child to implement.
@@ -165,9 +165,9 @@ public abstract class AbstractInvoice<E, F, G, H, I> {
             }
 
             // inserting new rows after row 42
-            for(int i = 0; i < (data.size() - dataRowNumber - 1 <= 13 ? PAGE_ROW_MAX-LAST_ROW : additionalRowNum); i++) {
-                sheet.createRow(startRow + i);
-                org.apache.poi.ss.usermodel.Row newRow = sheet.getRow(startRow + i);
+            for(int i = 0; i < (data.size() - dataRowNumber - 1 <= 13 ? PAGE_ROW_MAX-LAST_ROW+1 : additionalRowNum+1); i++) {
+                sheet.createRow(startRow-1 + i);
+                org.apache.poi.ss.usermodel.Row newRow = sheet.getRow(startRow-1 + i);
                 newRow.setHeight(sourceRow.getHeight());
                 newRow.setRowStyle(null);
                 newRow.setRowStyle(sourceRow.getRowStyle());
@@ -198,7 +198,7 @@ public abstract class AbstractInvoice<E, F, G, H, I> {
                     XSSFClientAnchor anchor = picture.getClientAnchor();
 
                     anchor.setRow1(data.size() - dataRowNumber - 1 <= 13 ? anchor.getRow1() + PAGE_ROW_MAX-LAST_ROW :  anchor.getRow1() + additionalRowNum);
-                    anchor.setRow2(data.size() - dataRowNumber - 1 <= 13 ? anchor.getRow2() + PAGE_ROW_MAX-LAST_ROW :  anchor.getRow1() + additionalRowNum);
+                    anchor.setRow2(data.size() - dataRowNumber - 1 <= 13 ? anchor.getRow2() + PAGE_ROW_MAX-LAST_ROW :  anchor.getRow2() + additionalRowNum);
                 }
             }
         }
@@ -217,14 +217,29 @@ public abstract class AbstractInvoice<E, F, G, H, I> {
         // on fait le total par colonne
         if(data.size() > dataRowNumber)
         {
-            org.apache.poi.ss.usermodel.Row newRow = sheet.getRow(TOTAL_ROW);
-            newRow.setHeight(sourceRow.getHeight());
-            newRow.setRowStyle(null);
-            newRow.setRowStyle(sourceRow.getRowStyle());
+            org.apache.poi.ss.usermodel.Row totalRow;
+            if(additionalRowNum%PAGE_ROW_MAX <= 13)
+                totalRow = sheet.getRow(TOTAL_ROW-1);
+            else
+                totalRow = sheet.getRow(TOTAL_ROW);
+            totalRow.setHeight(sourceRow.getHeight());
+            totalRow.setRowStyle(null);
+            totalRow.setRowStyle(sourceRow.getRowStyle());
+
+            Font arialNormal = factory.getWorkbook().createFont();
+            arialNormal.setFontName("Arial");
+            arialNormal.setFontHeightInPoints((short) 12);
+            arialNormal.setBold(false);
+
+            Font arialBold = factory.getWorkbook().createFont();
+            arialBold.setFontName("Arial");
+            arialBold.setFontHeightInPoints((short) 14);
+            arialBold.setBold(true);
+
             // looping throw the total row, setting border styles and setting formula
             for(int i = 0; i < 10; i++)
             {
-                Cell cell = newRow.createCell(i);
+                Cell cell = totalRow.createCell(i);
                 CellStyle cellStyle = factory.getWorkbook().createCellStyle();
                 if(i == 0){
                     cellStyle.setBorderLeft(BorderStyle.NONE);
@@ -250,92 +265,65 @@ public abstract class AbstractInvoice<E, F, G, H, I> {
                     cellStyle.setBorderBottom(BorderStyle.NONE);
                     cellStyle.setBorderLeft(BorderStyle.THIN);
                 }
+                cellStyle.setFont(arialNormal);
+                cellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
                 cell.setCellStyle(cellStyle);
                 if(i==2)
                     cell.setCellValue("Total");
                 if(i==5)
-                    cell.setCellFormula("SUM(F"+FIRST_ROW+":F"+TOTAL_ROW+")");
+                    cell.setCellFormula("SUM(F"+FIRST_ROW+":F"+(TOTAL_ROW-1)+")");
                 if(i==6)
-                    cell.setCellFormula("SUM(G"+FIRST_ROW+":G"+TOTAL_ROW+")");
+                    cell.setCellFormula("SUM(G"+FIRST_ROW+":G"+(TOTAL_ROW-1)+")");
                 if(i==7)
-                    cell.setCellFormula("SUM(H"+FIRST_ROW+":H"+TOTAL_ROW+")");
+                    cell.setCellFormula("SUM(H"+FIRST_ROW+":H"+(TOTAL_ROW-1)+")");
             }
 
             //Total due
-            org.apache.poi.ss.usermodel.Row totalDueRow = sheet.getRow(PAGE_ROW_MAX+2);
-            Cell totalDueCell = totalDueRow.getCell(7);
-            totalDueCell.setCellFormula("H" + (PAGE_ROW_MAX-1) + "-G"+ (PAGE_ROW_MAX-1));
-//
-//            Font arialNormal = factory.getWorkbook().createFont();
-//            arialNormal.setFontName("Arial");
-//            arialNormal.setFontHeightInPoints((short) 12);
-//            arialNormal.setBold(false);
-//
-//            Font arialBold = factory.getWorkbook().createFont();
-//            arialBold.setFontName("Arial");
-//            arialBold.setFontHeightInPoints((short) 14);
-//            arialBold.setBold(true);
-//
-//            CellStyle cellStyle = factory.getWorkbook().createCellStyle();
-//            cellStyle.setBorderRight(BorderStyle.THIN);
-//            cellStyle.setAlignment(HorizontalAlignment.RIGHT);
-//            cellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-//            cellStyle.setFont(arialBold);
-//            cellStyle.setBorderLeft(BorderStyle.THIN);
-//            cellStyle.setBorderRight(BorderStyle.THIN);
-//            cellStyle.setBorderTop(BorderStyle.THIN);
-//            cellStyle.setBorderBottom(BorderStyle.THIN);
-//
-//            CellStyle titleCellStyle = factory.getWorkbook().createCellStyle();
-//            titleCellStyle.setAlignment(HorizontalAlignment.CENTER);
-//            titleCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-//            titleCellStyle.setFont(arialBold);
-//            titleCellStyle.setBorderLeft(BorderStyle.THIN);
-//            titleCellStyle.setBorderRight(BorderStyle.THIN);
-//            titleCellStyle.setBorderTop(BorderStyle.THIN);
-//            titleCellStyle.setBorderBottom(BorderStyle.THIN);
-//
-//            CellStyle paidAmountTitleCellStyle = factory.getWorkbook().createCellStyle();
-//            paidAmountTitleCellStyle.setBorderRight(BorderStyle.THIN);
-//            paidAmountTitleCellStyle.setAlignment(HorizontalAlignment.CENTER);
-//            paidAmountTitleCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-//            paidAmountTitleCellStyle.setFont(arialNormal);
-//            paidAmountTitleCellStyle.setBorderLeft(BorderStyle.THIN);
-//            paidAmountTitleCellStyle.setBorderRight(BorderStyle.THIN);
-//            paidAmountTitleCellStyle.setBorderTop(BorderStyle.THIN);
-//            paidAmountTitleCellStyle.setBorderBottom(BorderStyle.THIN);
-//
-//            CellStyle middleCellStyle = factory.getWorkbook().createCellStyle();
-//            middleCellStyle.setBorderLeft(BorderStyle.NONE);
-//            middleCellStyle.setBorderRight(BorderStyle.THIN);
-//            middleCellStyle.setBorderTop(BorderStyle.THIN);
-//            middleCellStyle.setBorderBottom(BorderStyle.THIN);
-//
-//            org.apache.poi.ss.usermodel.Row totalDueRow = sheet.getRow(TOTAL_ROW+2);
-//            Cell totalDueTitleCell = totalDueRow.getCell(5);
-//            totalDueTitleCell.setCellValue("Total Due (€)");
-//            Cell totalDueCell = totalDueRow.getCell(7);
-//            totalDueCell.setCellFormula("H" + (TOTAL_ROW+1) + "-G"+ (TOTAL_ROW+1));
-//            totalDueTitleCell.setCellStyle(titleCellStyle);
-//            totalDueRow.getCell(6).setCellStyle(middleCellStyle);
-//            totalDueCell.setCellStyle(cellStyle);
-//
-//            org.apache.poi.ss.usermodel.Row paidAmountRow = sheet.getRow(TOTAL_ROW+3);
-//            Cell paidAmountTitleCell = paidAmountRow.getCell(5);
-//            paidAmountTitleCell.setCellValue("Paid Amount (€)");
-//            Cell paidAmountCell = paidAmountRow.getCell(7);
-//            paidAmountTitleCell.setCellStyle(paidAmountTitleCellStyle);
-//            paidAmountRow.getCell(6).setCellStyle(middleCellStyle);
-//            paidAmountCell.setCellStyle(cellStyle);
-//
-//            org.apache.poi.ss.usermodel.Row balanceDueRow = sheet.getRow(TOTAL_ROW+4);
-//            Cell balanceDueTitleCell = balanceDueRow.getCell(5);
-//            balanceDueTitleCell.setCellValue("Balance due (€)");
-//            Cell balanceDueCell = balanceDueRow.getCell(7);
-//            balanceDueCell.setCellFormula("H" + (TOTAL_ROW+3) + "-H"+ (TOTAL_ROW+4));
-//            balanceDueTitleCell.setCellStyle(titleCellStyle);
-//            balanceDueRow.getCell(6).setCellStyle(middleCellStyle);
-//            balanceDueCell.setCellStyle(cellStyle);
+            org.apache.poi.ss.usermodel.Row totalDueRow;
+            CellStyle totalDueCellStyle = factory.getWorkbook().createCellStyle();
+            totalDueCellStyle.setBorderRight(BorderStyle.THIN);
+            totalDueCellStyle.setBorderBottom(BorderStyle.THIN);
+            totalDueCellStyle.setBorderTop(BorderStyle.THIN);
+            totalDueCellStyle.setFont(arialBold);
+
+            if(additionalRowNum%PAGE_ROW_MAX <= 13) {
+                totalDueRow = sheet.getRow(PAGE_ROW_MAX + 2);
+                Cell totalDueCell = totalDueRow.createCell(7);
+                totalDueCell.setCellFormula("H" + (PAGE_ROW_MAX - 2) + "-G" + (PAGE_ROW_MAX - 2));
+                totalDueCell.setCellStyle(totalDueCellStyle);
+            }
+            else {
+                totalDueRow = sheet.getRow(TOTAL_ROW + 2);
+                Cell totalDueCell = totalDueRow.createCell(7);
+                totalDueCell.setCellFormula("H" + (TOTAL_ROW+1) + "-G" + (TOTAL_ROW+1));
+                totalDueCell.setCellStyle(totalDueCellStyle);
+            }
+        }
+
+        if (targetClient.getCurrency().equals("USD")) {
+            org.apache.poi.ss.usermodel.Row dollarRow;
+            String formula;
+            if (additionalRowNum % PAGE_ROW_MAX <= 13) {
+                dollarRow = sheet.getRow(TOTAL_ROW + 5);
+                formula = "H"+ (TOTAL_ROW+5) +" *" + exchangeRate;
+            }
+            else {
+                dollarRow = sheet.getRow(TOTAL_ROW + 3);
+                formula = "H" + (TOTAL_ROW + 3) + " *" + exchangeRate;
+            }
+            Cell dollarCell = dollarRow.createCell(7); // column H
+            CellStyle cellStyle = factory.getWorkbook().createCellStyle();
+            DataFormat format = factory.getWorkbook().createDataFormat();
+            Font arial = factory.getWorkbook().createFont();
+            arial.setFontName("Arial");
+            arial.setFontHeightInPoints((short) 12);
+            cellStyle.setBorderRight(BorderStyle.THIN);
+            cellStyle.setAlignment(HorizontalAlignment.RIGHT);
+            cellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            cellStyle.setFont(arial);
+            cellStyle.setDataFormat(format.getFormat("#,##0.00")); // to get decimal format eg : "1234,56" and not "1234,5678" by default
+            dollarCell.setCellStyle(cellStyle);
+            dollarRow.getCell(7).setCellFormula(formula);
         }
     }
 

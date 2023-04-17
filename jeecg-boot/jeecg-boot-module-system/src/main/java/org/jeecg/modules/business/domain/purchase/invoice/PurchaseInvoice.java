@@ -19,7 +19,7 @@ public class PurchaseInvoice extends AbstractInvoice<String, BigDecimal, Integer
     private final List<PromotionDetail> promotions;
 
     public PurchaseInvoice(Client targetClient, String code, String subject, List<PurchaseInvoiceEntry> purchaseInvoiceEntries, List<PromotionDetail> promotions) {
-        super(targetClient, code, subject);
+        super(targetClient, code, subject, BigDecimal.ONE);
         this.purchaseInvoiceEntries = purchaseInvoiceEntries;
         this.promotions = promotions;
     }

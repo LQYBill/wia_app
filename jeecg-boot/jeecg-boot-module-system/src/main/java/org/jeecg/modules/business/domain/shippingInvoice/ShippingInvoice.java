@@ -21,20 +21,15 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
 
     private final List<SavRefundWithDetail> savRefunds;
 
-    private final BigDecimal exchangeRate;
-
     private BigDecimal totalAmount;
-
-    private final String DOLLAR_LOCATION = "H"+ this.getTOTAL_ROW()+3;
 
     public ShippingInvoice(Client targetClient, String code,
                            String subject,
                            Map<PlatformOrder, List<PlatformOrderContent>> ordersToContent,
                            List<SavRefundWithDetail> savRefunds, BigDecimal exchangeRate) {
-        super(targetClient, code, subject);
+        super(targetClient, code, subject, exchangeRate);
         this.ordersToContent = ordersToContent;
         this.savRefunds = savRefunds;
-        this.exchangeRate = exchangeRate;
         totalAmount = BigDecimal.ZERO;
     }
 
@@ -171,10 +166,6 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
         return BigDecimal.ZERO;
     }
 
-    public BigDecimal getExchangeRate() {
-        return exchangeRate;
-    }
-
     /**
      * In addition to super's operation, if target client prefer dollar, write the formula of exchange to
      * a specific cell.
@@ -184,23 +175,5 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
     @Override
     protected void fillTable(InvoiceStyleFactory factory) {
         super.fillTable(factory);
-        if (targetClient.getCurrency().equals("USD")) {
-            Sheet sheet = factory.getWorkbook().getSheetAt(0);
-            org.apache.poi.ss.usermodel.Row dollarRow = sheet.getRow(this.getTOTAL_ROW()+5);
-            Cell dollarCell = dollarRow.createCell(7); // column H
-            CellStyle cellStyle = factory.getWorkbook().createCellStyle();
-            DataFormat format = factory.getWorkbook().createDataFormat();
-            Font arial = factory.getWorkbook().createFont();
-            arial.setFontName("Arial");
-            arial.setFontHeightInPoints((short) 12);
-            cellStyle.setBorderRight(BorderStyle.THIN);
-            cellStyle.setAlignment(HorizontalAlignment.RIGHT);
-            cellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-            cellStyle.setFont(arial);
-            cellStyle.setDataFormat(format.getFormat("#,##0.00")); // to get decimal format eg : "1234,56" and not "1234,5678" by default
-            dollarCell.setCellStyle(cellStyle);
-            String formula = "H"+ (this.getTOTAL_ROW()+5) +" *" + exchangeRate;
-            dollarRow.getCell(7).setCellFormula(formula);
-        }
     }
 }
