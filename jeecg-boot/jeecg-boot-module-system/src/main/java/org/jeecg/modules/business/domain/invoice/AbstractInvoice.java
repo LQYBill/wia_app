@@ -270,12 +270,24 @@ public abstract class AbstractInvoice<E, F, G, H, I> {
                 cell.setCellStyle(cellStyle);
                 if(i==2)
                     cell.setCellValue("Total");
-                if(i==5)
-                    cell.setCellFormula("SUM(F"+FIRST_ROW+":F"+(TOTAL_ROW-1)+")");
-                if(i==6)
-                    cell.setCellFormula("SUM(G"+FIRST_ROW+":G"+(TOTAL_ROW-1)+")");
-                if(i==7)
-                    cell.setCellFormula("SUM(H"+FIRST_ROW+":H"+(TOTAL_ROW-1)+")");
+                if(i==5) {
+                    if (additionalRowNum % PAGE_ROW_MAX <= 13)
+                        cell.setCellFormula("SUM(F" + FIRST_ROW + ":F" + (TOTAL_ROW-1) + ")");
+                    else
+                        cell.setCellFormula("SUM(F" + FIRST_ROW + ":F" + (TOTAL_ROW) + ")");
+                }
+                if(i==6) {
+                    if (additionalRowNum % PAGE_ROW_MAX <= 13)
+                        cell.setCellFormula("SUM(G" + FIRST_ROW + ":G" + (TOTAL_ROW - 1) + ")");
+                    else
+                        cell.setCellFormula("SUM(G" + FIRST_ROW + ":G" + (TOTAL_ROW) + ")");
+                }
+                if(i==7) {
+                    if (additionalRowNum % PAGE_ROW_MAX <= 13)
+                        cell.setCellFormula("SUM(H" + FIRST_ROW + ":H" + (TOTAL_ROW - 1) + ")");
+                    else
+                        cell.setCellFormula("SUM(H" + FIRST_ROW + ":H" + (TOTAL_ROW) + ")");
+                }
             }
 
             //Total due
