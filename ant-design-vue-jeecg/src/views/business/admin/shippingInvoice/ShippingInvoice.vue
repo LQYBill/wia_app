@@ -361,7 +361,8 @@ export default {
                 this.$message.info("Download succeed.")
               )
               this.downloadDetailFile(code)
-
+              this.makeInvoiceDisable = true;
+              this.completeInvoiceDisable = false;
             }
           }
         )

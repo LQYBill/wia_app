@@ -52,6 +52,9 @@ public class InvoiceStyleFactory {
         leftSideStyle.setBorderTop(BorderStyle.NONE);
         leftSideStyle.setAlignment(HorizontalAlignment.LEFT);
         leftSideStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        // decimal
+        DataFormat format =workbook.createDataFormat();
+        leftSideStyle.setDataFormat(format.getFormat("#,##0.00"));
         // font
         Font font = workbook.createFont();
         font.setFontName("Arial");
@@ -71,6 +74,9 @@ public class InvoiceStyleFactory {
         rightSideStyle.setBorderTop(BorderStyle.NONE);
         rightSideStyle.setAlignment(HorizontalAlignment.RIGHT);
         rightSideStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        //decimal
+        DataFormat format =workbook.createDataFormat();
+        rightSideStyle.setDataFormat(format.getFormat("#,##0.00"));
         // font
         Font font = workbook.createFont();
         font.setFontName("Arial");
