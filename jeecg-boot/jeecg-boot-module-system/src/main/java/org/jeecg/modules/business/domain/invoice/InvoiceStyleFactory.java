@@ -12,6 +12,7 @@ public class InvoiceStyleFactory {
 
     private CellStyle leftSideStyle;
     private CellStyle rightSideStyle;
+    private CellStyle rightSideDecimalStyle;
     private CellStyle otherStyle;
     private CellStyle subjectStyle;
 
@@ -74,15 +75,33 @@ public class InvoiceStyleFactory {
         rightSideStyle.setBorderTop(BorderStyle.NONE);
         rightSideStyle.setAlignment(HorizontalAlignment.RIGHT);
         rightSideStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-        //decimal
-        DataFormat format =workbook.createDataFormat();
-        rightSideStyle.setDataFormat(format.getFormat("#,##0.00"));
         // font
         Font font = workbook.createFont();
         font.setFontName("Arial");
         font.setFontHeightInPoints((short) 11);
         rightSideStyle.setFont(font);
         return rightSideStyle;
+    }
+    public CellStyle rightSideDecimalStyle() {
+        if (rightSideDecimalStyle != null)
+            return rightSideDecimalStyle;
+        // border
+        rightSideDecimalStyle = workbook.createCellStyle();
+        rightSideDecimalStyle.setBorderBottom(BorderStyle.NONE);
+        rightSideDecimalStyle.setBorderLeft(BorderStyle.THIN);
+        rightSideDecimalStyle.setBorderRight(BorderStyle.THIN);
+        rightSideDecimalStyle.setBorderTop(BorderStyle.NONE);
+        rightSideDecimalStyle.setAlignment(HorizontalAlignment.RIGHT);
+        rightSideDecimalStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        // decimal
+        DataFormat format =workbook.createDataFormat();
+        leftSideStyle.setDataFormat(format.getFormat("#,##0.00"));
+        // font
+        Font font = workbook.createFont();
+        font.setFontName("Arial");
+        font.setFontHeightInPoints((short) 11);
+        rightSideDecimalStyle.setFont(font);
+        return rightSideDecimalStyle;
     }
 
     public CellStyle subjectStyle(){

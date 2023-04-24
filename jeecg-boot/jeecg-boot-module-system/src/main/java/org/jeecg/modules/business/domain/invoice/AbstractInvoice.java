@@ -209,10 +209,10 @@ public abstract class AbstractInvoice<E, F, G, H, I> {
             log.info("Writing line {} with data {}", lineNum, rowValue);
             configCell("C", lineNum, String.format("%06d", i + 1), factory.leftSideStyle());
             configCell("D", lineNum, rowValue.getCol1(), factory.leftSideStyle());
-            configCell("E", lineNum, rowValue.getCol2(), factory.rightSideStyle());
+            configCell("E", lineNum, rowValue.getCol2(), factory.rightSideDecimalStyle());
             configCell("F", lineNum, rowValue.getCol3(), factory.rightSideStyle());
-            configCell("G", lineNum, rowValue.getCol4(), factory.rightSideStyle());
-            configCell("H", lineNum, rowValue.getCol5(), factory.rightSideStyle());
+            configCell("G", lineNum, rowValue.getCol4(), factory.rightSideDecimalStyle());
+            configCell("H", lineNum, rowValue.getCol5(), factory.rightSideDecimalStyle());
         }
         // on fait le total par colonne
         if(data.size() > dataRowNumber)
