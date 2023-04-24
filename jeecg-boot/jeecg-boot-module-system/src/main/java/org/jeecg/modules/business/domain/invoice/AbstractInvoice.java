@@ -145,12 +145,12 @@ public abstract class AbstractInvoice<E, F, G, H, I> {
         // we shift down the rows after the table and we clone the row in the table
         int dataRowNumber = LAST_ROW - FIRST_ROW;
         int additionalRowNum = data.size() - dataRowNumber - 1;
-        TOTAL_ROW = LAST_ROW+additionalRowNum;
 
         Sheet sheet = factory.getWorkbook().getSheetAt(0);
         org.apache.poi.ss.usermodel.Row sourceRow = sheet.getRow(FIRST_ROW);
         if(data.size() > dataRowNumber)
         {
+            TOTAL_ROW = LAST_ROW+additionalRowNum;
             int startRow = LAST_ROW+1;
             int fileLastRow = sheet.getLastRowNum();
             // shifting the footer of the file, to X rows below
@@ -315,13 +315,18 @@ public abstract class AbstractInvoice<E, F, G, H, I> {
         if (targetClient.getCurrency().equals("USD")) {
             org.apache.poi.ss.usermodel.Row dollarRow;
             String formula;
-            if (additionalRowNum % PAGE_ROW_MAX <= 13) {
-                dollarRow = sheet.getRow(TOTAL_ROW + 5);
-                formula = "H"+ (TOTAL_ROW+5) +" *" + exchangeRate;
+            if(data.size() > dataRowNumber){
+                if (additionalRowNum % PAGE_ROW_MAX <= 13) {
+                    dollarRow = sheet.getRow(TOTAL_ROW + 5);
+                    formula = "H" + (TOTAL_ROW + 5) + " *" + exchangeRate;
+                } else {
+                    dollarRow = sheet.getRow(TOTAL_ROW + 3);
+                    formula = "H" + (TOTAL_ROW + 3) + " *" + exchangeRate;
+                }
             }
             else {
-                dollarRow = sheet.getRow(TOTAL_ROW + 3);
-                formula = "H" + (TOTAL_ROW + 3) + " *" + exchangeRate;
+                dollarRow = sheet.getRow(TOTAL_ROW + 2);
+                formula = "H" + (TOTAL_ROW + 2) + " *" + exchangeRate;
             }
             Cell dollarCell = dollarRow.createCell(7); // column H
             CellStyle cellStyle = factory.getWorkbook().createCellStyle();

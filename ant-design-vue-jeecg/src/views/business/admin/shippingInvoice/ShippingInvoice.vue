@@ -362,7 +362,7 @@ export default {
               )
               this.downloadDetailFile(code)
               this.makeInvoiceDisable = true;
-              this.completeInvoiceDisable = false;
+              this.completeInvoiceDisable = true;
             }
           }
         )
