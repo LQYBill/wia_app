@@ -143,4 +143,9 @@ public class LogisticChannelServiceImpl extends ServiceImpl<LogisticChannelMappe
         return logisticChannelMapper.getFromZhName(zhNames);
     }
 
+    @Override
+    public List<String> listByCompany(String companyName) {
+        return logisticChannelMapper.listByCompany(companyName);
+    }
+
 }

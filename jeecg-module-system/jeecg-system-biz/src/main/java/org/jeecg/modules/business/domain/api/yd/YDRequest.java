@@ -1,6 +1,7 @@
 package org.jeecg.modules.business.domain.api.yd;
 
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -24,6 +25,7 @@ public class YDRequest {
     private final static String URL = "http://oms.ydhex.com/webservice/PublicService.asmx/ServiceInterfaceUTF8";
     private final String appToken;
     private final String appKey;
+    @Getter
     private final YDRequestBody ydRequestBody;
 
     private static final RequestConfig REQUEST_CONFIG = RequestConfig.custom().build();

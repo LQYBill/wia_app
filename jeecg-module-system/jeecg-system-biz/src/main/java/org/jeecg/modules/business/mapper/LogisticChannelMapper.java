@@ -20,4 +20,6 @@ public interface LogisticChannelMapper extends BaseMapper<LogisticChannel> {
 
     List<LogisticChannel> listByIdAndZhName();
     List<LogisticChannel> getFromZhName(@Param("zhNames") List<String> zhNames);
+
+    List<String> listByCompany(@Param("company") String companyName);
 }

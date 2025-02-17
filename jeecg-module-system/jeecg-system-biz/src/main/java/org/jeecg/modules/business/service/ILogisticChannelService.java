@@ -54,4 +54,6 @@ public interface ILogisticChannelService extends IService<LogisticChannel> {
     List<LogisticChannel> listByIdAndZhName();
 
     List<LogisticChannel> getFromZhName(List<String> zhNames);
+
+    List<String> listByCompany(String companyName);
 }
