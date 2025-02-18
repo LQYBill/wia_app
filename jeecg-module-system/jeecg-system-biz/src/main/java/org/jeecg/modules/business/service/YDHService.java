@@ -27,13 +27,13 @@ public class YDHService {
     @Value("${ydh.api.apiKey}")
     private String API_KEY;
 
-    public void deleteYDHTrackingNumbers(List<String> platformOrderNumbers, ExecutorService executor) {
+    public void deleteYDHTrackingNumbers(List<String> platformOrderIds, ExecutorService executor) {
         List<YDRequest> ydRequests = new ArrayList<>();
         ObjectMapper mapper = new ObjectMapper();
         mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
-        platformOrderNumbers.forEach(poNumber -> {
-            YDRemoveOrderRequestBody requestBody = new YDRemoveOrderRequestBody(poNumber);
+        platformOrderIds.forEach(poId -> {
+            YDRemoveOrderRequestBody requestBody = new YDRemoveOrderRequestBody(poId);
             YDRequest ydRequest = new YDRequest(API_TOKEN, API_KEY, requestBody);
             ydRequests.add(ydRequest);
         });
@@ -58,6 +58,6 @@ public class YDHService {
                 .collect(Collectors.toList());
         List<Boolean> results = futures.stream().map(CompletableFuture::join).collect(Collectors.toList());
         long nbSuccesses = results.stream().filter(b -> b).count();
-        log.info("{}/{} YDH orders have been deleted.", nbSuccesses, platformOrderNumbers.size());
+        log.info("{}/{} YDH orders have been deleted.", nbSuccesses, platformOrderIds.size());
     }
 }

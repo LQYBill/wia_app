@@ -1,14 +1,19 @@
 package org.jeecg.modules.business.domain.job;
 
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
-import org.jeecg.modules.business.domain.api.mabang.dochangeorder.*;
+import org.jeecg.modules.business.domain.api.mabang.getorderlist.Order;
+import org.jeecg.modules.business.domain.api.mabang.getorderlist.OrderListRequestBody;
+import org.jeecg.modules.business.service.IPlatformOrderMabangService;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,11 +23,16 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 @Slf4j
+@Component
 public class ClearLogisticChannelJob implements Job {
+    @Autowired
+    private IPlatformOrderMabangService platformOrderMabangService;
+
     private static final Integer DEFAULT_NUMBER_OF_THREADS = 10;
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
+        log.info("ClearLogisticChannelJob is executing ...");
         JobDataMap jobDataMap = context.getMergedJobDataMap();
         String parameter = ((String) jobDataMap.get("parameter"));
         List<String> platformOrderIds = new ArrayList<>();
@@ -45,18 +55,17 @@ public class ClearLogisticChannelJob implements Job {
                 throw new RuntimeException(e);
             }
         }
-        ExecutorService executor = Executors.newFixedThreadPool(DEFAULT_NUMBER_OF_THREADS);
+        List<List<String>> platformOrderIdLists = Lists.partition(platformOrderIds, 10);
 
-        List<CompletableFuture<Boolean>> clearLogisticFutures = platformOrderIds.stream()
-                .map(orderId -> CompletableFuture.supplyAsync(() -> {
-                    ClearLogisticRequestBody body = new ClearLogisticRequestBody(orderId);
-                    ClearLogisticRequest request = new ClearLogisticRequest(body);
-                    ClearLogisticResponse response = request.send();
-                    return response.success();
-                }, executor))
-                .collect(Collectors.toList());
-        List<Boolean> clearResults = clearLogisticFutures.stream().map(CompletableFuture::join).collect(Collectors.toList());
-        long clearSuccessCount = clearResults.stream().filter(b -> b).count();
-        log.info("{}/{} logistic channel names cleared successfully.", clearSuccessCount, platformOrderIds.size());
+        List<OrderListRequestBody> requests = new ArrayList<>();
+        for (List<String> platformOrderIdList : platformOrderIdLists) {
+            requests.add(new OrderListRequestBody().setPlatformOrderIds(platformOrderIdList));
+        }
+        ExecutorService executor = Executors.newFixedThreadPool(DEFAULT_NUMBER_OF_THREADS);
+        List<Order> mabangOrders = platformOrderMabangService.getOrdersFromMabang(requests, executor);
+
+        platformOrderMabangService.clearLogisticChannel(mabangOrders, executor);
+        executor.shutdown();
+        log.info("ClearLogisticChannelJob is finished.");
     }
 }

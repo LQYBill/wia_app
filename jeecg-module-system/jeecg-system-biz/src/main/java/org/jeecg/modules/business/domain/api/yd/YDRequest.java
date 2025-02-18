@@ -49,7 +49,9 @@ public class YDRequest {
                 HttpPost request = new HttpPost(URL);
 
                 // adding the form data
-                request.setEntity(new UrlEncodedFormEntity(generateFormData(), "UTF-8"));
+                List<NameValuePair> pairs = generateFormData();
+                log.info("Request sent : {}", pairsToString(pairs));
+                request.setEntity(new UrlEncodedFormEntity(pairs, "UTF-8"));
                 return httpClient.execute(request);
             } catch (Exception e) {
                 log.error("Request failed on attempt n°{}", attempts);
@@ -71,6 +73,17 @@ public class YDRequest {
         pairs.add(new BasicNameValuePair("serviceMethod", ydRequestBody.getServiceMethod()));
         pairs.add(new BasicNameValuePair("paramsJson", ydRequestBody.getParamsJson()));
         return pairs;
+    }
+    private String pairsToString(List<NameValuePair> pairs) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        for (int i = 0; i < pairs.size(); i++) {
+            sb.append(pairs.get(i).getName()).append("=").append(pairs.get(i).getValue());
+            if(i < pairs.size() - 1)
+                sb.append(",");
+        }
+        sb.append("]");
+        return sb.toString();
     }
 
 }

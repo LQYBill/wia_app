@@ -2,8 +2,6 @@ package org.jeecg.modules.business.domain.api.yd;
 
 import com.alibaba.fastjson.JSONObject;
 
-import java.util.List;
-
 public class YDRemoveOrderRequestBody extends YDRequestBody {
 
     private static final String SERVICE_METHOD = "removeorder";
@@ -17,5 +15,8 @@ public class YDRemoveOrderRequestBody extends YDRequestBody {
         JSONObject param = new JSONObject();
         param.put(PARAM_KEY, platformOrderNumber);
         return param.toJSONString();
+    }
+    public String toString() {
+        return "YDRemoveOrderRequestBody(serviceMethod=" + this.getServiceMethod() + ", paramJson=" + this.getParamsJson() + ")";
     }
 }

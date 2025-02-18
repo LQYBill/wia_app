@@ -335,8 +335,12 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
         log.info("{}/{} logistic channel names cleared successfully.", logisticClearSuccessCount, orders.size());
 
         List<String> YDHLogisticChannels = logisticChannelService.listByCompany("义达");
-        List<String> poNumberWithYDHLogistic = orders.stream().filter(order -> YDHLogisticChannels.contains(order.getLogisticChannelName())).map(Order::getPlatformOrderNumber).collect(toList());
-        ydhService.deleteYDHTrackingNumbers(poNumberWithYDHLogistic, executor);
+        List<String> poIdWithYDHLogistic = orders.stream().filter(order -> YDHLogisticChannels.contains(order.getLogisticChannelName())).map(Order::getPlatformOrderId).collect(toList());
+        if(poIdWithYDHLogistic.isEmpty()) {
+            log.info("No YDH logistic channel to delete.");
+            return;
+        }
+        ydhService.deleteYDHTrackingNumbers(poIdWithYDHLogistic, executor);
     }
     @Override
     public String stripAccents(String input) {
