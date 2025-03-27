@@ -183,4 +183,10 @@ public class LogisticExpenseDetail implements Serializable {
     @Excel(name = "货物赔偿备注", width = 15)
     @ApiModelProperty(value = "货物赔偿备注")
     private BigDecimal compensationRemark;
+    /**
+     * 国家
+     */
+    @Excel(name = "国家", width = 15)
+    @ApiModelProperty(value = "国家")
+    private String targetCountry;
 }

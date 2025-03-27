@@ -3,23 +3,26 @@ package org.jeecg.modules.business.service.impl;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sun.istack.NotNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jeecg.modules.business.entity.LogisticExpense.*;
 import org.jeecg.modules.business.entity.LogisticExpenseDetail;
 import org.jeecg.modules.business.mapper.LogisticExpenseDetailMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
+import org.jeecg.modules.business.service.ILogisticCompanyService;
 import org.jeecg.modules.business.service.ILogisticExpenseDetailService;
-import org.jeecg.modules.business.vo.LogisticCompanyEnum;
-import org.jeecg.modules.business.vo.LogisticExpenseProportion;
-import org.jeecg.modules.business.vo.PlatformOrderLogisticExpenseDetail;
-import org.jeecg.modules.business.vo.ResponsesWithMsg;
+import org.jeecg.modules.business.vo.*;
 import org.jeecg.modules.business.vo.dashboard.PeriodLogisticProfit;
+import org.jeecgframework.poi.excel.ExcelImportUtil;
+import org.jeecgframework.poi.excel.entity.ImportParams;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
 
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -41,9 +44,10 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
 
     @Autowired
     private PlatformOrderMapper platformOrderMapper;
-
     @Autowired
     private LogisticExpenseDetailMapper logisticExpenseDetailMapper;
+    @Autowired
+    private ILogisticCompanyService logisticCompanyService;
 
     @Override
     public PeriodLogisticProfit calculateLogisticProfitOf(Date startDate, Date endDate, List<String> country, List<String> channelName) {
@@ -213,23 +217,32 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
     }
 
     @Override
-    public void importExcel(MultipartFile file, LogisticCompanyEnum logisticCompanyEnum) {
-        ResponsesWithMsg responses = new ResponsesWithMsg();
-        Class<?> clazz = LogisticExpenseDetail.class;
+    public Response<List<LogisticExpenseDetail>, String> importExcel(MultipartFile file, LogisticCompanyEnum logisticCompanyEnum) {
+        Response<List<AbstractLogisticExpenseDetail>, String> excelToObjectResponse = new Response<>();
+        Response<List<LogisticExpenseDetail>, String> importResponse = new Response<>();
+        Class<?> entityClass = LogisticExpenseDetail.class;
         switch (logisticCompanyEnum) {
             case DISIFANG:
 
                 break;
             case CNE:
                 log.info("Importing CNE expense detail excel");
-                clazz = CNEExpenseDetail.class;
+                entityClass = CNEExpenseDetail.class;
+                excelToObjectResponse = CNEExcelToObject(file);
+
                 break;
             case CHUKOUYI:
 
                 break;
             case ANTU:
                 log.info("Importing AnTu expense detail excel");
-                clazz = AnTuExpenseDetail.class;
+                entityClass = AnTuExpenseDetail.class;
+                excelToObjectResponse = antuExcelToObject(file);
+                if(excelToObjectResponse.getError() != null) {
+                    break;
+                }
+                List<AnTuExpenseDetail> antuExpenseDetails = excelToObjectResponse.getData().stream().map(AnTuExpenseDetail.class::cast).collect(Collectors.toList());
+                importResponse.setData(antuToLogisticExpenseDetail(antuExpenseDetails));
                 break;
             case MIAOXIN:
 
@@ -248,7 +261,7 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
                 break;
             case YIDA:
                 log.info("Importing Yida expense detail excel");
-                clazz = YDHExpenseDetail.class;
+                entityClass = YDHExpenseDetail.class;
                 break;
             case UBI:
 
@@ -258,7 +271,7 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
                 break;
             case WANBANG:
                 log.info("Importing WanBang expense detail excel");
-                clazz = WanBangExpenseDetail.class;
+                entityClass = WanBangExpenseDetail.class;
                 break;
             case WIA:
 
@@ -268,7 +281,7 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
                 break;
             case CAINIAO:
                 log.info("Importing CaiNiao expense detail excel");
-                clazz = CaiNiaoExpenseDetail.class;
+                entityClass = CaiNiaoExpenseDetail.class;
                 break;
             case SHENZHENYUANPENG:
 
@@ -280,9 +293,83 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
 
                 break;
         }
-
+        return importResponse;
     }
+    @Override
+    public Response<List<AbstractLogisticExpenseDetail>, String> antuExcelToObject(MultipartFile file) {
+        Response<List<AbstractLogisticExpenseDetail>, String> responses = new Response<>();
+        try (InputStream inputStream = file.getInputStream()){
+            Workbook workbook = new HSSFWorkbook(inputStream);
+            Sheet firstSheet = workbook.getSheetAt(0);
+            int firstRow = firstSheet.getFirstRowNum();
+            int lastRow = firstSheet.getLastRowNum();
+            ImportParams params = new ImportParams();
+            params.setTitleRows(0);
+            params.setNeedSave(true);
+            List<AbstractLogisticExpenseDetail> list = ExcelImportUtil.importExcel(file.getInputStream(), AnTuExpenseDetail.class, params);
+            System.out.println("list size: " + list.size());
+            System.out.println("objects : " + list);
+            responses.setData(list);
+        } catch (Exception e) {
+            responses.setError(e.getMessage());
+            log.error(e.getMessage(), e);
+        }
+        return responses;
+    }
+    @Override
+    public Response<List<AbstractLogisticExpenseDetail>, String> CNEExcelToObject(MultipartFile file) {
+        Response<List<AbstractLogisticExpenseDetail>, String> responses = new Response<>();
+        try (InputStream inputStream = file.getInputStream()){
+            Workbook workbook = WorkbookFactory.create(inputStream);
+            Sheet firstSheet = workbook.getSheetAt(1);
+            int firstRow = firstSheet.getFirstRowNum();
+            int lastRow = firstSheet.getLastRowNum();
+//            ImportParams params = new ImportParams();
+//            params.setTitleRows(0);
+//            params.setSheetNum(1);
+//            params.setStartSheetIndex(1);
+//            params.setNeedSave(true);
+//            List<AbstractLogisticExpenseDetail> detailList = ExcelImportUtil.importExcel(file.getInputStream(), CNEExpenseDetail.class, params);
+//            System.out.println("list size: " + detailList.size());
+//            System.out.println("objects : " + detailList);
+//            params.setSheetNum(2);
+//            params.setStartSheetIndex(2);
+//            List<CNEExtraExpenseDetail> extraDetailLIst = ExcelImportUtil.importExcel(file.getInputStream(), CNEExtraExpenseDetail.class, params);
+//            System.out.println("list size: " + extraDetailLIst.size());
+//            System.out.println("objects : " + extraDetailLIst);
+            List<CNEExpenseDetail> detailList = new ArrayList<>();
+            for (int rowIndex = firstRow + 1; rowIndex <= lastRow; rowIndex++) {
+                Row row = firstSheet.getRow(rowIndex);
+                CNEExpenseDetail detail = new CNEExpenseDetail();
+                for( int cellIndex = 1; cellIndex < 11; cellIndex++) {
+                    Cell cell = row.getCell(cellIndex, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                }
 
+            }
+//            responses.setData(detailList);
+        } catch (Exception e) {
+            responses.setError(e.getMessage());
+            log.error(e.getMessage(), e);
+        }
+        return responses;
+    }
+    @Override
+    public List<LogisticExpenseDetail> antuToLogisticExpenseDetail(List<AnTuExpenseDetail> antuExpenseDetails) {
+        List<LogisticExpenseDetail> logisticExpenseDetails = new ArrayList<>();
+        String companyId = logisticCompanyService.getIdByName(LogisticCompanyEnum.ANTU.getName());
+        for (AnTuExpenseDetail antuExpenseDetail : antuExpenseDetails) {
+            LogisticExpenseDetail logisticExpenseDetail = new LogisticExpenseDetail();
+            logisticExpenseDetail.setPlatformOrderSerialId(antuExpenseDetail.getPlatformOrderId());
+            logisticExpenseDetail.setTrackingNumber(antuExpenseDetail.getTrackingNumber());
+            logisticExpenseDetail.setTargetCountry(antuExpenseDetail.getTargetCountry());
+            logisticExpenseDetail.setChargingWeight(antuExpenseDetail.getChargingWeight());
+            logisticExpenseDetail.setShippingFee(antuExpenseDetail.getServiceFee());
+            logisticExpenseDetail.setAdditionalFee(antuExpenseDetail.getAdditionalFee());
+            logisticExpenseDetail.setTotalFee(antuExpenseDetail.getTotalFee());
+            logisticExpenseDetail.setLogisticCompanyId(companyId);
+        }
+        return logisticExpenseDetails;
+    }
     @Override
     public List<String> allCountries() {
         return platformOrderMapper.allCountries();

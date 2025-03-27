@@ -1,14 +1,13 @@
 package org.jeecg.modules.business.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.jeecg.modules.business.entity.LogisticExpense.AbstractLogisticExpenseDetail;
+import org.jeecg.modules.business.entity.LogisticExpense.AnTuExpenseDetail;
 import org.jeecg.modules.business.entity.LogisticExpenseDetail;
-import org.jeecg.modules.business.vo.LogisticCompanyEnum;
-import org.jeecg.modules.business.vo.LogisticExpenseProportion;
+import org.jeecg.modules.business.vo.*;
 import org.jeecg.modules.business.vo.dashboard.PeriodLogisticProfit;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -34,11 +33,17 @@ public interface ILogisticExpenseDetailService extends IService<LogisticExpenseD
 
     List<LogisticExpenseProportion> calculateLogisticExpenseProportionByCountry(Date startDate, Date endDate, List<String> country, List<String> channelName);
 
+    Response<List<AbstractLogisticExpenseDetail>, String> antuExcelToObject(MultipartFile file);
+
+    Response<List<AbstractLogisticExpenseDetail>, String> CNEExcelToObject(MultipartFile file);
+
+    List<LogisticExpenseDetail> antuToLogisticExpenseDetail(List<AnTuExpenseDetail> antuExpenseDetails);
+
     List<String> allCountries();
 
     List<String> allChannels();
 
     boolean saveBatch(Collection<LogisticExpenseDetail> expenseDetails);
 
-    void importExcel(MultipartFile file, LogisticCompanyEnum logisticCompanyEnum);
+    Response<?, String> importExcel(MultipartFile file, LogisticCompanyEnum logisticCompanyEnum);
 }

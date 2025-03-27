@@ -15,5 +15,5 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface LogisticCompanyMapper extends BaseMapper<LogisticCompany> {
-
+    String getIdByName(@Param("name") String name);
 }

@@ -3,6 +3,7 @@ package org.jeecg.modules.business.service.impl;
 import org.jeecg.modules.business.entity.LogisticCompany;
 import org.jeecg.modules.business.mapper.LogisticCompanyMapper;
 import org.jeecg.modules.business.service.ILogisticCompanyService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -15,5 +16,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
  */
 @Service
 public class LogisticCompanyServiceImpl extends ServiceImpl<LogisticCompanyMapper, LogisticCompany> implements ILogisticCompanyService {
+    @Autowired
+    private LogisticCompanyMapper logisticCompanyMapper;
 
+    @Override
+    public String getIdByName(String name) {
+        return logisticCompanyMapper.getIdByName(name);
+    }
 }

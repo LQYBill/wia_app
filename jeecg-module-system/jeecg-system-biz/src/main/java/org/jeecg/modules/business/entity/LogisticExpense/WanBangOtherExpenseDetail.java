@@ -6,7 +6,7 @@ import org.jeecgframework.poi.excel.annotation.Excel;
 import java.math.BigDecimal;
 
 @Data
-public class WanBangOtherExpenseDetail {
+public class WanBangOtherExpenseDetail  extends AbstractLogisticExpenseDetail{
     @Excel(name="类型")
     private String additionalFeeType;
     @Excel(name="金额")

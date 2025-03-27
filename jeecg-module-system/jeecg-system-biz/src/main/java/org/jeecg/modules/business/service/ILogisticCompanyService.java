@@ -11,4 +11,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface ILogisticCompanyService extends IService<LogisticCompany> {
 
+    String getIdByName(String name);
 }

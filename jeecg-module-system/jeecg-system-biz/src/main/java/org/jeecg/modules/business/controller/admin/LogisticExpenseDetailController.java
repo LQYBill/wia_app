@@ -19,6 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.jeecg.common.system.base.controller.JeecgController;
 import org.jeecg.modules.business.vo.LogisticCompanyEnum;
+import org.jeecg.modules.business.vo.Response;
+import org.jeecg.modules.business.vo.Responses;
 import org.jeecg.modules.business.vo.ResponsesWithMsg;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -165,7 +167,7 @@ public class LogisticExpenseDetailController extends JeecgController<LogisticExp
     @RequestMapping(value = "/importExcel", method = RequestMethod.POST)
     public Result<?> importExcel(HttpServletRequest request) throws IOException, ServletException {
 		log.info("Importing logistic expense detail excel");
-		ResponsesWithMsg responses = new ResponsesWithMsg();
+		Response<?, String> responses = new Response<>();
 		MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
 		MultipartFile file = multipartRequest.getFile("file");
 		if(file == null) {
@@ -178,9 +180,11 @@ public class LogisticExpenseDetailController extends JeecgController<LogisticExp
 			return Result.error(400,"Missing logistic company param");
 		}
 		try {
-			LogisticCompanyEnum logisticCompanyEnum = LogisticCompanyEnum.valueOf(logisticCompany);
-			logisticExpenseDetailService.importExcel(file, logisticCompanyEnum);
+			LogisticCompanyEnum logisticCompanyEnum = LogisticCompanyEnum.getByValue(logisticCompany);
+			System.out.println("Logistic Company Enum : " + logisticCompanyEnum);
+			responses = logisticExpenseDetailService.importExcel(file, logisticCompanyEnum);
 		} catch (IllegalArgumentException e) {
+			log.error(e.getMessage());
 			return Result.error(400,"Invalid logistic company param");
 		}
 
