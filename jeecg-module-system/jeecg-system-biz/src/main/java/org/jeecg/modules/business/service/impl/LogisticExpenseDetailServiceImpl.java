@@ -298,17 +298,13 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
     @Override
     public Response<List<AbstractLogisticExpenseDetail>, String> antuExcelToObject(MultipartFile file) {
         Response<List<AbstractLogisticExpenseDetail>, String> responses = new Response<>();
-        try (InputStream inputStream = file.getInputStream()){
-            Workbook workbook = new HSSFWorkbook(inputStream);
-            Sheet firstSheet = workbook.getSheetAt(0);
-            int firstRow = firstSheet.getFirstRowNum();
-            int lastRow = firstSheet.getLastRowNum();
+        try {
             ImportParams params = new ImportParams();
             params.setTitleRows(0);
             params.setNeedSave(true);
             List<AbstractLogisticExpenseDetail> list = ExcelImportUtil.importExcel(file.getInputStream(), AnTuExpenseDetail.class, params);
-            System.out.println("list size: " + list.size());
-            System.out.println("objects : " + list);
+            System.out.println("Details size: " + list.size());
+            System.out.println("Details : " + list);
             responses.setData(list);
         } catch (Exception e) {
             responses.setError(e.getMessage());
@@ -319,11 +315,105 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
     @Override
     public Response<List<AbstractLogisticExpenseDetail>, String> CNEExcelToObject(MultipartFile file) {
         Response<List<AbstractLogisticExpenseDetail>, String> responses = new Response<>();
+        List<AbstractLogisticExpenseDetail> detailList = new ArrayList<>();
+
         try (InputStream inputStream = file.getInputStream()){
             Workbook workbook = WorkbookFactory.create(inputStream);
-            Sheet firstSheet = workbook.getSheetAt(1);
-            int firstRow = firstSheet.getFirstRowNum();
-            int lastRow = firstSheet.getLastRowNum();
+            detailList.addAll(CNEExpenseDetailToObject(workbook));
+            detailList.addAll(CNEExtraExpenseDetailToObject(workbook));
+            detailList.addAll(CNERefundDetailToObject(workbook));
+            responses.setData(detailList);
+        } catch (Exception e) {
+            responses.setError(e.getMessage());
+            log.error(e.getMessage(), e);
+        }
+        return responses;
+    }
+
+    private Collection<? extends AbstractLogisticExpenseDetail> CNERefundDetailToObject(Workbook workbook) {
+        List<AbstractLogisticExpenseDetail> details = new ArrayList<>();
+        Sheet sheet = workbook.getSheetAt(3);
+        int firstRow = sheet.getFirstRowNum();
+        int lastRow = sheet.getLastRowNum();
+        for (int rowIndex = firstRow + 1; rowIndex < lastRow; rowIndex++) {
+            Row row = sheet.getRow(rowIndex);
+            CNERefundDetail detail = new CNERefundDetail();
+            for( int cellIndex = 1; cellIndex < 7; cellIndex++) {
+                Cell cell = row.getCell(cellIndex, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                switch (cellIndex) {
+                    case 1:
+                        detail.setTrackingNumber(cell.getStringCellValue());
+                        break;
+                    case 2:
+                        detail.setTotalFee(BigDecimal.valueOf(cell.getNumericCellValue()));
+                        break;
+                    case 3:
+                        detail.setCurrency(cell.getStringCellValue());
+                        break;
+                    case 4:
+                        if(!cell.getCellType().equals(CellType.BLANK)){
+                            detail.setRemark(cell.getStringCellValue());
+                        }
+                        break;
+                }
+            }
+            details.add(detail);
+        }
+        System.out.println("Refund detail list size: " + details.size());
+        System.out.println("Refund details : " + details);
+        return details;
+    }
+
+    private Collection<? extends AbstractLogisticExpenseDetail> CNEExtraExpenseDetailToObject(Workbook workbook) {
+        List<AbstractLogisticExpenseDetail> details = new ArrayList<>();
+        Sheet sheet = workbook.getSheetAt(2);
+        int firstRow = sheet.getFirstRowNum();
+        int lastRow = sheet.getLastRowNum();
+        for (int rowIndex = firstRow + 1; rowIndex < lastRow; rowIndex++) {
+            Row row = sheet.getRow(rowIndex);
+            CNEExtraExpenseDetail detail = new CNEExtraExpenseDetail();
+            for( int cellIndex = 1; cellIndex < 9; cellIndex++) {
+                Cell cell = row.getCell(cellIndex, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                switch (cellIndex) {
+                    case 1:
+                        detail.setFeeDate(cell.getStringCellValue());
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        detail.setFeeType(cell.getStringCellValue());
+                        break;
+                    case 4:
+                        detail.setRelatedExpenseField(cell.getStringCellValue());
+                        break;
+                    case 5:
+                        detail.setRelatedExpenseValue(cell.getStringCellValue());
+                        break;
+                    case 6:
+                        detail.setTotalFee(BigDecimal.valueOf(cell.getNumericCellValue()));
+                        break;
+                    case 7:
+                        detail.setCurrency(cell.getStringCellValue());
+                        break;
+                    case 8:
+                        if(!cell.getCellType().equals(CellType.BLANK)){
+                            detail.setRemark(cell.getStringCellValue());
+                        }
+                        break;
+                }
+            }
+            details.add(detail);
+        }
+        System.out.println("Extra detail list size: " + details.size());
+        System.out.println("Extra details : " + details);
+        return details;
+    }
+
+    private Collection<? extends AbstractLogisticExpenseDetail> CNEExpenseDetailToObject(Workbook workbook) {
+        List<AbstractLogisticExpenseDetail> details = new ArrayList<>();
+        Sheet sheet = workbook.getSheetAt(1);
+        int firstRow = sheet.getFirstRowNum();
+        int lastRow = sheet.getLastRowNum();
 //            ImportParams params = new ImportParams();
 //            params.setTitleRows(0);
 //            params.setSheetNum(1);
@@ -337,22 +427,54 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
 //            List<CNEExtraExpenseDetail> extraDetailLIst = ExcelImportUtil.importExcel(file.getInputStream(), CNEExtraExpenseDetail.class, params);
 //            System.out.println("list size: " + extraDetailLIst.size());
 //            System.out.println("objects : " + extraDetailLIst);
-            List<CNEExpenseDetail> detailList = new ArrayList<>();
-            for (int rowIndex = firstRow + 1; rowIndex <= lastRow; rowIndex++) {
-                Row row = firstSheet.getRow(rowIndex);
-                CNEExpenseDetail detail = new CNEExpenseDetail();
-                for( int cellIndex = 1; cellIndex < 11; cellIndex++) {
-                    Cell cell = row.getCell(cellIndex, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+        // last row is the summary row
+        for (int rowIndex = firstRow + 1; rowIndex < lastRow; rowIndex++) {
+            Row row = sheet.getRow(rowIndex);
+            CNEExpenseDetail detail = new CNEExpenseDetail();
+            for( int cellIndex = 1; cellIndex < 11; cellIndex++) {
+                Cell cell = row.getCell(cellIndex, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                switch (cellIndex) {
+                    case 1:
+                        detail.setBusinessDate(cell.getStringCellValue());
+                        break;
+                    case 2:
+                        detail.setInternalTrackingNumber(cell.getStringCellValue());
+                        break;
+                    case 3:
+                        detail.setTrackingNumber(cell.getStringCellValue());
+                        break;
+                    case 4:
+                        detail.setPlatformOrderId(cell.getStringCellValue());
+                        break;
+                    case 5:
+                        detail.setLogisticChannelName(cell.getStringCellValue());
+                        break;
+                    case 6:
+                        detail.setTargetCountryCn(cell.getStringCellValue());
+                        break;
+                    case 7:
+                        detail.setChargingWeight(BigDecimal.valueOf(cell.getNumericCellValue()));
+                        break;
+                    case 8:
+                        detail.setTotalFee(BigDecimal.valueOf(cell.getNumericCellValue()));
+                        break;
+                    case 9:
+                        detail.setCurrency(cell.getStringCellValue());
+                        break;
+                    case 10:
+                        if(!cell.getCellType().equals(CellType.BLANK)){
+                            detail.setRemark(cell.getStringCellValue());
+                        }
+                        break;
                 }
-
             }
-//            responses.setData(detailList);
-        } catch (Exception e) {
-            responses.setError(e.getMessage());
-            log.error(e.getMessage(), e);
+            details.add(detail);
         }
-        return responses;
+        System.out.println("list size: " + details.size());
+        System.out.println("objects : " + details);
+        return details;
     }
+
     @Override
     public List<LogisticExpenseDetail> antuToLogisticExpenseDetail(List<AnTuExpenseDetail> antuExpenseDetails) {
         List<LogisticExpenseDetail> logisticExpenseDetails = new ArrayList<>();

@@ -1,12 +1,16 @@
 package org.jeecg.modules.business.entity.LogisticExpense;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.jeecgframework.poi.excel.annotation.Excel;
 
 import java.math.BigDecimal;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class CNEExtraExpenseDetail {
+public class CNEExtraExpenseDetail extends AbstractLogisticExpenseDetail {
+    @Excel(name="费用日期")
+    private String feeDate;
     @Excel(name="附加费类型")
     private String feeType;
     @Excel(name="关联单号类型")
