@@ -17,13 +17,15 @@ SELECT s.name                                      AS 'Boutique',
        po.order_service_fee + SUM(poc.service_fee) AS 'Frais de service',
        po.picking_fee + SUM(poc.picking_fee)       AS 'Frais de préparation',
        po.packaging_material_fee                   AS 'Frais de matériel d\'emballage',
+       po.insurance_fee                            AS `Frais d\'assurance produits`,
        SUM(poc.vat)                                AS 'TVA',
        po.shipping_invoice_number                  AS 'N° de facture'
 FROM platform_order po
          JOIN shop s ON po.shop_id = s.id
          RIGHT JOIN platform_order_content poc ON po.id = poc.platform_order_id
          JOIN sku ON poc.sku_id = sku.id
-WHERE shipping_invoice_number IS NOT NULL
+WHERE po.order_time > '2025-01-01'
+  AND shipping_invoice_number IS NOT NULL
   AND poc.erp_status <> 5
 GROUP BY po.id, s.name, po.order_time
 ORDER BY s.name, po.order_time;
