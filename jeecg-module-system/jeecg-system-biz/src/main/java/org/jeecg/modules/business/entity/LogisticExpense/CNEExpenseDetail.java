@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.jeecg.modules.business.entity.LogisticExpenseDetail;
 import org.jeecgframework.poi.excel.annotation.Excel;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -13,8 +14,10 @@ import java.util.Date;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class CNEExpenseDetail  extends AbstractLogisticExpenseDetail{
-    @Excel(name="业务日期")
-    private String businessDate;
+    @Excel(name="业务日期", format = "yyyy-MM-dd")
+    @JsonFormat(timezone = "GMT+2", pattern = "yyyy-MM-dd")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private Date businessDate;
     @Excel(name="内单号", type = 1)
     private String internalTrackingNumber;
     @Excel(name="转单号")

@@ -1,7 +1,6 @@
 package org.jeecg.modules.business.entity;
 
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.math.BigDecimal;
 
@@ -62,6 +61,13 @@ public class LogisticExpenseDetail implements Serializable {
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @ApiModelProperty(value = "更新日期")
     private Date updateTime;
+    /**
+     * date
+     */
+    @JsonFormat(timezone = "GMT+2", pattern = "yyyy-MM-dd")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    @Excel(name = "业务日期", width = 15, format = "yyyy-MM-dd")
+    private Date date;
     /**
      * 平台订单序列号（客户单号）
      */
@@ -157,7 +163,7 @@ public class LogisticExpenseDetail implements Serializable {
      */
     @Excel(name = "附加费用备注", width = 15)
     @ApiModelProperty(value = "附加费用备注")
-    private BigDecimal additionalFeeRemark;
+    private String additionalFeeRemark;
     /**
      * 总费用
      */
@@ -182,7 +188,7 @@ public class LogisticExpenseDetail implements Serializable {
      */
     @Excel(name = "货物赔偿备注", width = 15)
     @ApiModelProperty(value = "货物赔偿备注")
-    private BigDecimal compensationRemark;
+    private String compensationRemark;
     /**
      * 国家
      */

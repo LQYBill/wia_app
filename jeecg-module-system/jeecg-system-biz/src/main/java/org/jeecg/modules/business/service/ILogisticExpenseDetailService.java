@@ -35,7 +35,7 @@ public interface ILogisticExpenseDetailService extends IService<LogisticExpenseD
 
     Response<List<AbstractLogisticExpenseDetail>, String> antuExcelToObject(MultipartFile file);
 
-    Response<List<AbstractLogisticExpenseDetail>, String> CNEExcelToObject(MultipartFile file);
+    Response<List<LogisticExpenseDetail>, String> CNEExcelToObject(MultipartFile file, String companyId);
 
     List<LogisticExpenseDetail> antuToLogisticExpenseDetail(List<AnTuExpenseDetail> antuExpenseDetails);
 

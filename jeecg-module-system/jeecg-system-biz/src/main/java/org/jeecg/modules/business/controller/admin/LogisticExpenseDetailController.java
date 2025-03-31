@@ -188,6 +188,6 @@ public class LogisticExpenseDetailController extends JeecgController<LogisticExp
 			return Result.error(400,"Invalid logistic company param");
 		}
 
-		return Result.OK();
+		return Result.OK(responses);
     }
 }

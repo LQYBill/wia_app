@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.checkerframework.checker.units.qual.C;
 import org.jeecg.modules.business.entity.LogisticExpense.*;
 import org.jeecg.modules.business.entity.LogisticExpenseDetail;
 import org.jeecg.modules.business.mapper.LogisticExpenseDetailMapper;
@@ -24,6 +25,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
@@ -48,6 +51,9 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
     private LogisticExpenseDetailMapper logisticExpenseDetailMapper;
     @Autowired
     private ILogisticCompanyService logisticCompanyService;
+
+    private final SimpleDateFormat CREATE_TIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+
 
     @Override
     public PeriodLogisticProfit calculateLogisticProfitOf(Date startDate, Date endDate, List<String> country, List<String> channelName) {
@@ -218,30 +224,35 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
 
     @Override
     public Response<List<LogisticExpenseDetail>, String> importExcel(MultipartFile file, LogisticCompanyEnum logisticCompanyEnum) {
-        Response<List<AbstractLogisticExpenseDetail>, String> excelToObjectResponse = new Response<>();
         Response<List<LogisticExpenseDetail>, String> importResponse = new Response<>();
-        Class<?> entityClass = LogisticExpenseDetail.class;
         switch (logisticCompanyEnum) {
             case DISIFANG:
 
                 break;
             case CNE:
                 log.info("Importing CNE expense detail excel");
-                entityClass = CNEExpenseDetail.class;
-                excelToObjectResponse = CNEExcelToObject(file);
+                String companyId = logisticCompanyService.getIdByName(LogisticCompanyEnum.ANTU.getName());
+                Response<List<LogisticExpenseDetail>, String> cneExcelToLogisticResponse = new Response<>();
+                cneExcelToLogisticResponse = CNEExcelToObject(file, companyId);
 
+                if(cneExcelToLogisticResponse.getError() != null) {
+                    importResponse.setError(cneExcelToLogisticResponse.getError());
+                    return importResponse;
+                }
+                importResponse.setData(cneExcelToLogisticResponse.getData());
                 break;
             case CHUKOUYI:
 
                 break;
             case ANTU:
                 log.info("Importing AnTu expense detail excel");
-                entityClass = AnTuExpenseDetail.class;
-                excelToObjectResponse = antuExcelToObject(file);
-                if(excelToObjectResponse.getError() != null) {
-                    break;
+                Response<List<AbstractLogisticExpenseDetail>, String> antuExcelToLogisticResponse = new Response<>();
+                antuExcelToLogisticResponse = antuExcelToObject(file);
+                if(antuExcelToLogisticResponse.getError() != null) {
+                    importResponse.setError(antuExcelToLogisticResponse.getError());
+                    return importResponse;
                 }
-                List<AnTuExpenseDetail> antuExpenseDetails = excelToObjectResponse.getData().stream().map(AnTuExpenseDetail.class::cast).collect(Collectors.toList());
+                List<AnTuExpenseDetail> antuExpenseDetails = antuExcelToLogisticResponse.getData().stream().map(AnTuExpenseDetail.class::cast).collect(Collectors.toList());
                 importResponse.setData(antuToLogisticExpenseDetail(antuExpenseDetails));
                 break;
             case MIAOXIN:
@@ -261,7 +272,6 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
                 break;
             case YIDA:
                 log.info("Importing Yida expense detail excel");
-                entityClass = YDHExpenseDetail.class;
                 break;
             case UBI:
 
@@ -271,7 +281,6 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
                 break;
             case WANBANG:
                 log.info("Importing WanBang expense detail excel");
-                entityClass = WanBangExpenseDetail.class;
                 break;
             case WIA:
 
@@ -281,7 +290,6 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
                 break;
             case CAINIAO:
                 log.info("Importing CaiNiao expense detail excel");
-                entityClass = CaiNiaoExpenseDetail.class;
                 break;
             case SHENZHENYUANPENG:
 
@@ -313,15 +321,19 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
         return responses;
     }
     @Override
-    public Response<List<AbstractLogisticExpenseDetail>, String> CNEExcelToObject(MultipartFile file) {
-        Response<List<AbstractLogisticExpenseDetail>, String> responses = new Response<>();
-        List<AbstractLogisticExpenseDetail> detailList = new ArrayList<>();
+    public Response<List<LogisticExpenseDetail>, String> CNEExcelToObject(MultipartFile file, String companyId) {
+        Response<List<LogisticExpenseDetail>, String> responses = new Response<>();
+        List<LogisticExpenseDetail> detailList = new ArrayList<>();
 
         try (InputStream inputStream = file.getInputStream()){
             Workbook workbook = WorkbookFactory.create(inputStream);
-            detailList.addAll(CNEExpenseDetailToObject(workbook));
-            detailList.addAll(CNEExtraExpenseDetailToObject(workbook));
-            detailList.addAll(CNERefundDetailToObject(workbook));
+            List<CNEExpenseDetail> expenseDetails = CNEExpenseDetailToObject(workbook);
+            List<CNEExtraExpenseDetail> extraExpenseDetails  = CNEExtraExpenseDetailToObject(workbook);
+            List<CNERefundDetail> refundDetails = CNERefundDetailToObject(workbook);
+
+            detailList.addAll(CNEDetailToLogisticDetail(expenseDetails, companyId));
+            detailList.addAll(CNEExtraDetailToLogisticDetail(extraExpenseDetails, companyId));
+            detailList.addAll(CNERefundDetailToLogisticDetail(refundDetails, companyId));
             responses.setData(detailList);
         } catch (Exception e) {
             responses.setError(e.getMessage());
@@ -330,27 +342,30 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
         return responses;
     }
 
-    private Collection<? extends AbstractLogisticExpenseDetail> CNERefundDetailToObject(Workbook workbook) {
-        List<AbstractLogisticExpenseDetail> details = new ArrayList<>();
+    private List<CNERefundDetail> CNERefundDetailToObject(Workbook workbook) throws ParseException {
+        List<CNERefundDetail> details = new ArrayList<>();
         Sheet sheet = workbook.getSheetAt(3);
         int firstRow = sheet.getFirstRowNum();
         int lastRow = sheet.getLastRowNum();
         for (int rowIndex = firstRow + 1; rowIndex < lastRow; rowIndex++) {
             Row row = sheet.getRow(rowIndex);
             CNERefundDetail detail = new CNERefundDetail();
-            for( int cellIndex = 1; cellIndex < 7; cellIndex++) {
+            for( int cellIndex = 1; cellIndex < 11; cellIndex++) {
                 Cell cell = row.getCell(cellIndex, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
                 switch (cellIndex) {
                     case 1:
+                        detail.setRefundDate(CREATE_TIME_FORMAT.parse(cell.getStringCellValue()));
+                        break;
+                    case 5:
                         detail.setTrackingNumber(cell.getStringCellValue());
                         break;
-                    case 2:
+                    case 8:
                         detail.setTotalFee(BigDecimal.valueOf(cell.getNumericCellValue()));
                         break;
-                    case 3:
+                    case 9:
                         detail.setCurrency(cell.getStringCellValue());
                         break;
-                    case 4:
+                    case 10:
                         if(!cell.getCellType().equals(CellType.BLANK)){
                             detail.setRemark(cell.getStringCellValue());
                         }
@@ -364,8 +379,8 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
         return details;
     }
 
-    private Collection<? extends AbstractLogisticExpenseDetail> CNEExtraExpenseDetailToObject(Workbook workbook) {
-        List<AbstractLogisticExpenseDetail> details = new ArrayList<>();
+    private List<CNEExtraExpenseDetail> CNEExtraExpenseDetailToObject(Workbook workbook) throws ParseException {
+        List<CNEExtraExpenseDetail> details = new ArrayList<>();
         Sheet sheet = workbook.getSheetAt(2);
         int firstRow = sheet.getFirstRowNum();
         int lastRow = sheet.getLastRowNum();
@@ -376,7 +391,7 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
                 Cell cell = row.getCell(cellIndex, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
                 switch (cellIndex) {
                     case 1:
-                        detail.setFeeDate(cell.getStringCellValue());
+                        detail.setFeeDate(CREATE_TIME_FORMAT.parse(cell.getStringCellValue()));
                         break;
                     case 2:
                         break;
@@ -409,8 +424,8 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
         return details;
     }
 
-    private Collection<? extends AbstractLogisticExpenseDetail> CNEExpenseDetailToObject(Workbook workbook) {
-        List<AbstractLogisticExpenseDetail> details = new ArrayList<>();
+    private List<CNEExpenseDetail> CNEExpenseDetailToObject(Workbook workbook) throws ParseException {
+        List<CNEExpenseDetail> details = new ArrayList<>();
         Sheet sheet = workbook.getSheetAt(1);
         int firstRow = sheet.getFirstRowNum();
         int lastRow = sheet.getLastRowNum();
@@ -431,11 +446,11 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
         for (int rowIndex = firstRow + 1; rowIndex < lastRow; rowIndex++) {
             Row row = sheet.getRow(rowIndex);
             CNEExpenseDetail detail = new CNEExpenseDetail();
-            for( int cellIndex = 1; cellIndex < 11; cellIndex++) {
+            for( int cellIndex = 1; cellIndex < 9; cellIndex++) {
                 Cell cell = row.getCell(cellIndex, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
                 switch (cellIndex) {
                     case 1:
-                        detail.setBusinessDate(cell.getStringCellValue());
+                        detail.setBusinessDate(CREATE_TIME_FORMAT.parse(cell.getStringCellValue()));
                         break;
                     case 2:
                         detail.setInternalTrackingNumber(cell.getStringCellValue());
@@ -446,9 +461,6 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
                     case 4:
                         detail.setPlatformOrderId(cell.getStringCellValue());
                         break;
-                    case 5:
-                        detail.setLogisticChannelName(cell.getStringCellValue());
-                        break;
                     case 6:
                         detail.setTargetCountryCn(cell.getStringCellValue());
                         break;
@@ -457,14 +469,6 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
                         break;
                     case 8:
                         detail.setTotalFee(BigDecimal.valueOf(cell.getNumericCellValue()));
-                        break;
-                    case 9:
-                        detail.setCurrency(cell.getStringCellValue());
-                        break;
-                    case 10:
-                        if(!cell.getCellType().equals(CellType.BLANK)){
-                            detail.setRemark(cell.getStringCellValue());
-                        }
                         break;
                 }
             }
@@ -475,6 +479,55 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
         return details;
     }
 
+    public List<LogisticExpenseDetail> CNEDetailToLogisticDetail(List<CNEExpenseDetail> details, String companyId) {
+        List<LogisticExpenseDetail> logisticExpenseDetails = new ArrayList<>();
+        for(CNEExpenseDetail detail : details) {
+            LogisticExpenseDetail logisticExpenseDetail = new LogisticExpenseDetail();
+            logisticExpenseDetail.setPlatformOrderSerialId(detail.getPlatformOrderId());
+            logisticExpenseDetail.setTrackingNumber(detail.getTrackingNumber());
+            logisticExpenseDetail.setTargetCountry(detail.getTargetCountryCn());
+            logisticExpenseDetail.setChargingWeight(detail.getChargingWeight());
+            logisticExpenseDetail.setShippingFee(detail.getTotalFee());
+            logisticExpenseDetail.setTotalFee(detail.getTotalFee());
+            logisticExpenseDetail.setLogisticCompanyId(companyId);
+
+            logisticExpenseDetails.add(logisticExpenseDetail);
+        }
+        return logisticExpenseDetails;
+    }
+    public List<LogisticExpenseDetail> CNEExtraDetailToLogisticDetail(List<CNEExtraExpenseDetail> details, String companyId) {
+        List<LogisticExpenseDetail> logisticExpenseDetails = new ArrayList<>();
+        for(CNEExtraExpenseDetail detail : details) {
+            LogisticExpenseDetail expenseDetail = new LogisticExpenseDetail();
+            expenseDetail.setDate(detail.getFeeDate());
+            if(detail.getRelatedExpenseField().equals("内单号"))
+                expenseDetail.setVirtualTrackingNumber(detail.getRelatedExpenseValue());
+            else
+                throw new RuntimeException("Unknown related expense field: " + detail.getRelatedExpenseField());
+            expenseDetail.setAdditionalFee(detail.getTotalFee());
+            expenseDetail.setAdditionalFeeRemark(detail.getRemark());
+            expenseDetail.setTotalFee(detail.getTotalFee());
+            expenseDetail.setLogisticCompanyId(companyId);
+
+            logisticExpenseDetails.add(expenseDetail);
+        }
+        return logisticExpenseDetails;
+    }
+    public List<LogisticExpenseDetail> CNERefundDetailToLogisticDetail(List<CNERefundDetail> details, String companyId) {
+        List<LogisticExpenseDetail> logisticExpenseDetails = new ArrayList<>();
+        for(CNERefundDetail detail : details) {
+            LogisticExpenseDetail logisticExpenseDetail = new LogisticExpenseDetail();
+            logisticExpenseDetail.setDate(detail.getRefundDate());
+            logisticExpenseDetail.setTrackingNumber(detail.getTrackingNumber());
+            logisticExpenseDetail.setCompensation(detail.getTotalFee());
+            logisticExpenseDetail.setCompensationRemark(detail.getRemark());
+            logisticExpenseDetail.setTotalFee(detail.getTotalFee().negate());
+            logisticExpenseDetail.setLogisticCompanyId(companyId);
+
+            logisticExpenseDetails.add(logisticExpenseDetail);
+        }
+        return logisticExpenseDetails;
+    }
     @Override
     public List<LogisticExpenseDetail> antuToLogisticExpenseDetail(List<AnTuExpenseDetail> antuExpenseDetails) {
         List<LogisticExpenseDetail> logisticExpenseDetails = new ArrayList<>();

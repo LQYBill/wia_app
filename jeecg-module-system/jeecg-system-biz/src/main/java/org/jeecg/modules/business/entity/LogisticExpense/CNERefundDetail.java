@@ -6,10 +6,13 @@ import lombok.EqualsAndHashCode;
 import org.jeecgframework.poi.excel.annotation.Excel;
 
 import java.math.BigDecimal;
+import java.util.Date;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class CNERefundDetail extends AbstractLogisticExpenseDetail{
+    @Excel(name="退款日期")
+    private Date refundDate;
     @Excel(name="转单号")
     private String trackingNumber;
     @Excel(name="退款")

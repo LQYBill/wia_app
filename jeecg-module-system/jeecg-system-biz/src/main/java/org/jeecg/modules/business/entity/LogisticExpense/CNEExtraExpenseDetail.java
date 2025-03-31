@@ -5,12 +5,13 @@ import lombok.EqualsAndHashCode;
 import org.jeecgframework.poi.excel.annotation.Excel;
 
 import java.math.BigDecimal;
+import java.util.Date;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class CNEExtraExpenseDetail extends AbstractLogisticExpenseDetail {
     @Excel(name="费用日期")
-    private String feeDate;
+    private Date feeDate;
     @Excel(name="附加费类型")
     private String feeType;
     @Excel(name="关联单号类型")
