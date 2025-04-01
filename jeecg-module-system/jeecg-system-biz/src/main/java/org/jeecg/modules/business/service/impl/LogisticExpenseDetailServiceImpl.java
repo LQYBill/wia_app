@@ -232,7 +232,7 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
             case CNE:
                 log.info("Importing CNE expense detail excel");
                 String companyId = logisticCompanyService.getIdByName(LogisticCompanyEnum.ANTU.getName());
-                Response<List<LogisticExpenseDetail>, String> cneExcelToLogisticResponse = new Response<>();
+                Response<List<LogisticExpenseDetail>, String> cneExcelToLogisticResponse;
                 cneExcelToLogisticResponse = CNEExcelToObject(file, companyId);
 
                 if(cneExcelToLogisticResponse.getError() != null) {
@@ -246,7 +246,7 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
                 break;
             case ANTU:
                 log.info("Importing AnTu expense detail excel");
-                Response<List<AbstractLogisticExpenseDetail>, String> antuExcelToLogisticResponse = new Response<>();
+                Response<List<AbstractLogisticExpenseDetail>, String> antuExcelToLogisticResponse;
                 antuExcelToLogisticResponse = antuExcelToObject(file);
                 if(antuExcelToLogisticResponse.getError() != null) {
                     importResponse.setError(antuExcelToLogisticResponse.getError());
@@ -281,6 +281,16 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
                 break;
             case WANBANG:
                 log.info("Importing WanBang expense detail excel");
+//                String companyId = logisticCompanyService.getIdByName(LogisticCompanyEnum.WANBANG.getName());
+                Response<List<AbstractLogisticExpenseDetail>, String> wanBangExcelToLogisticResponse;
+                wanBangExcelToLogisticResponse = WangBangExcelToObject(file);
+                if(wanBangExcelToLogisticResponse.getError() != null) {
+                    importResponse.setError(wanBangExcelToLogisticResponse.getError());
+                    return importResponse;
+                }
+                List<WanBangExpenseDetail> wanBangExpenseDetails = wanBangExcelToLogisticResponse.getData().stream().map(WanBangExpenseDetail.class::cast).collect(Collectors.toList());
+//                importResponse.setData(wanbangToLogisticExpenseDetail(wanBangExpenseDetails));
+
                 break;
             case WIA:
 
@@ -328,11 +338,10 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
         try (InputStream inputStream = file.getInputStream()){
             Workbook workbook = WorkbookFactory.create(inputStream);
             List<CNEExpenseDetail> expenseDetails = CNEExpenseDetailToObject(workbook);
-            List<CNEExtraExpenseDetail> extraExpenseDetails  = CNEExtraExpenseDetailToObject(workbook);
+            List<CNEExtraExpenseDetail> extraExpenseDetails = CNEExtraExpenseDetailToObject(workbook);
             List<CNERefundDetail> refundDetails = CNERefundDetailToObject(workbook);
 
-            detailList.addAll(CNEDetailToLogisticDetail(expenseDetails, companyId));
-            detailList.addAll(CNEExtraDetailToLogisticDetail(extraExpenseDetails, companyId));
+            detailList.addAll(CNEDetailToLogisticDetail(expenseDetails, extraExpenseDetails, companyId));
             detailList.addAll(CNERefundDetailToLogisticDetail(refundDetails, companyId));
             responses.setData(detailList);
         } catch (Exception e) {
@@ -479,20 +488,59 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
         return details;
     }
 
-    public List<LogisticExpenseDetail> CNEDetailToLogisticDetail(List<CNEExpenseDetail> details, String companyId) {
-        List<LogisticExpenseDetail> logisticExpenseDetails = new ArrayList<>();
-        for(CNEExpenseDetail detail : details) {
-            LogisticExpenseDetail logisticExpenseDetail = new LogisticExpenseDetail();
-            logisticExpenseDetail.setPlatformOrderSerialId(detail.getPlatformOrderId());
-            logisticExpenseDetail.setTrackingNumber(detail.getTrackingNumber());
-            logisticExpenseDetail.setTargetCountry(detail.getTargetCountryCn());
-            logisticExpenseDetail.setChargingWeight(detail.getChargingWeight());
-            logisticExpenseDetail.setShippingFee(detail.getTotalFee());
-            logisticExpenseDetail.setTotalFee(detail.getTotalFee());
-            logisticExpenseDetail.setLogisticCompanyId(companyId);
-
-            logisticExpenseDetails.add(logisticExpenseDetail);
+    public Response<List<AbstractLogisticExpenseDetail>, String> WangBangExcelToObject(MultipartFile file) {
+        Response<List<AbstractLogisticExpenseDetail>, String> responses = new Response<>();
+        try (InputStream inputStream = file.getInputStream()){
+            ImportParams params = new ImportParams();
+            params.setStartSheetIndex(1);
+            params.setSheetNum(1);
+            params.setTitleRows(0);
+            params.setNeedSave(true);
+            List<AbstractLogisticExpenseDetail> list = ExcelImportUtil.importExcel(inputStream, WanBangExpenseDetail.class, params);
+            System.out.println("Details size: " + list.size());
+            System.out.println("Details : " + list);
+            responses.setData(list);
+        } catch (Exception e) {
+            responses.setError(e.getMessage());
+            log.error(e.getMessage(), e);
         }
+        return responses;
+    }
+
+    public List<LogisticExpenseDetail> CNEDetailToLogisticDetail(List<CNEExpenseDetail> details, List<CNEExtraExpenseDetail> extraExpenseDetails, String companyId) {
+        List<LogisticExpenseDetail> logisticExpenseDetails = new ArrayList<>();
+        List<CNEExtraExpenseDetail> extraExpenseWithInternalTracking = extraExpenseDetails.stream().filter(detail -> detail.getRelatedExpenseField().equals("内单号")).collect(Collectors.toList());
+        List<String> unknownExtraExpense = extraExpenseDetails.stream().map(CNEExtraExpenseDetail::getRelatedExpenseField).filter(relatedExpenseField -> !relatedExpenseField.equals("内单号")).distinct().collect(Collectors.toList());
+        if(!unknownExtraExpense.isEmpty()) {
+            throw new RuntimeException("Unknown extra expense field: " + unknownExtraExpense);
+        }
+
+        Map<String, CNEExtraExpenseDetail> extraFeeMappedByValue = extraExpenseWithInternalTracking.stream().collect(Collectors.toMap(CNEExtraExpenseDetail::getRelatedExpenseValue, Function.identity()));
+        for(CNEExpenseDetail detail : details) {
+            LogisticExpenseDetail expenseDetail = new LogisticExpenseDetail();
+            expenseDetail.setPlatformOrderSerialId(detail.getPlatformOrderId());
+            if(extraFeeMappedByValue.containsKey(detail.getInternalTrackingNumber())) {
+                expenseDetail.setAdditionalFee(extraFeeMappedByValue.get(detail.getInternalTrackingNumber()).getTotalFee());
+                expenseDetail.setAdditionalFeeRemark(extraFeeMappedByValue.get(detail.getInternalTrackingNumber()).getRemark());
+                extraFeeMappedByValue.remove(detail.getInternalTrackingNumber());
+            }
+            expenseDetail.setTrackingNumber(detail.getTrackingNumber());
+            expenseDetail.setTargetCountry(detail.getTargetCountryCn());
+            expenseDetail.setChargingWeight(detail.getChargingWeight());
+            expenseDetail.setShippingFee(detail.getTotalFee());
+            expenseDetail.setTotalFee(detail.getTotalFee());
+            if(expenseDetail.getAdditionalFee() != null) {
+                expenseDetail.setTotalFee(expenseDetail.getShippingFee().add(expenseDetail.getAdditionalFee()));
+            }
+            expenseDetail.setLogisticCompanyId(companyId);
+
+            logisticExpenseDetails.add(expenseDetail);
+        }
+
+        if(!extraFeeMappedByValue.isEmpty()) {
+            logisticExpenseDetails.addAll(CNEExtraDetailToLogisticDetail(new ArrayList<>(extraFeeMappedByValue.values()), companyId));
+        }
+
         return logisticExpenseDetails;
     }
     public List<LogisticExpenseDetail> CNEExtraDetailToLogisticDetail(List<CNEExtraExpenseDetail> details, String companyId) {
@@ -529,10 +577,10 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
         return logisticExpenseDetails;
     }
     @Override
-    public List<LogisticExpenseDetail> antuToLogisticExpenseDetail(List<AnTuExpenseDetail> antuExpenseDetails) {
+    public List<LogisticExpenseDetail> antuToLogisticExpenseDetail(List<AnTuExpenseDetail> expenseDetails) {
         List<LogisticExpenseDetail> logisticExpenseDetails = new ArrayList<>();
         String companyId = logisticCompanyService.getIdByName(LogisticCompanyEnum.ANTU.getName());
-        for (AnTuExpenseDetail antuExpenseDetail : antuExpenseDetails) {
+        for (AnTuExpenseDetail antuExpenseDetail : expenseDetails) {
             LogisticExpenseDetail logisticExpenseDetail = new LogisticExpenseDetail();
             logisticExpenseDetail.setPlatformOrderSerialId(antuExpenseDetail.getPlatformOrderId());
             logisticExpenseDetail.setTrackingNumber(antuExpenseDetail.getTrackingNumber());
@@ -545,6 +593,10 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
         }
         return logisticExpenseDetails;
     }
+
+//    public List<LogisticExpenseDetail> wanbangToLogisticExpenseDetail(List<WanBangExpenseDetail> expenseDetails) {
+//
+//    }
     @Override
     public List<String> allCountries() {
         return platformOrderMapper.allCountries();
