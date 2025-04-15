@@ -1,13 +1,14 @@
 package org.jeecg.modules.business.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import org.jeecg.modules.business.entity.LogisticExpense.AbstractLogisticExpenseDetail;
-import org.jeecg.modules.business.entity.LogisticExpense.AnTuExpenseDetail;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.jeecg.modules.business.entity.LogisticExpense.*;
 import org.jeecg.modules.business.entity.LogisticExpenseDetail;
 import org.jeecg.modules.business.vo.*;
 import org.jeecg.modules.business.vo.dashboard.PeriodLogisticProfit;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.text.ParseException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -35,9 +36,31 @@ public interface ILogisticExpenseDetailService extends IService<LogisticExpenseD
 
     Response<List<AbstractLogisticExpenseDetail>, String> antuExcelToObject(MultipartFile file);
 
+    Response<List<CaiNiaoExpenseDetail>, String> canNiaoExcelToObject(MultipartFile file);
+
     Response<List<LogisticExpenseDetail>, String> CNEExcelToObject(MultipartFile file, String companyId);
 
+    List<CNERefundDetail> CNERefundDetailToObject(Workbook workbook) throws ParseException;
+
+    List<CNEExtraExpenseDetail> CNEExtraExpenseDetailToObject(Workbook workbook) throws ParseException;
+
+    List<CNEExpenseDetail> CNEExpenseDetailToObject(Workbook workbook) throws ParseException;
+
+    Response<List<LogisticExpenseDetail>, String> WangBangExcelToObject(MultipartFile file);
+
+    Response<List<LogisticExpenseDetail>, String> WanBangDetailToLogisticDetail(MultipartFile file, String companyId);
+
+    Response<List<LogisticExpenseDetail>, String> WanBangOtherDetailToLogisticDetail(MultipartFile file, String companyId);
+
+    List<LogisticExpenseDetail> CNEDetailToLogisticDetail(List<CNEExpenseDetail> details, List<CNEExtraExpenseDetail> extraExpenseDetails, String companyId);
+
+    List<LogisticExpenseDetail> CNEExtraDetailToLogisticDetail(List<CNEExtraExpenseDetail> details, String companyId);
+
+    List<LogisticExpenseDetail> CNERefundDetailToLogisticDetail(List<CNERefundDetail> details, String companyId);
+
     List<LogisticExpenseDetail> antuToLogisticExpenseDetail(List<AnTuExpenseDetail> antuExpenseDetails);
+
+    List<LogisticExpenseDetail> caiNiaoToLogisticExpenseDetail(List<CaiNiaoExpenseDetail> details);
 
     List<String> allCountries();
 

@@ -1,10 +1,8 @@
 package org.jeecg.modules.business.entity.LogisticExpense;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.jeecg.modules.business.entity.LogisticExpenseDetail;
 import org.jeecgframework.poi.excel.annotation.Excel;
 import org.springframework.format.annotation.DateTimeFormat;
 

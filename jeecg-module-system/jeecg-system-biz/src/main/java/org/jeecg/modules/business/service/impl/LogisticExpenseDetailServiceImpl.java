@@ -3,11 +3,9 @@ package org.jeecg.modules.business.service.impl;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sun.istack.NotNull;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.checkerframework.checker.units.qual.C;
 import org.jeecg.modules.business.entity.LogisticExpense.*;
+import org.jeecg.modules.business.entity.LogisticExpense.CaiNiaoExpenseDetail.ExpenseType;
 import org.jeecg.modules.business.entity.LogisticExpenseDetail;
 import org.jeecg.modules.business.mapper.LogisticExpenseDetailMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
@@ -281,16 +279,13 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
                 break;
             case WANBANG:
                 log.info("Importing WanBang expense detail excel");
-//                String companyId = logisticCompanyService.getIdByName(LogisticCompanyEnum.WANBANG.getName());
-                Response<List<AbstractLogisticExpenseDetail>, String> wanBangExcelToLogisticResponse;
+                Response<List<LogisticExpenseDetail>, String> wanBangExcelToLogisticResponse;
                 wanBangExcelToLogisticResponse = WangBangExcelToObject(file);
                 if(wanBangExcelToLogisticResponse.getError() != null) {
                     importResponse.setError(wanBangExcelToLogisticResponse.getError());
                     return importResponse;
                 }
-                List<WanBangExpenseDetail> wanBangExpenseDetails = wanBangExcelToLogisticResponse.getData().stream().map(WanBangExpenseDetail.class::cast).collect(Collectors.toList());
-//                importResponse.setData(wanbangToLogisticExpenseDetail(wanBangExpenseDetails));
-
+                importResponse.setData(wanBangExcelToLogisticResponse.getData());
                 break;
             case WIA:
 
@@ -300,6 +295,17 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
                 break;
             case CAINIAO:
                 log.info("Importing CaiNiao expense detail excel");
+                Response<List<CaiNiaoExpenseDetail>, String> caiNiaoExcelToLogisticResponse;
+                caiNiaoExcelToLogisticResponse = canNiaoExcelToObject(file);
+                if(caiNiaoExcelToLogisticResponse.getError() != null) {
+                    importResponse.setError(caiNiaoExcelToLogisticResponse.getError());
+                    return importResponse;
+                }
+                List<CaiNiaoExpenseDetail> caiNiaoExpenseDetails = new ArrayList<>(caiNiaoExcelToLogisticResponse.getData());
+                List<LogisticExpenseDetail> logisticExpenseDetails = caiNiaoToLogisticExpenseDetail(caiNiaoExpenseDetails);
+                System.out.println("logistic expense details size after reduce : " + logisticExpenseDetails.size());
+                System.out.println("logistic expense details after reduce : " + logisticExpenseDetails);
+                importResponse.setData(logisticExpenseDetails);
                 break;
             case SHENZHENYUANPENG:
 
@@ -313,14 +319,15 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
         }
         return importResponse;
     }
+
     @Override
     public Response<List<AbstractLogisticExpenseDetail>, String> antuExcelToObject(MultipartFile file) {
         Response<List<AbstractLogisticExpenseDetail>, String> responses = new Response<>();
-        try {
+        try (InputStream inputStream = file.getInputStream()){
             ImportParams params = new ImportParams();
             params.setTitleRows(0);
             params.setNeedSave(true);
-            List<AbstractLogisticExpenseDetail> list = ExcelImportUtil.importExcel(file.getInputStream(), AnTuExpenseDetail.class, params);
+            List<AbstractLogisticExpenseDetail> list = ExcelImportUtil.importExcel(inputStream, AnTuExpenseDetail.class, params);
             System.out.println("Details size: " + list.size());
             System.out.println("Details : " + list);
             responses.setData(list);
@@ -330,6 +337,72 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
         }
         return responses;
     }
+
+    @Override
+    public Response<List<CaiNiaoExpenseDetail>, String> canNiaoExcelToObject(MultipartFile file) {
+        Response<List<CaiNiaoExpenseDetail>, String> responses = new Response<>();
+        List<CaiNiaoExpenseDetail> details = new ArrayList<>();
+        try (InputStream inputStream = file.getInputStream()){
+            Workbook workbook = WorkbookFactory.create(inputStream);
+            Sheet sheet = workbook.getSheetAt(0);
+            int firstRow = sheet.getFirstRowNum();
+            int lastRow = sheet.getLastRowNum();
+            for (int rowIndex = firstRow + 1; rowIndex < lastRow; rowIndex++) {
+                Row row = sheet.getRow(rowIndex);
+                CaiNiaoExpenseDetail detail = new CaiNiaoExpenseDetail();
+                for (int cellIndex = 1; cellIndex < 44; cellIndex++) {
+                    Cell cell = row.getCell(cellIndex, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                    switch (cellIndex) {
+                        case 1:
+                            detail.setExpenseName(cell.getStringCellValue());
+                            break;
+                        case 2:
+                            detail.setTrackingNumber(cell.getStringCellValue());
+                            break;
+                        case 7:
+                            detail.setBillingAmount(BigDecimal.valueOf(cell.getNumericCellValue()));
+                            break;
+                        case 10:
+                            detail.setDate(CREATE_TIME_FORMAT.parse(cell.getStringCellValue()));
+                            break;
+                        case 23:
+                            detail.setPlatformOrderId(cell.getStringCellValue());
+                            break;
+                        case 32:
+                            if(!cell.getCellType().equals(CellType.BLANK)) {
+                                detail.setChargingWeight(new BigDecimal(cell.getStringCellValue()));
+                            }
+                            break;
+                        case 34:
+                            detail.setTargetCountry(cell.getStringCellValue());
+                            break;
+                        case 38:
+                            detail.setTargetCountryCn(cell.getStringCellValue());
+                            break;
+                        case 39:
+                            if(!cell.getCellType().equals(CellType.BLANK)) {
+                                detail.setVolumetricWeight(new BigDecimal(cell.getStringCellValue()));
+                            }
+                            break;
+                        case 40:
+                            if(!cell.getCellType().equals(CellType.BLANK)) {
+                                detail.setRealWeight(new BigDecimal(cell.getStringCellValue()));
+                            }
+                            break;
+                    }
+                }
+                details.add(detail);
+            }
+            System.out.println("Details size: " + details.size());
+            System.out.println("Details : " + details);
+            responses.setData(details);
+        } catch (Exception e) {
+            responses.setError(e.getMessage());
+            log.error(e.getMessage(), e);
+        }
+        return responses;
+    }
+
     @Override
     public Response<List<LogisticExpenseDetail>, String> CNEExcelToObject(MultipartFile file, String companyId) {
         Response<List<LogisticExpenseDetail>, String> responses = new Response<>();
@@ -351,7 +424,8 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
         return responses;
     }
 
-    private List<CNERefundDetail> CNERefundDetailToObject(Workbook workbook) throws ParseException {
+    @Override
+    public List<CNERefundDetail> CNERefundDetailToObject(Workbook workbook) throws ParseException {
         List<CNERefundDetail> details = new ArrayList<>();
         Sheet sheet = workbook.getSheetAt(3);
         int firstRow = sheet.getFirstRowNum();
@@ -388,7 +462,8 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
         return details;
     }
 
-    private List<CNEExtraExpenseDetail> CNEExtraExpenseDetailToObject(Workbook workbook) throws ParseException {
+    @Override
+    public List<CNEExtraExpenseDetail> CNEExtraExpenseDetailToObject(Workbook workbook) throws ParseException {
         List<CNEExtraExpenseDetail> details = new ArrayList<>();
         Sheet sheet = workbook.getSheetAt(2);
         int firstRow = sheet.getFirstRowNum();
@@ -433,24 +508,12 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
         return details;
     }
 
-    private List<CNEExpenseDetail> CNEExpenseDetailToObject(Workbook workbook) throws ParseException {
+    @Override
+    public List<CNEExpenseDetail> CNEExpenseDetailToObject(Workbook workbook) throws ParseException {
         List<CNEExpenseDetail> details = new ArrayList<>();
         Sheet sheet = workbook.getSheetAt(1);
         int firstRow = sheet.getFirstRowNum();
         int lastRow = sheet.getLastRowNum();
-//            ImportParams params = new ImportParams();
-//            params.setTitleRows(0);
-//            params.setSheetNum(1);
-//            params.setStartSheetIndex(1);
-//            params.setNeedSave(true);
-//            List<AbstractLogisticExpenseDetail> detailList = ExcelImportUtil.importExcel(file.getInputStream(), CNEExpenseDetail.class, params);
-//            System.out.println("list size: " + detailList.size());
-//            System.out.println("objects : " + detailList);
-//            params.setSheetNum(2);
-//            params.setStartSheetIndex(2);
-//            List<CNEExtraExpenseDetail> extraDetailLIst = ExcelImportUtil.importExcel(file.getInputStream(), CNEExtraExpenseDetail.class, params);
-//            System.out.println("list size: " + extraDetailLIst.size());
-//            System.out.println("objects : " + extraDetailLIst);
         // last row is the summary row
         for (int rowIndex = firstRow + 1; rowIndex < lastRow; rowIndex++) {
             Row row = sheet.getRow(rowIndex);
@@ -488,25 +551,131 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
         return details;
     }
 
-    public Response<List<AbstractLogisticExpenseDetail>, String> WangBangExcelToObject(MultipartFile file) {
-        Response<List<AbstractLogisticExpenseDetail>, String> responses = new Response<>();
+    @Override
+    public Response<List<LogisticExpenseDetail>, String> WangBangExcelToObject(MultipartFile file) {
+        String companyId = logisticCompanyService.getIdByName(LogisticCompanyEnum.WANBANG.getName());
+        Response<List<LogisticExpenseDetail>, String> responses = new Response<>();
+
+        Response<List<LogisticExpenseDetail>, String> wanBangDetailToLogisticResponse = WanBangDetailToLogisticDetail(file, companyId);
+        if(wanBangDetailToLogisticResponse.getError() != null) {
+            responses.setError(wanBangDetailToLogisticResponse.getError());
+            return responses;
+        }
+        List<LogisticExpenseDetail> logisticExpenseDetails = new ArrayList<>(wanBangDetailToLogisticResponse.getData());
+        Response<List<LogisticExpenseDetail>, String> wanBangOtherDetailToLogisticResponse = WanBangOtherDetailToLogisticDetail(file, companyId);
+        if(wanBangOtherDetailToLogisticResponse.getError() != null) {
+            responses.setError(wanBangOtherDetailToLogisticResponse.getError());
+            return responses;
+        }
+        logisticExpenseDetails.addAll(wanBangOtherDetailToLogisticResponse.getData());
+        responses.setData(logisticExpenseDetails);
+        return responses;
+    }
+
+    @Override
+    public Response<List<LogisticExpenseDetail>, String> WanBangDetailToLogisticDetail(MultipartFile file, String companyId) {
+        Response<List<LogisticExpenseDetail>, String> responses = new Response<>();
+        List<WanBangExpenseDetail> details = new ArrayList<>();
         try (InputStream inputStream = file.getInputStream()){
             ImportParams params = new ImportParams();
             params.setStartSheetIndex(1);
             params.setSheetNum(1);
             params.setTitleRows(0);
             params.setNeedSave(true);
-            List<AbstractLogisticExpenseDetail> list = ExcelImportUtil.importExcel(inputStream, WanBangExpenseDetail.class, params);
-            System.out.println("Details size: " + list.size());
-            System.out.println("Details : " + list);
-            responses.setData(list);
+            details = ExcelImportUtil.importExcel(inputStream, WanBangExpenseDetail.class, params);
+            System.out.println("Details size: " + details.size());
+            System.out.println("Details : " + details);
+
         } catch (Exception e) {
             responses.setError(e.getMessage());
             log.error(e.getMessage(), e);
         }
+        List<LogisticExpenseDetail> logisticExpenseDetails = new ArrayList<>();
+        for(WanBangExpenseDetail detail : details) {
+            LogisticExpenseDetail expenseDetail = new LogisticExpenseDetail();
+            expenseDetail.setDate(detail.getDate());
+            expenseDetail.setTrackingNumber(detail.getTrackingNumber());
+            expenseDetail.setChargingWeight(detail.getChargingWeight());
+            expenseDetail.setTargetCountry(detail.getTargetCountry());
+            expenseDetail.setShippingFee(detail.getShippingFee());
+            expenseDetail.setRegistrationFee(detail.getRegistrationFee());
+            expenseDetail.setCustomsDuty(detail.getCustomsDuty());
+            expenseDetail.setAdditionalFee(detail.getAdditionalFee());
+            expenseDetail.setFuelSurcharge(detail.getFuelSurcharge());
+            expenseDetail.setOversizeSurcharge(detail.getOversizeSurcharge());
+            expenseDetail.setTotalFee(detail.getTotalFee());
+
+            expenseDetail.setLogisticCompanyId(companyId);
+            logisticExpenseDetails.add(expenseDetail);
+        }
+        responses.setData(logisticExpenseDetails);
         return responses;
     }
 
+    @Override
+    public Response<List<LogisticExpenseDetail>, String> WanBangOtherDetailToLogisticDetail(MultipartFile file, String companyId) {
+        Response<List<LogisticExpenseDetail>, String> responses = new Response<>();
+
+        List<WanBangOtherExpenseDetail> details = new ArrayList<>();
+        try (InputStream inputStream = file.getInputStream()){
+            Workbook workbook = WorkbookFactory.create(inputStream);
+
+            Sheet sheet = workbook.getSheetAt(2);
+            int firstRow = sheet.getFirstRowNum();
+            int lastRow = sheet.getLastRowNum();
+
+            for (int rowIndex = firstRow + 1; rowIndex < lastRow; rowIndex++) {
+                Row row = sheet.getRow(rowIndex);
+                WanBangOtherExpenseDetail detail = new WanBangOtherExpenseDetail();
+                for(int cellIndex = 0; cellIndex < 10; cellIndex++) {
+                    Cell cell = row.getCell(cellIndex, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                    switch (cellIndex) {
+                        case 1:
+                            detail.setDate(CREATE_TIME_FORMAT.parse(cell.getStringCellValue()));
+                            break;
+                        case 3:
+                            detail.setAdditionalFeeType(cell.getStringCellValue());
+                            break;
+                        case 4:
+                            detail.setTotalFee(BigDecimal.valueOf(cell.getNumericCellValue()));
+                            break;
+                        case 7:
+                            detail.setTrackingNumber(cell.getStringCellValue());
+                            break;
+                        case 8:
+                            detail.setWeight(new BigDecimal(cell.getStringCellValue()));
+                            break;
+                        case 9:
+                            detail.setRemark(cell.getStringCellValue());
+                            break;
+                    }
+                }
+                details.add(detail);
+            }
+            System.out.println("otherExpenseDetails size: " + details.size());
+            System.out.println("otherExpenseDetails : " + details);
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+        List<LogisticExpenseDetail> logisticExpenseDetails = new ArrayList<>();
+        for(WanBangOtherExpenseDetail detail : details) {
+            LogisticExpenseDetail expenseDetail = new LogisticExpenseDetail();
+            expenseDetail.setDate(detail.getDate());
+            expenseDetail.setTrackingNumber(detail.getTrackingNumber());
+            expenseDetail.setAdditionalFee(detail.getTotalFee());
+            expenseDetail.setChargingWeight(detail.getWeight());
+            expenseDetail.setAdditionalFeeRemark(detail.getRemark());
+            expenseDetail.setTotalFee(detail.getTotalFee());
+
+            expenseDetail.setLogisticCompanyId(companyId);
+            logisticExpenseDetails.add(expenseDetail);
+        }
+        responses.setData(logisticExpenseDetails);
+        return responses;
+    }
+
+    @Override
     public List<LogisticExpenseDetail> CNEDetailToLogisticDetail(List<CNEExpenseDetail> details, List<CNEExtraExpenseDetail> extraExpenseDetails, String companyId) {
         List<LogisticExpenseDetail> logisticExpenseDetails = new ArrayList<>();
         List<CNEExtraExpenseDetail> extraExpenseWithInternalTracking = extraExpenseDetails.stream().filter(detail -> detail.getRelatedExpenseField().equals("内单号")).collect(Collectors.toList());
@@ -543,6 +712,8 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
 
         return logisticExpenseDetails;
     }
+
+    @Override
     public List<LogisticExpenseDetail> CNEExtraDetailToLogisticDetail(List<CNEExtraExpenseDetail> details, String companyId) {
         List<LogisticExpenseDetail> logisticExpenseDetails = new ArrayList<>();
         for(CNEExtraExpenseDetail detail : details) {
@@ -561,6 +732,8 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
         }
         return logisticExpenseDetails;
     }
+
+    @Override
     public List<LogisticExpenseDetail> CNERefundDetailToLogisticDetail(List<CNERefundDetail> details, String companyId) {
         List<LogisticExpenseDetail> logisticExpenseDetails = new ArrayList<>();
         for(CNERefundDetail detail : details) {
@@ -576,27 +749,86 @@ public class LogisticExpenseDetailServiceImpl extends ServiceImpl<LogisticExpens
         }
         return logisticExpenseDetails;
     }
+
     @Override
-    public List<LogisticExpenseDetail> antuToLogisticExpenseDetail(List<AnTuExpenseDetail> expenseDetails) {
+    public List<LogisticExpenseDetail> antuToLogisticExpenseDetail(List<AnTuExpenseDetail> details) {
         List<LogisticExpenseDetail> logisticExpenseDetails = new ArrayList<>();
         String companyId = logisticCompanyService.getIdByName(LogisticCompanyEnum.ANTU.getName());
-        for (AnTuExpenseDetail antuExpenseDetail : expenseDetails) {
+        for (AnTuExpenseDetail detail : details) {
             LogisticExpenseDetail logisticExpenseDetail = new LogisticExpenseDetail();
-            logisticExpenseDetail.setPlatformOrderSerialId(antuExpenseDetail.getPlatformOrderId());
-            logisticExpenseDetail.setTrackingNumber(antuExpenseDetail.getTrackingNumber());
-            logisticExpenseDetail.setTargetCountry(antuExpenseDetail.getTargetCountry());
-            logisticExpenseDetail.setChargingWeight(antuExpenseDetail.getChargingWeight());
-            logisticExpenseDetail.setShippingFee(antuExpenseDetail.getServiceFee());
-            logisticExpenseDetail.setAdditionalFee(antuExpenseDetail.getAdditionalFee());
-            logisticExpenseDetail.setTotalFee(antuExpenseDetail.getTotalFee());
+            logisticExpenseDetail.setPlatformOrderSerialId(detail.getPlatformOrderId());
+            logisticExpenseDetail.setTrackingNumber(detail.getTrackingNumber());
+            logisticExpenseDetail.setTargetCountry(detail.getTargetCountry());
+            logisticExpenseDetail.setChargingWeight(detail.getChargingWeight());
+            logisticExpenseDetail.setShippingFee(detail.getServiceFee());
+            logisticExpenseDetail.setAdditionalFee(detail.getAdditionalFee());
+            logisticExpenseDetail.setTotalFee(detail.getTotalFee());
             logisticExpenseDetail.setLogisticCompanyId(companyId);
         }
         return logisticExpenseDetails;
     }
 
-//    public List<LogisticExpenseDetail> wanbangToLogisticExpenseDetail(List<WanBangExpenseDetail> expenseDetails) {
-//
-//    }
+    @Override
+    public List<LogisticExpenseDetail> caiNiaoToLogisticExpenseDetail(List<CaiNiaoExpenseDetail> details) {
+        List<LogisticExpenseDetail> logisticExpenseDetails = new ArrayList<>();
+        String companyId = logisticCompanyService.getIdByName(LogisticCompanyEnum.CAINIAO.getName());
+        for (CaiNiaoExpenseDetail detail : details) {
+            LogisticExpenseDetail logisticExpenseDetail = new LogisticExpenseDetail();
+            logisticExpenseDetail.setDate(detail.getDate());
+            logisticExpenseDetail.setPlatformOrderSerialId(detail.getPlatformOrderId());
+            logisticExpenseDetail.setTrackingNumber(detail.getTrackingNumber());
+            logisticExpenseDetail.setChargingWeight(detail.getChargingWeight());
+            logisticExpenseDetail.setVolumetricWeight(detail.getVolumetricWeight());
+            logisticExpenseDetail.setRealWeight(detail.getRealWeight());
+            logisticExpenseDetail.setTargetCountry(detail.getTargetCountry());
+
+            if(detail.getExpenseName().equals(ExpenseType.REFUND.getName())) {
+                logisticExpenseDetail.setCompensation(detail.getBillingAmount());
+                logisticExpenseDetail.setCompensationRemark(detail.getExpenseName());
+            }
+            if(detail.getExpenseName().equals(ExpenseType.ADDITIONAL_FEE.getName())) {
+                logisticExpenseDetail.setAdditionalFee(detail.getBillingAmount());
+                logisticExpenseDetail.setAdditionalFeeRemark(detail.getExpenseName());
+            }
+            if(detail.getExpenseName().equals(ExpenseType.SHIPPING_FEE.getName())) {
+                logisticExpenseDetail.setShippingFee(detail.getBillingAmount());
+            }
+            logisticExpenseDetail.setTotalFee(detail.getBillingAmount());
+
+            logisticExpenseDetail.setLogisticCompanyId(companyId);
+            logisticExpenseDetails.add(logisticExpenseDetail);
+        }
+        return logisticExpenseDetails.stream().reduce(
+                new ArrayList<>(),
+                (acc, detail) -> {
+                    Optional<LogisticExpenseDetail> existingDetail = acc.stream().filter(d -> d.getPlatformOrderSerialId().equals(detail.getPlatformOrderSerialId())).findFirst();
+                    if(existingDetail.isPresent()) {
+                        LogisticExpenseDetail existing = existingDetail.get();
+                        if(detail.getShippingFee() != null) {
+                            if(existing.getShippingFee() == null) existing.setShippingFee(BigDecimal.ZERO);
+                            existing.setShippingFee(existing.getShippingFee().add(detail.getShippingFee()));
+                        }
+                        if(detail.getCompensation() != null) {
+                            if(existing.getCompensation() == null) existing.setCompensation(BigDecimal.ZERO);
+                            existing.setCompensation(existing.getCompensation().add(detail.getCompensation()));
+                        }
+                        if(detail.getAdditionalFee() != null) {
+                            if(existing.getAdditionalFee() == null) existing.setAdditionalFee(BigDecimal.ZERO);
+                            existing.setAdditionalFee(existing.getAdditionalFee().add(detail.getAdditionalFee()));
+                        }
+                        if(detail.getTotalFee() != null) {
+                            if(existing.getTotalFee() == null) existing.setTotalFee(BigDecimal.ZERO);
+                            existing.setTotalFee(existing.getTotalFee().add(detail.getTotalFee()));
+                        }
+                    } else {
+                        acc.add(detail);
+                    }
+                    return acc;
+                },
+                (a, b) -> a
+        );
+    }
+
     @Override
     public List<String> allCountries() {
         return platformOrderMapper.allCountries();

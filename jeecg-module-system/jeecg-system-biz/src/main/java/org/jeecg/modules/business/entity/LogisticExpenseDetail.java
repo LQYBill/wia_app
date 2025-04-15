@@ -141,6 +141,16 @@ public class LogisticExpenseDetail implements Serializable {
     @ApiModelProperty(value = "重派费")
     private BigDecimal secondDeliveryFee;
     /**
+     * 超尺寸费
+     */
+    @Excel(name="超尺寸费")
+    private BigDecimal oversizeSurcharge;
+    /**
+     * 关税
+     */
+    @Excel(name="关税")
+    private BigDecimal customsDuty;
+    /**
      * 增值税
      */
     @Excel(name = "增值税", width = 15)
