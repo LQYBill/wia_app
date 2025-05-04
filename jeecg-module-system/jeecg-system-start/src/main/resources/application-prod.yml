@@ -353,5 +353,9 @@ mabang:
   api:
     appkey: "87a1a0c46df86eb2683e74776894dae9"
     devid: "200809"
+ydh:
+  api:
+    appKey: ""
+    apiToken: ""
 company:
   orgName: "WIA"

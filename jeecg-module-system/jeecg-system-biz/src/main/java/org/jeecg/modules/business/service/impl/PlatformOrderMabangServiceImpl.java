@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
-import org.jeecg.common.system.api.ISysBaseAPI;
 import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.modules.business.domain.api.mabang.dochangeorder.*;
 import org.jeecg.modules.business.domain.api.mabang.getorderlist.*;
@@ -16,8 +15,10 @@ import org.jeecg.modules.business.domain.api.mabang.orderDoOrderAbnormal.OrderSu
 import org.jeecg.modules.business.domain.job.ThrottlingExecutorService;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.mapper.PlatformOrderMabangMapper;
+import org.jeecg.modules.business.service.ILogisticChannelService;
 import org.jeecg.modules.business.service.IPlatformOrderMabangService;
 import org.jeecg.modules.business.service.IPlatformOrderService;
+import org.jeecg.modules.business.service.YDHService;
 import org.jeecg.modules.business.vo.PlatformOrderOperation;
 import org.jeecg.modules.business.vo.Responses;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,7 +50,9 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
     @Autowired
     private IPlatformOrderService orderservice;
     @Autowired
-    private ISysBaseAPI ISysBaseApi;
+    private ILogisticChannelService logisticChannelService;
+    @Autowired
+    private YDHService ydhService;
 
     private static final Integer DEFAULT_NUMBER_OF_THREADS = 2;
     private static final Integer MABANG_API_RATE_LIMIT_PER_MINUTE = 10;
@@ -330,6 +333,14 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
         List<Boolean> logisticResults = clearLogisticFutures.stream().map(CompletableFuture::join).collect(Collectors.toList());
         long logisticClearSuccessCount = logisticResults.stream().filter(b -> b).count();
         log.info("{}/{} logistic channel names cleared successfully.", logisticClearSuccessCount, orders.size());
+
+        List<String> YDHLogisticChannels = logisticChannelService.listByCompany("义达");
+        List<String> poIdWithYDHLogistic = orders.stream().filter(order -> YDHLogisticChannels.contains(order.getLogisticChannelName())).map(Order::getPlatformOrderId).collect(toList());
+        if(poIdWithYDHLogistic.isEmpty()) {
+            log.info("No YDH logistic channel to delete.");
+            return;
+        }
+        ydhService.deleteYDHTrackingNumbers(poIdWithYDHLogistic, executor);
     }
     @Override
     public String stripAccents(String input) {

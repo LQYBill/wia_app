@@ -17,4 +17,10 @@
             #{zhName}
         </foreach>
     </select>
+    <select id="listByCompany" resultType="java.lang.String">
+        SELECT zh_name
+        FROM logistic_channel lc
+        JOIN logistic_company comp ON lc.logistic_company_id = comp.id
+        WHERE comp.name = #{company};
+    </select>
 </mapper>

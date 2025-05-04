@@ -20,6 +20,8 @@ import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.sql.Date;
@@ -33,6 +35,7 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 @Slf4j
+@Component
 public class YDJob implements Job {
 
     @Autowired
@@ -45,8 +48,10 @@ public class YDJob implements Job {
     private static final Integer DEFAULT_MAXIMUM_NUMBER_OF_PARCELS_PER_TRANSACTION = 800;
     private static final List<String> DEFAULT_TRANSPORTERS = Arrays.asList("义速宝Colissmo特快专线", "义速宝法邮普货", "义速宝法邮膏体", "德国超级经济(普货)");
 
-    private final static String APP_TOKEN = "y553qci626dds5d6lcughy3ogicvfaxmh";
-    private final static String APP_KEY = "ynpoeds5511hg791mmksg6xccqxhax11j16eqz1itylq7whijki20egl0nmyql5h9";
+    @Value("${ydh.api.apiToken}")
+    private String API_TOKEN;
+    @Value("${ydh.api.apiKey}")
+    private String API_KEY;
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
@@ -101,7 +106,7 @@ public class YDJob implements Job {
         List<YDRequest> ydRequests = new ArrayList<>();
         billCodeLists.forEach(billcodeList -> {
             YDParcelTraceRequestBody ydParcelTraceRequestBody = new YDParcelTraceRequestBody(billcodeList);
-            YDRequest ydRequest = new YDRequest(APP_TOKEN, APP_KEY, ydParcelTraceRequestBody);
+            YDRequest ydRequest = new YDRequest(API_TOKEN, API_KEY, ydParcelTraceRequestBody);
             ydRequests.add(ydRequest);
         });
         ExecutorService executor = Executors.newFixedThreadPool(DEFAULT_NUMBER_OF_THREADS);
