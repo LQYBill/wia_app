@@ -818,7 +818,7 @@
                 #{order.trackingNumber},
                 #{order.orderTime},
                 #{order.shippingTime},
-                #{order.recipient},
+                UUID(),
                 #{order.country},
                 #{order.postcode},
                 #{order.status},

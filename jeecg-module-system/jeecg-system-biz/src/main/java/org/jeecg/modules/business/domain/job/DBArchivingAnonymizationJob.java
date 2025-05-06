@@ -8,10 +8,7 @@ import org.jeecg.modules.business.entity.Parcel;
 import org.jeecg.modules.business.entity.ParcelTrace;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
-import org.jeecg.modules.business.service.IParcelService;
-import org.jeecg.modules.business.service.IParcelTraceService;
-import org.jeecg.modules.business.service.IPlatformOrderContentService;
-import org.jeecg.modules.business.service.IPlatformOrderService;
+import org.jeecg.modules.business.service.*;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
@@ -26,10 +23,19 @@ import java.util.stream.Collectors;
 
 /**
  * A  job that archives entries from platform_order, platform_order_content, parcel, parcel_trace
+ * Data Anonymization, following EU GDPR guidelines.
+ * This job is responsible for anonymizing personal data in the database.
+ * It is scheduled to run every day at XX.
+ * The job will anonymize personal data in the database, such as names, addresses, and phone numbers.
+ * It will replace the personal data with UUIDs to ensure that the data is no longer identifiable.
+ * Personal data will be anonymized after 3 years of inactivity for our direct clients.
+ * And 2 years after creation for our indirect clients.
+ * ---
+ * Job frequency : every day at 10:00 am
  */
 @Slf4j
 @Component
-public class DBArchivingJob implements Job {
+public class DBArchivingAnonymizationJob implements Job {
     @Autowired
     @Setter
     private IParcelService parcelService;
@@ -84,7 +90,7 @@ public class DBArchivingJob implements Job {
             platformOrders = platformOrderService.fetchOrdersToArchiveBeforeDate(endDate);
             log.info("Archiving entries before ["+endDate+"]");
         }
-        if(platformOrders.size() > 0) {
+        if(!platformOrders.isEmpty()) {
             // sauvegarde des entrées dans des listes
             // suppression des entrées dans l'ancienne table
             List<String> platformOrderIDs = platformOrders.stream().map(PlatformOrder::getId).collect(Collectors.toList());
