@@ -94,6 +94,15 @@ public class Invoice implements Serializable {
     @ApiModelProperty(value = "是否通过付款审核")
     private Boolean paymentApproved;
 
+    @ApiModelProperty(value = "payment document string")
+    private String paymentDocumentString;
+
+    @ApiModelProperty(value = "paid")
+    private Boolean paid;
+
+    @ApiModelProperty(value = "payment status")
+    private String paymentStatus;
+
     @Excel(name = "type", width = 15)
     @ApiModelProperty(value = "type")
     private String type;

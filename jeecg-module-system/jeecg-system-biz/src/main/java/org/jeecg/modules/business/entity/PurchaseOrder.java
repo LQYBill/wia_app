@@ -120,6 +120,9 @@ public class PurchaseOrder implements Serializable {
     @ApiModelProperty(value = "是否通过付款审核")
     private Boolean paymentApproved;
 
+    @ApiModelProperty(value = "paid amount")
+    private java.math.BigDecimal paidAmount;
+
     /**
      * Payment document
      */

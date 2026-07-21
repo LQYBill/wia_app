@@ -215,10 +215,12 @@ public class TransactionController {
             case PURCHASE_INVOICE: {// Invoice 1XXX:update purchase order
                 PurchaseOrder po = purchaseOrderService.getPurchaseByInvoiceNumber(invoiceNumber);
                 if (po == null) {
+                    log.warn("uploadPaymentProofAndNotify failed because purchase order was not found, invoiceNumber={}", invoiceNumber);
                     return Result.error("Cannot find purchase order for invoice number: " + invoiceNumber);
                 }
                 po.setPaymentDocumentString(paymentProofString);
                 if (!purchaseOrderService.updateById(po)) {
+                    log.error("uploadPaymentProofAndNotify failed to update purchase order, invoiceNumber={}", invoiceNumber);
                     return Result.error("Failed to update purchase order for invoice number: " + invoiceNumber);
                 }
                 log.info("Purchase order updated successfully, payment proof set to: {}", paymentProofString);
@@ -226,10 +228,12 @@ public class TransactionController {
             }
             case SHIPPING_INVOICE: { // Invoice 2XXX:update shipping invoice
                 if (si == null) {
+                    log.warn("uploadPaymentProofAndNotify failed because shipping invoice was not found, invoiceNumber={}", invoiceNumber);
                     return Result.error("Cannot find shipping invoice for invoice number: " + invoiceNumber);
                 }
                 si.setPaymentDocumentString(paymentProofString);
                 if (!shippingInvoiceService.updateById(si)) {
+                    log.error("uploadPaymentProofAndNotify failed to update shipping invoice, invoiceNumber={}", invoiceNumber);
                     return Result.error("Failed to update shipping invoice for invoice number: " + invoiceNumber);
                 }
                 log.info("Shipping invoice updated successfully, payment proof set to: {}", paymentProofString);
@@ -237,10 +241,12 @@ public class TransactionController {
             }
             case COMPLETE_INVOICE: { // Invoice 7XXX:update shipping invoice and  purchase order
                 if (si == null) {
+                    log.warn("uploadPaymentProofAndNotify failed because complete invoice shipping record was not found, invoiceNumber={}", invoiceNumber);
                     return Result.error("Cannot find shipping invoice for invoice number: " + invoiceNumber);
                 }
                 si.setPaymentDocumentString(paymentProofString);
                 if (!shippingInvoiceService.updateById(si)) {
+                    log.error("uploadPaymentProofAndNotify failed to update complete invoice shipping record, invoiceNumber={}", invoiceNumber);
                     return Result.error("Failed to update shipping invoice for invoice number: " + invoiceNumber);
                 }
                 // 2)  purchase order
@@ -274,25 +280,49 @@ public class TransactionController {
             templateModel.put("uploadTime", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             templateModel.put("reviewLink", "https://app.wia-sourcing.com/business/admin/purchasing/PaymentProofReview");
             List<SysUser> accountantUsers = sysUserService.getUsersByRoleCode("accountant");
-
-            for (SysUser accountant : accountantUsers) {
-                String email = accountant.getEmail();
-                if (StringUtils.isNotBlank(email)) {
-                    emailService.newSendSimpleMessage(email, emailSubject, templateName, templateModel);
-                    log.info("Email sent to accountant {} at {}", accountant.getUsername(), email);
-                } else {
-                    log.warn("Accountant {} has no email, skipping notification", accountant.getUsername());
-                }
+            List<String> failedAccountants = notifyAccountants(accountantUsers, emailSubject, templateName, templateModel, invoiceNumber);
+            if (!failedAccountants.isEmpty()) {
+                String errorMessage = "Payment proof saved, but failed to notify accountants: " + String.join(", ", failedAccountants);
+                log.error("uploadPaymentProofAndNotify completed with notification failures for invoiceNumber={}, failedAccountants={}",
+                        invoiceNumber, failedAccountants);
+                return Result.error(errorMessage);
             }
         } catch (Exception e) {
             log.error("Failed to send email notification for payment proof upload", e);
+            return Result.error("Payment proof saved, but failed to notify accountants: " + e.getMessage());
         }
         return Result.ok("Your payment proof has been submitted and will be reviewed soon.");
     }
     @GetMapping("/getAllCurrenciesByClient")
     public Result<?> getAllCurrenciesByClient(@RequestParam("clientId") String clientId) {
-        List<Currency> currencies = transactionService.getAllCurrenciesByClient(clientId);
-        return Result.ok(currencies);
+        return Result.ok(transactionService.getAllCurrenciesByClient(clientId));
+    }
+
+    private List<String> notifyAccountants(List<SysUser> accountantUsers,
+                                   String emailSubject,
+                                   String templateName,
+                                   Map<String, Object> templateModel,
+                                   String invoiceNumber) {
+        List<String> failedAccountants = new ArrayList<>();
+        for (SysUser accountant : accountantUsers) {
+            String email = accountant.getEmail();
+            if (StringUtils.isNotBlank(email)) {
+                try {
+                    emailService.newSendSimpleMessage(email, emailSubject, templateName, templateModel);
+                    log.info("Payment proof notification email sent to accountant {} at {} for invoiceNumber={}",
+                            accountant.getUsername(), email, invoiceNumber);
+                } catch (Exception e) {
+                    log.error("Failed to send payment proof notification email to accountant {} for invoiceNumber={}",
+                            accountant.getUsername(), invoiceNumber, e);
+                    failedAccountants.add(accountant.getUsername());
+                }
+            } else {
+                log.warn("Accountant {} has no email, skipping notification for invoiceNumber={}",
+                        accountant.getUsername(), invoiceNumber);
+                failedAccountants.add(accountant.getUsername());
+            }
+        }
+        return failedAccountants;
     }
 
 }
