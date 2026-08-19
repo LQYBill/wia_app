@@ -224,8 +224,8 @@ public class OrderCreationRequestBody implements RequestBody {
                 .append("-")
                 .append(instance.get(Calendar.DAY_OF_MONTH))
                 .append(")");
-        // VA 所有店铺订单都添加 海外代发
-        if (shopErpCode.contains("VA")) {
+        // VA 所有店铺 和 EP POD店铺订单都添加 海外代发
+        if (shopErpCode.contains("VA") || shopErpCode.contains("EP POD")) {
             sb.append(DROP_SHIPPING);
         }
         sb.append(LINE_BREAK);
