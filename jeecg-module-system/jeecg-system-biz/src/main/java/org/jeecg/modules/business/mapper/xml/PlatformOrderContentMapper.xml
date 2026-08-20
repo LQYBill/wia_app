@@ -384,6 +384,7 @@
                po.shipping_label_url,
                po.buyer_message,
                po.tracking_number,
+               lco.name as logistic_company_name,
                lc.zh_name as logistic_channel_name,
                lc.code as logistic_channel_code,
                poc.id as platform_order_content_id,
@@ -410,6 +411,7 @@
         from platform_order_content poc
                  join platform_order po on poc.platform_order_id = po.id
                  left join logistic_channel lc on po.logistic_channel_name = lc.zh_name
+                 left join logistic_company lco on lc.logistic_company_id = lco.id
                  join shop sh on po.shop_id = sh.id
                  join sku s on poc.sku_id = s.id
                  join shouman_sku_relation ssr on s.id = ssr.sku_id
@@ -432,6 +434,7 @@
         <result property="city" column="city" javaType="string"/>
         <result property="country" column="name_zh" javaType="string"/>
         <result property="trackingNumber" column="tracking_number" javaType="string"/>
+        <result property="logisticCompanyName" column="logistic_company_name" javaType="string"/>
         <result property="logisticChannelName" column="logistic_channel_name" javaType="string"/>
         <result property="logisticChannelCode" column="logistic_channel_code" javaType="string"/>
         <result property="shippingLabelUrl" column="shipping_label_url" javaType="string"/>
@@ -475,6 +478,7 @@
                po.shipping_label_url,
                po.buyer_message,
                po.tracking_number,
+               lco.name as logistic_company_name,
                lc.zh_name as logistic_channel_name,
                lc.code as logistic_channel_code,
                poc.id as platform_order_content_id,
@@ -501,6 +505,7 @@
         from platform_order_content poc
                  join platform_order po on poc.platform_order_id = po.id
                  left join logistic_channel lc on po.logistic_channel_name = lc.zh_name
+                 left join logistic_company lco on lc.logistic_company_id = lco.id
                  join shop sh on po.shop_id = sh.id
                  join sku s on poc.sku_id = s.id
                  join shouman_sku_relation ssr on s.id = ssr.sku_id

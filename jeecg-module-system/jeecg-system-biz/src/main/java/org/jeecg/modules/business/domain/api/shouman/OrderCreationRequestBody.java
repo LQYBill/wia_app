@@ -11,9 +11,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -83,8 +81,8 @@ public class OrderCreationRequestBody implements RequestBody {
                     content.getRegexList(), shoumanOrderBase.getShopErpCode(), shoumanOrderBase.getPlatformOrderNumber(),
                     content.getCustomizationUrl()));
             if (shoumanOrderBase.getBuyerMessage() != null) {
-                String manuscriptCustomizationData = resolveManuscriptCustomizationData(content, allContents);
-                addManuscripts(contentJson, manuscriptCustomizationData, content.getRegexList(),
+                String materialCustomizationData = resolveMaterialCustomizationData(content, allContents);
+                addMaterials(contentJson, materialCustomizationData, content.getRegexList(),
                     shoumanOrderBase.getBuyerMessage());
             }
             putNonNull(contentJson, "sku", content.getSku());
@@ -107,9 +105,10 @@ public class OrderCreationRequestBody implements RequestBody {
         return json;
     }
 
-    private String resolveManuscriptCustomizationData(ShoumanOrderContent content,
-                                                       List<ShoumanOrderContent> allContents) {
-        if (content.getCustomizationData() != null && !content.getCustomizationData().trim().isEmpty()) {
+    private String resolveMaterialCustomizationData(ShoumanOrderContent content,
+                                                    List<ShoumanOrderContent> allContents) {
+        if (content.getCustomizationData() != null && !content.getCustomizationData().trim().isEmpty()
+                && content.getCustomizationData().contains(QUOTE)) {
             return content.getCustomizationData();
         }
         if (content.getSkuId() == null || allContents == null) {
@@ -118,38 +117,33 @@ public class OrderCreationRequestBody implements RequestBody {
         return allContents.stream()
                 .filter(candidate -> content.getSkuId().equals(candidate.getSkuId()))
                 .map(ShoumanOrderContent::getCustomizationData)
-                .filter(customizationData -> customizationData != null && !customizationData.trim().isEmpty())
+                .filter(customizationData -> customizationData != null && !customizationData.trim().isEmpty()
+                        && customizationData.contains(QUOTE))
                 .findFirst()
                 .orElse(null);
     }
-    private void addManuscripts(JSONObject contentJson, String customizationData, List<ShoumanRegex> regexList,
-                                String buyerMessage) {
+
+    private void addMaterials(JSONObject contentJson, String customizationData, List<ShoumanRegex> regexList,
+                              String buyerMessage) {
         if (buyerMessage == null || buyerMessage.trim().isEmpty()
                 || customizationData == null || customizationData.trim().isEmpty()) {
             return;
         }
 
-        JSONArray manuscripts = new JSONArray();
-        Set<String> manuscriptUrls = new LinkedHashSet<>();
-        addBuyerMessageManuscripts(manuscriptUrls, customizationData, regexList, buyerMessage);
-        for (String manuscriptUrl : manuscriptUrls) {
-            JSONObject manuscript = new JSONObject();
-            manuscript.put("manuscriptUrl", manuscriptUrl);
-            manuscript.put("thumbnailUrl", manuscriptUrl);
-            manuscripts.add(manuscript);
-        }
+        JSONArray materialUrls = new JSONArray();
+        addBuyerMessageMaterials(materialUrls, customizationData, regexList, buyerMessage);
 
         // Keep supporting the original design-id based Print 4K format.
-        if (manuscripts.isEmpty()) {
-            addPrint4kManuscript(manuscripts, customizationData, buyerMessage);
+        if (materialUrls.isEmpty()) {
+            addPrint4kMaterial(materialUrls, customizationData, buyerMessage);
         }
-        if (!manuscripts.isEmpty()) {
-            contentJson.put("manuscripts", manuscripts);
+        if (!materialUrls.isEmpty()) {
+            contentJson.put("customizedFileUrls", materialUrls);
         }
     }
 
-    private void addBuyerMessageManuscripts(Set<String> manuscriptUrls, String customizationData,
-                                             List<ShoumanRegex> regexList, String buyerMessage) {
+    private void addBuyerMessageMaterials(JSONArray materialUrls, String customizationData,
+                                          List<ShoumanRegex> regexList, String buyerMessage) {
         if (regexList == null) {
             return;
         }
@@ -170,7 +164,7 @@ public class OrderCreationRequestBody implements RequestBody {
                 while (urlMatcher.find()) {
                     String url = urlMatcher.group();
                     if (url.toLowerCase().contains(normalizedContent)) {
-                        manuscriptUrls.add(url);
+                        materialUrls.add(url);
                     }
                 }
             }
@@ -182,7 +176,7 @@ public class OrderCreationRequestBody implements RequestBody {
         return extractedParts.length == 0 ? null : extractedParts[extractedParts.length - 1].trim();
     }
 
-    private void addPrint4kManuscript(JSONArray manuscripts, String customizationData, String buyerMessage) {
+    private void addPrint4kMaterial(JSONArray materialUrls, String customizationData, String buyerMessage) {
         Matcher designIdMatcher = DESIGN_ID_IN_CUSTOMIZATION_PATTERN.matcher(customizationData);
         if (!designIdMatcher.find()) {
             return;
@@ -196,10 +190,7 @@ public class OrderCreationRequestBody implements RequestBody {
             if (!urlDesignIdMatcher.find() || !designId.equals(urlDesignIdMatcher.group(1))) {
                 continue;
             }
-            JSONObject manuscript = new JSONObject();
-            manuscript.put("manuscriptUrl", printUrl);
-            manuscript.put("thumbnailUrl", printUrl);
-            manuscripts.add(manuscript);
+            materialUrls.add(printUrl);
             break;
         }
     }
@@ -224,8 +215,10 @@ public class OrderCreationRequestBody implements RequestBody {
                 .append("-")
                 .append(instance.get(Calendar.DAY_OF_MONTH))
                 .append(")");
-        // VA 所有店铺 和 EP POD店铺订单都添加 海外代发
-        if (shopErpCode.contains("VA") || shopErpCode.contains("EP POD")) {
+        // VA 所有店铺 和 EP POD店铺订单都添加 海外代发, 万邦除外
+        if ((shoumanOrderBase.getLogisticCompanyName() == null
+                || !shoumanOrderBase.getLogisticCompanyName().equalsIgnoreCase("万邦"))
+                && (shopErpCode.contains("VA") || shopErpCode.contains("EP POD"))) {
             sb.append(DROP_SHIPPING);
         }
         sb.append(LINE_BREAK);
