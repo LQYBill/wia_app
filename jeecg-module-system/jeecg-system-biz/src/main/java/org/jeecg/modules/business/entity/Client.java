@@ -85,6 +85,9 @@ public class Client implements Serializable {
 
     @TableField(exist = false)
     private String invoiceEntityId;
+
+    @TableField(exist = false)
+    private List<InvoiceEntity> invoiceEntityList;
     /**
      * 邮箱
      */
