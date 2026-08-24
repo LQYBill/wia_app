@@ -1327,6 +1327,9 @@
           AND p.can_send = 1
           AND p.create_time > '2025-09-01'
           AND sr.is_active = 1
+          <if test="shopId != null and shopId != ''">
+            AND p.shop_id = #{shopId}
+          </if>
           AND NOT EXISTS (
             SELECT 1
             FROM shouman_order so
@@ -1361,6 +1364,9 @@
           AND p.can_send = 1
           AND p.create_time > '2025-09-01'
           AND sr.is_active = 1
+          <if test="shopId != null and shopId != ''">
+            AND p.shop_id = #{shopId}
+          </if>
           AND NOT EXISTS (
             SELECT 1
             FROM shouman_order so

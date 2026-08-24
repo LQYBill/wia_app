@@ -250,9 +250,9 @@ public interface PlatformOrderMapper extends BaseMapper<PlatformOrder> {
 
     void updateLocalTrackingNumber(@Param("data") List<YDTrackingNumberData> data);
 
-    List<PlatformOrderPage> pagePotentialShoumanOrders(long pageNo, long pageSize, String column, String order);
+    List<PlatformOrderPage> pagePotentialShoumanOrders(long pageNo, long pageSize, String column, String order, String shopId);
 
-    Integer countPotentialShoumanOrders();
+    Integer countPotentialShoumanOrders(String shopId);
 
     List<String> getPlatformOrderIdsByInvoiceNumbers(@Param("invoiceNumbers") List<String> invoiceNumbers);
     int countListByClientAndShops(@Param("clientId") String clientId,@Param("shopIds") List<String> shopIds,

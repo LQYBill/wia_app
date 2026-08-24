@@ -578,9 +578,18 @@ public class PlatformOrderController {
     @AutoLog(value = "潜在首曼订单-分页列表查询")
     @ApiOperation(value = "潜在首曼订单-分页列表查询", notes = "潜在首曼订单-分页列表查询")
     @GetMapping(value = "/shouman/list")
-    public Result<?> queryPageShoumanList(@RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo, @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize, @RequestParam(name = "column") String column, @RequestParam(name = "order") String order) {
+    public Result<?> queryPageShoumanList(
+            @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
+            @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
+            @RequestParam(name = "column") String column,
+            @RequestParam(name = "order") String order,
+            @RequestParam(name = "shopId", required = false) String shopId) {
         Page<PlatformOrderPage> page = new Page<>(pageNo, pageSize);
-        platformOrderService.pagePotentialShoumanOrders(page, CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, column), order);
+        platformOrderService.pagePotentialShoumanOrders(
+                page,
+                CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, column),
+                order,
+                shopId);
         return Result.OK(page);
     }
 

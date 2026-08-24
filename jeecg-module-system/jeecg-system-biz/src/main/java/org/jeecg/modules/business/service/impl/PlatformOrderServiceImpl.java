@@ -615,10 +615,10 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
     }
 
     @Override
-    public void pagePotentialShoumanOrders(IPage<PlatformOrderPage> page, String column, String order) {
-        List<PlatformOrderPage> potentialShoumanOrders = platformOrderMap.pagePotentialShoumanOrders(page.offset(), page.getSize(), column, order);
+    public void pagePotentialShoumanOrders(IPage<PlatformOrderPage> page, String column, String order, String shopId) {
+        List<PlatformOrderPage> potentialShoumanOrders = platformOrderMap.pagePotentialShoumanOrders(page.offset(), page.getSize(), column, order, shopId);
         page.setRecords(potentialShoumanOrders);
-        page.setTotal(platformOrderMap.countPotentialShoumanOrders());
+        page.setTotal(platformOrderMap.countPotentialShoumanOrders(shopId));
     }
 
     @Override

@@ -302,7 +302,7 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
 
     void updateLocalTrackingNumber(List<YDTrackingNumberData> data);
 
-    void pagePotentialShoumanOrders(IPage<PlatformOrderPage> page, String column, String order);
+    void pagePotentialShoumanOrders(IPage<PlatformOrderPage> page, String column, String order, String shopId);
 
     List<String> getPlatformOrderIdsByInvoiceNumbers(List<String> invoiceNumbers);
 
