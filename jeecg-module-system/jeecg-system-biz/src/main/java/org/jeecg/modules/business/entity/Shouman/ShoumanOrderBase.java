@@ -17,6 +17,7 @@ public class ShoumanOrderBase {
     private String city;
     private String country;
     private String trackingNumber;
+    private String logisticCompanyName;
     private String logisticChannelName;
     private String logisticChannelCode;
     private String shippingLabelUrl;
@@ -37,6 +38,7 @@ public class ShoumanOrderBase {
                 ", city='" + city + '\'' +
                 ", country='" + country + '\'' +
                 ", trackingNumber='" + trackingNumber + '\'' +
+                ", logisticCompanyName='" + logisticCompanyName + '\'' +
                 ", logisticChannelName='" + logisticChannelName + '\'' +
                 ", logisticChannelCode='" + logisticChannelCode + '\'' +
                 ", shippingLabelUrl='" + shippingLabelUrl + '\'' +
