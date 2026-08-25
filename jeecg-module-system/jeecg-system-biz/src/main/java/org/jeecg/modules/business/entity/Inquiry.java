@@ -46,7 +46,6 @@ public class Inquiry implements Serializable {
     @ApiModelProperty(value = "Updated time")
     private Date updateTime;
 
-    @Excel(name = "Status", width = 15)
     @ApiModelProperty(value = "Inquiry status")
     private String status;
 
@@ -60,11 +59,11 @@ public class Inquiry implements Serializable {
     @ApiModelProperty(value = "Sales ID")
     private String salesId;
 
-    @Excel(name = "Link", width = 30)
+    @Excel(name = "Link (Required)", width = 30)
     @ApiModelProperty(value = "Inquiry link")
     private String link;
 
-    @Excel(name = "Country", width = 20, dictTable = "country", dicText = "name_en", dicCode = "id")
+    @Excel(name = "Country (Required)", width = 20, dictTable = "country", dicText = "name_en", dicCode = "id")
     @Dict(dictTable = "country", dicText = "name_en", dicCode = "id")
     @ApiModelProperty(value = "Country IDs, comma separated")
     private String countryId;
@@ -73,11 +72,11 @@ public class Inquiry implements Serializable {
     @ApiModelProperty(value = "Country ID list for multi-select")
     private List<String> countryIds;
 
-    @Excel(name = "Expected Sales", width = 15)
+    @Excel(name = "Expected Sales (Required)", width = 15)
     @ApiModelProperty(value = "Expected sales")
     private Integer expectedSales;
 
-    @Excel(name = "Photo", width = 30)
+    @Excel(name = "Photo", width = 30, type = 2)
     @ApiModelProperty(value = "Photo")
     private String photo;
 

@@ -129,8 +129,8 @@
         <if test="q.customerPrice != null">customer_price = #{q.customerPrice},</if>
         <if test="q.country != null and q.country != ''">country = #{q.country},</if>
         <if test="q.category != null and q.category != ''">category = #{q.category},</if>
-        <if test="q.declaredValue != null">declared_value = #{q.declaredValue},</if>
-        <if test="q.iossRate != null">ioss_rate = #{q.iossRate},</if>
+        declared_value = #{q.declaredValue},
+        ioss_rate = #{q.iossRate},
         <if test="q.priorityMode != null">prioritymode = #{q.priorityMode},</if>
         <if test="q.inquiryId != null">
             <choose>
@@ -171,7 +171,7 @@
             update_time = NOW()
         </set>
         WHERE id = #{q.id}
-          AND status = '0'
+          AND (status = '0' <if test="isAdmin">OR status = '1'</if>)
     </update>
 
     <sql id="RevokeQuoteSet">

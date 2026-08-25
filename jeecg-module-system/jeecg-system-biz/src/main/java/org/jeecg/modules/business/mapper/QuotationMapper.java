@@ -20,7 +20,7 @@ public interface QuotationMapper extends BaseMapper<Quotation> {
     Quotation getByIdForClient(@Param("id") String id,
                                @Param("clientId") String clientId);
 
-    int updateQuoteFields(@Param("q") Quotation q);
+    int updateQuoteFields(@Param("q") Quotation q, @Param("isAdmin") boolean isAdmin);
 
     int revokeQuoteById(@Param("id") String id);
 
