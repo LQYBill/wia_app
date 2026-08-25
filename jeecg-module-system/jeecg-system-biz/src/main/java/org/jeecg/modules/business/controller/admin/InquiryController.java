@@ -114,7 +114,7 @@ public class InquiryController extends JeecgController<Inquiry, IInquiryService>
         }
     }
 
-    @ApiOperation(value = "Inquiry export to Excel", notes = "Also serves as the import template: export with no filters to get a blank/example file matching the import column layout. Newest first. Multi-link JSON (title/url pairs) is flattened into readable \"title: url\" entries, one per line in the same cell; a row with exactly one link gets a clickable hyperlink instead (Excel only supports one hyperlink target per cell).")
+    @ApiOperation(value = "Inquiry export to Excel")
     @RequestMapping(value = "/exportXls")
     public void exportXls(HttpServletRequest request, HttpServletResponse response, Inquiry inquiry) throws IOException {
         if (!securityService.checkIsEmployee()) {
@@ -144,7 +144,7 @@ public class InquiryController extends JeecgController<Inquiry, IInquiryService>
         }
     }
 
-    @ApiOperation(value = "Inquiry batch import from Excel", notes = "Inquiry batch import from Excel. Employees can import for any client; customers can import, but every row is force-bound to their own client id. Each row currently supports a single country (comma-separated multi-country is not supported by the generic dict import). Client text that doesn't match an existing client's internal_code is kept as-is (unregistered/prospect client name), matching the frontend's own convention.")
+    @ApiOperation(value = "Inquiry batch import from Excel")
     @RequestMapping(value = "/importExcel", method = RequestMethod.POST)
     public Result<?> importExcel(HttpServletRequest request, HttpServletResponse response) {
         boolean isEmployee = securityService.checkIsEmployee();
