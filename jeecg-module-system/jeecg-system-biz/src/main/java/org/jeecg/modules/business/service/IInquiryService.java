@@ -1,7 +1,11 @@
 package org.jeecg.modules.business.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.jeecg.modules.business.entity.Inquiry;
+import org.jeecg.modules.business.vo.InquiryImportResult;
+
+import java.util.List;
 
 public interface IInquiryService extends IService<Inquiry> {
     void createInquiry(Inquiry inquiry);
@@ -13,4 +17,8 @@ public interface IInquiryService extends IService<Inquiry> {
     String resolvePrimaryCountryId(Inquiry inquiry);
 
     String normalizeCountryValue(String countryValue);
+
+    Workbook buildExportWorkbook(List<Inquiry> exportList, String exportedByName);
+
+    InquiryImportResult importFromExcel(byte[] fileBytes, String forcedClientId) throws Exception;
 }

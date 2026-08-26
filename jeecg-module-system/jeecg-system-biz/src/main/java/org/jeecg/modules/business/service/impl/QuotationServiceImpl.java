@@ -66,6 +66,13 @@ public class QuotationServiceImpl extends ServiceImpl<QuotationMapper, Quotation
     private static final int CUSTOMER_QUOTE_PHOTO_COLUMN = 4;
     private static final int CUSTOMER_QUOTE_PHOTO_COLUMN_WIDTH = 40 * 256;
     private static final short CUSTOMER_QUOTE_PHOTO_ROW_HEIGHT = 90 * 20;
+    private static final List<String> EU_COUNTRY_LIST = Arrays.asList("Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus",
+            "Czech", "Czech Republic", "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Ireland", "Italy",
+            "Latvia", "Lithuania", "Luxembourg", "Malta", "Netherlands", "Poland", "Portugal", "Romania", "Slovakia",
+            "Slovenia", "Spain", "Sweden");
+    private static final BigDecimal SMALL_PARCEL_TAX_PER_HSCODE = BigDecimal.valueOf(3.05);
+    private static final String STATUS_IN_PROGRESS = "0";
+    private static final String STATUS_COMPLETED = "1";
 
     @Autowired
     private LogisticChannelMapper logisticChannelMapper;
@@ -208,6 +215,9 @@ public class QuotationServiceImpl extends ServiceImpl<QuotationMapper, Quotation
         ExportParams exportParams = new ExportParams("Customer Quotes", "Customer Quotes");
         exportParams.setType(ExcelType.XSSF);
 
+        boolean anyHasIoss = records != null && records.stream()
+                .anyMatch(r -> r != null && (r.getDeclaredValue() != null || r.getIossFee() != null));
+
         List<ExcelExportEntity> columns = new ArrayList<>();
         columns.add(new ExcelExportEntity("Product Name", "productName"));
         columns.add(new ExcelExportEntity("Supplier SKU", "supplierSku"));
@@ -223,6 +233,9 @@ public class QuotationServiceImpl extends ServiceImpl<QuotationMapper, Quotation
             columns.add(new ExcelExportEntity("Sales Remark", "salesRemark"));
         }
         columns.add(new ExcelExportEntity("Shipping Fee (EUR)", "logisticsFee"));
+        if (anyHasIoss) {
+            columns.add(new ExcelExportEntity("IOSS Fee (EUR)", "iossFee"));
+        }
         columns.add(new ExcelExportEntity("Total Fee (EUR)", "totalFee"));
 
         List<Map<String, Object>> dataList = new ArrayList<>();
@@ -242,6 +255,9 @@ public class QuotationServiceImpl extends ServiceImpl<QuotationMapper, Quotation
                     row.put("salesRemark", getSalesRemarkText(quotation.getSalesRemark()));
                 }
                 row.put("logisticsFee", quotation.getLogisticsFee());
+                if (anyHasIoss) {
+                    row.put("iossFee", quotation.getIossFee());
+                }
                 row.put("totalFee", quotation.getTotalFee());
                 row.put("sizeRange", StringUtils.isNotBlank(quotation.getSizeRange()) ? quotation.getSizeRange() : quotation.getProductSize());
                 dataList.add(row);
@@ -410,14 +426,29 @@ public class QuotationServiceImpl extends ServiceImpl<QuotationMapper, Quotation
             throw new IllegalArgumentException("country cannot be empty");
         }
         estimateQuote(q);
-        q.setStatus("0");
+        q.setStatus(STATUS_IN_PROGRESS);
     }
 
     @Override
     public int updateQuoteFields(Quotation q) {
         normalizeCountryFields(q);
         estimateQuote(q);
-        return baseMapper.updateQuoteFields(q);
+        boolean isAdmin = securityService.checkIsAdmin();
+        if (isAdmin) {
+            Quotation existing = baseMapper.selectById(q.getId());
+            if (existing != null && STATUS_COMPLETED.equals(existing.getStatus())) {
+                // Quote is completed: admin can only flip it back to editable in this save, nothing else.
+                // Other field changes only take effect on a later edit, once the quote is back to status '0'.
+                if (!STATUS_IN_PROGRESS.equals(q.getStatus())) {
+                    return 0;
+                }
+                Quotation statusOnly = new Quotation();
+                statusOnly.setId(q.getId());
+                statusOnly.setStatus(STATUS_IN_PROGRESS);
+                return baseMapper.updateQuoteFields(statusOnly, true);
+            }
+        }
+        return baseMapper.updateQuoteFields(q, isAdmin);
     }
 
     @Override
@@ -459,6 +490,8 @@ public class QuotationServiceImpl extends ServiceImpl<QuotationMapper, Quotation
         BigDecimal rmbToEur = getRmbToEurRate();
         boolean salePriceComputedFromMargin = false;
         BigDecimal inputMargin = null;
+        boolean partnerPriceComputedFromMargin = false;
+        BigDecimal inputPartnerMargin = null;
         if (rmbToEur != null && rmbToEur.compareTo(BigDecimal.ZERO) > 0) {
             if (q.getCostRmb() != null) {
                 q.setCostEur(safeBd(q.getCostRmb()).multiply(rmbToEur).setScale(2, RoundingMode.HALF_UP));
@@ -474,22 +507,38 @@ public class QuotationServiceImpl extends ServiceImpl<QuotationMapper, Quotation
                 }
             }
             if (q.getSalePriceRmb() != null) {
-                q.setSalePriceEur(safeBd(q.getSalePriceRmb()).multiply(rmbToEur).setScale(2, RoundingMode.HALF_UP));
+                q.setSalePriceEur(safeBd(q.getSalePriceRmb()).multiply(rmbToEur).setScale(2, RoundingMode.UP));
+            }
+            if (shouldComputePartnerPriceFromMargin(q)) {
+                BigDecimal commission = safeBd(q.getPartnerMargin());
+                q.setPartnerSalePrice(safeBd(q.getSalePriceEur())
+                        .multiply(commission)
+                        .setScale(2, RoundingMode.UP));
+                q.setPartnerMargin(commission);
+                inputPartnerMargin = commission;
+                partnerPriceComputedFromMargin = true;
             }
         }
 
         fillLogisticsFee(q);
 
-        if (q.getSalePriceEur() != null) {
-            q.setPrixAchat(safeBd(q.getSalePriceEur()).setScale(2, RoundingMode.HALF_UP));
-        }
-        if (q.getSalePriceEur() != null && q.getLogisticsFee() != null) {
-            q.setTotalFee(safeBd(q.getSalePriceEur()).add(safeBd(q.getLogisticsFee())).setScale(2, RoundingMode.HALF_UP));
+        // Partner sale price takes priority over customer sale price wherever a single "the" sale price is needed,
+        // falling back to customer sale price when there's no partner price.
+        BigDecimal totalFeeBasePrice = q.getPartnerSalePrice() != null ? q.getPartnerSalePrice() : q.getSalePriceEur();
+        if (totalFeeBasePrice != null) {
+            q.setPrixAchat(safeBd(totalFeeBasePrice).setScale(2, RoundingMode.HALF_UP));
         }
         if (q.getDeclaredValue() != null && q.getIossRate() != null) {
             q.setIossFee(safeBd(q.getDeclaredValue()).multiply(safeBd(q.getIossRate())).setScale(2, RoundingMode.HALF_UP));
         } else {
             q.setIossFee(null);
+        }
+        if (totalFeeBasePrice != null && q.getLogisticsFee() != null) {
+            q.setTotalFee(safeBd(totalFeeBasePrice)
+                    .add(safeBd(q.getLogisticsFee()))
+                    .add(safeBd(q.getSmallParcelTaxFee()))
+                    .add(safeBd(q.getIossFee()))
+                    .setScale(2, RoundingMode.UP));
         }
         if (q.getSalePriceRmb() != null && q.getCostRmb() != null) {
             q.setProfitRmb(safeBd(q.getSalePriceRmb()).subtract(safeBd(q.getCostRmb())).setScale(2, RoundingMode.HALF_UP));
@@ -503,6 +552,16 @@ public class QuotationServiceImpl extends ServiceImpl<QuotationMapper, Quotation
             BigDecimal saleEur = safeBd(q.getSalePriceEur());
             if (saleEur.compareTo(BigDecimal.ZERO) != 0) {
                 q.setMargin(safeBd(q.getProfitEur()).divide(saleEur, 4, RoundingMode.HALF_UP));
+            }
+        }
+        if (partnerPriceComputedFromMargin) {
+            q.setPartnerMargin(inputPartnerMargin);
+        } else if (q.getPartnerSalePrice() != null && q.getSalePriceEur() != null) {
+            BigDecimal saleEurForCommission = safeBd(q.getSalePriceEur());
+            if (saleEurForCommission.compareTo(BigDecimal.ZERO) != 0) {
+                BigDecimal impliedCommission = safeBd(q.getPartnerSalePrice())
+                        .divide(saleEurForCommission, 4, RoundingMode.HALF_UP);
+                q.setPartnerMargin(impliedCommission);
             }
         }
         return q;
@@ -523,17 +582,21 @@ public class QuotationServiceImpl extends ServiceImpl<QuotationMapper, Quotation
     private void fillLogisticsFee(Quotation q) {
         if (StringUtils.isBlank(q.getLogisticChannel()) || StringUtils.isBlank(q.getCountry()) || q.getExpressWeightG() == null) {
             q.setLogisticsFee(null);
+            q.setSmallParcelTaxFee(BigDecimal.ZERO);
             return;
         }
         Integer weightG = q.getExpressWeightG();
         if (weightG <= 0) {
             q.setLogisticsFee(BigDecimal.ZERO);
+            q.setSmallParcelTaxFee(BigDecimal.ZERO);
             return;
         }
         String countryCode = null;
+        String countryNameEn = null;
         try {
             Country country = countryMapper.selectById(q.getCountry());
             countryCode = country == null ? null : country.getCode();
+            countryNameEn = country == null ? null : country.getNameEn();
         } catch (Exception ex) {
             log.error("[estimateQuote] country resolve failed countryId={}", q.getCountry(), ex);
         }
@@ -546,6 +609,7 @@ public class QuotationServiceImpl extends ServiceImpl<QuotationMapper, Quotation
             );
             if (price == null) {
                 q.setLogisticsFee(null);
+                q.setSmallParcelTaxFee(BigDecimal.ZERO);
                 return;
             }
             BigDecimal fee = price.calculateShippingPrice(BigDecimal.valueOf(weightG))
@@ -553,9 +617,29 @@ public class QuotationServiceImpl extends ServiceImpl<QuotationMapper, Quotation
                     .add(safeBd(price.getAdditionalCost()))
                     .setScale(2, RoundingMode.UP);
             q.setLogisticsFee(fee);
+            if (isEuCountry(countryNameEn) && shouldChargeSmallParcelTax(q.getLogisticChannel())) {
+                q.setSmallParcelTaxFee(SMALL_PARCEL_TAX_PER_HSCODE);
+            } else {
+                q.setSmallParcelTaxFee(BigDecimal.ZERO);
+            }
         } catch (Exception ex) {
             log.error("[estimateQuote] freight query failed", ex);
             q.setLogisticsFee(null);
+            q.setSmallParcelTaxFee(BigDecimal.ZERO);
+        }
+    }
+
+    private boolean isEuCountry(String countryNameEn) {
+        return StringUtils.isNotBlank(countryNameEn) && EU_COUNTRY_LIST.stream().anyMatch(c -> c.equalsIgnoreCase(countryNameEn));
+    }
+
+    private boolean shouldChargeSmallParcelTax(String logisticChannelId) {
+        try {
+            LogisticChannel channel = logisticChannelMapper.selectById(logisticChannelId);
+            return channel == null || !"1".equals(channel.getSmallParcelTaxExempted());
+        } catch (Exception ex) {
+            log.warn("[estimateQuote] small parcel tax exemption check failed, channelId={}, err={}", logisticChannelId, ex.getMessage());
+            return true;
         }
     }
 
@@ -590,6 +674,8 @@ public class QuotationServiceImpl extends ServiceImpl<QuotationMapper, Quotation
         quotation.setPackWeightG(null);
         quotation.setExpressWeightG(null);
         quotation.setLogisticChannel(null);
+        quotation.setDeclaredValue(null);
+        quotation.setIossRate(null);
         return quotation;
     }
 
@@ -673,6 +759,26 @@ public class QuotationServiceImpl extends ServiceImpl<QuotationMapper, Quotation
                 .subtract(safeBd(q.getCostRmb()))
                 .divide(salePriceRmb, 4, RoundingMode.HALF_UP);
         return impliedMargin.compareTo(normalizedMargin.setScale(4, RoundingMode.HALF_UP)) != 0;
+    }
+
+    private boolean shouldComputePartnerPriceFromMargin(Quotation q) {
+        if (q == null || q.getPartnerMargin() == null || q.getSalePriceEur() == null) {
+            return false;
+        }
+        BigDecimal saleEur = safeBd(q.getSalePriceEur());
+        if (saleEur.compareTo(BigDecimal.ZERO) <= 0) {
+            return false;
+        }
+        if (q.getPartnerSalePrice() == null) {
+            return true;
+        }
+        BigDecimal partnerSalePrice = safeBd(q.getPartnerSalePrice());
+        if (partnerSalePrice.compareTo(BigDecimal.ZERO) <= 0) {
+            return true;
+        }
+        BigDecimal commission = safeBd(q.getPartnerMargin()).setScale(4, RoundingMode.HALF_UP);
+        BigDecimal impliedCommission = partnerSalePrice.divide(saleEur, 4, RoundingMode.HALF_UP);
+        return impliedCommission.compareTo(commission) != 0;
     }
 
     private String getSalesRemarkText(String salesRemark) {

@@ -118,6 +118,11 @@ public class Quotation implements Serializable {
     @TableField(exist = false)
     private BigDecimal logisticsFee;
 
+    @Excel(name = "Small Parcel Tax EUR", width = 15)
+    @ApiModelProperty(value = "EU small parcel tax")
+    @TableField(exist = false)
+    private BigDecimal smallParcelTaxFee;
+
     @Excel(name = "Total Fee EUR", width = 15)
     @ApiModelProperty(value = "Total fee EUR")
     @TableField(exist = false)
@@ -154,9 +159,14 @@ public class Quotation implements Serializable {
     @TableField(exist = false)
     private BigDecimal salePriceEur;
 
-    @Excel(name = "Partner Sale Price", width = 15)
-    @ApiModelProperty(value = "Partner sale price")
-    private Integer partnerSalePrice;
+    @Excel(name = "Partner Sale Price EUR", width = 15)
+    @ApiModelProperty(value = "Partner sale price EUR")
+    private BigDecimal partnerSalePrice;
+
+    @Excel(name = "Partner Commission", width = 15)
+    @ApiModelProperty(value = "Partner commission, direct multiplier on salePriceEur (e.g. 1.15 = 115% of sale price)")
+    @TableField(exist = false)
+    private BigDecimal partnerMargin;
 
     @Excel(name = "Profit RMB", width = 15)
     @ApiModelProperty(value = "Profit RMB")

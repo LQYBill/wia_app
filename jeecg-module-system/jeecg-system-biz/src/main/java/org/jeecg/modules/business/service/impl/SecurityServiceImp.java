@@ -5,14 +5,18 @@ import org.apache.shiro.SecurityUtils;
 import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.modules.business.service.ISecurityService;
 import org.jeecg.modules.system.service.ISysDepartService;
+import org.jeecg.modules.system.service.ISysUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @Slf4j
 public class SecurityServiceImp implements ISecurityService {
     @Autowired private ISysDepartService sysDepartService;
+    @Autowired private ISysUserService sysUserService;
     @Autowired private Environment env;
 
     @Override
@@ -20,5 +24,12 @@ public class SecurityServiceImp implements ISecurityService {
         String companyOrgCode = sysDepartService.queryCodeByDepartName(env.getProperty("company.orgName"));
         LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
         return sysUser.getOrgCode().equals(companyOrgCode);
+    }
+
+    @Override
+    public boolean checkIsAdmin() {
+        LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+        List<String> roles = sysUserService.getRole(sysUser.getUsername());
+        return roles != null && roles.contains("admin");
     }
 }
