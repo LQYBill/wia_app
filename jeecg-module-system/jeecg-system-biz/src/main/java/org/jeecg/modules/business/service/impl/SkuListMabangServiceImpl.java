@@ -285,6 +285,11 @@ public class SkuListMabangServiceImpl extends ServiceImpl<SkuListMabangMapper, S
                         s.setIsGift(skuData.getIsGift());
                         isUpdated = true;
                     }
+                    String imageSource = getImageSource(skuData);
+                    if (!Objects.equals(s.getImageSource(), imageSource)) {
+                        s.setImageSource(imageSource);
+                        isUpdated = true;
+                    }
                     if(isUpdated)
                         skusToUpdate.add(s);
 
@@ -433,12 +438,7 @@ public class SkuListMabangServiceImpl extends ServiceImpl<SkuListMabangMapper, S
                     s.setZhName(skuData.getNameCN());
                 }
             }
-            if(skuData.getStockPicture() == null || skuData.getStockPicture().isEmpty()) {
-                s.setImageSource(skuData.getSalePicture());
-            }
-            else {
-                s.setImageSource(skuData.getStockPicture());
-            }
+            s.setImageSource(getImageSource(skuData));
             s.setIsGift(skuData.getIsGift());
             // hasBattery : 1 = yes ; 2 = no
             if (skuData.getHasBattery() == 1) {
@@ -461,6 +461,17 @@ public class SkuListMabangServiceImpl extends ServiceImpl<SkuListMabangMapper, S
         }
         return skuMap;
     }
+    /**
+     * Prefer the stock picture, falling back to the sale picture when no stock
+     * picture is available. This is the same rule used for newly imported SKUs.
+     */
+    private String getImageSource(SkuData skuData) {
+        if (skuData.getStockPicture() == null || skuData.getStockPicture().isEmpty()) {
+            return skuData.getSalePicture();
+        }
+        return skuData.getStockPicture();
+    }
+
     public String createSkuWeight(Sku sku, String salesRemark, Date effectiveDate) {
         String remark = "";
         SkuWeight sw = new SkuWeight();
