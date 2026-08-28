@@ -18,7 +18,7 @@ public interface IInquiryService extends IService<Inquiry> {
 
     String normalizeCountryValue(String countryValue);
 
-    Workbook buildExportWorkbook(List<Inquiry> exportList, String exportedByName);
+    Workbook buildExportWorkbook(List<Inquiry> exportList, String exportedByName, boolean isEmployee);
 
     InquiryImportResult importFromExcel(byte[] fileBytes, String forcedClientId) throws Exception;
 }
