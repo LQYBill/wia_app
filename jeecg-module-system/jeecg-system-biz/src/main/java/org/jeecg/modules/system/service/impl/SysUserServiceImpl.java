@@ -554,10 +554,18 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	@Override
 	public List<DictModel> listSalespersonOptions() {
 		String companyOrgCode = sysDepartService.queryCodeByDepartName(env.getProperty("company.orgName"));
+		Set<String> salesUserIds = getUsersByRoleCode("Sales").stream()
+				.map(SysUser::getId)
+				.filter(StringUtils::isNotBlank)
+				.collect(Collectors.toSet());
+		if (salesUserIds.isEmpty()) {
+			return Collections.emptyList();
+		}
 		return this.list(new LambdaQueryWrapper<SysUser>()
 						.eq(SysUser::getDelFlag, CommonConstant.DEL_FLAG_0)
 						.eq(SysUser::getStatus, CommonConstant.USER_UNFREEZE)
 						.eq(SysUser::getOrgCode, companyOrgCode)
+						.in(SysUser::getId, salesUserIds)
 						.ne(SysUser::getUsername, "_reserve_user_external"))
 				.stream()
 				.filter(Objects::nonNull)

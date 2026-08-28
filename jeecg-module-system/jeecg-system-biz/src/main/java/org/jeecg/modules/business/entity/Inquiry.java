@@ -49,7 +49,7 @@ public class Inquiry implements Serializable {
     @ApiModelProperty(value = "Inquiry status")
     private String status;
 
-    @Excel(name = "Client", width = 15, dictTable = "client", dicText = "internal_code", dicCode = "id")
+    @Excel(name = "Client (Required)", width = 15, dictTable = "client", dicText = "internal_code", dicCode = "id")
     @Dict(dictTable = "client", dicText = "internal_code", dicCode = "id")
     @ApiModelProperty(value = "Client ID")
     private String clientId;
@@ -97,7 +97,7 @@ public class Inquiry implements Serializable {
     private String color;
 
     @TableField("prioritymode")
-    @Excel(name = "Priority Mode", width = 20)
+    @Excel(name = "Priority Mode (Required)", width = 20)
     @ApiModelProperty(value = "Priority mode")
     private String priorityMode;
 }

@@ -56,7 +56,7 @@ public class InquiryController extends JeecgController<Inquiry, IInquiryService>
     @Autowired
     private IClientService clientService;
 
-    @ApiOperation(value = "Inquiry list", notes = "Inquiry list")
+    @ApiOperation(value = "Inquiry list")
     @GetMapping(value = "/list")
     public Result<IPage<Inquiry>> queryPageList(Inquiry inquiry,
                                                 @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
@@ -96,7 +96,7 @@ public class InquiryController extends JeecgController<Inquiry, IInquiryService>
     }
 
     @AutoLog(value = "Inquiry add")
-    @ApiOperation(value = "Inquiry add", notes = "Inquiry add")
+    @ApiOperation(value = "Inquiry add")
     @PostMapping(value = "/add")
     public Result<String> add(@RequestBody Inquiry inquiry) {
         if (!securityService.checkIsEmployee()) {
@@ -132,7 +132,7 @@ public class InquiryController extends JeecgController<Inquiry, IInquiryService>
         List<Inquiry> exportList = inquiryService.list(queryWrapper);
 
         LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
-        Workbook workbook = inquiryService.buildExportWorkbook(exportList, sysUser.getRealname());
+        Workbook workbook = inquiryService.buildExportWorkbook(exportList, sysUser.getRealname(), securityService.checkIsEmployee());
 
         String exportDate = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -179,7 +179,7 @@ public class InquiryController extends JeecgController<Inquiry, IInquiryService>
     }
 
     @AutoLog(value = "Inquiry edit")
-    @ApiOperation(value = "Inquiry edit", notes = "Inquiry edit")
+    @ApiOperation(value = "Inquiry edit")
     @RequestMapping(value = "/edit", method = {RequestMethod.PUT, RequestMethod.POST})
     public Result<String> edit(@RequestBody Inquiry inquiry) {
         Result<String> accessError = checkInquiryAccess(inquiry.getId());
@@ -202,7 +202,7 @@ public class InquiryController extends JeecgController<Inquiry, IInquiryService>
     }
 
     @AutoLog(value = "Inquiry delete")
-    @ApiOperation(value = "Inquiry delete", notes = "Inquiry delete")
+    @ApiOperation(value = "Inquiry delete")
     @DeleteMapping(value = "/delete")
     public Result<String> delete(@RequestParam(name = "id") String id) {
         Result<String> accessError = checkInquiryAccess(id);
@@ -214,7 +214,7 @@ public class InquiryController extends JeecgController<Inquiry, IInquiryService>
     }
 
     @AutoLog(value = "Inquiry batch delete")
-    @ApiOperation(value = "Inquiry batch delete", notes = "Inquiry batch delete")
+    @ApiOperation(value = "Inquiry batch delete")
     @DeleteMapping(value = "/deleteBatch")
     public Result<String> deleteBatch(@RequestParam(name = "ids") String ids) {
         for (String id : ids.split(",")) {
@@ -227,7 +227,7 @@ public class InquiryController extends JeecgController<Inquiry, IInquiryService>
         return Result.OK("Deleted successfully");
     }
 
-    @ApiOperation(value = "Inquiry query by id", notes = "Inquiry query by id")
+    @ApiOperation(value = "Inquiry query by id")
     @GetMapping(value = "/queryById")
     public Result<Inquiry> queryById(@RequestParam(name = "id") String id) {
         Result<String> accessError = checkInquiryAccess(id);
