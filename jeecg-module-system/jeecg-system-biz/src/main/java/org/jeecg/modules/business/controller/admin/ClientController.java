@@ -67,8 +67,11 @@ public class ClientController {
 
     private final ISysUserService sysUserService;
 
+    private final ISecurityService securityService;
+
     @Autowired
-    public ClientController(IClientService clientService, IShopService shopService, IClientSkuService clientSkuService, IInvoiceEntityService invoiceEntityService, IBalanceService balanceService, IPlatformOrderService platformOrderService, ClientSalespersonMapper clientSalespersonMapper, ISysUserService sysUserService) {
+    public ClientController(IClientService clientService, IShopService shopService, IClientSkuService clientSkuService, IInvoiceEntityService invoiceEntityService, IBalanceService balanceService, IPlatformOrderService platformOrderService, ClientSalespersonMapper clientSalespersonMapper, ISysUserService sysUserService, ISecurityService securityService) {
+        this.securityService = securityService;
         this.clientService = clientService;
         this.shopService = shopService;
         this.clientSkuService = clientSkuService;
@@ -171,6 +174,11 @@ public class ClientController {
      */
     @GetMapping(value = "/all")
     public Result<List<Client>> all(){
+        if (!securityService.checkIsEmployee()) {
+            Client currentClient = clientService.getCurrentClient();
+            List<Client> ownList = currentClient == null ? Collections.emptyList() : Collections.singletonList(currentClient);
+            return Result.OK(ownList);
+        }
         List<Client> list = clientService.list().stream()
                 .filter(client -> client.getActive().equals("1"))
                 .sorted(Comparator.comparing(Client::getInternalCode))

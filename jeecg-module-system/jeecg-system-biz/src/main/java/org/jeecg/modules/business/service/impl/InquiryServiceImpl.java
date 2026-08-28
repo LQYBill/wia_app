@@ -14,6 +14,7 @@ import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.DataValidation;
 import org.apache.poi.ss.usermodel.DataValidationConstraint;
 import org.apache.poi.ss.usermodel.DataValidationHelper;
+import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Hyperlink;
 import org.apache.poi.ss.usermodel.IndexedColors;
@@ -23,6 +24,11 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.ss.util.CellReference;
+import org.apache.poi.xssf.usermodel.XSSFDrawing;
+import org.apache.poi.xssf.usermodel.XSSFPicture;
+import org.apache.poi.xssf.usermodel.XSSFPictureData;
+import org.apache.poi.xssf.usermodel.XSSFShape;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.jeecg.common.system.vo.DictModel;
 import org.jeecg.config.JeecgBaseConfig;
 import org.jeecg.modules.business.entity.Client;
@@ -45,8 +51,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -149,6 +158,9 @@ public class InquiryServiceImpl extends ServiceImpl<InquiryMapper, Inquiry> impl
         if (inquiry.getExpectedSales() == null) {
             throw new IllegalArgumentException("expectedSales cannot be empty");
         }
+        if (StringUtils.isBlank(inquiry.getPriorityMode())) {
+            throw new IllegalArgumentException("priorityMode cannot be empty");
+        }
     }
 
     private Set<String> validCountryIds() {
@@ -207,7 +219,7 @@ public class InquiryServiceImpl extends ServiceImpl<InquiryMapper, Inquiry> impl
     }
 
     @Override
-    public Workbook buildExportWorkbook(List<Inquiry> exportList, String exportedByName) {
+    public Workbook buildExportWorkbook(List<Inquiry> exportList, String exportedByName, boolean isEmployee) {
         List<Inquiry> rows = new ArrayList<>();
         List<String> linkTargets = new ArrayList<>();
         for (Inquiry item : exportList) {
@@ -234,8 +246,36 @@ public class InquiryServiceImpl extends ServiceImpl<InquiryMapper, Inquiry> impl
         Workbook workbook = ExcelExportUtil.exportExcel(exportParams, Inquiry.class, rows);
         applyHyperlinksToColumn(workbook, "Link (Required)", rows.size(), linkTargets);
         applyWrapTextForMultilineCells(workbook, "Link (Required)", rows);
-        addDropdownValidation(workbook, rows.size());
+        addDropdownValidation(workbook, rows.size(), isEmployee);
+        highlightRequiredHeaders(workbook, REQUIRED_HEADER_NAMES);
         return workbook;
+    }
+
+    private static final List<String> REQUIRED_HEADER_NAMES = Arrays.asList(
+            "Client (Required)", "Link (Required)", "Country (Required)",
+            "Expected Sales (Required)", "Priority Mode (Required)");
+
+    private static void highlightRequiredHeaders(Workbook workbook, List<String> requiredHeaderNames) {
+        if (workbook == null || workbook.getNumberOfSheets() == 0) {
+            return;
+        }
+        Sheet sheet = workbook.getSheetAt(0);
+        for (String headerText : requiredHeaderNames) {
+            int[] header = findHeaderCell(sheet, headerText);
+            if (header == null) {
+                continue;
+            }
+            Row row = sheet.getRow(header[0]);
+            Cell cell = row == null ? null : row.getCell(header[1]);
+            if (cell == null) {
+                continue;
+            }
+            CellStyle requiredStyle = workbook.createCellStyle();
+            requiredStyle.cloneStyleFrom(cell.getCellStyle());
+            requiredStyle.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
+            requiredStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            cell.setCellStyle(requiredStyle);
+        }
     }
 
     private static List<String[]> parseLinkEntries(String rawLink) {
@@ -356,7 +396,7 @@ public class InquiryServiceImpl extends ServiceImpl<InquiryMapper, Inquiry> impl
         }
     }
 
-    private void addDropdownValidation(Workbook workbook, int dataRowCount) {
+    private void addDropdownValidation(Workbook workbook, int dataRowCount, boolean isEmployee) {
         if (workbook == null || workbook.getNumberOfSheets() == 0) {
             return;
         }
@@ -379,10 +419,10 @@ public class InquiryServiceImpl extends ServiceImpl<InquiryMapper, Inquiry> impl
                 } else if ("Sales".equals(text)) {
                     headerRowIndex = r;
                     salesColIndex = cell.getColumnIndex();
-                } else if ("Client".equals(text)) {
+                } else if ("Client (Required)".equals(text)) {
                     headerRowIndex = r;
                     clientColIndex = cell.getColumnIndex();
-                } else if ("Priority Mode".equals(text)) {
+                } else if ("Priority Mode (Required)".equals(text)) {
                     headerRowIndex = r;
                     priorityModeColIndex = cell.getColumnIndex();
                 }
@@ -408,13 +448,13 @@ public class InquiryServiceImpl extends ServiceImpl<InquiryMapper, Inquiry> impl
                 .forEach(orderedCountryNames::add);
         List<String> countryNames = new ArrayList<>(orderedCountryNames);
 
-        List<String> salesUsernames = sysUserService.listSalespersonOptions().stream()
+        List<String> salesUsernames = !isEmployee ? Collections.emptyList() : sysUserService.listSalespersonOptions().stream()
                 .map(DictModel::getText)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
 
-        List<String> clientCodes = clientService.list().stream()
+        List<String> clientCodes = !isEmployee ? Collections.emptyList() : clientService.list().stream()
                 .filter(c -> "1".equals(c.getActive()))
                 .map(Client::getInternalCode)
                 .filter(StringUtils::isNotBlank)
@@ -479,13 +519,17 @@ public class InquiryServiceImpl extends ServiceImpl<InquiryMapper, Inquiry> impl
         params.setNeedSave(false);
 
         List<Inquiry> list = ExcelImportUtil.importExcel(new ByteArrayInputStream(fileBytes), Inquiry.class, params);
-        List<String> rawClientTexts = readRawColumnValues(fileBytes, "Client", params.getTitleRows(), params.getHeadRows());
+        List<String> rawClientTexts = readRawColumnValues(fileBytes, "Client (Required)", params.getTitleRows(), params.getHeadRows());
+        List<String> photoPaths = extractPhotoPaths(fileBytes, "Photo", params.getTitleRows(), params.getHeadRows());
 
         InquiryImportResult result = new InquiryImportResult();
         Set<String> seenInBatch = new HashSet<>();
         for (int i = 0; i < list.size(); i++) {
             Inquiry inquiry = list.get(i);
             inquiry.setId(null);
+            if (i < photoPaths.size() && StringUtils.isNotBlank(photoPaths.get(i))) {
+                inquiry.setPhoto(photoPaths.get(i));
+            }
             boolean rawClientBlank = i >= rawClientTexts.size() || StringUtils.isBlank(rawClientTexts.get(i));
             if (StringUtils.isBlank(inquiry.getClientId()) && rawClientBlank
                     && StringUtils.isBlank(inquiry.getLink()) && StringUtils.isBlank(inquiry.getCountryId())
@@ -621,5 +665,65 @@ public class InquiryServiceImpl extends ServiceImpl<InquiryMapper, Inquiry> impl
             log.warn("Failed to read raw Client column for prospect-client fallback", e);
         }
         return values;
+    }
+
+    private List<String> extractPhotoPaths(byte[] fileBytes, String headerText, int titleRows, int headRows) {
+        int dataStart = titleRows + headRows;
+        List<String> paths = new ArrayList<>();
+        try (Workbook workbook = WorkbookFactory.create(new ByteArrayInputStream(fileBytes))) {
+            Sheet sheet = workbook.getSheetAt(0);
+            for (int r = dataStart; r <= sheet.getLastRowNum(); r++) {
+                paths.add("");
+            }
+            if (!(sheet instanceof XSSFSheet)) {
+                return paths;
+            }
+            int headerRowIndex = titleRows + headRows - 1;
+            Row headerRow = sheet.getRow(headerRowIndex);
+            int colIndex = -1;
+            if (headerRow != null) {
+                for (Cell cell : headerRow) {
+                    if (headerText.equals(cell.getStringCellValue())) {
+                        colIndex = cell.getColumnIndex();
+                        break;
+                    }
+                }
+            }
+            if (colIndex < 0) {
+                return paths;
+            }
+            XSSFDrawing drawing = ((XSSFSheet) sheet).getDrawingPatriarch();
+            if (drawing == null) {
+                return paths;
+            }
+            String uploadRoot = jeecgBaseConfig.getPath().getUpload();
+            File targetDir = new File(uploadRoot, "inquiry");
+            if (!targetDir.exists()) {
+                targetDir.mkdirs();
+            }
+            for (XSSFShape shape : drawing.getShapes()) {
+                if (!(shape instanceof XSSFPicture)) {
+                    continue;
+                }
+                XSSFPicture picture = (XSSFPicture) shape;
+                int anchorCol = picture.getClientAnchor().getCol1();
+                int anchorRow = picture.getClientAnchor().getRow1();
+                int dataRowIndex = anchorRow - dataStart;
+                if (anchorCol != colIndex || dataRowIndex < 0 || dataRowIndex >= paths.size()) {
+                    continue;
+                }
+                XSSFPictureData pictureData = picture.getPictureData();
+                String fileName = System.currentTimeMillis() + "_" + Math.round(Math.random() * 1_000_000)
+                        + "." + pictureData.suggestFileExtension();
+                File targetFile = new File(targetDir, fileName);
+                try (FileOutputStream out = new FileOutputStream(targetFile)) {
+                    out.write(pictureData.getData());
+                }
+                paths.set(dataRowIndex, "inquiry/" + fileName);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to extract embedded photos from inquiry import", e);
+        }
+        return paths;
     }
 }
