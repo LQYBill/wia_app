@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.jeecg.modules.business.mapper.ShippingPriceChangeMapper">
+    <select id="findSales" resultType="org.jeecg.modules.business.entity.ShippingPriceChangeSales" resultMap="shippingPriceChangeSalesMap">
+        SELECT poc.sku_id,
+               s.erp_code,
+               s.en_name,
+               s.image_source,
+               po.country,
+               c.code,
+               COALESCE(NULLIF(po.logistic_channel_name, ''), po.invoice_logistic_channel_name) as channelName,
+               SUM(COALESCE(poc.quantity, 0)) as quantity
+        FROM client_sku cs
+        JOIN platform_order_content poc ON poc.sku_id = cs.sku_id
+        JOIN platform_order po ON po.id = poc.platform_order_id
+        JOIN sku s ON s.id = poc.sku_id
+        JOIN country c ON c.name_en = po.country
+            OR c.special_name = po.country
+        WHERE cs.client_id =#{clientId}
+          AND po.order_time &gt;= #{startDate}
+          AND po.erp_status in ('3', '4')
+          AND po.country IS NOT NULL AND po.country != ''
+          AND COALESCE(NULLIF(po.logistic_channel_name, ''), po.invoice_logistic_channel_name) IS NOT NULL
+        GROUP BY cs.client_id, poc.sku_id, s.erp_code, s.en_name, po.country, channelName
+        ORDER BY po.country, quantity desc
+    </select>
+
+    <resultMap id="shippingPriceChangeSalesMap" type="org.jeecg.modules.business.entity.ShippingPriceChangeSales">
+        <result property="skuId" column="sku_id" javaType="string"/>
+        <result property="skuCode" column="erp_code" javaType="string"/>
+        <result property="skuName" column="en_name" javaType="string"/>
+        <result property="imageUrl" column="image_source" javaType="string"/>
+        <result property="country" column="country" javaType="string"/>
+        <result property="countryCode" column="code" javaType="string"/>
+        <result property="channelName" column="channelName" javaType="string"/>
+        <result property="quantity" column="quantity"/>
+    </resultMap>
+
+    <select id="findLatestWeights" resultType="java.util.Map">
+        SELECT sw.sku_id AS skuId, sw.weight AS weight
+        FROM sku_weight sw
+        JOIN (
+          SELECT sku_id, MAX(effective_date) AS effectiveDate
+          FROM sku_weight
+          WHERE sku_id IN <foreach collection="skuIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+            AND effective_date &lt;= #{date}
+          GROUP BY sku_id
+        ) latest ON latest.sku_id = sw.sku_id AND latest.effectiveDate = sw.effective_date
+    </select>
+
+    <select id="findPriceHistory" resultType="org.jeecg.modules.business.entity.LogisticChannelPrice">
+        SELECT lcp.*,
+               target_lc.zh_name AS price_channel_name
+        FROM logistic_channel target_lc
+                 JOIN logistic_channel price_lc
+                      ON price_lc.id = target_lc.id
+                          OR price_lc.id = target_lc.same_price_channel_id
+                 JOIN logistic_channel_price lcp
+                      ON lcp.channel_id = price_lc.id
+                 JOIN country c
+                      ON c.code = lcp.effective_country
+        WHERE target_lc.zh_name = #{channelName}
+          AND (c.name_en = #{country} OR c.special_name = #{country})
+          AND lcp.weight_range_start &lt;= #{weight}
+          AND lcp.weight_range_end &gt;= #{weight}
+        ORDER BY lcp.effective_date DESC, lcp.id ASC
+    </select>
+</mapper>
