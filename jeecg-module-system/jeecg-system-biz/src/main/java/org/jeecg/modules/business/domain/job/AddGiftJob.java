@@ -30,6 +30,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -44,6 +45,7 @@ public class AddGiftJob implements Job {
     private static final List<String> DEFAULT_SHOPS = Arrays.asList("FC Takumiya", "FCFR");
     private static final Integer DEFAULT_NUMBER_OF_THREADS = 10;
     private static final String OBSOLETE_STATUS_CODE = "4";
+    private static final Integer MABANG_API_RATE_LIMIT_PER_MINUTE = 300;
 
     @Autowired
     private IPlatformOrderService platformOrderService;
@@ -108,7 +110,9 @@ public class AddGiftJob implements Job {
         }
         List<Order> mabangOrders = new ArrayList<>();
 
-        ExecutorService executor = Executors.newFixedThreadPool(DEFAULT_NUMBER_OF_THREADS);
+        ExecutorService throttlingExecutorService = ThrottlingExecutorService.createExecutorService(DEFAULT_NUMBER_OF_THREADS,
+                MABANG_API_RATE_LIMIT_PER_MINUTE, TimeUnit.MINUTES);
+
         List<CompletableFuture<Boolean>> futures = requests.stream()
                 .map(request -> CompletableFuture.supplyAsync(() -> {
                     boolean success = false;
@@ -122,7 +126,7 @@ public class AddGiftJob implements Job {
                         log.error("Error communicating with MabangAPI", e);
                     }
                     return success;
-                }, executor))
+                }, throttlingExecutorService))
                 .collect(Collectors.toList());
         List<Boolean> results = futures.stream().map(CompletableFuture::join).collect(Collectors.toList());
         long nbSuccesses = results.stream().filter(b -> b).count();
@@ -135,7 +139,7 @@ public class AddGiftJob implements Job {
         log.info("{} gift insertion requests to be sent to MabangAPI", giftInsertionRequests.size());
 
         log.info("Clearing logistic channel names before inserting gifts");
-        platformOrderMabangService.clearLogisticChannel(ordersWithLogistic, executor);
+        platformOrderMabangService.clearLogisticChannel(ordersWithLogistic, throttlingExecutorService);
 
         List<CompletableFuture<Boolean>> giftInsertionFutures = giftInsertionRequests.stream()
                 .map(giftInsertionRequestBody -> CompletableFuture.supplyAsync(() -> {
@@ -148,7 +152,7 @@ public class AddGiftJob implements Job {
                         log.error("Error communicating with MabangAPI", e);
                     }
                     return success;
-                }, executor))
+                }, throttlingExecutorService))
                 .collect(Collectors.toList());
         results = giftInsertionFutures.stream().map(CompletableFuture::join).collect(Collectors.toList());
         nbSuccesses = results.stream().filter(b -> b).count();

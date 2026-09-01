@@ -23,6 +23,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -33,6 +34,7 @@ public class RemoveVirtualProductJob implements Job {
     private static final Integer DEFAULT_NUMBER_OF_THREADS = 10;
     private static final String REMOVED_SKU_STATUS = "4";;
     private Map<String, List<String>> virtualSkusByShop = new HashMap<>();
+    private static final Integer MABANG_API_RATE_LIMIT_PER_MINUTE = 300;
 
     @Autowired
     private IPlatformOrderService platformOrderService;
@@ -92,8 +94,11 @@ public class RemoveVirtualProductJob implements Job {
         for (List<String> platformOrderIdList : platformOrderIdLists) {
             requests.add(new OrderListRequestBody().setPlatformOrderIds(platformOrderIdList));
         }
-        ExecutorService executor = Executors.newFixedThreadPool(DEFAULT_NUMBER_OF_THREADS);
-        List<Order> mabangOrders = platformOrderMabangService.getOrdersFromMabang(requests, executor);
+
+        ExecutorService throttlingExecutorService = ThrottlingExecutorService.createExecutorService(DEFAULT_NUMBER_OF_THREADS,
+                MABANG_API_RATE_LIMIT_PER_MINUTE, TimeUnit.MINUTES);
+
+        List<Order> mabangOrders = platformOrderMabangService.getOrdersFromMabang(requests, throttlingExecutorService);
 
         log.info("Constructing virtual SKU removal requests");
         List<Order> ordersWithLogistic = new ArrayList<>();
@@ -123,7 +128,7 @@ public class RemoveVirtualProductJob implements Job {
         log.info("{} virtual SKU removal requests to be sent to MabangAPI", removeSkuRequests.size());
 
         // First we delete the logistic channel names, otherwise we can't delete virtual skus
-        platformOrderMabangService.clearLogisticChannel(ordersWithLogistic, executor);
+        platformOrderMabangService.clearLogisticChannel(ordersWithLogistic, throttlingExecutorService);
 
         List<CompletableFuture<Boolean>> removeSkuFutures = removeSkuRequests.stream()
                 .map(removeSkuRequestBody -> CompletableFuture.supplyAsync(() -> {
@@ -136,7 +141,7 @@ public class RemoveVirtualProductJob implements Job {
                         log.error("Error communicating with MabangAPI", e);
                     }
                     return success;
-                }, executor))
+                }, throttlingExecutorService))
                 .collect(Collectors.toList());
         List<Boolean> results = removeSkuFutures.stream().map(CompletableFuture::join).collect(Collectors.toList());
         long nbSuccesses = results.stream().filter(b -> b).count();
