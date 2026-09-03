@@ -22,7 +22,7 @@ import lombok.experimental.Accessors;
 /**
  * @Description: 首曼订单
  * @Author: jeecg-boot
- * @Date: 2026-04-23
+ * @Date: 2026-09-03
  * @Version: V1.2
  */
 @Data
@@ -102,4 +102,11 @@ public class ShoumanOrder implements Serializable {
     @Excel(name = "首曼订单状态", width = 15)
     @ApiModelProperty(value = "首曼订单状态")
     private java.lang.Integer status;
+
+    /**
+     * 包裹重量
+     */
+    @Excel(name = "包裹重量", width = 15)
+    @ApiModelProperty(value = "包裹重量")
+    private java.lang.String weight;
 }
