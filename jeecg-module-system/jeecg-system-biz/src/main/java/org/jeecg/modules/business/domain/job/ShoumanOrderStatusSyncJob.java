@@ -52,6 +52,7 @@ public class ShoumanOrderStatusSyncJob implements Job {
             }
 
             shoumanOrder.setStatus(resultBody.getOrderStatus());
+            shoumanOrder.setWeight(resultBody.getWeight());
             ordersToUpdate.add(shoumanOrder);
             log.info("Finished querying Shouman order status for {}, status={}", platformOrderId, resultBody.getOrderStatus());
         }
