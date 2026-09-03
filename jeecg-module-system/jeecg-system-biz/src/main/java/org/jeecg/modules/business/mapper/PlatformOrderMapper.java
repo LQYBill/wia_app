@@ -8,6 +8,7 @@ import org.jeecg.modules.business.domain.api.yd.YDTrackingNumberData;
 import org.jeecg.modules.business.domain.job.ThirdPartyStockAttributionParam;
 import org.jeecg.modules.business.entity.PlatformOrder;
 import org.jeecg.modules.business.entity.PlatformOrderShopSync;
+import org.jeecg.modules.business.entity.ShoumanOrderWeight;
 import org.jeecg.modules.business.vo.*;
 import org.jeecg.modules.business.vo.clientPlatformOrder.ClientPlatformOrderPage;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrderQuantity;
@@ -215,7 +216,7 @@ public interface PlatformOrderMapper extends BaseMapper<PlatformOrder> {
 
     List<PlatformOrder> selectByPlatformOrderIds(@Param("platformOrderIds") List<String> platformOrderIds);
 
-    List<PlatformOrder> findShoumanShippedButMabangUnshippedOrders();
+    List<ShoumanOrderWeight> findShoumanShippedButMabangUnshippedOrders();
 
     void batchUpdateErpStatusByPlatformOrderIds(@Param("platformOrderIds") List<String> platformOrderIds, @Param("erpStatus") int erpStatus);
 

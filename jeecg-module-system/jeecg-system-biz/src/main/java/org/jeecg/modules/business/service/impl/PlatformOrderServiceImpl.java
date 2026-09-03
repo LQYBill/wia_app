@@ -524,7 +524,7 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
     }
 
     @Override
-    public List<PlatformOrder> findShoumanShippedButMabangUnshippedOrders() {
+    public List<ShoumanOrderWeight> findShoumanShippedButMabangUnshippedOrders() {
         return platformOrderMap.findShoumanShippedButMabangUnshippedOrders();
     }
 

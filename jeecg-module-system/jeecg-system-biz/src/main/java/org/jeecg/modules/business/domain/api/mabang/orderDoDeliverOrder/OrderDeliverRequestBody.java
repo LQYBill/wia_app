@@ -14,9 +14,11 @@ import java.util.function.Function;
 public class OrderDeliverRequestBody implements RequestBody {
 
     private String platformOrderId;
+    private String weight;
 
-    public OrderDeliverRequestBody(PlatformOrder platformOrder) {
-        this.platformOrderId = platformOrder.getPlatformOrderId();
+    public OrderDeliverRequestBody(String platformOrderId, String weight) {
+        this.platformOrderId = platformOrderId;
+        this.weight = weight;
     }
 
     @Override
@@ -28,6 +30,7 @@ public class OrderDeliverRequestBody implements RequestBody {
     public Map<String, Object> parameters() {
         JSONObject json = new JSONObject();
         putNonNull(json, "platformOrderId", platformOrderId);
+        putNonNull(json, "orderWeight", weight);
         return json;
     }
 

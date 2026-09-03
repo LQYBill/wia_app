@@ -262,7 +262,7 @@ public interface IPlatformOrderService extends IService<PlatformOrder> {
 
     List<PlatformOrder> selectByPlatformOrderIds(List<String> platformOrderIds);
 
-    List<PlatformOrder> findShoumanShippedButMabangUnshippedOrders();
+    List<ShoumanOrderWeight> findShoumanShippedButMabangUnshippedOrders();
 
     void batchUpdateErpStatusByPlatformOrderIds(List<String> platformOrderIds, int erpStatus);
 

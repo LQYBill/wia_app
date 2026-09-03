@@ -992,8 +992,8 @@
         </foreach>;
     </select>
 
-    <select id="findShoumanShippedButMabangUnshippedOrders" resultType="org.jeecg.modules.business.entity.PlatformOrder">
-        SELECT po.*
+    <select id="findShoumanShippedButMabangUnshippedOrders" resultType="org.jeecg.modules.business.entity.ShoumanOrderWeight">
+        SELECT po.platform_order_id, so.weight
         FROM platform_order po
         JOIN shouman_order so ON so.platform_order_id = po.platform_order_id
         WHERE so.status = 6
