@@ -77,12 +77,12 @@ public class ExtraFeeServiceImpl extends ServiceImpl<ExtraFeeMapper, ExtraFee> i
         }
         ExtraFeeOption otherOption = extraFeeOptionService.getByName(AUTRES_OPTION_NAME);
         boolean isAutres = otherOption != null && option.getId().equals(otherOption.getId());
-        if (isAutres) {
-            if (feeParam.getDescription() == null || feeParam.getDescription().trim().isEmpty()) {
-                throw new IllegalArgumentException("Description is empty");
-            }
+        if (feeParam.getDescription() != null && !feeParam.getDescription().trim().isEmpty()) {
             feeParam.setDescription(feeParam.getDescription().trim());
         } else {
+            if (isAutres) {
+                throw new IllegalArgumentException("Description cannot be empty!");
+            }
             feeParam.setDescription(null);
         }
         ExtraFee fee = new ExtraFee();
