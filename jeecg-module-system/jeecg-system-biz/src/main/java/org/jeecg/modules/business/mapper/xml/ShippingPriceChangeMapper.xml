@@ -19,6 +19,7 @@
         WHERE cs.client_id =#{clientId}
           AND po.order_time &gt;= #{startDate}
           AND po.erp_status in ('3', '4')
+          AND s.is_gift = '1'
           AND po.country IS NOT NULL AND po.country != ''
           AND COALESCE(NULLIF(po.logistic_channel_name, ''), po.invoice_logistic_channel_name) IS NOT NULL
         GROUP BY cs.client_id, poc.sku_id, s.erp_code, s.en_name, po.country, channelName
