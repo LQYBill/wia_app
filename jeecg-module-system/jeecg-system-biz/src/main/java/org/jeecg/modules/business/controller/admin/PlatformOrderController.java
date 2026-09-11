@@ -20,9 +20,7 @@ import org.jeecg.common.aspect.annotation.AutoLog;
 import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.common.util.oConvertUtils;
-import org.jeecg.modules.business.domain.api.mabang.dochangeorder.ChangeOrderResponse;
-import org.jeecg.modules.business.domain.api.mabang.dochangeorder.ChangeWarehouseRequest;
-import org.jeecg.modules.business.domain.api.mabang.dochangeorder.ChangeWarehouseRequestBody;
+import org.jeecg.modules.business.domain.api.mabang.dochangeorder.*;
 import org.jeecg.modules.business.domain.api.mabang.getorderlist.*;
 import org.jeecg.modules.business.domain.api.shouman.JsonOrderCreationRequestBody;
 import org.jeecg.modules.business.domain.api.shouman.OrderCreationRequest;
@@ -66,6 +64,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jeecg.modules.business.vo.PlatformOrderOperation.Action.*;
@@ -112,6 +111,7 @@ public class PlatformOrderController {
     @Autowired
     private FreeMarkerConfigurer freemarkerConfigurer;
 
+    private static final Pattern SHOUMAN_REMARK = Pattern.compile("首曼系统下单 \\d{8}(?!\\d)");
     private static final Integer DEFAULT_NUMBER_OF_THREADS = 2;
     private static final Integer MABANG_API_RATE_LIMIT_PER_MINUTE = 10;
 
@@ -635,6 +635,8 @@ public class PlatformOrderController {
             shoumanOrder.setCreateBy(sysUser.getUsername());
             shoumanOrders.add(shoumanOrder);
         }
+
+        Set<String> successfulOrderIds = new LinkedHashSet<>();
         try {
             shoumanOrderService.saveBatch(shoumanOrders);
 
@@ -658,6 +660,7 @@ public class PlatformOrderController {
                     if (((Integer) status) == 1) {
                         log.info("Shouman Order {} ended with success", platformOrderId);
                         shoumanOrder.setSuccess(status.toString());
+                        successfulOrderIds.add(platformOrderId);
                     } else {
                         log.info("Shouman Order {} failed", platformOrderId);
                     }
@@ -669,7 +672,11 @@ public class PlatformOrderController {
             shoumanOrderService.updateBatchById(shoumanOrders);
             log.info("Finished updating Shouman Orders in DB");
 
-            return Result.OK("订单已发送成功，请前往首曼系统确认");
+            log.info("Started appending remarks to Mabang");
+            appendMabangRemarks(new ArrayList<>(successfulOrderIds));
+            log.info("Finished appending remarks to Mabang");
+
+            return Result.OK("订单已发送成功，请前往首曼系统确认，马帮备注标注中，请前往马帮确认");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -697,5 +704,71 @@ public class PlatformOrderController {
         }
         if (isEmployee) sysMessageService.pushProgress(userId, "Method not supported");
         return Result.error(HttpStatus.NOT_FOUND.value(), "Invoicing method not supported");
+    }
+
+    private void appendMabangRemarks(List<String> platformOrderIds) {
+        String marker = "首曼系统下单 " + LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+        // Use the same bounded order batches as existing Mabang order queries.
+        for (int offset = 0; offset < platformOrderIds.size(); offset += 10) {
+            List<String> batch = platformOrderIds.subList(offset, Math.min(offset + 10, platformOrderIds.size()));
+            Map<String, List<String>> ordersByRemark = new LinkedHashMap<>();
+            try {
+                OrderListResponse orderList = new OrderListRequest(new OrderListRequestBody()
+                        .setPlatformOrderIds(batch)).send();
+                Set<String> missing = new LinkedHashSet<>(batch);
+                List<Order> orders = orderList.getData().toJavaList(Order.class);
+                for (Order order : orders) {
+                    String platformOrderId = order.getPlatformOrderId();
+                    if (!missing.remove(platformOrderId)) {
+                        continue;
+                    }
+                    String remark = order.getRemark();
+                    if (remark != null && SHOUMAN_REMARK.matcher(remark).find()) {
+                        continue;
+                    }
+                    String updated = remark == null || remark.trim().isEmpty() ? marker : remark + " " + marker;
+                    ordersByRemark.computeIfAbsent(updated, key -> new ArrayList<>()).add(platformOrderId);
+                }
+                if (!missing.isEmpty()) {
+                    log.warn("Shouman orders not found in Mabang while updating remarks: {}", missing);
+                }
+            } catch (Exception e) {
+                log.error("Failed to retrieve Mabang orders for remark batch {}", batch, e);
+                continue;
+            }
+
+            List<EditRemarkRequestBody> editRemarkRequests = new ArrayList<>();
+            for (Map.Entry<String, List<String>> entry : ordersByRemark.entrySet()) {
+                for (String platformOrderId : entry.getValue()) {
+                    editRemarkRequests.add(new EditRemarkRequestBody(platformOrderId, entry.getKey()));
+                }
+            }
+
+            ExecutorService executor = ThrottlingExecutorService.createExecutorService(DEFAULT_NUMBER_OF_THREADS,
+                    MABANG_API_RATE_LIMIT_PER_MINUTE, TimeUnit.MINUTES);
+            ResponsesWithMsg<String> responses = new ResponsesWithMsg<>();
+            List<CompletableFuture<Boolean>> editRemarkFutures = editRemarkRequests.stream()
+                    .map(request -> CompletableFuture.supplyAsync(() -> {
+                        boolean success = false;
+                        try {
+                            EditRemarkRequest editRemarkRequest = new EditRemarkRequest(request);
+                            ChangeOrderResponse response = editRemarkRequest.send();
+                            success = response.success();
+                            if (success) {
+                                responses.addSuccess(request.getPlatformOrderId());
+                            } else {
+                                responses.addFailure(request.getPlatformOrderId(), response.getMessage());
+                            }
+                        } catch (RuntimeException e) {
+                            log.error("Error editing order remark {} : {}", request.getPlatformOrderId(), e.getMessage());
+                            responses.addFailure(request.getPlatformOrderId(), e.getMessage());
+                        }
+                        return success;
+                    }, executor))
+                    .collect(Collectors.toList());
+            List<Boolean> results = editRemarkFutures.stream().map(CompletableFuture::join).collect(Collectors.toList());
+            long nbSuccesses = results.stream().filter(b -> b).count();
+            log.info("{}/{} order remarks updated successfully.", nbSuccesses, editRemarkRequests.size());
+        }
     }
 }
