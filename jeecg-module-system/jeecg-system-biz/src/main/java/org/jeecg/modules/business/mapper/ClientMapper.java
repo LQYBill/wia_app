@@ -49,4 +49,6 @@ public interface ClientMapper extends BaseMapper<Client> {
     List<Client> getClientsByCodes(List<String> clientCodes);
     List<Client> getClientsWithAutoInvoice();
     List<String> findClientIdsBySalesId(@Param("salesId") String salesId);
+
+    int deactivateClientWithoutActiveShops(String owner);
 }

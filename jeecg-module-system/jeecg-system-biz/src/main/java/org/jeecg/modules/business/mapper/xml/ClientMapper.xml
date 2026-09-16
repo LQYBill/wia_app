@@ -155,4 +155,16 @@
         FROM client
         WHERE salesperson = #{salesId}
     </select>
+
+    <update id="deactivateClientWithoutActiveShops">
+        UPDATE client c
+        SET c.active = '0', c.update_time = NOW()
+        WHERE c.id = #{ownerId}
+          AND c.active = '1'
+          AND NOT EXISTS (
+            SELECT 1
+            FROM shop s
+            WHERE s.owner_id = c.id AND s.active = '1'
+        )
+    </update>
 </mapper>
