@@ -807,6 +807,7 @@ public class SkuServiceImpl extends ServiceImpl<SkuMapper, Sku> implements ISkuS
                         && quantity >= discountMoq;
                 BigDecimal appliedSkuPrice = isDiscountApplied ? discountedPrice : originalSkuPrice;
                 Map<String, Object> skuData = new HashMap<>();
+                skuData.put("id", sku.getId());
                 skuData.put("skuId", sku.getId());
                 skuData.put("erpCode", sku.getErpCode());
                 skuData.put("enName", sku.getEnName());

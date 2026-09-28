@@ -26,6 +26,7 @@ import java.util.Map;
  * @Version: V1.0
  */
 public interface IPurchaseOrderService extends IService<PurchaseOrder> {
+    String addQuotedSkuPurchase(List<SkuQuantity> quantities, String invoiceEntityId, String quoteId) throws UserException;
         /**
      * 添加一对多
      */

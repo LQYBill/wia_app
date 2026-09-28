@@ -23,6 +23,7 @@ import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
 import org.jeecg.modules.business.mapper.PurchaseOrderContentMapper;
 import org.jeecg.modules.business.service.*;
+import org.jeecg.modules.business.service.impl.purchase.PurchaseShippingQuoteService;
 import org.jeecg.modules.business.vo.*;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
 import org.jeecg.modules.message.service.ISysMessageService;
@@ -98,6 +99,8 @@ public class InvoiceController {
     private PlatformOrderContentMapper platformOrderContentMap;
     @Autowired
     private IPurchaseOrderService purchaseOrderService;
+    @Autowired
+    private PurchaseShippingQuoteService purchaseShippingQuoteService;
     @Autowired
     private PurchaseOrderContentMapper purchaseOrderContentMapper;
     @Autowired
@@ -451,6 +454,8 @@ public class InvoiceController {
                 return Result.error(HttpStatus.SC_NOT_FOUND, "Client not found");
         }
         Object invoiceEntityIdRaw = payload.remove("invoiceEntityId");
+        Object quoteIdRaw = payload.remove("quoteId");
+        String quoteId = quoteIdRaw == null ? null : quoteIdRaw.toString();
         String invoiceEntityId = invoiceEntityIdRaw == null ? null : invoiceEntityIdRaw.toString();
         InvoiceMetaData metaData;
         List<SkuQuantity> skuQuantities = new ArrayList<>();
@@ -461,10 +466,19 @@ public class InvoiceController {
                 if (!skuClientId.equals(client.getId()))
                     return Result.error(HttpStatus.SC_NOT_FOUND, "Sku " + entry.getKey() + " for client " + client.getInternalCode() + " not found.");
             }
-            skuQuantities.add(new SkuQuantity(skuId, entry.getKey(), ((Number) entry.getValue()).intValue()));
+            int quantity;
+            try {
+                quantity = new java.math.BigDecimal(String.valueOf(entry.getValue())).intValueExact();
+                if (quantity <= 0) return Result.error("SKU quantities must be positive integers");
+            } catch (NumberFormatException | ArithmeticException e) {
+                return Result.error("SKU quantities must be positive integers");
+            }
+            skuQuantities.add(new SkuQuantity(skuId, entry.getKey(), quantity));
         }
         try {
-            String purchaseId = purchaseOrderService.addPurchase(skuQuantities, invoiceEntityId);
+            String purchaseId = isEmployee && (quoteId == null || quoteId.trim().isEmpty())
+                    ? purchaseOrderService.addPurchase(skuQuantities, invoiceEntityId)
+                    : purchaseOrderService.addQuotedSkuPurchase(skuQuantities, invoiceEntityId, quoteId);
             PurchaseOrder purchaseOrder = purchaseOrderService.getById(purchaseId);
             String clientId = purchaseOrder.getClientId();
             if(client == null)
