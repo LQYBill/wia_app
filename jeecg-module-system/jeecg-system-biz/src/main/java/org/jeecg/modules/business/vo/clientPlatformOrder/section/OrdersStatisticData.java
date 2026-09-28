@@ -89,6 +89,7 @@ public class OrdersStatisticData {
     }
 
     public BigDecimal finalAmount() {
-        return getEstimatedTotalPrice().subtract(getReducedAmount()).add(getExtraShippingFees());
+        // estimatedTotalPrice already includes extraShippingFees.
+        return getEstimatedTotalPrice().subtract(getReducedAmount());
     }
 }
