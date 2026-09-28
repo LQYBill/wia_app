@@ -26,6 +26,8 @@ import io.swagger.annotations.ApiModelProperty;
 @Data
 @TableName("purchase_order")
 public class PurchaseOrder implements Serializable {
+    /** China domestic shipping fee in EUR, excluding product promotions. */
+    private java.math.BigDecimal domesticShippingFee;
     private static final long serialVersionUID = 1L;
 
     /**

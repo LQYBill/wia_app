@@ -18,6 +18,11 @@ import org.springframework.http.ResponseEntity;
  */
 @Slf4j
 public class SkuListRequest extends Request {
+    public SkuListResponse sendOnce() {
+        ResponseEntity<String> res = rawSend(1);
+        if (res == null || res.getBody() == null) throw new IllegalStateException("Mabang SKU lookup unavailable");
+        return SkuListResponse.parse(JSON.parseObject(res.getBody()));
+    }
 
     public SkuListRequest(SkuListRequestBody body) {
         super(body);

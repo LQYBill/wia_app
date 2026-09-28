@@ -42,6 +42,11 @@ public abstract class Request {
      * @return the response of the body or null, if response
      */
     protected ResponseEntity<String> rawSend() {
+        return rawSend(5);
+    }
+
+    /** Interactive quotation requests use a single bounded HTTP attempt. */
+    protected ResponseEntity<String> rawSend(int maxAttempts) {
         int attempts = 0;
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.CONTENT_TYPE, "application/json");
@@ -50,7 +55,7 @@ public abstract class Request {
         log.info("JSON SENT : " + bodyString);
         String signature = authorization(bodyString);
         headers.add("Authorization", signature);
-        while (attempts++ < 5){
+        while (attempts++ < maxAttempts){
             try {
                 return RestUtil.request(URL, METHOD, headers, null, bodyString, String.class);
             } catch (Exception e) {

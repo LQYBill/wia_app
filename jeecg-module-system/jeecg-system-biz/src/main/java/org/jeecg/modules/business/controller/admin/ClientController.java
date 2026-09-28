@@ -153,6 +153,9 @@ public class ClientController {
      */
     @PostMapping(value = "/add")
     public Result<?> add(@RequestBody ClientPage clientPage) {
+        if (clientPage.getSmallPurchaseShippingFeeEnabled() != null && !securityService.checkIsEmployee()) {
+            return Result.error("Only employees may configure domestic shipping fees");
+        }
         Client client = new Client();
         BeanUtils.copyProperties(clientPage, client);
         clientService.saveMain(client, clientPage.getShopList(), clientPage.getClientSkuList(), clientPage.getInvoiceEntityList());
@@ -194,6 +197,9 @@ public class ClientController {
      */
     @PatchMapping(value = "/edit")
     public Result<?> edit(@RequestBody ClientPage clientPage) {
+        if (clientPage.getSmallPurchaseShippingFeeEnabled() != null && !securityService.checkIsEmployee()) {
+            return Result.error("Only employees may configure domestic shipping fees");
+        }
         Client client = new Client();
         BeanUtils.copyProperties(clientPage, client);
         Client clientEntity = clientService.getById(client.getId());

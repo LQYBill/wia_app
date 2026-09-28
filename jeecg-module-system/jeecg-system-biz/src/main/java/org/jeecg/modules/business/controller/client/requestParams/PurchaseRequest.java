@@ -8,6 +8,7 @@ import java.util.List;
 
 @Data
 public class PurchaseRequest {
+    private String quoteId;
 
     private final List<SkuQuantity> skuQuantity;
 

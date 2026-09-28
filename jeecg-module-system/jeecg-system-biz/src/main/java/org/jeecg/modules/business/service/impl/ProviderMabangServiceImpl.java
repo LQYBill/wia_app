@@ -51,6 +51,8 @@ import static org.jeecg.modules.business.domain.api.mabang.purDoChangePurchase.C
 @Slf4j
 public class ProviderMabangServiceImpl extends ServiceImpl<ProviderMabangMapper, ProviderData> implements IProviderMabangService {
     @Autowired
+    private org.jeecg.modules.business.mapper.PurchaseShippingQuoteMapper shippingQuoteMapper;
+    @Autowired
     private IProviderService providerService;
     @Autowired
     private IPurchaseOrderService purchaseOrderService;
@@ -132,6 +134,29 @@ public class ProviderMabangServiceImpl extends ServiceImpl<ProviderMabangMapper,
             skuDataMap.put(skuData.getErpCode(), skuData);
         }
         Map<String, String> erpCodeMismatchNotes = logSkuCodeMismatchDiagnostics(skuQuantities, skuDataMap);
+        // A paid self-service quote must not silently switch supplier at procurement time.
+        for (org.jeecg.modules.business.entity.PurchaseOrder purchase :
+                purchaseOrderService.getPurchasesByInvoiceNumber(metaData.getInvoiceCode())) {
+            org.jeecg.modules.business.entity.PurchaseShippingQuoteRecord record = shippingQuoteMapper.findByOrder(purchase.getId());
+            if (record == null) continue;
+            org.jeecg.modules.business.vo.clientPurchaseOrder.PurchaseShippingQuote quote =
+                    com.alibaba.fastjson.JSON.parseObject(record.getSnapshotJson(),
+                            org.jeecg.modules.business.vo.clientPurchaseOrder.PurchaseShippingQuote.class);
+            if (!quote.isEnabled()) continue;
+            for (Map.Entry<String, String> entry : quote.getErpCodes().entrySet()) {
+                String code = entry.getValue();
+                // Gifts excluded by the existing procurement query are not submitted to Mabang.
+                if (!skuQuantities.containsKey(code)) continue;
+                SkuData current = skuDataMap.get(code);
+                String supplier = current == null || current.getSupplier() == null ? null : current.getSupplier().trim();
+                if (!Objects.equals(quote.getSuppliers().get(entry.getKey()), supplier)
+                        || !Objects.equals(quote.getQuantities().get(entry.getKey()), skuQuantities.get(code))) {
+                    responses.addFailure("Supplier or quantity changed since checkout for SKU " + code
+                            + ". Manual review required; no Mabang purchase was created.");
+                    return responses;
+                }
+            }
+        }
         List<SkuStockData> skuStockData = new ArrayList<>();
         for(Map.Entry<String, SkuData> entry : skuDataMap.entrySet()) {
             SkuStockData stockData = new SkuStockData();

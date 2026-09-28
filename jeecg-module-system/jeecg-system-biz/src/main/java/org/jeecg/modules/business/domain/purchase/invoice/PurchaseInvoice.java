@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
  * Control content of purchase invoice
  */
 public class PurchaseInvoice extends AbstractInvoice<String, BigDecimal, Integer, BigDecimal, BigDecimal> {
+    @lombok.Setter
+    private BigDecimal domesticShippingFee;
 
     private final List<PurchaseInvoiceEntry> purchaseInvoiceEntries;
 
@@ -53,6 +55,10 @@ public class PurchaseInvoice extends AbstractInvoice<String, BigDecimal, Integer
                         )
                 ).collect(Collectors.toList())
         );
+        if (domesticShippingFee != null && domesticShippingFee.signum() > 0) {
+            res.add(new Row<>("China domestic shipping fee", domesticShippingFee, 1,
+                    (BigDecimal) null, domesticShippingFee));
+        }
         return res;
     }
 

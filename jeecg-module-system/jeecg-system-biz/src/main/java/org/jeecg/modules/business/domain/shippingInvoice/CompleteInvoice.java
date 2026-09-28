@@ -19,6 +19,9 @@ import java.util.stream.Collectors;
  * need complex data, instance of class can only be created by its factory.
  */
 public class CompleteInvoice extends ShippingInvoice {
+    @lombok.Setter
+    private BigDecimal domesticShippingFee;
+
     private final List<PurchaseInvoiceEntry> purchaseInvoiceEntries;
 
     private final List<PromotionDetail> promotions;
@@ -63,6 +66,10 @@ public class CompleteInvoice extends ShippingInvoice {
                         )
                 ).collect(Collectors.toList())
         );
+        if (domesticShippingFee != null && domesticShippingFee.signum() > 0) {
+            res.add(new Row<>("China domestic shipping fee", (Object) domesticShippingFee, 1,
+                    null, domesticShippingFee));
+        }
         res.addAll(rows);
         return res;
     }

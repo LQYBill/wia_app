@@ -23,6 +23,7 @@ import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderMapper;
 import org.jeecg.modules.business.mapper.PurchaseOrderContentMapper;
 import org.jeecg.modules.business.service.*;
+import org.jeecg.modules.business.service.impl.purchase.PurchaseShippingQuoteService;
 import org.jeecg.modules.business.vo.*;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
 import org.jeecg.modules.message.service.ISysMessageService;
@@ -98,6 +99,8 @@ public class InvoiceController {
     private PlatformOrderContentMapper platformOrderContentMap;
     @Autowired
     private IPurchaseOrderService purchaseOrderService;
+    @Autowired
+    private PurchaseShippingQuoteService purchaseShippingQuoteService;
     @Autowired
     private PurchaseOrderContentMapper purchaseOrderContentMapper;
     @Autowired
@@ -451,6 +454,8 @@ public class InvoiceController {
                 return Result.error(HttpStatus.SC_NOT_FOUND, "Client not found");
         }
         Object invoiceEntityIdRaw = payload.remove("invoiceEntityId");
+        Object quoteIdRaw = payload.remove("quoteId");
+        String quoteId = quoteIdRaw == null ? null : quoteIdRaw.toString();
         String invoiceEntityId = invoiceEntityIdRaw == null ? null : invoiceEntityIdRaw.toString();
         InvoiceMetaData metaData;
         List<SkuQuantity> skuQuantities = new ArrayList<>();
@@ -461,10 +466,19 @@ public class InvoiceController {
                 if (!skuClientId.equals(client.getId()))
                     return Result.error(HttpStatus.SC_NOT_FOUND, "Sku " + entry.getKey() + " for client " + client.getInternalCode() + " not found.");
             }
-            skuQuantities.add(new SkuQuantity(skuId, entry.getKey(), ((Number) entry.getValue()).intValue()));
+            int quantity;
+            try {
+                quantity = new java.math.BigDecimal(String.valueOf(entry.getValue())).intValueExact();
+                if (quantity <= 0) return Result.error("SKU quantities must be positive integers");
+            } catch (NumberFormatException | ArithmeticException e) {
+                return Result.error("SKU quantities must be positive integers");
+            }
+            skuQuantities.add(new SkuQuantity(skuId, entry.getKey(), quantity));
         }
         try {
-            String purchaseId = purchaseOrderService.addPurchase(skuQuantities, invoiceEntityId);
+            String purchaseId = isEmployee && (quoteId == null || quoteId.trim().isEmpty())
+                    ? purchaseOrderService.addPurchase(skuQuantities, invoiceEntityId)
+                    : purchaseOrderService.addQuotedSkuPurchase(skuQuantities, invoiceEntityId, quoteId);
             PurchaseOrder purchaseOrder = purchaseOrderService.getById(purchaseId);
             String clientId = purchaseOrder.getClientId();
             if(client == null)
@@ -919,6 +933,28 @@ public class InvoiceController {
         }
     }
 
+    private BigDecimal estimateDomesticShippingFeeInEur(Client client, List<String> orderIds) throws UserException {
+        if (orderIds == null || orderIds.isEmpty()) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        List<String> orderIdsForPurchase = platformOrderMapper.fetchByIds(orderIds).stream()
+                .filter(order -> order.getPurchaseInvoiceNumber() == null)
+                .map(PlatformOrder::getId)
+                .collect(Collectors.toList());
+
+        BigDecimal domesticShippingFee = BigDecimal.ZERO;
+        if (!orderIdsForPurchase.isEmpty()) {
+            List<SkuQuantity> skuQuantities = platformOrderContentService
+                    .listSkusToPurchaseForOrders(orderIdsForPurchase);
+            if (skuQuantities != null && !skuQuantities.isEmpty()) {
+                domesticShippingFee = purchaseShippingQuoteService
+                        .estimateDomesticShippingFee(client, skuQuantities);
+            }
+        }
+
+        return domesticShippingFee.setScale(2, RoundingMode.HALF_UP);
+    }
+
     /**
      * Get an estimate of shipping fees and purchase fees for selected orders
      * @param param Parameters for creating a pre-shipping invoice
@@ -927,7 +963,15 @@ public class InvoiceController {
     @PostMapping(value = "/completeFeesEstimation")
     public Result<?> getCompleteFeesEstimation(@RequestBody ShippingInvoiceOrderParam param) throws UserException {
         boolean isEmployee = securityService.checkIsEmployee();
-        String currency = clientService.getById(param.clientID()).getCurrency();
+        Client estimationClient = clientService.buildInvoiceClient(param.clientID(), param.getInvoiceEntityId());
+        String currency = estimationClient.getCurrency();
+        BigDecimal exchangeRate = BigDecimal.ONE;
+        if (!"EUR".equals(currency)) {
+            exchangeRate = exchangeRatesMapper.getLatestExchangeRate("EUR", currency);
+            if (exchangeRate == null || exchangeRate.signum() <= 0) {
+                throw new UserException("Exchange rate unavailable");
+            }
+        }
         List<PlatformOrder> orders = platformOrderMapper.fetchByIds(param.orderIds());
         Map<String, List<PlatformOrder>> ordersMapByShop = orders.stream().collect(Collectors.groupingBy(PlatformOrder::getShopId));
         Map<String, Estimation> estimationsByShop = new HashMap<>();
@@ -973,15 +1017,35 @@ public class InvoiceController {
                     purchaseEstimation = data.finalAmount() == null ? BigDecimal.ZERO : data.finalAmount();
                 }
             }
+            BigDecimal shippingFeesEstimationEur = shippingFeesEstimation.setScale(2, RoundingMode.CEILING);
+            BigDecimal purchaseEstimationEur = purchaseEstimation.setScale(2, RoundingMode.CEILING);
+            BigDecimal domesticShippingFeeEur = estimateDomesticShippingFeeInEur(
+                    estimationClient, orderIdsForPurchaseEstimation);
+            BigDecimal totalEstimationEur = shippingFeesEstimationEur
+                    .add(purchaseEstimationEur)
+                    .add(domesticShippingFeeEur)
+                    .setScale(2, RoundingMode.CEILING);
+            BigDecimal domesticShippingFee = domesticShippingFeeEur;
             boolean isCompleteInvoiceReady = errorMessages.isEmpty();
             if(!currency.equals("EUR")) {
-                BigDecimal exchangeRate = exchangeRatesMapper.getLatestExchangeRate("EUR", currency);
                 purchaseEstimation = purchaseEstimation.multiply(exchangeRate).setScale(2, RoundingMode.CEILING);
                 shippingFeesEstimation = shippingFeesEstimation.multiply(exchangeRate).setScale(2, RoundingMode.CEILING);
+                domesticShippingFee = domesticShippingFeeEur.multiply(exchangeRate)
+                        .setScale(2, RoundingMode.HALF_UP);
             }
             log.info("Purchase Fee {} : {}", currency, purchaseEstimation);
             log.info("Shipping Fee {} : {}", currency, shippingFeesEstimation);
-            estimationsByShop.put(shopId, new Estimation(internalCode, ordersToProccess, processedOrders, shippingFeesEstimation, purchaseEstimation, currency, errorMessages, shop, Collections.singletonList(shopId), "", "", isCompleteInvoiceReady, orderIds));
+            Estimation estimation = new Estimation(internalCode, ordersToProccess, processedOrders,
+                    shippingFeesEstimation, purchaseEstimation, currency, errorMessages, shop,
+                    Collections.singletonList(shopId), "", "", isCompleteInvoiceReady, orderIds);
+            estimation.setDomesticShippingFee(domesticShippingFee);
+            estimation.setTotalEstimation(estimation.getTotalEstimation()
+                    .add(domesticShippingFee).setScale(2, RoundingMode.CEILING));
+            estimation.setShippingFeesEstimationEur(shippingFeesEstimationEur);
+            estimation.setPurchaseEstimationEur(purchaseEstimationEur);
+            estimation.setDomesticShippingFeeEur(domesticShippingFeeEur);
+            estimation.setTotalEstimationEur(totalEstimationEur);
+            estimationsByShop.put(shopId, estimation);
         }
         // return list of estimation by shop
         return Result.ok(estimationsByShop);

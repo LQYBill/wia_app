@@ -1,5 +1,6 @@
 package org.jeecg.modules.business.service.impl.purchase;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -14,6 +15,7 @@ import org.jeecg.modules.business.mapper.*;
 import org.jeecg.modules.business.service.*;
 import org.jeecg.modules.business.vo.*;
 import org.jeecg.modules.business.vo.clientPlatformOrder.section.OrdersStatisticData;
+import org.jeecg.modules.business.vo.clientPurchaseOrder.PurchaseShippingQuote;
 import org.jeecg.modules.message.handle.enums.SendMsgTypeEnum;
 import org.jeecg.modules.message.util.PushMsgUtil;
 import org.jeecg.modules.system.service.ISysUserService;
@@ -22,6 +24,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -46,6 +50,48 @@ import static org.jeecg.modules.business.entity.Invoice.InvoiceType.PURCHASE;
 @Slf4j
 @Service
 public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, PurchaseOrder> implements IPurchaseOrderService {
+    @Autowired private PurchaseShippingQuoteService shippingQuotes;
+    @Autowired private PurchaseShippingQuoteMapper shippingQuoteMapper;
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String addQuotedSkuPurchase(List<SkuQuantity> items, String invoiceEntityId, String quoteId) throws UserException {
+        Client client = shippingQuotes.purchaseClient(items);
+        Map<String, Integer> quantities = PurchaseShippingQuoteService.quantities(items);
+        Map<String, String> erpCodes = shippingQuotes.validate(client, quantities);
+        if (quoteId == null || quoteId.trim().isEmpty()) {
+            if (Boolean.TRUE.equals(client.getSmallPurchaseShippingFeeEnabled())) {
+                throw new UserException("SHIPPING_QUOTE_REQUIRED: Please preview and confirm the purchase total.");
+            }
+            return createSkuPurchase(items, invoiceEntityId, client, false);
+        }
+        PurchaseShippingQuoteRecord record = shippingQuoteMapper.lockQuote(quoteId, client.getId());
+        if (record == null) throw new UserException("SHIPPING_QUOTE_INVALID: Please refresh the purchase quote.");
+        if (record.getPurchaseOrderId() != null) throw new UserException("SHIPPING_QUOTE_USED: Purchase already submitted.");
+        if (record.getExpiresAt().getTime() <= System.currentTimeMillis()) {
+            throw new UserException("SHIPPING_QUOTE_EXPIRED: Please refresh and confirm the purchase total.");
+        }
+        PurchaseShippingQuote quote = JSON.parseObject(record.getSnapshotJson(), PurchaseShippingQuote.class);
+        if (!quantities.equals(quote.getQuantities()) || !erpCodes.equals(quote.getErpCodes())
+                || !Objects.equals(client.getCurrency(), quote.getCurrency())
+                || Boolean.TRUE.equals(client.getSmallPurchaseShippingFeeEnabled()) != quote.isEnabled()) {
+            throw new UserException("SHIPPING_QUOTE_CHANGED: Please refresh and confirm the purchase total.");
+        }
+        // The accepted supplier snapshot is valid for three minutes. Do not silently reprice it.
+        String orderId = createSkuPurchase(items, invoiceEntityId, client, false);
+        PurchaseOrder order = getById(orderId);
+        if (order.getTotalAmount().compareTo(quote.getMerchandiseAmount()) != 0
+                || order.getDiscountAmount().compareTo(quote.getDiscountAmount()) != 0) {
+            throw new UserException("SHIPPING_QUOTE_CHANGED: Product prices changed; please obtain a new quote.");
+        }
+        order.setDomesticShippingFee(quote.getDomesticShippingFee());
+        // Existing product amounts are EUR. final_amount must match the currency debited from balance.
+        order.setFinalAmount(quote.getPayableAmount());
+        updateById(order);
+        record.setPurchaseOrderId(orderId);
+        shippingQuoteMapper.updateById(record);
+        return orderId;
+    }
     @Autowired
     private PurchaseOrderMapper purchaseOrderMapper;
     @Autowired
@@ -223,7 +269,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
      * @return the purchase order's identifier (UUID)
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public String addPurchase(List<SkuQuantity> skuQuantities, List<String> platformOrderIDs, String invoiceEntityId) throws UserException {
         Objects.requireNonNull(platformOrderIDs);
 
@@ -260,6 +306,8 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
                 invoiceNumber,
                 invoiceEntityId
         );
+
+        shippingQuotes.applyToPurchase(client, skuQuantities, details, purchaseID);
 
         // 2. save purchase's content
         List<OrderContentEntry> entries = details.stream()
@@ -314,18 +362,15 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
      * @return the purchase order's identifier (UUID)
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public String addPurchase(List<SkuQuantity> skuQuantities, String invoiceEntityId) throws UserException {
+        Client client = shippingQuotes.purchaseClient(skuQuantities);
+        shippingQuotes.validate(client, PurchaseShippingQuoteService.quantities(skuQuantities));
+        return createSkuPurchase(skuQuantities, invoiceEntityId, client, true);
+    }
 
-        Client client = clientService.getCurrentClient();
-        if(client == null) {
-            LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
-            if(sysUser.getOrgCode().contains("A01") || sysUser.getOrgCode().contains("A03")) {
-                client = clientService.getClientBySku(skuQuantities.get(0).getID());
-            }
-            else
-                throw new UserException("User is not a client");
-        }
+    private String createSkuPurchase(List<SkuQuantity> skuQuantities, String invoiceEntityId, Client client,
+                                     boolean calculateShipping) throws UserException {
         if (invoiceEntityId != null) {
             // validates the entity exists and belongs to this client
             clientService.buildInvoiceClient(client.getId(), invoiceEntityId);
@@ -349,6 +394,8 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
                 invoiceNumber,
                 invoiceEntityId
         );
+
+        if (calculateShipping) shippingQuotes.applyToPurchase(client, skuQuantities, details, purchaseID);
 
         // 2. save purchase's content
         List<OrderContentEntry> entries = details.stream()
@@ -388,12 +435,18 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         Map<String, String> map = new HashMap<>();
         map.put("client", client.getFirstName());
         map.put("order_number", invoiceNumber);
-        pushMsgUtil.sendMessage(
-                SendMsgTypeEnum.EMAIL.getType(),
-                "purchase_order_confirmation",
-                map,
-                "service@wia-sourcing.com"
-        );
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        try {
+                            pushMsgUtil.sendMessage(SendMsgTypeEnum.EMAIL.getType(),
+                                    "purchase_order_confirmation", map, "service@wia-sourcing.com");
+                        } catch (RuntimeException e) {
+                            log.error("Purchase confirmation notification failed after commit", e);
+                        }
+                    }
+                });
 
         // 4. return purchase id
         return purchaseID;
@@ -414,7 +467,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
      * @return the purchase order's identifier (UUID)
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public String addPurchase(String username, Client client, String invoiceNumber, List<SkuQuantity> skuQuantities,
                               Map<PlatformOrder, List<PlatformOrderContent>> orderAndContent, List<String> ordersWithStock,
                               String invoiceEntityId) throws UserException {
@@ -437,6 +490,8 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
                 invoiceNumber,
                 invoiceEntityId
         );
+
+        shippingQuotes.applyToPurchase(client, skuQuantities, details, purchaseID);
 
         // 2. save purchase's content
         List<OrderContentEntry> entries = details.stream()
@@ -589,10 +644,13 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
             }
         }
         client = clientService.buildInvoiceClient(purchaseOrder.getClientId(), purchaseOrder.getInvoiceEntityId());
+        PurchaseShippingQuote savedQuote = shippingQuotes.saved(purchaseID);
+        if (savedQuote != null) client.setCurrency(savedQuote.getCurrency());
         List<PurchaseInvoiceEntry> purchaseOrderSkuList = purchaseOrderContentMapper.selectInvoiceDataByID(purchaseID);
         List<PromotionDetail> promotionDetails = skuPromotionHistoryMapper.selectPromotionByPurchase(purchaseID);
         String invoiceCode = purchaseOrder.getInvoiceNumber();
-        BigDecimal eurToUsd = exchangeRatesMapper.getLatestExchangeRate("EUR", "USD");
+        BigDecimal eurToUsd = savedQuote == null ? exchangeRatesMapper.getLatestExchangeRate("EUR", "USD")
+                : savedQuote.getExchangeRate();
 
         String filename = "Invoice N°" + invoiceCode + " (" + client.getInvoiceEntity() + ").xlsx";
         Path template;
@@ -604,6 +662,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         Path newInvoice = Paths.get(INVOICE_DIR, filename);
         Files.copy(template, newInvoice, StandardCopyOption.REPLACE_EXISTING);
         PurchaseInvoice pv = new PurchaseInvoice(client, invoiceCode, "Purchase Invoice", purchaseOrderSkuList, promotionDetails, eurToUsd);
+        pv.setDomesticShippingFee(purchaseOrder.getDomesticShippingFee());
         pv.toExcelFile(newInvoice);
         return new InvoiceMetaData(filename,invoiceCode, pv.getTargetClient().getInternalCode(), pv.getTargetClient().getInvoiceEntity(), "");
     }
