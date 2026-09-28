@@ -23,6 +23,7 @@ import io.swagger.annotations.ApiModelProperty;
 @Data
 @ApiModel(value="purchase_orderPage对象", description="商品采购订单")
 public class PurchaseOrderPage {
+    private java.math.BigDecimal domesticShippingFee;
 
 	/**主键*/
 	@ApiModelProperty(value = "主键")

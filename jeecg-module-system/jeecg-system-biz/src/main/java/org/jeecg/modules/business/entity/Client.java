@@ -231,6 +231,10 @@ public class Client implements Serializable {
     @ApiModelProperty(value = "跟单销售")
     private String salespersonNames;
 
+    @Dict(dicCode = "yn")
+    @ApiModelProperty(value = "所有采购方式是否收取小额采购境内运费")
+    private Boolean smallPurchaseShippingFeeEnabled;
+
     public String fullName() {
         return firstName + " " + surname;
     }

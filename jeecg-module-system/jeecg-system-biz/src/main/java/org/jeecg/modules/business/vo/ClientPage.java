@@ -23,6 +23,7 @@ import java.util.List;
 @Data
 @ApiModel(value = "clientPage对象", description = "客户")
 public class ClientPage {
+    private Boolean smallPurchaseShippingFeeEnabled;
 
     /**
      * 主键
