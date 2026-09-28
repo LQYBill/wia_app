@@ -933,6 +933,28 @@ public class InvoiceController {
         }
     }
 
+    private BigDecimal estimateDomesticShippingFeeInEur(Client client, List<String> orderIds) throws UserException {
+        if (orderIds == null || orderIds.isEmpty()) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        List<String> orderIdsForPurchase = platformOrderMapper.fetchByIds(orderIds).stream()
+                .filter(order -> order.getPurchaseInvoiceNumber() == null)
+                .map(PlatformOrder::getId)
+                .collect(Collectors.toList());
+
+        BigDecimal domesticShippingFee = BigDecimal.ZERO;
+        if (!orderIdsForPurchase.isEmpty()) {
+            List<SkuQuantity> skuQuantities = platformOrderContentService
+                    .listSkusToPurchaseForOrders(orderIdsForPurchase);
+            if (skuQuantities != null && !skuQuantities.isEmpty()) {
+                domesticShippingFee = purchaseShippingQuoteService
+                        .estimateDomesticShippingFee(client, skuQuantities);
+            }
+        }
+
+        return domesticShippingFee.setScale(2, RoundingMode.HALF_UP);
+    }
+
     /**
      * Get an estimate of shipping fees and purchase fees for selected orders
      * @param param Parameters for creating a pre-shipping invoice
@@ -941,7 +963,8 @@ public class InvoiceController {
     @PostMapping(value = "/completeFeesEstimation")
     public Result<?> getCompleteFeesEstimation(@RequestBody ShippingInvoiceOrderParam param) throws UserException {
         boolean isEmployee = securityService.checkIsEmployee();
-        String currency = clientService.getById(param.clientID()).getCurrency();
+        Client estimationClient = clientService.buildInvoiceClient(param.clientID(), param.getInvoiceEntityId());
+        String currency = estimationClient.getCurrency();
         List<PlatformOrder> orders = platformOrderMapper.fetchByIds(param.orderIds());
         Map<String, List<PlatformOrder>> ordersMapByShop = orders.stream().collect(Collectors.groupingBy(PlatformOrder::getShopId));
         Map<String, Estimation> estimationsByShop = new HashMap<>();
@@ -987,15 +1010,26 @@ public class InvoiceController {
                     purchaseEstimation = data.finalAmount() == null ? BigDecimal.ZERO : data.finalAmount();
                 }
             }
+            BigDecimal domesticShippingFeeEur = estimateDomesticShippingFeeInEur(
+                    estimationClient, orderIdsForPurchaseEstimation);
+            BigDecimal domesticShippingFee = domesticShippingFeeEur;
             boolean isCompleteInvoiceReady = errorMessages.isEmpty();
             if(!currency.equals("EUR")) {
                 BigDecimal exchangeRate = exchangeRatesMapper.getLatestExchangeRate("EUR", currency);
                 purchaseEstimation = purchaseEstimation.multiply(exchangeRate).setScale(2, RoundingMode.CEILING);
                 shippingFeesEstimation = shippingFeesEstimation.multiply(exchangeRate).setScale(2, RoundingMode.CEILING);
+                domesticShippingFee = domesticShippingFeeEur.multiply(exchangeRate)
+                        .setScale(2, RoundingMode.HALF_UP);
             }
             log.info("Purchase Fee {} : {}", currency, purchaseEstimation);
             log.info("Shipping Fee {} : {}", currency, shippingFeesEstimation);
-            estimationsByShop.put(shopId, new Estimation(internalCode, ordersToProccess, processedOrders, shippingFeesEstimation, purchaseEstimation, currency, errorMessages, shop, Collections.singletonList(shopId), "", "", isCompleteInvoiceReady, orderIds));
+            Estimation estimation = new Estimation(internalCode, ordersToProccess, processedOrders,
+                    shippingFeesEstimation, purchaseEstimation, currency, errorMessages, shop,
+                    Collections.singletonList(shopId), "", "", isCompleteInvoiceReady, orderIds);
+            estimation.setDomesticShippingFee(domesticShippingFee);
+            estimation.setTotalEstimation(estimation.getTotalEstimation()
+                    .add(domesticShippingFee).setScale(2, RoundingMode.CEILING));
+            estimationsByShop.put(shopId, estimation);
         }
         // return list of estimation by shop
         return Result.ok(estimationsByShop);

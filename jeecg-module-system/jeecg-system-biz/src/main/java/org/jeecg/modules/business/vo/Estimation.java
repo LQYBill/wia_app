@@ -15,6 +15,7 @@ public class Estimation {
     private BigDecimal shippingFeesEstimation;
     private BigDecimal purchaseEstimation;
     private BigDecimal totalEstimation;
+    private BigDecimal domesticShippingFee;
     private String currency;
     private List<String> errorMessages;
     private String shop = "";
