@@ -965,6 +965,13 @@ public class InvoiceController {
         boolean isEmployee = securityService.checkIsEmployee();
         Client estimationClient = clientService.buildInvoiceClient(param.clientID(), param.getInvoiceEntityId());
         String currency = estimationClient.getCurrency();
+        BigDecimal exchangeRate = BigDecimal.ONE;
+        if (!"EUR".equals(currency)) {
+            exchangeRate = exchangeRatesMapper.getLatestExchangeRate("EUR", currency);
+            if (exchangeRate == null || exchangeRate.signum() <= 0) {
+                throw new UserException("Exchange rate unavailable");
+            }
+        }
         List<PlatformOrder> orders = platformOrderMapper.fetchByIds(param.orderIds());
         Map<String, List<PlatformOrder>> ordersMapByShop = orders.stream().collect(Collectors.groupingBy(PlatformOrder::getShopId));
         Map<String, Estimation> estimationsByShop = new HashMap<>();
@@ -1010,12 +1017,17 @@ public class InvoiceController {
                     purchaseEstimation = data.finalAmount() == null ? BigDecimal.ZERO : data.finalAmount();
                 }
             }
+            BigDecimal shippingFeesEstimationEur = shippingFeesEstimation.setScale(2, RoundingMode.CEILING);
+            BigDecimal purchaseEstimationEur = purchaseEstimation.setScale(2, RoundingMode.CEILING);
             BigDecimal domesticShippingFeeEur = estimateDomesticShippingFeeInEur(
                     estimationClient, orderIdsForPurchaseEstimation);
+            BigDecimal totalEstimationEur = shippingFeesEstimationEur
+                    .add(purchaseEstimationEur)
+                    .add(domesticShippingFeeEur)
+                    .setScale(2, RoundingMode.CEILING);
             BigDecimal domesticShippingFee = domesticShippingFeeEur;
             boolean isCompleteInvoiceReady = errorMessages.isEmpty();
             if(!currency.equals("EUR")) {
-                BigDecimal exchangeRate = exchangeRatesMapper.getLatestExchangeRate("EUR", currency);
                 purchaseEstimation = purchaseEstimation.multiply(exchangeRate).setScale(2, RoundingMode.CEILING);
                 shippingFeesEstimation = shippingFeesEstimation.multiply(exchangeRate).setScale(2, RoundingMode.CEILING);
                 domesticShippingFee = domesticShippingFeeEur.multiply(exchangeRate)
@@ -1029,6 +1041,10 @@ public class InvoiceController {
             estimation.setDomesticShippingFee(domesticShippingFee);
             estimation.setTotalEstimation(estimation.getTotalEstimation()
                     .add(domesticShippingFee).setScale(2, RoundingMode.CEILING));
+            estimation.setShippingFeesEstimationEur(shippingFeesEstimationEur);
+            estimation.setPurchaseEstimationEur(purchaseEstimationEur);
+            estimation.setDomesticShippingFeeEur(domesticShippingFeeEur);
+            estimation.setTotalEstimationEur(totalEstimationEur);
             estimationsByShop.put(shopId, estimation);
         }
         // return list of estimation by shop
