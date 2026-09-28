@@ -325,6 +325,7 @@ public class ShippingInvoiceFactory {
         BigDecimal exchangeRate = exchangeRatesMapper.getLatestExchangeRate("EUR", client.getCurrency());
         List<PurchaseInvoiceEntry> purchaseOrderSkuList = new ArrayList<>();
         List<PromotionDetail> promotionDetails = new ArrayList<>();
+        BigDecimal domesticShippingFee = BigDecimal.ZERO;
         List<String> allOrderIds = orderAndContent.keySet().stream().map(PlatformOrder::getId).collect(toList());
         if(!allOrderIds.isEmpty()) {
             List<SkuQuantity> skuQuantities = platformOrderContentService.listSkusToPurchaseForOrders(allOrderIds);
@@ -341,6 +342,9 @@ public class ShippingInvoiceFactory {
 
                 purchaseOrderSkuList = purchaseOrderContentMapper.selectInvoiceDataByID(purchaseID);
                 promotionDetails = skuPromotionHistoryMapper.selectPromotionByPurchase(purchaseID);
+                PurchaseOrder purchaseOrder = purchaseOrderService.getById(purchaseID);
+                domesticShippingFee = purchaseOrder.getDomesticShippingFee() == null
+                        ? BigDecimal.ZERO : purchaseOrder.getDomesticShippingFee();
                 if (savRefunds != null) {
                     updateSavRefundsInDb(savRefunds, invoiceCode);
                 }
@@ -352,8 +356,10 @@ public class ShippingInvoiceFactory {
         }
         updateOrdersAndContentsInDb(orderAndContent);
 
-        response.setData(new CompleteInvoice(client, invoiceCode, subject, orderAndContent, savRefunds, extraFees,
-                purchaseOrderSkuList, promotionDetails, exchangeRate));
+        CompleteInvoice invoice = new CompleteInvoice(client, invoiceCode, subject, orderAndContent, savRefunds, extraFees,
+                purchaseOrderSkuList, promotionDetails, exchangeRate);
+        invoice.setDomesticShippingFee(domesticShippingFee);
+        response.setData(invoice);
         return response;
     }
 
@@ -504,10 +510,14 @@ public class ShippingInvoiceFactory {
         List<SkuQuantity> skuQuantities = platformOrderContentService.listSkusToPurchaseForOrders(orderIds);
         List<PurchaseInvoiceEntry> purchaseOrderSkuList = new ArrayList<>();
         List<PromotionDetail> promotionDetails = new ArrayList<>();
+        BigDecimal domesticShippingFee = BigDecimal.ZERO;
         if (skuQuantities != null && !skuQuantities.isEmpty()) {
             String purchaseID = purchaseOrderService.addPurchase(username, client, invoiceCode, skuQuantities, orderAndContent, null, invoiceEntityId);
             purchaseOrderSkuList = purchaseOrderContentMapper.selectInvoiceDataByID(purchaseID);
             promotionDetails = skuPromotionHistoryMapper.selectPromotionByPurchase(purchaseID);
+            PurchaseOrder purchaseOrder = purchaseOrderService.getById(purchaseID);
+            domesticShippingFee = purchaseOrder.getDomesticShippingFee() == null
+                    ? BigDecimal.ZERO : purchaseOrder.getDomesticShippingFee();
         } else {
             log.info("[BALANCE][PURCHASE][SKIP] no sku to purchase");
         }
@@ -519,10 +529,10 @@ public class ShippingInvoiceFactory {
             extraFeeService.updateInvoiceNumberByIds(extraFeesIds, invoiceCode);
         }
         updateOrdersAndContentsInDb(orderAndContent);
-        response.setData(
-                new CompleteInvoice(client, invoiceCode, subject, orderAndContent, savRefunds, extraFees,
-                        purchaseOrderSkuList, promotionDetails, eurToUsd)
-        );
+        CompleteInvoice invoice = new CompleteInvoice(client, invoiceCode, subject, orderAndContent, savRefunds, extraFees,
+                purchaseOrderSkuList, promotionDetails, eurToUsd);
+        invoice.setDomesticShippingFee(domesticShippingFee);
+        response.setData(invoice);
         return response;
     }
 
@@ -1757,7 +1767,9 @@ public class ShippingInvoiceFactory {
         List<PurchaseInvoiceEntry> purchaseOrderSkuList = purchaseOrderContentMapper.selectInvoiceDataByID(purchaseId);
         List<PromotionDetail> promotionDetails = skuPromotionHistoryMapper.selectPromotionByPurchase(purchaseId);
         BigDecimal eurToUsd = exchangeRatesMapper.getExchangeRateFromDate("EUR", "USD", CREATE_TIME_FORMAT.format(order.getCreateTime()));
-        return new PurchaseInvoice(client, invoiceCode, "Purchase Invoice", purchaseOrderSkuList, promotionDetails, eurToUsd);
+        PurchaseInvoice invoice = new PurchaseInvoice(client, invoiceCode, "Purchase Invoice", purchaseOrderSkuList, promotionDetails, eurToUsd);
+        invoice.setDomesticShippingFee(order.getDomesticShippingFee());
+        return invoice;
     }
     public CompleteInvoice buildExistingCompleteInvoice(String invoiceCode, String clientId, String start, String end, String filetype, String shippingMethod) throws UserException {
         log.info("Building existing complete invoice : {} - Client ID : {}, ", invoiceCode, clientId);
@@ -1776,8 +1788,11 @@ public class ShippingInvoiceFactory {
         String purchaseID = purchaseOrderService.getInvoiceId(invoiceCode);
         List<PurchaseInvoiceEntry> purchaseOrderSkuList = purchaseOrderContentMapper.selectInvoiceDataByID(purchaseID);
         List<PromotionDetail> promotionDetails = skuPromotionHistoryMapper.selectPromotionByPurchase(purchaseID);
-        return new CompleteInvoice(client, invoiceCode, subject, ordersMapContent, savRefunds, extraFees,
+        CompleteInvoice invoice = new CompleteInvoice(client, invoiceCode, subject, ordersMapContent, savRefunds, extraFees,
                 purchaseOrderSkuList, promotionDetails, eurToUsd);
+        PurchaseOrder purchaseOrder = purchaseOrderService.getById(purchaseID);
+        invoice.setDomesticShippingFee(purchaseOrder == null ? null : purchaseOrder.getDomesticShippingFee());
+        return invoice;
     }
     /** ===== Error tag helpers ===== */
     private static String tagOrder(String reason) {
