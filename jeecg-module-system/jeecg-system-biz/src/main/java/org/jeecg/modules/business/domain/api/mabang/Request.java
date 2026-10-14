@@ -27,7 +27,7 @@ import static java.lang.Thread.sleep;
 public abstract class Request {
     private final static String URL = "https://gwapi.mabangerp.com/api/v2";
     private static final HttpMethod METHOD = HttpMethod.POST;
-    private static final String APP_KEY = "87a1a0c46df86eb2683e74776894dae9";
+    private static final String APP_KEY = "ce9ca42ff05a5dd005e98e709a7a4a08";
     private static final String DEV_ID = "200809";
 
     private final RequestBody body;
