@@ -782,6 +782,7 @@
         >
             #{erpStatus}
         </foreach>
+        AND can_send = 1
         AND poc.erp_status &lt;&gt; 5
         <if test = "startDate != null and endDate != null">
             AND po.order_time &gt;= #{startDate}
