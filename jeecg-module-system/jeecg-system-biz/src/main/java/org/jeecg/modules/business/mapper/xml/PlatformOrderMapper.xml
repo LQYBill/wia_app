@@ -994,12 +994,13 @@
     </select>
 
     <select id="findShoumanShippedButMabangUnshippedOrders" resultType="org.jeecg.modules.business.entity.ShoumanOrderWeight">
-        SELECT po.platform_order_id, so.weight
+        SELECT po.logistic_channel_name,po.platform_order_id, so.weight
         FROM platform_order po
         JOIN shouman_order so ON so.platform_order_id = po.platform_order_id
         WHERE so.status = 6
           AND po.erp_status IN (1, 2)
           AND po.shipping_label_url IS NOT NULL
+          AND po.logistic_channel_name NOT LIKE '%万邦%'
     </select>
     <update id="removePurchaseInvoiceNumber">
         UPDATE platform_order
