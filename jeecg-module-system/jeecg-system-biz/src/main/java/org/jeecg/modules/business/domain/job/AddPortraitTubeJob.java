@@ -32,31 +32,21 @@ import java.util.stream.Collectors;
 public class AddPortraitTubeJob implements Job {
 
     private static final Integer DEFAULT_NUMBER_OF_DAYS = 5;
-    private static final Double MAXIMUM_CANVAS_IN_TUBE = 3.0;
-    private static final Double MAXIMUM_UV_CANVAS_IN_45_TUBE = 4.0;
+    private static final int MAXIMUM_CANVAS_IN_TUBE = 3;
+    private static final int MAXIMUM_56_CANVAS_IN_TUBE = 3;
 
     private static final List<String> DEFAULT_SHOPS = Arrays.asList("JCH3", "JCH4", "JCH5");
     private static final Integer DEFAULT_NUMBER_OF_THREADS = 10;
-    private static final String TUBE_30_SKU_SINGLE_DOUBLE = "PJ95330032-WIA";
+    private static final String TUBE_40_SKU = "PJ95430040-WIA";
+    private static final String TUBE_50_SKU = "PJ95530040-WIA";
+    private static final String TUBE_60_SKU_SINGLE_DOUBLE = "PJ349600045-JCH";
+    private static final String TUBE_60_SKU_TREBLE = "PJ349600048-JCH";
 
-    // 30cm 1-2 40*32
-    private static final String TUBE_NEW_40_SKU_SINGLE = "PJ349400032-JCH";
-    // 30cm 3-4 40*45
-    private static final String TUBE_NEW_40_SKU_MULTIPLE = "PJ349400045-JCH";
-    // 40cm 1-2 50*32
-    private static final String TUBE_NEW_50_SKU_SINGLE = "PJ349500032-JCH";
-    // 40cm 3-4 50*45
-    private static final String TUBE_NEW_50_SKU_MULTIPLE = "PJ349500045-JCH";
-    // 50cm 1-2 60*32
-    // todo 2026-06-25 temporarily changed PJ349600032-JCH -> PJ349600045-JCH, may revert one day
-    private static final String TUBE_NEW_60_SKU_SINGLE = "PJ349600045-JCH";
-    // 50cm 1-2 60*45
-    private static final String TUBE_NEW_60_SKU_DOUBLE = "PJ349600045-JCH";
-    private static final String TUBE_NEW_60_SKU_TREBLE = "PJ349600048-JCH";
-
-    private static final List<String> TUBE_SKUS = Arrays.asList(TUBE_30_SKU_SINGLE_DOUBLE, TUBE_NEW_40_SKU_MULTIPLE,
-            TUBE_NEW_50_SKU_MULTIPLE, TUBE_NEW_60_SKU_SINGLE, TUBE_NEW_50_SKU_SINGLE,
-            TUBE_NEW_60_SKU_DOUBLE, TUBE_NEW_40_SKU_SINGLE, TUBE_NEW_60_SKU_TREBLE);
+    // Include retired tubes so existing order items can be removed when applying the new rules.
+    private static final List<String> TUBE_SKUS = Arrays.asList(
+            "PJ95310032-WIA", "PJ349600032-JCH", "PJ95330045-WIA", "PJ95530032-WIA", "PJ95430032-WIA",
+            "PJ349500032-JCH", "PJ349400032-JCH", "PJ95330032-WIA", "PJ349500045-JCH", "PJ349400045-JCH",
+            TUBE_40_SKU, TUBE_50_SKU, TUBE_60_SKU_SINGLE_DOUBLE, TUBE_60_SKU_TREBLE);
     private static final String PREFIX_50_CANVAS = "JJ2501";
     private static final String PREFIX_50_CANVAS_CHROME = "JJ2001";
     private static final String PREFIX_40_CANVAS = "JJ2500";
@@ -76,6 +66,25 @@ public class AddPortraitTubeJob implements Job {
      * SKU-to-canvas rule mapping. The order matters: prefix rules should be evaluated before regex rules.
      */
     enum CanvasSkuRule {
+        // Each triptych set requires its own tube.
+        PREFIX_TRIPTYCH_00("JJ25VF00", null) {
+            @Override
+            void apply(CanvasCounts counts, int quantity) {
+                counts.triptych40TubeCount += quantity;
+            }
+        },
+        PREFIX_TRIPTYCH_01("JJ25VF01", null) {
+            @Override
+            void apply(CanvasCounts counts, int quantity) {
+                counts.triptych50TubeCount += quantity;
+            }
+        },
+        PREFIX_TRIPTYCH_02("JJ25VF02", null) {
+            @Override
+            void apply(CanvasCounts counts, int quantity) {
+                counts.triptych60TubeCount += quantity;
+            }
+        },
         // Prefix rules for standard canvas SKUs
         PREFIX_50(PREFIX_50_CANVAS, null) {
             @Override
@@ -311,9 +320,7 @@ public class AddPortraitTubeJob implements Job {
         HashSet<Pair<String, Integer>> currentTubes = new HashSet<>();
         HashSet<Pair<String, Integer>> adequateTubes = new HashSet<>();
         CanvasCounts counts = collectCanvasCounts(orderItems, currentTubes);
-        TubeCounts tubes = determineTubeCounts(counts);
-        applyUvRemainders(counts, tubes);
-        addAdequateTubes(adequateTubes, tubes);
+        addAdequateTubes(adequateTubes, counts);
         return Pair.of(currentTubes, adequateTubes);
     }
 
@@ -330,169 +337,33 @@ public class AddPortraitTubeJob implements Job {
                 applyCanvasRules(sku, quantity, counts);
             }
         }
-        counts.computeRemainders();
         return counts;
     }
 
-    private static TubeCounts determineTubeCounts(CanvasCounts counts) {
-        TubeCounts tubes = new TubeCounts();
-        applyFullCanvasTubes(counts, tubes);
-        applyRemainderRules(counts, tubes);
-        return tubes;
-    }
-
-    private static void applyFullCanvasTubes(CanvasCounts counts, TubeCounts tubes) {
-        tubes.tubeNew60TrebleCount = (int) Math.floor(counts.canvas50Count / MAXIMUM_CANVAS_IN_TUBE);
-        tubes.tubeNew50MultipleCount = (int) Math.floor(counts.canvas40Count / MAXIMUM_CANVAS_IN_TUBE);
-        tubes.tubeNew40MultipleCount = (int) Math.floor(counts.canvas30Count / MAXIMUM_CANVAS_IN_TUBE);
-
-        tubes.tubeNew60DoubleCount = (int) Math.floor(counts.canvasUV50Count / MAXIMUM_UV_CANVAS_IN_45_TUBE);
-        tubes.tubeNew60TrebleCount += (int) Math.floor(counts.canvasNew56Count / MAXIMUM_CANVAS_IN_TUBE);
-        tubes.tubeNew50MultipleCount += (int) Math.floor(counts.canvasNew46Count / MAXIMUM_CANVAS_IN_TUBE);
-        tubes.tubeNew40MultipleCount += (int) Math.floor(counts.canvasNew36Count / MAXIMUM_CANVAS_IN_TUBE);
-        tubes.tubeNew40MultipleCount += (int) Math.floor(counts.canvasUV30Count / MAXIMUM_UV_CANVAS_IN_45_TUBE);
-        tubes.tubeNew50MultipleCount += (int) Math.floor(counts.canvasUV40Count / MAXIMUM_UV_CANVAS_IN_45_TUBE);
-    }
-
-    private static void applyRemainderRules(CanvasCounts counts, TubeCounts tubes) {
-        if (counts.totalRemainderCount > 0 && counts.totalRemainderCount < 4) {
-            applySmallRemainderRules(counts, tubes);
-        } else if (counts.totalRemainderCount >= 4) {
-            applyLargeRemainderRules(counts, tubes);
+    private static void addAdequateTubes(HashSet<Pair<String, Integer>> adequateTubes, CanvasCounts counts) {
+        // Aggregate 36*46, 30*40 and 40*60 canvases, with at most three per tube.
+        int canvas40TubeCount = counts.canvasNew36Count + counts.canvas30Count + counts.canvas40Count
+                + counts.canvasUV30Count + counts.canvasUV40Count;
+        addIfPositive(adequateTubes, TUBE_40_SKU,
+                (canvas40TubeCount + MAXIMUM_CANVAS_IN_TUBE - 1) / MAXIMUM_CANVAS_IN_TUBE
+                        + counts.triptych40TubeCount);
+        // Aggregate 46*66 and 50*70 canvases, with at most three per tube.
+        int canvas50TubeCount = counts.canvasNew46Count + counts.canvas50Count + counts.canvasUV50Count;
+        addIfPositive(adequateTubes, TUBE_50_SKU,
+                (canvas50TubeCount + MAXIMUM_CANVAS_IN_TUBE - 1) / MAXIMUM_CANVAS_IN_TUBE
+                        + counts.triptych50TubeCount);
+        // Pack each full group of three 56*76 canvases together, then the remaining one or two.
+        addIfPositive(adequateTubes, TUBE_60_SKU_TREBLE,
+                counts.canvasNew56Count / MAXIMUM_56_CANVAS_IN_TUBE + counts.triptych60TubeCount);
+        if (counts.canvasNew56Count % MAXIMUM_56_CANVAS_IN_TUBE > 0) {
+            addIfPositive(adequateTubes, TUBE_60_SKU_SINGLE_DOUBLE, 1);
         }
-    }
-
-    private static void applySmallRemainderRules(CanvasCounts counts, TubeCounts tubes) {
-        if (counts.canvas50RemainderCount > 0 || counts.canvasNew56RemainderCount > 0) {
-            // It only takes one 50cm/56cm canvas with any other canvas to impose the use of NEW 60cm multiple tube
-            if (counts.totalRemainderCount > 1) {
-                // Only if there are 3 56cm/46cm canvases, we need a 60cm TREBLE tube, otherwise 60cm DOUBLE tube suffice
-                if (counts.canvasNew56RemainderCount + counts.canvasNew46RemainderCount == 3) {
-                    tubes.tubeNew60TrebleCount++;
-                } else {
-                    tubes.tubeNew60DoubleCount++;
-                }
-            } else if (counts.canvasNew56RemainderCount > 0) {
-                // Only NEW 60cm tubes can contain NEW 56cm canvases
-                tubes.tubeNew60SingleCount++;
-            } else {
-                tubes.tubeNew50SingleCount++;
-            }
-        } else {
-            // No 50/56cm canvases
-            if (counts.totalRemainderCount > 1) {
-                // It only takes one 40cm/46cm canvas with any other canvas to impose the use of NEW 50cm multiple tube
-                if (counts.canvas40RemainderCount > 0 || counts.canvasNew46RemainderCount > 0) {
-                    tubes.tubeNew50MultipleCount++;
-                } else if (counts.canvasNew36RemainderCount > 0) {
-                    tubes.tubeNew40MultipleCount++;
-                } else {
-                    tubes.tube30SingleDoubleCount++;
-                }
-            } else {
-                if (counts.canvasNew46RemainderCount > 0) {
-                    tubes.tubeNew50SingleCount++;
-                } else if (counts.canvas40RemainderCount > 0 || counts.canvasNew36RemainderCount > 0) {
-                    tubes.tube40SingleCount++;
-                } else if (counts.canvas30RemainderCount > 0) {
-                    tubes.tube30SingleDoubleCount++;
-                }
-            }
-        }
-    }
-
-    private static void applyLargeRemainderRules(CanvasCounts counts, TubeCounts tubes) {
-        // When remaining 4 to 6 canvases, one 50/56cm canvas imposes one NEW 60cm multiple tube
-        if (counts.canvas50RemainderCount > 0 || counts.canvasNew56RemainderCount > 0) {
-            // If there are 3 or more 56cm/46cm canvases, we need a 60cm TREBLE tube, otherwise 60cm DOUBLE tube suffice
-            if (counts.canvasNew56RemainderCount + counts.canvasNew46RemainderCount >= 3) {
-                tubes.tubeNew60TrebleCount++;
-            } else {
-                tubes.tubeNew60DoubleCount++;
-            }
-            if (counts.canvas50RemainderCount + counts.canvasNew56RemainderCount > 1) {
-                // If we have two 50/56cm canvases and a total of 5 of 6 canvases
-                if (counts.totalRemainderCount > 4) {
-                    if (counts.canvas40RemainderCount > 1 || counts.canvasNew46RemainderCount > 1) {
-                        tubes.tubeNew50MultipleCount++;
-                    } else {
-                        tubes.tube30SingleDoubleCount++;
-                    }
-                } else {
-                    if (counts.canvasNew46RemainderCount > 1) {
-                        tubes.tubeNew50SingleCount++;
-                    } else if (counts.canvas40RemainderCount > 1) {
-                        tubes.tube40SingleCount++;
-                    } else {
-                        tubes.tube30SingleDoubleCount++;
-                    }
-                }
-            } else {
-                // Only case possible : 1 * 50/56cm, 2 * 40/46cm, 2 * 30/36cm
-                if (counts.canvasNew36RemainderCount > 0) {
-                    tubes.tubeNew40MultipleCount++;
-                } else {
-                    tubes.tube30SingleDoubleCount++;
-                }
-            }
-        } else {
-            // No 50/56cm canvases : only 30,36,40,46cm canvases, each type having no more than 2
-            if (counts.canvas40RemainderCount > 0 || counts.canvasNew46RemainderCount > 0) {
-                // Any 40/46cm canvas means at least one NEW 50cm multiple tube is needed
-                tubes.tubeNew50MultipleCount++;
-                if (counts.canvas40RemainderCount > 1 && counts.canvasNew46RemainderCount > 1) {
-                    if (counts.totalRemainderCount > 4) {
-                        tubes.tubeNew50MultipleCount++;
-                    } else {
-                        tubes.tubeNew40MultipleCount++;
-                    }
-                } else if (counts.canvasNew36RemainderCount > 0 && counts.totalRemainderCount > 4) {
-                    tubes.tubeNew40MultipleCount++;
-                } else {
-                    tubes.tube30SingleDoubleCount++;
-                }
-            } else {
-                // Only 30/36cm canvases, meaning only one possible case : two 30cm and two 36cm canvases
-                tubes.tubeNew40MultipleCount++;
-                tubes.tube30SingleDoubleCount++;
-            }
-        }
-    }
-
-    private static void applyUvRemainders(CanvasCounts counts, TubeCounts tubes) {
-        // Special case for UV canvases
-        if (counts.canvasUV30RemainderCount == 1 || counts.canvasUV30RemainderCount == 2) {
-            tubes.tube40SingleCount++;
-        }
-        if (counts.canvasUV30RemainderCount == 3) {
-            tubes.tubeNew40MultipleCount++;
-        }
-        if (counts.canvasUV40RemainderCount == 1 || counts.canvasUV40RemainderCount == 2) {
-            tubes.tubeNew50SingleCount++;
-        }
-        if (counts.canvasUV40RemainderCount == 3) {
-            tubes.tubeNew50MultipleCount++;
-        }
-        if (counts.canvasUV50RemainderCount == 1 || counts.canvasUV50RemainderCount == 2) {
-            tubes.tubeNew60SingleCount++;
-        }
-        if (counts.canvasUV50RemainderCount == 3) {
-            tubes.tubeNew60DoubleCount++;
-        }
-    }
-
-    private static void addAdequateTubes(HashSet<Pair<String, Integer>> adequateTubes, TubeCounts tubes) {
-        addIfPositive(adequateTubes, TUBE_30_SKU_SINGLE_DOUBLE, tubes.tube30SingleDoubleCount);
-        addIfPositive(adequateTubes, TUBE_NEW_40_SKU_SINGLE, tubes.tube40SingleCount);
-        addIfPositive(adequateTubes, TUBE_NEW_40_SKU_MULTIPLE, tubes.tubeNew40MultipleCount);
-        addIfPositive(adequateTubes, TUBE_NEW_50_SKU_SINGLE, tubes.tubeNew50SingleCount);
-        addIfPositive(adequateTubes, TUBE_NEW_50_SKU_MULTIPLE, tubes.tubeNew50MultipleCount);
-        addIfPositive(adequateTubes, TUBE_NEW_60_SKU_SINGLE, tubes.tubeNew60SingleCount);
-        addIfPositive(adequateTubes, TUBE_NEW_60_SKU_DOUBLE, tubes.tubeNew60DoubleCount);
-        addIfPositive(adequateTubes, TUBE_NEW_60_SKU_TREBLE, tubes.tubeNew60TrebleCount);
     }
 
     static class CanvasCounts {
+        private int triptych40TubeCount;
+        private int triptych50TubeCount;
+        private int triptych60TubeCount;
         private int canvas30Count;
         private int canvas40Count;
         private int canvas50Count;
@@ -502,18 +373,6 @@ public class AddPortraitTubeJob implements Job {
         private int canvasUV30Count;
         private int canvasUV40Count;
         private int canvasUV50Count;
-
-        private int canvas30RemainderCount;
-        private int canvas40RemainderCount;
-        private int canvas50RemainderCount;
-        private int canvasNew36RemainderCount;
-        private int canvasNew46RemainderCount;
-        private int canvasNew56RemainderCount;
-        private int canvasUV30RemainderCount;
-        private int canvasUV40RemainderCount;
-        private int canvasUV50RemainderCount;
-        private int totalRemainderCount;
-
 
         int getCanvas50Count() {
             return canvas50Count;
@@ -526,31 +385,6 @@ public class AddPortraitTubeJob implements Job {
         int getCanvasUV50Count() {
             return canvasUV50Count;
         }
-
-        private void computeRemainders() {
-            canvas30RemainderCount = canvas30Count % MAXIMUM_CANVAS_IN_TUBE.intValue();
-            canvas40RemainderCount = canvas40Count % MAXIMUM_CANVAS_IN_TUBE.intValue();
-            canvas50RemainderCount = canvas50Count % MAXIMUM_CANVAS_IN_TUBE.intValue();
-            canvasNew36RemainderCount = canvasNew36Count % MAXIMUM_CANVAS_IN_TUBE.intValue();
-            canvasNew46RemainderCount = canvasNew46Count % MAXIMUM_CANVAS_IN_TUBE.intValue();
-            canvasNew56RemainderCount = canvasNew56Count % MAXIMUM_CANVAS_IN_TUBE.intValue();
-            canvasUV30RemainderCount = canvasUV30Count % MAXIMUM_UV_CANVAS_IN_45_TUBE.intValue();
-            canvasUV40RemainderCount = canvasUV40Count % MAXIMUM_UV_CANVAS_IN_45_TUBE.intValue();
-            canvasUV50RemainderCount = canvasUV50Count % MAXIMUM_UV_CANVAS_IN_45_TUBE.intValue();
-            totalRemainderCount = canvas30RemainderCount + canvas40RemainderCount + canvas50RemainderCount +
-                    canvasNew36RemainderCount + canvasNew46RemainderCount + canvasNew56RemainderCount;
-        }
-    }
-
-    private static class TubeCounts {
-        private int tubeNew50SingleCount;
-        private int tube40SingleCount;
-        private int tube30SingleDoubleCount;
-        private int tubeNew60TrebleCount;
-        private int tubeNew50MultipleCount;
-        private int tubeNew40MultipleCount;
-        private int tubeNew60SingleCount;
-        private int tubeNew60DoubleCount;
     }
 
     private static void addIfPositive(HashSet<Pair<String, Integer>> adequateTubes, String sku, int quantity) {
