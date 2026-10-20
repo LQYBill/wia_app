@@ -29,7 +29,7 @@
 
 	<properties>
 		<skipTests>true</skipTests>
-		<wia-app.version>3.30.1</wia-app.version>
+		<wia-app.version>3.30.3</wia-app.version>
 		<jeecgboot.version>3.6.3</jeecgboot.version>
 		<java.version>1.8</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
