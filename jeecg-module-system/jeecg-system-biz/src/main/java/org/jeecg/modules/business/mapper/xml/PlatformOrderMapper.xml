@@ -899,6 +899,7 @@
             po.picking_fee = 0.0,
             po.packaging_material_fee = 0.0,
             po.small_parcel_tax = 0.0,
+            po.eu_customs_handling_fee = 0.0,
             po.erp_status =
                 CASE
                     WHEN erp_status = '4' THEN '3'
@@ -916,6 +917,7 @@
             picking_fee = 0.0,
             packaging_material_fee = 0.0,
             small_parcel_tax = 0.0,
+            eu_customs_handling_fee = 0.0,
             erp_status =
                 CASE erp_status
                     WHEN '4' THEN '3'

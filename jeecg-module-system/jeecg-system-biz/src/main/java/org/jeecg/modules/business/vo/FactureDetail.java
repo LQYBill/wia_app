@@ -72,6 +72,9 @@ public class FactureDetail {
     @TableField("`Taxe petit colis`")
     private final BigDecimal smallParcelTax;
 
+    @TableField("`Frais de traitement douanier UE`")
+    private final BigDecimal euCustomsHandlingFee;
+
     @TableField("`TVA`")
     private final BigDecimal TVA;
 

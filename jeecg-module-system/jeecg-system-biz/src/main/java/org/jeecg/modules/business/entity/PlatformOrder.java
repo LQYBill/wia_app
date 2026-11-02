@@ -308,6 +308,10 @@ public class PlatformOrder implements Serializable {
     @Excel(name = "欧盟小包税", width = 15)
     @ApiModelProperty(value = "欧盟小包税")
     private java.math.BigDecimal smallParcelTax;
+
+    @Excel(name = "欧盟海关处理费", width = 15)
+    @ApiModelProperty(value = "欧盟海关处理费")
+    private java.math.BigDecimal euCustomsHandlingFee;
      /**
      * 买家备注/平台留言
      */

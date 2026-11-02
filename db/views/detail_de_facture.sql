@@ -19,13 +19,14 @@ SELECT s.name                                      AS 'Boutique',
        po.packaging_material_fee                   AS 'Frais de matériel d\'emballage',
        po.insurance_fee                            AS 'Frais d\'assurance produits',
        po.small_parcel_tax                         AS 'Taxe petit colis',
+       COALESCE(po.eu_customs_handling_fee, 0.00)   AS 'Frais de traitement douanier UE',
        SUM(poc.vat)                                AS 'TVA',
        po.shipping_invoice_number                  AS 'N° de facture'
 FROM platform_order po
          JOIN shop s ON po.shop_id = s.id
          RIGHT JOIN platform_order_content poc ON po.id = poc.platform_order_id
          JOIN sku ON poc.sku_id = sku.id
-WHERE po.order_time > '2025-06-01'
+WHERE po.order_time > '2026-01-01'
   AND shipping_invoice_number IS NOT NULL
   AND poc.erp_status <> 5
 GROUP BY po.id, s.name, po.order_time

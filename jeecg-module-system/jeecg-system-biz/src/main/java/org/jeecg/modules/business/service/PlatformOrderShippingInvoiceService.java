@@ -153,6 +153,7 @@ public class PlatformOrderShippingInvoiceService {
             "Frais de matériel d'emballage",
             "Frais d'assurance produits",
             "Taxe petit colis",
+            "Frais de traitement douanier UE",
             "TVA",
             "N° de facture"
     };
@@ -195,6 +196,7 @@ public class PlatformOrderShippingInvoiceService {
             "Packaging Material Fee",
             "Product Insurance Fee",
             "Small parcel tax",
+            "EU customs handling fee",
             "VAT",
             "Invoice No."
     };
@@ -538,6 +540,8 @@ public class PlatformOrderShippingInvoiceService {
             sheetManager.write(detail.getInsuranceFee());
             sheetManager.nextCol();
             sheetManager.write(detail.getSmallParcelTax());
+            sheetManager.nextCol();
+            sheetManager.write(detail.getEuCustomsHandlingFee());
             sheetManager.nextCol();
             sheetManager.write(detail.getTVA());
             sheetManager.nextCol();

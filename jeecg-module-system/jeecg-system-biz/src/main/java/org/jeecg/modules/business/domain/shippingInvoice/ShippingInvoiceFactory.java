@@ -30,6 +30,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -116,9 +118,23 @@ public class ShippingInvoiceFactory {
     private static final String TAG_SKU   = "SKU|";
     private static final String TAG_SKUS  = "SKUS|";
     private static final BigDecimal SMALL_PARCEL_TAX_PER_HSCODE = BigDecimal.valueOf(3.05);
+    private static final BigDecimal EU_CUSTOMS_HANDLING_FEE_PER_HSCODE = new BigDecimal("2.05");
+    private static final LocalDate EU_CUSTOMS_HANDLING_FEE_START_DATE = LocalDate.of(2026, 10, 26);
+    private static final ZoneId SHIPPING_DATE_ZONE = ZoneId.of("Europe/Paris");
 
     private boolean shouldCalculateSmallParcelTax(LogisticChannel logisticChannel) {
         return logisticChannel == null || !"1".equals(logisticChannel.getSmallParcelTaxExempted());
+    }
+
+    BigDecimal calculateEuCustomsHandlingFee(PlatformOrder order, LogisticChannel channel, Integer distinctHsCodeCount) {
+        if (!EU_COUNTRY_LIST.contains(order.getCountry()) || !shouldCalculateSmallParcelTax(channel)
+                || order.getShippingTime() == null || distinctHsCodeCount == null || distinctHsCodeCount <= 0) {
+            return BigDecimal.ZERO;
+        }
+        LocalDate shippingDate = Instant.ofEpochMilli(order.getShippingTime().getTime())
+                .atZone(SHIPPING_DATE_ZONE).toLocalDate();
+        return shippingDate.isBefore(EU_CUSTOMS_HANDLING_FEE_START_DATE) ? BigDecimal.ZERO
+                : EU_CUSTOMS_HANDLING_FEE_PER_HSCODE.multiply(BigDecimal.valueOf(distinctHsCodeCount));
     }
 
     /**
@@ -1005,6 +1021,8 @@ public class ShippingInvoiceFactory {
             if (vatApplicable && minimumDeclaredValue != null) {
                 totalVAT = calculateTotalVat(totalDeclaredValue, clientVatPercentage, minimumDeclaredValue);
             }
+            BigDecimal euCustomsHandlingFee = calculateEuCustomsHandlingFee(uninvoicedOrder,
+                    logisticChannelPair.getLeft(), distinctHsCodeNbInOrders.get(uninvoicedOrder.getPlatformOrderId()));
             if(virtualBalance != null){
                 virtualBalance = virtualBalance
                         .subtract(packageMatFee)
@@ -1013,6 +1031,7 @@ public class ShippingInvoiceFactory {
                         .subtract(orderServiceFee)
                         .subtract(totalShippingFee)
                         .subtract(orderInsuranceFee)
+                        .subtract(euCustomsHandlingFee)
                         .subtract(totalVAT);
                 if (virtualBalance.compareTo(BigDecimal.ZERO) < 0) {
                     if(client.getIsChronologicalOrder().equals("1")) {
@@ -1035,6 +1054,7 @@ public class ShippingInvoiceFactory {
                         BigDecimal.valueOf(distinctHsCodeNbInOrders.get(uninvoicedOrder.getPlatformOrderId())));
                 uninvoicedOrder.setSmallParcelTax(BigDecimal.ZERO.equals(smallParcelTaxForOrder) ? SMALL_PARCEL_TAX_PER_HSCODE : smallParcelTaxForOrder);
             }
+            uninvoicedOrder.setEuCustomsHandlingFee(euCustomsHandlingFee);
             uninvoicedOrder.setFretFee(fretFee);
             uninvoicedOrder.setPickingFee(pickingFee);
             uninvoicedOrder.setOrderServiceFee(orderServiceFee);
@@ -1193,6 +1213,8 @@ public class ShippingInvoiceFactory {
         if (vatApplicable && minimumDeclaredValue != null) {
             totalVAT = calculateTotalVat(totalDeclaredValue, clientVatPercentage, minimumDeclaredValue);
         }
+        BigDecimal euCustomsHandlingFee = calculateEuCustomsHandlingFee(order,
+                logisticChannelPair.getLeft(), distinctHsCodeNbInOrders.get(order.getPlatformOrderId()));
         if(virtualBalance != null){
             virtualBalance = virtualBalance
                     .subtract(packageMatFee)
@@ -1201,6 +1223,7 @@ public class ShippingInvoiceFactory {
                     .subtract(orderServiceFee)
                     .subtract(totalShippingFee)
                     .subtract(orderInsuranceFees)
+                    .subtract(euCustomsHandlingFee)
                     .subtract(totalVAT);
             if (virtualBalance.compareTo(BigDecimal.ZERO) < 0) {
                 response.setData(virtualBalance);
@@ -1236,6 +1259,7 @@ public class ShippingInvoiceFactory {
                     BigDecimal.valueOf(distinctHsCodeNbInOrders.get(order.getPlatformOrderId())));
             order.setSmallParcelTax(BigDecimal.ZERO.equals(smallParcelTaxForOrder) ? SMALL_PARCEL_TAX_PER_HSCODE : smallParcelTaxForOrder);
         }
+        order.setEuCustomsHandlingFee(euCustomsHandlingFee);
         order.setFretFee(fretFee);
         order.setPickingFee(pickingFee);
         order.setOrderServiceFee(orderServiceFee);
@@ -1611,6 +1635,9 @@ public class ShippingInvoiceFactory {
         List<Country> countryList = countryService.findAll();
         Map<String, String> logisticChannelNameToId = logisticChannels.stream().collect(toMap(LogisticChannel::getInternalName, LogisticChannel::getId));
 
+        Map<String, Integer> distinctHsCodeCounts = ordersMap.isEmpty() ? Collections.emptyMap()
+                : platformOrderContentService.getDistinctHsCodeNbInOrders(ordersMap.keySet().stream()
+                .map(PlatformOrder::getPlatformOrderId).collect(toList()));
         for(PlatformOrder order: ordersMap.keySet()) {
             FeesEstimationPerOrder estimation = new FeesEstimationPerOrder();
             estimation.setOrderId(order.getId());
@@ -1703,6 +1730,8 @@ public class ShippingInvoiceFactory {
             order.setPickingFee(pickingFee);
             order.setOrderServiceFee(orderServiceFee);
             order.setInsuranceFee(skuInsuranceTotal);
+            order.setEuCustomsHandlingFee(calculateEuCustomsHandlingFee(order, logisticChannelPair.getLeft(),
+                    distinctHsCodeCounts.get(order.getPlatformOrderId())));
 
             BigDecimal remainingShippingFee = totalShippingFee;
             for (PlatformOrderContent content : contents) {

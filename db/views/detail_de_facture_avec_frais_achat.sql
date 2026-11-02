@@ -36,6 +36,8 @@ SELECT
     (po.picking_fee + SUM(poc.picking_fee))           AS `Frais de préparation`,
     po.packaging_material_fee                         AS `Frais de matériel d'emballage`,
     COALESCE(po.insurance_fee, 0.00)                  AS `Frais d'assurance produits`,
+    po.small_parcel_tax                               AS `Taxe petit colis`,
+    COALESCE(po.eu_customs_handling_fee, 0.00)         AS `Frais de traitement douanier UE`,
     SUM(poc.vat)                                      AS `TVA`,
     po.shipping_invoice_number                        AS `N° de facture`
 FROM platform_order po

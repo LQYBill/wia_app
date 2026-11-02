@@ -66,6 +66,7 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
         BigDecimal totalPackageMatFeePerOrder = BigDecimal.ZERO;
         BigDecimal totalInsuranceFees = BigDecimal.ZERO;
         BigDecimal totalSmallParcelTax = BigDecimal.ZERO;
+        BigDecimal totalEuCustomsHandlingFee = BigDecimal.ZERO;
         for (Map.Entry<String, List<PlatformOrder>> entry : countryPackageMap.entrySet()) {
             String country = entry.getKey();
             List<PlatformOrder> orders = entry.getValue();
@@ -80,6 +81,9 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
             BigDecimal countryInsuranceFees = BigDecimal.ZERO;
             for (PlatformOrder po : orders) {
                 totalSmallParcelTax = totalSmallParcelTax.add(po.getSmallParcelTax());
+                if (po.getEuCustomsHandlingFee() != null) {
+                    totalEuCustomsHandlingFee = totalEuCustomsHandlingFee.add(po.getEuCustomsHandlingFee());
+                }
                 countryFretFees = countryFretFees.add(po.getFretFee());
                 countryServiceFeesPerOrder = countryServiceFeesPerOrder.add(po.getOrderServiceFee());
                 countryPickingFeesPerOrder = countryPickingFeesPerOrder.add(po.getPickingFee());
@@ -162,6 +166,9 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
                 totalSmallParcelTax
         );
         rows.add(smallParcelTaxRow);
+        if (totalEuCustomsHandlingFee.signum() > 0) {
+            rows.add(new Row<>("Total EU customs handling fee", null, null, null, totalEuCustomsHandlingFee));
+        }
         if (savRefunds != null) {
             for (SavRefundWithDetail savRefund : savRefunds) {
                 BigDecimal refundForOrder = BigDecimal.ZERO
@@ -192,6 +199,7 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
             }
         }
         totalAmount = totalAmount.add(totalSmallParcelTax);
+        totalAmount = totalAmount.add(totalEuCustomsHandlingFee);
         totalAmount = totalAmount.add(vatForEU);
         return rows;
     }
