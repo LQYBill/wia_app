@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.jeecg.modules.business.mapper.WSTrackOrderMapper">
+    <!-- Keep the startup count and paged queries on exactly the same eligibility rules. -->
+    <sql id="eligibleOrders">
+        FROM platform_order po
+        WHERE EXISTS (
+            SELECT 1 FROM logistic_channel lc
+            INNER JOIN logistic_company company ON company.id = lc.logistic_company_id
+            WHERE lc.zh_name = po.logistic_channel_name
+              AND company.name LIKE '%威狮%'
+        )
+          AND po.internal_tracking_number IS NOT NULL
+          AND TRIM(po.internal_tracking_number) != ''
+        <if test="startDate != null">AND po.shipping_time &gt;= #{startDate}</if>
+        <if test="endExclusive != null">AND po.shipping_time &lt; #{endExclusive}</if>
+        <if test="transporters != null and transporters.size() > 0">
+            AND po.logistic_channel_name IN
+            <foreach collection="transporters" item="name" open="(" separator="," close=")">#{name}</foreach>
+        </if>
+    </sql>
+    <select id="countBillCodes" resultType="long">
+        SELECT COUNT(DISTINCT po.internal_tracking_number)
+        <include refid="eligibleOrders"/>
+    </select>
+    <select id="findBillCodes" resultType="java.lang.String">
+        SELECT DISTINCT po.internal_tracking_number
+        <include refid="eligibleOrders"/>
+        AND po.internal_tracking_number &gt; #{after}
+        ORDER BY po.internal_tracking_number
+        LIMIT #{limit}
+    </select>
+</mapper>
