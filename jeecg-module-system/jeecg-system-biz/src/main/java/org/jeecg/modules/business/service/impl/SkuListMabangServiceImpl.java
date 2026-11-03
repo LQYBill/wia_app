@@ -692,13 +692,15 @@ public class SkuListMabangServiceImpl extends ServiceImpl<SkuListMabangMapper, S
 
     /**
      * Call a routine to replace SKU codes (from MabangAPI)
-     * by SKU IDs in platform_order_content table after creating new SKUs
+     * by SKU IDs for content created within the last six months after creating new SKUs.
      */
     @Override
     public void updateSkuId() {
         OnlCgformFieldMapper onlCgformFieldMapper = SpringContextUtils.getBean(OnlCgformFieldMapper.class);
         Map<String, Object> params = new HashMap<>();
-        String sql = "UPDATE platform_order_content SET sku_id = skuErpToId(sku_id) WHERE sku_id NOT LIKE '1%'";
+        String sql = "UPDATE platform_order_content SET sku_id = skuErpToId(sku_id) "
+                + "WHERE create_time >= DATE_SUB(NOW(), INTERVAL 6 MONTH) "
+                + "AND sku_id NOT LIKE '1%'";
         params.put("execute_sql_string", sql);
         onlCgformFieldMapper.executeUpdatetSQL(params);
     }
