@@ -358,7 +358,7 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
      */
     @Override
     public List<Order> getOrdersFromMabang(List<OrderListRequestBody> requests, ExecutorService executor) {
-        List<Order> mabangOrders = new ArrayList<>();
+        List<Order> mabangOrders = Collections.synchronizedList(new ArrayList<>());
 
         List<CompletableFuture<Boolean>> futures = requests.stream()
                 .map(request -> CompletableFuture.supplyAsync(() -> {
@@ -543,49 +543,71 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
 
     @Override
     public ResponsesWithMsg<String> editOrdersRemark(String invoiceNumber) {
+        if (invoiceNumber == null || !invoiceNumber.matches("^[0-9]{4}-[0-9]{2}-[127][0-9]{3}$")) {
+            throw new IllegalArgumentException("Invalid invoice number");
+        }
         ResponsesWithMsg<String> responses = new ResponsesWithMsg<>();
-        List<String> platformOrderIds = platformOrderService.getPlatformOrderIdsByInvoiceNumber(invoiceNumber);
-        if(platformOrderIds.isEmpty()) {
-            log.info("No orders found with invoice number {}", invoiceNumber);
+        List<String> platformOrderIds = platformOrderService.getPlatformOrderIdsByInvoiceNumber(invoiceNumber)
+                .stream().filter(Objects::nonNull).distinct().collect(toList());
+        if (platformOrderIds.isEmpty()) {
             responses.addFailure(invoiceNumber, "No orders found with invoice number");
             return responses;
         }
-        log.info("Editing orders remark with invoice number {} for platform order ids {}", invoiceNumber, platformOrderIds);
         ExecutorService executor = ThrottlingExecutorService.createExecutorService(DEFAULT_NUMBER_OF_THREADS,
                 MABANG_API_RATE_LIMIT_PER_MINUTE, TimeUnit.MINUTES);
-        List<OrderListRequestBody> OrderRequests = new ArrayList<>();
-        List<List<String>> orderIdsPartition = Lists.partition(platformOrderIds, 10);
-        for (List<String> platformOrderIdList : orderIdsPartition) {
-            OrderRequests.add(new OrderListRequestBody().setPlatformOrderIds(platformOrderIdList));
-        }
-        List<Order> ordersFromMabang = getOrdersFromMabang(OrderRequests, executor);
-        List<EditRemarkRequestBody> editRemarkRequests = new ArrayList<>();
-        for(Order order: ordersFromMabang) {
-            editRemarkRequests.add(new EditRemarkRequestBody(order.getPlatformOrderId(), order.getRemark()+ " " + invoiceNumber));
-        }
-        List<CompletableFuture<Boolean>> editRemarkFutures = editRemarkRequests.stream()
-                .map(request -> CompletableFuture.supplyAsync(() -> {
-                    boolean success = false;
-                    try {
-                        EditRemarkRequest editRemarkRequest = new EditRemarkRequest(request);
-                        ChangeOrderResponse response = editRemarkRequest.send();
-                        success = response.success();
-                        if (success) {
-                            responses.addSuccess(request.getPlatformOrderId());
-                        } else {
-                            responses.addFailure(request.getPlatformOrderId(), response.getMessage());
+        try {
+            List<OrderListRequestBody> orderRequests = new ArrayList<>();
+            for (List<String> ids : Lists.partition(platformOrderIds, 10)) {
+                orderRequests.add(new OrderListRequestBody().setPlatformOrderIds(ids));
+            }
+            List<Order> orders = getOrdersFromMabang(orderRequests, executor);
+            List<EditRemarkRequestBody> requests = invoiceRemarkRequests(invoiceNumber, platformOrderIds, orders, responses);
+            List<CompletableFuture<Void>> futures = requests.stream()
+                    .map(request -> CompletableFuture.runAsync(() -> {
+                        try {
+                            ChangeOrderResponse response = new EditRemarkRequest(request).send();
+                            synchronized (responses) {
+                                if (response.success()) {
+                                    responses.addSuccess(request.getPlatformOrderId());
+                                } else {
+                                    responses.addFailure(request.getPlatformOrderId(), response.getMessage());
+                                }
+                            }
+                        } catch (RuntimeException e) {
+                            log.error("Error editing order remark {}", request.getPlatformOrderId(), e);
+                            synchronized (responses) {
+                                responses.addFailure(request.getPlatformOrderId(), e.getMessage());
+                            }
                         }
-                    } catch (RuntimeException e) {
-                        log.error("Error editing order remark {} : {}", request.getPlatformOrderId(), e.getMessage());
-                        responses.addFailure(request.getPlatformOrderId(), e.getMessage());
-                    }
-                    return success;
-                }, executor))
-                .collect(Collectors.toList());
-        List<Boolean> results = editRemarkFutures.stream().map(CompletableFuture::join).collect(Collectors.toList());
-        long nbSuccesses = results.stream().filter(b -> b).count();
-        log.info("{}/{} order remarks updated successfully.", nbSuccesses, editRemarkRequests.size());
-        return responses;
+                    }, executor)).collect(toList());
+            futures.forEach(CompletableFuture::join);
+            return responses;
+        } finally {
+            executor.shutdown();
+        }
+    }
+
+    static List<EditRemarkRequestBody> invoiceRemarkRequests(String invoiceNumber, List<String> orderIds,
+                                                            List<Order> orders, ResponsesWithMsg<String> responses) {
+        Map<String, Order> ordersById = orders.stream().collect(Collectors.toMap(
+                Order::getPlatformOrderId, Function.identity(), (first, duplicate) -> first));
+        Pattern invoiceMarker = Pattern.compile("(?<![0-9-])" + Pattern.quote(invoiceNumber) + "(?![0-9-])");
+        List<EditRemarkRequestBody> requests = new ArrayList<>();
+        for (String orderId : new LinkedHashSet<>(orderIds)) {
+            Order order = ordersById.get(orderId);
+            if (order == null) {
+                responses.addFailure(orderId, "Order could not be retrieved from Mabang; please retry");
+                continue;
+            }
+            String remark = order.getRemark() == null ? "" : order.getRemark();
+            if (invoiceMarker.matcher(remark).find()) {
+                responses.addSuccess(orderId, "Invoice number already present; skipped");
+                continue;
+            }
+            requests.add(new EditRemarkRequestBody(orderId,
+                    remark.trim().isEmpty() ? invoiceNumber : remark + " " + invoiceNumber));
+        }
+        return requests;
     }
     @Override
     public ResponsesWithMsg<String> deleteOrderRemark(String invoiceNumber) {
