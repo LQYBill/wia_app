@@ -127,13 +127,20 @@ public class ShippingInvoiceFactory {
     }
 
     BigDecimal calculateEuCustomsHandlingFee(PlatformOrder order, LogisticChannel channel, Integer distinctHsCodeCount) {
+        return calculateEuCustomsHandlingFee(order, channel, distinctHsCodeCount, LocalDate.now(SHIPPING_DATE_ZONE));
+    }
+
+    BigDecimal calculateEuCustomsHandlingFee(PlatformOrder order, LogisticChannel channel, Integer distinctHsCodeCount,
+                                           LocalDate invoiceDate) {
         if (!EU_COUNTRY_LIST.contains(order.getCountry()) || !shouldCalculateSmallParcelTax(channel)
-                || order.getShippingTime() == null || distinctHsCodeCount == null || distinctHsCodeCount <= 0) {
+                || distinctHsCodeCount == null || distinctHsCodeCount <= 0) {
             return BigDecimal.ZERO;
         }
-        LocalDate shippingDate = Instant.ofEpochMilli(order.getShippingTime().getTime())
+        // Pre-shipping invoices have no shipping date yet; use the invoice date in that case.
+        LocalDate chargeDate = order.getShippingTime() == null ? invoiceDate
+                : Instant.ofEpochMilli(order.getShippingTime().getTime())
                 .atZone(SHIPPING_DATE_ZONE).toLocalDate();
-        return shippingDate.isBefore(EU_CUSTOMS_HANDLING_FEE_START_DATE) ? BigDecimal.ZERO
+        return chargeDate.isBefore(EU_CUSTOMS_HANDLING_FEE_START_DATE) ? BigDecimal.ZERO
                 : EU_CUSTOMS_HANDLING_FEE_PER_HSCODE.multiply(BigDecimal.valueOf(distinctHsCodeCount));
     }
 
