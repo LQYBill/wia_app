@@ -94,6 +94,8 @@ public class InvoiceController {
     @Autowired
     private IPlatformOrderService platformOrderService;
     @Autowired
+    private IPlatformOrderMabangService platformOrderMabangService;
+    @Autowired
     private IPlatformOrderContentService platformOrderContentService;
     @Autowired
     private PlatformOrderContentMapper platformOrderContentMap;
@@ -1055,6 +1057,32 @@ public class InvoiceController {
     public Result<?> getCompleteFeesEstimationPerOrder(@RequestParam("clientID") String clientId, @RequestParam("orderIds[]") List<String> orderIds) throws UserException {
         List<FeesEstimationPerOrder> estimations = shippingInvoiceService.getShippingEstimationPerOrder(clientId, orderIds);
         return Result.OK(estimations);
+    }
+
+    @PostMapping("/retagOrders")
+    public Result<?> retagOrders(@RequestBody InvoiceOrdersEditParam param) {
+        String invoiceNumber = param.getInvoiceNumber();
+        if (invoiceNumber == null || !invoiceNumber.matches("^[0-9]{4}-[0-9]{2}-[127][0-9]{3}$")) {
+            return Result.error(400, "Invalid invoice number");
+        }
+        if (PURCHASE.name().equals(Invoice.getType(invoiceNumber))) {
+            PurchaseOrder invoice = purchaseOrderService.getPurchaseByInvoiceNumber(invoiceNumber);
+            if (invoice == null || !Integer.valueOf(1).equals(invoice.getStatus())) {
+                return Result.error(400, "Cannot tag orders for an inactive invoice");
+            }
+        } else {
+            ShippingInvoice invoice = iShippingInvoiceService.getShippingInvoice(invoiceNumber);
+            if (invoice == null || !Integer.valueOf(1).equals(invoice.getStatus())) {
+                return Result.error(400, "Cannot tag orders for an inactive invoice");
+            }
+        }
+        // Use the same ownership check as the invoice download page.
+        Result<?> validity = checkInvoiceValidity(invoiceNumber);
+        if (!validity.isSuccess()) {
+            return validity;
+        }
+        // A manual repair applies to every related order, independent of automatic tagging options.
+        return Result.OK(platformOrderMabangService.editOrdersRemark(invoiceNumber));
     }
 
     @GetMapping(value = "/checkInvoiceValidity")

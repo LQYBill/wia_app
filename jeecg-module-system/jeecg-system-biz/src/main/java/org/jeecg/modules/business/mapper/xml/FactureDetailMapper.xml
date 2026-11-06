@@ -1,6 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.jeecg.modules.business.mapper.FactureDetailMapper">
+    <!-- Filter by invoice before aggregating; querying the grouped view materializes unrelated invoices. -->
+    <select id="getInvoiceDetail" resultType="org.jeecg.modules.business.vo.FactureDetail">
+        SELECT s.name                                   AS boutique,
+               po.platform_order_id                     AS mabangNum,
+               po.platform_order_number                 AS commandeNum,
+               po.tracking_number                       AS suiviNum,
+               po.order_time                            AS commandeDate,
+               po.shipping_time                         AS expeditionDate,
+               po.recipient                             AS clientName,
+               po.country                               AS country,
+               po.postcode                              AS postalCode,
+               JSON_ARRAYAGG(sku.erp_code)               AS sku,
+               JSON_ARRAYAGG(sku.en_name)                AS productName,
+               JSON_ARRAYAGG(poc.quantity)               AS quantity,
+               SUM(poc.purchase_fee)                    AS purchaseFee,
+               po.fret_fee                              AS fretFee,
+               SUM(poc.shipping_fee)                    AS livraisonFee,
+               po.order_service_fee + SUM(poc.service_fee) AS serviceFee,
+               po.picking_fee + SUM(poc.picking_fee)     AS pickingFee,
+               po.packaging_material_fee                AS packagingMaterialFee,
+               po.insurance_fee                         AS insuranceFee,
+               po.small_parcel_tax                      AS smallParcelTax,
+               COALESCE(po.eu_customs_handling_fee, 0.00) AS euCustomsHandlingFee,
+               SUM(poc.vat)                             AS TVA,
+               po.shipping_invoice_number               AS factureNum
+        FROM platform_order po
+        JOIN shop s ON po.shop_id = s.id
+        JOIN platform_order_content poc ON po.id = poc.platform_order_id
+        JOIN sku ON poc.sku_id = sku.id
+        WHERE po.shipping_invoice_number = #{invoiceNumber}
+          AND po.order_time &gt; '2026-01-01'
+          AND poc.erp_status &lt;&gt; 5
+        GROUP BY po.id, s.name, po.order_time
+        ORDER BY s.name, po.order_time
+    </select>
+
     <select id="getInvoiceDetailWithPurchaseFee" resultType="org.jeecg.modules.business.vo.FactureDetail">
         SELECT * FROM detail_de_facture_avec_frais_achat
         WHERE `N° de facture` = #{invoiceNumber}

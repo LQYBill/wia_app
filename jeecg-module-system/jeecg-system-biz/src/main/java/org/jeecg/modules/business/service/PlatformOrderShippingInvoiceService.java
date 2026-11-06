@@ -468,11 +468,7 @@ public class PlatformOrderShippingInvoiceService {
     }
 
     public List<FactureDetail> getInvoiceDetail(String invoiceNumber) {
-
-        QueryWrapper<FactureDetail> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("`N° de facture`", invoiceNumber);
-
-        return factureDetailMapper.selectList(queryWrapper);
+        return factureDetailMapper.getInvoiceDetail(invoiceNumber);
     }
 
     public List<FactureDetail> getInvoiceDetailWithPurchaseFee(String invoiceNumber) {
