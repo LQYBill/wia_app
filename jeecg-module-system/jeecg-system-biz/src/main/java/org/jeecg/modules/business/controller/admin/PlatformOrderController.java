@@ -22,6 +22,7 @@ import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.common.util.oConvertUtils;
 import org.jeecg.modules.business.domain.api.mabang.dochangeorder.*;
 import org.jeecg.modules.business.domain.api.mabang.getorderlist.*;
+import org.jeecg.modules.business.domain.api.mabang.orderUpdateOrderNewOrder.UpdateResult;
 import org.jeecg.modules.business.domain.api.shouman.JsonOrderCreationRequestBody;
 import org.jeecg.modules.business.domain.api.shouman.OrderCreationRequest;
 import org.jeecg.modules.business.domain.api.shouman.OrderCreationRequestBody;
@@ -672,11 +673,28 @@ public class PlatformOrderController {
             shoumanOrderService.updateBatchById(shoumanOrders);
             log.info("Finished updating Shouman Orders in DB");
 
+            boolean preparingUpdated = true;
+            if (!successfulOrderIds.isEmpty()) {
+                try {
+                    Response<List<UpdateResult>, List<UpdateResult>> response =
+                            platformOrderMabangService.updateOrderStatusToPreparing(new ArrayList<>(successfulOrderIds));
+                    preparingUpdated = response.getError().isEmpty();
+                    if (!preparingUpdated) {
+                        log.warn("Failed to mark Shouman orders as preparing in Mabang: {}", response.getError());
+                    }
+                } catch (RuntimeException e) {
+                    preparingUpdated = false;
+                    log.error("Failed to mark Shouman orders as preparing in Mabang: {}", successfulOrderIds, e);
+                }
+            }
+
             log.info("Started appending remarks to Mabang");
             appendMabangRemarks(new ArrayList<>(successfulOrderIds));
             log.info("Finished appending remarks to Mabang");
 
-            return Result.OK("订单已发送成功，请前往首曼系统确认，马帮备注标注中，请前往马帮确认");
+            return Result.OK(preparingUpdated
+                    ? "订单已发送成功，请前往首曼系统确认，马帮已标记配货中，备注标注中，请前往马帮确认"
+                    : "订单已发送成功，请前往首曼系统确认，马帮标记配货中存在失败，备注标注中，请前往马帮检查处理");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
