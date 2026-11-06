@@ -34,6 +34,9 @@ import java.util.*;
 @Slf4j
 public class SendInventoryJob implements Job {
 
+    // parameter: {"clientEmails":{"CLIENT_A":"inventory@example.com"},"clients":["CLIENT_A"]}
+    // clientEmails is required; clients optionally restricts the configured recipients.
+
     private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
     private final static String[] PURCHASE_INVENTORY_TITLES = {
             "SKU",
@@ -64,42 +67,58 @@ public class SendInventoryJob implements Job {
     public void execute(JobExecutionContext context) throws JobExecutionException {
         log.info("Started SendInventoryJob");
         List<String> clientCodes = new ArrayList<>();
-        List<Client> clients = null;
+        Map<String, String> clientEmails = new LinkedHashMap<>();
         String date = new SimpleDateFormat("yyyyMMdd").format(new Date());
 
         JobDataMap jobDataMap = context.getMergedJobDataMap();
         String parameter = ((String) jobDataMap.get("parameter"));
-        if (parameter != null) {
-            try {
-                JSONObject jsonObject = new JSONObject(parameter);
-                if (!jsonObject.isNull("clients")) {
-                    JSONArray clientJsonArray = jsonObject.getJSONArray("clients");
-                    for (int i = 0; i < clientJsonArray.length(); i++) {
-                        clientCodes.add(clientJsonArray.getString(i));
-                    }
-                    if (clientCodes.isEmpty()) {
-                        log.error("No client code given, aborting");
-                        return;
-                    }
-                    clients = clientService.getClientsByCodes(clientCodes);
-                }
-            } catch (JSONException e) {
-                log.error("Error while parsing parameter as JSON, falling back to default parameters.");
+        try {
+            if (parameter == null || parameter.trim().isEmpty()) {
+                throw new JobExecutionException("SendInventoryJob requires clientEmails in job parameters");
             }
+            JSONObject jsonObject = new JSONObject(parameter);
+            JSONObject emailJsonObject = jsonObject.getJSONObject("clientEmails");
+            Iterator<?> keys = emailJsonObject.keys();
+            while (keys.hasNext()) {
+                String clientCode = (String) keys.next();
+                Object email = emailJsonObject.get(clientCode);
+                if (!(email instanceof String) || !((String) email).trim().matches(EMAIL_REGEX)) {
+                    throw new JobExecutionException("Invalid inventory email for client " + clientCode);
+                }
+                clientEmails.put(clientCode, ((String) email).trim());
+            }
+            if (clientEmails.isEmpty()) {
+                throw new JobExecutionException("SendInventoryJob requires at least one client email");
+            }
+            if (!jsonObject.isNull("clients")) {
+                JSONArray clientJsonArray = jsonObject.getJSONArray("clients");
+                for (int i = 0; i < clientJsonArray.length(); i++) {
+                    clientCodes.add(clientJsonArray.getString(i));
+                }
+                if (clientCodes.isEmpty()) {
+                    log.error("No client code given, aborting");
+                    return;
+                }
+            } else {
+                clientCodes.addAll(clientEmails.keySet());
+            }
+            for (String clientCode : clientCodes) {
+                if (!clientEmails.containsKey(clientCode)) {
+                    throw new JobExecutionException("Missing inventory email for client " + clientCode);
+                }
+            }
+        } catch (JSONException e) {
+            throw new JobExecutionException("Invalid SendInventoryJob parameters; clientEmails must map client codes to email addresses", e);
         }
-        if (clients == null) {
-            clients = clientService.getActiveClientsToReceiveInventory();
-        } else {
-            log.info("Client list overwritten by job parameters : {}", parameter);
-        }
+        List<Client> clients = clientService.getClientsByCodes(clientCodes);
         log.info("{} clients to receive inventory", clients.size());
 
         for (Client client : clients) {
             String clientCode = client.getInternalCode();
             log.info("Current client {}", clientCode);
-            String email = client.getEmail();
-            if (!email.matches(EMAIL_REGEX)) {
-                log.error("Client {} doesn't have a valid email {}, skipping", clientCode, email);
+            String email = clientEmails.get(clientCode);
+            if (email == null) {
+                log.error("Client {} has no inventory email configured, skipping", clientCode);
                 continue;
             }
             List<SkuOrderPage> inventory = skuService.getInventoryByClientCode(clientCode);
@@ -108,7 +127,7 @@ public class SendInventoryJob implements Job {
                 log.info("Starting exporting inventory to Excel file");
                 Path path = exportInventoryToExcel(inventory, client, date);
                 log.info("Finished exporting inventory to Excel file with success");
-                sendInventoryByMail(client, path);
+                sendInventoryByMail(client, email, path);
 
             } catch (IOException e) {
                 log.error("Error while exporting inventory to Excel file : {}", e.getMessage());
@@ -164,7 +183,7 @@ public class SendInventoryJob implements Job {
         return path;
     }
 
-    private void sendInventoryByMail(Client client, Path path) {
+    private void sendInventoryByMail(Client client, String email, Path path) {
         log.info("Sending inventory to client {}", client.getInternalCode());
         String subject = "Votre inventaire du jour";
         Properties prop = emailService.getMailSender();
@@ -181,7 +200,7 @@ public class SendInventoryJob implements Job {
             freemarkerConfigurer = emailService.freemarkerClassLoaderConfig();
             Template freemarkerTemplate = freemarkerConfigurer.getConfiguration().getTemplate("client/dailyInventory.ftl");
             String htmlBody = FreeMarkerTemplateUtils.processTemplateIntoString(freemarkerTemplate, templateModel);
-            emailService.sendMessageWithAttachment(client.getEmail(), subject, htmlBody, path.toString(), session);
+            emailService.sendMessageWithAttachment(email, subject, htmlBody, path.toString(), session);
             log.info("Inventory sent to client {} with success", client.getInternalCode());
         }
         catch(Exception e) {
