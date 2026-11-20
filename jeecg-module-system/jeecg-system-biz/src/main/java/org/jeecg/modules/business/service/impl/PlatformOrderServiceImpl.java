@@ -586,7 +586,15 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
 
     @Override
     public List<String> findReadyAbnormalOrders(List<String> skus, List<String> shops) {
-        return platformOrderMap.findReadyAbnormalOrders(skus, shops);
+        if (shops == null || shops.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<String> shopIds = shopService.lambdaQuery().select(Shop::getId)
+                .in(Shop::getErpCode, shops).list().stream().map(Shop::getId).collect(toList());
+        if (shopIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return platformOrderMap.findReadyAbnormalOrdersByShopIds(skus, shopIds);
     }
 
     @Override

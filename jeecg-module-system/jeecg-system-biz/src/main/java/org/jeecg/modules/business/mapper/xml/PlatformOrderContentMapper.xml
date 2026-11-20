@@ -98,10 +98,35 @@
     <select id="searchSkuDetail"
             resultType="org.jeecg.modules.business.vo.SkuDetail"
             resultMap="skuDetailResultMap">
-        SELECT *
-        FROM sku_price_promotion
-        WHERE sku_id IN
-        <foreach collection="list" index="i" item="item" open="(" separator="," close=")">#{item}</foreach>
+        SELECT s.id AS sku_id, s.en_name AS name_en, s.zh_name AS name_zh,
+               s.erp_code, s.image_source,
+               spr.promotion_id, spr.promo_milestone, spr.quantity_purchased, spr.discount,
+               sp.id AS price_id, sp.price, sp.threshold, sp.discounted_price,
+               sp.currency_id, sp.date AS price_date
+        FROM sku s
+        LEFT JOIN sku_promotion_relation spr ON spr.sku_id = s.id
+        LEFT JOIN sku_price sp ON sp.sku_id = s.id
+          AND sp.date = (
+              SELECT MAX(latest.date)
+              FROM sku_price latest
+              WHERE latest.sku_id = s.id
+                AND latest.date &lt;= CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '+08:00')
+          )
+        WHERE
+        <choose>
+            <when test="list != null and list.size() > 0">
+                s.id IN
+                <foreach collection="list" item="item" open="(" separator="," close=")">#{item}</foreach>
+            </when>
+            <otherwise>1 = 0</otherwise>
+        </choose>
+        <!-- Preserve sales-volume ordering, but aggregate only the requested SKU's orders. -->
+        ORDER BY (
+            SELECT SUM(poc.quantity)
+            FROM platform_order_content poc
+            JOIN platform_order po ON po.id = poc.platform_order_id
+            WHERE poc.sku_id = s.id AND po.status = 2
+        ) DESC
     </select>
     <select id="getAllWeightsDiscountsServiceFees"
             resultType="org.jeecg.modules.business.vo.SkuWeightDiscountServiceFees">

@@ -1030,35 +1030,32 @@
         WHERE shipping_invoice_number = #{invoiceNumber} OR purchase_invoice_number = #{invoiceNumber};
     </select>
     <select id="countPlatformOrders" resultType="org.jeecg.modules.business.vo.OrderKpi">
-        WITH processedByUser AS (
-            SELECT invoice_number
-            FROM shipping_invoice si
-            WHERE create_by = #{username}
-            UNION ALL
-            SELECT invoice_number
-            FROM purchase_order po
-            WHERE create_by = #{username}
-        ), processed AS (
-            SELECT COUNT(*) AS processed
-            FROM platform_order
-            WHERE erp_status = 4
-            AND IF(#{showAllData} = true,
-                   shipping_invoice_number IS NOT NULL,
-                   (shipping_invoice_number IN (SELECT invoice_number FROM processedByUser) OR purchase_invoice_number IN (SELECT invoice_number FROM processedByUser))
-                )
-            AND shipping_time BETWEEN #{start} AND #{end}
-        ), processing AS (
-            SELECT COUNT(*) AS processing
-            FROM platform_order
-            WHERE erp_status IN (1,2,3)
-            AND order_time &lt;= #{end}
-            AND IF(#{showAllData} = true,
-                   shipping_invoice_number IS NOT NULL,
-                   shipping_invoice_number IN (SELECT invoice_number FROM processedByUser) OR purchase_invoice_number IN (SELECT invoice_number FROM processedByUser)
-                )
-        )
-        SELECT processed, processing
-        FROM processed, processing;
+        <if test="!showAllData">
+            WITH processedByUser AS (
+                SELECT invoice_number FROM shipping_invoice WHERE create_by = #{username}
+                UNION
+                SELECT invoice_number FROM purchase_order WHERE create_by = #{username}
+            ), visibleOrders AS (
+                SELECT po.id, po.erp_status, po.shipping_time, po.order_time
+                FROM processedByUser invoices
+                JOIN platform_order po ON po.shipping_invoice_number = invoices.invoice_number
+                UNION
+                SELECT po.id, po.erp_status, po.shipping_time, po.order_time
+                FROM processedByUser invoices
+                JOIN platform_order po ON po.purchase_invoice_number = invoices.invoice_number
+            )
+        </if>
+        SELECT COALESCE(SUM(CASE WHEN po.erp_status = '4'
+                    AND po.shipping_time BETWEEN #{start} AND #{end} THEN 1 ELSE 0 END), 0) AS processed,
+               COALESCE(SUM(CASE WHEN po.erp_status IN ('1', '2', '3')
+                    AND po.order_time &lt;= #{end} THEN 1 ELSE 0 END), 0) AS processing
+        FROM
+        <choose>
+            <when test="showAllData">platform_order</when>
+            <otherwise>visibleOrders</otherwise>
+        </choose>
+        po
+        <if test="showAllData">WHERE po.shipping_invoice_number IS NOT NULL</if>
     </select>
     <select id="fetchShippingPeriodAndType" resultType="java.util.Map">
         SELECT DATE_FORMAT(IF(po.shipping_time &lt; s.create_time, MIN(po.shipping_time), MIN(po.order_time)),'%Y-%m-%d %T') AS startDate,
@@ -1153,98 +1150,59 @@
         AND order_time &lt;= #{endDate}
         AND shipping_invoice_number IS NULL;
     </select>
-    <select id="findReadyAbnormalOrders" resultType="java.lang.String">
-        WITH skusInAbnormalOrders AS (
-            SELECT poc.sku_id , poc.platform_order_id, poc.erp_status
-            FROM platform_order po
-            JOIN platform_order_content poc ON po.id = poc.platform_order_id
-            JOIN shop s ON po.shop_id = s.id
-            WHERE can_send = 2
-            AND po.erp_status IN (1,2)
-            AND po.order_time &gt;= NOW() - INTERVAL 5 DAY
-            AND s.erp_code IN
-            <foreach
-                    collection="shops"
-                    separator=","
-                    open="("
-                    close=")"
-                    index="index"
-                    item="shop">
-                #{shop}
-            </foreach>
-        ),
-        orders_with_bad_sku AS (
-            SELECT DISTINCT
-            CASE
-                WHEN s.id IS NULL AND sao.erp_status &lt;&gt; 5 THEN sao.platform_order_id
-            END as order_id
-            FROM skusInAbnormalOrders sao
-            LEFT JOIN sku s ON sao.sku_id = s.id
-        ),
-        orders_with_skus AS (
-            SELECT DISTINCT poc.platform_order_id as id
-            FROM platform_order_content poc
-            JOIN sku s ON poc.sku_id = s.id
-            JOIN platform_order po ON poc.platform_order_id = po.id
-            WHERE po.can_send IN (1,2)
-            AND po.can_send = 2
-            AND po.order_time &gt;= NOW() - INTERVAL 5 DAY
-            AND s.erp_code IN
-            <foreach
-                    collection="skus"
-                    separator=","
-                    open="("
-                    close=")"
-                    index="index"
-                    item="sku">
-                #{sku}
-            </foreach>
-            AND poc.erp_status &lt;&gt; 5
-            AND poc.warehouse_name != '法国巴黎仓库-唯客路'
-        ),
-        orders_ready AS (
-            SELECT po.id as id
-            FROM platform_order po
-            JOIN shop s ON po.shop_id = s.id
-            LEFT JOIN orders_with_bad_sku owbs ON po.id = owbs.order_id
-            WHERE owbs.order_id IS NULL
-            AND po.erp_status IN (1,2)
-            AND po.can_send = 2
-            AND po.order_time &gt;= NOW() - INTERVAL 5 DAY
-            AND s.erp_code IN
-            <foreach
-                    collection="shops"
-                    separator=","
-                    open="("
-                    close=")"
-                    index="index"
-                    item="shop">
-                #{shop}
-            </foreach>
-        )
-        SELECT ors.id
-        FROM orders_ready ors
-        WHERE ors.id NOT IN (SELECT * FROM orders_with_skus);
+    <select id="findReadyAbnormalOrdersByShopIds" resultType="java.lang.String">
+        <!-- Shop IDs are resolved first so the composite order index can use constant ranges.
+             STRAIGHT_JOIN also avoids materializing exclusions over all orders. -->
+        SELECT STRAIGHT_JOIN po.id
+        FROM platform_order po
+        WHERE
+        <choose>
+            <when test="shopIds != null and shopIds.size() > 0">
+                po.shop_id IN
+                <foreach collection="shopIds" item="shopId" open="(" close=")" separator=",">#{shopId}</foreach>
+            </when>
+            <otherwise>1 = 0</otherwise>
+        </choose>
+          AND po.can_send = '2'
+          AND po.erp_status IN ('1', '2')
+          AND po.order_time &gt;= NOW() - INTERVAL 5 DAY
+          AND NOT EXISTS (
+              SELECT 1
+              FROM platform_order_content poc
+              LEFT JOIN sku sk ON sk.id = poc.sku_id
+              WHERE poc.platform_order_id = po.id
+                AND poc.erp_status &lt;&gt; '5'
+                AND sk.id IS NULL
+          )
+        <if test="skus != null and skus.size() > 0">
+          AND NOT EXISTS (
+              SELECT 1
+              FROM platform_order_content poc
+              JOIN sku sk ON sk.id = poc.sku_id
+              WHERE poc.platform_order_id = po.id
+                AND poc.erp_status &lt;&gt; '5'
+                AND poc.warehouse_name &lt;&gt; '法国巴黎仓库-唯客路'
+                AND sk.erp_code IN
+                <foreach collection="skus" item="sku" open="(" close=")" separator=",">#{sku}</foreach>
+          )
+        </if>
     </select>
     <select id="findReadyAbnormalOrdersWithSkus" resultType="java.lang.String">
         SELECT DISTINCT poc.platform_order_id
         FROM platform_order_content poc
         JOIN sku s ON poc.sku_id = s.id
         JOIN platform_order po ON poc.platform_order_id = po.id
-        WHERE po.can_send IN (1,2)
-        AND po.can_send = 2
+        WHERE po.can_send = '2'
         AND po.order_time &gt;= NOW() - INTERVAL 5 DAY
-        AND s.erp_code IN
-        <foreach
-            collection="skus"
-            separator=","
-            open="("
-            close=")"
-            index="index"
-            item="sku">
-                #{sku}
-        </foreach>
-        AND poc.erp_status &lt;&gt; 5
+        AND
+        <choose>
+            <when test="skus != null and skus.size() > 0">
+                s.erp_code IN
+                <foreach collection="skus" item="sku" open="(" close=")" separator=",">#{sku}</foreach>
+            </when>
+            <otherwise>1 = 0</otherwise>
+        </choose>
+        AND poc.erp_status &lt;&gt; '5'
         AND poc.warehouse_name = '法国巴黎仓库-唯客路';
     </select>
 
@@ -1553,32 +1511,29 @@
                  JOIN sku s ON s.id = tps.sku_id
                  JOIN platform_order_content poc ON poc.sku_id = s.id
                  JOIN platform_order p ON p.id = poc.platform_order_id
-                 JOIN shop on p.shop_id = shop.id
+                 JOIN shop ON shop.id = p.shop_id
+        <!-- Retain NOT IN's existing NULL semantics; the attribution table already has an order index. -->
         WHERE p.platform_order_id NOT IN (SELECT platform_order_id FROM third_party_stock_attribution tpsa)
-          AND p.country IN
-            <foreach
-                    collection="countries"
-                    index="index"
-                    item="country"
-                    open="("
-                    close=")"
-                    separator=",">
-                #{country}
-            </foreach>
+          AND
+          <choose>
+              <when test="countries != null and countries.size() > 0">
+                  p.country IN
+                  <foreach collection="countries" item="country" open="(" close=")" separator=",">#{country}</foreach>
+              </when>
+              <otherwise>1 = 0</otherwise>
+          </choose>
           AND tps.quantity > 0
           AND poc.warehouse_name &lt;&gt; tps.warehouse_name
-          AND shop.erp_code IN
-            <foreach
-                    collection="shopCodes"
-                    index="index"
-                    item="shopCode"
-                    open="("
-                    close=")"
-                    separator=",">
-                #{shopCode}
-            </foreach>
+          AND
+          <choose>
+              <when test="shopCodes != null and shopCodes.size() > 0">
+                  shop.erp_code IN
+                  <foreach collection="shopCodes" item="shopCode" open="(" close=")" separator=",">#{shopCode}</foreach>
+              </when>
+              <otherwise>1 = 0</otherwise>
+          </choose>
           AND p.create_time > #{startDateTime}
-           AND poc.erp_status in (1);
+          AND poc.erp_status = '1';
     </select>
     <select id="searchOrdersSkus" resultType="org.jeecg.modules.business.vo.SkuOrderPage">
     WITH orders_skus AS (

@@ -80,6 +80,10 @@ public class RemoveOrdersByPlatformWarehouseJob implements Job {
 
         log.info("Start fetching orders from shops {} and platform warehouses {}", shopCodes, platformWarehouses);
         List<PlatformOrder> orders = platformOrderService.fetchByPlatformWarehouse(shopCodes, platformWarehouses);
+        if (orders.isEmpty()) {
+            log.info("No orders can be found, job abort.");
+            return;
+        }
         List<PlatformOrderContent> orderContents = platformOrderContentService
                 .fetchOrderContent(orders.stream().map(PlatformOrder::getId)
                         .collect(Collectors.toList()));
