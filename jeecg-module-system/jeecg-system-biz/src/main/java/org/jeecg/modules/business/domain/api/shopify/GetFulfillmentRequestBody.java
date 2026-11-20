@@ -12,7 +12,7 @@ public class GetFulfillmentRequestBody extends ShopifyRequestBody {
 
     public GetFulfillmentRequestBody(String sitePrefix, String platformOrderId, String shopToken) {
         super(sitePrefix, shopToken);
-        this.platformOrderId = platformOrderId.split("_")[0];
+        this.platformOrderId = platformOrderId.replaceFirst("_[0-9]+$", "");
     }
 
     public GetFulfillmentRequestBody(PlatformOrderShopSync platformOrderShopSync) {

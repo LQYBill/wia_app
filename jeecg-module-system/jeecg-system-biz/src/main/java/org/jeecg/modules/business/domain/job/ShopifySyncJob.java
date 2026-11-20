@@ -18,13 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static java.util.stream.Collectors.toMap;
 
 @Slf4j
 public class ShopifySyncJob implements Job {
@@ -60,27 +57,28 @@ public class ShopifySyncJob implements Job {
         ObjectMapper mapper = new ObjectMapper();
         mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         List<PlatformOrderShopSync> ordersReadyForShopifySync = platformOrderService.fetchOrderInShopsReadyForShopifySync(shops);
-        Map<String, PlatformOrderShopSync> syncMap = ordersReadyForShopifySync.stream()
-                .collect(toMap(sync -> sync.getPlatformOrderId().split("_")[0], Function.identity()));
-
-        List<FulfillmentOrder> fulfillmentOrders = new ArrayList<>();
+        // Keep the original local order attached to each request, including split-order suffixes.
+        Map<CreateFulfillmentRequestBody, String> sourceOrderIds = new ConcurrentHashMap<>();
 
         ExecutorService throttlingExecutorService = ThrottlingExecutorService.createExecutorService(DEFAULT_NUMBER_OF_THREADS,
                 SHOPIFY_API_RATE_LIMIT_PER_SHOP_PER_MINUTE, TimeUnit.MINUTES);
         log.info("Constructing fulfillment retrieval requests");
-        List<GetFulfillmentRequestBody> getFulfillmentRequestBodyList = new ArrayList<>();
-        ordersReadyForShopifySync.forEach(o -> getFulfillmentRequestBodyList.add(new GetFulfillmentRequestBody(o)));
+        log.info("{} fulfillment retrieval requests to be sent to ShopifyAPI", ordersReadyForShopifySync.size());
 
-        log.info("{} fulfillment retrieval requests to be sent to ShopifyAPI", getFulfillmentRequestBodyList.size());
-
-        List<CompletableFuture<Boolean>> futures = getFulfillmentRequestBodyList.stream()
-                .map(body -> CompletableFuture.supplyAsync(() -> {
+        List<CompletableFuture<Boolean>> futures = ordersReadyForShopifySync.stream()
+                .map(order -> CompletableFuture.supplyAsync(() -> {
                     boolean success = false;
                     try {
-                        GetFulfillmentRequest getFulfillmentRequest = new GetFulfillmentRequest(body);
-                        String responseStr = getFulfillmentRequest.rawSend().getBody();
+                        String responseStr = fetchFulfillmentOrders(new GetFulfillmentRequestBody(order));
                         FulfillmentOrdersResponse response = mapper.readValue(responseStr, FulfillmentOrdersResponse.class);
-                        fulfillmentOrders.addAll(response.getFulfillmentOrders());
+                        for (FulfillmentOrder fulfillmentOrder : response.getFulfillmentOrders()) {
+                            if (fulfillmentOrder.isOpen()) {
+                                sourceOrderIds.put(new CreateFulfillmentRequestBody(fulfillmentOrder.getId(), order),
+                                        order.getPlatformOrderId());
+                            } else {
+                                log.info("Order {} is already fulfilled, skipping.", order.getPlatformOrderId());
+                            }
+                        }
                         success = true;
                     } catch (RuntimeException e) {
                         log.error("Error communicating with ShopifyAPI", e);
@@ -92,31 +90,22 @@ public class ShopifySyncJob implements Job {
                 .collect(Collectors.toList());
         List<Boolean> results = futures.stream().map(CompletableFuture::join).collect(Collectors.toList());
         long nbSuccesses = results.stream().filter(b -> b).count();
-        log.info("{}/{} fulfillment retrieval requests have succeeded.", nbSuccesses, getFulfillmentRequestBodyList.size());
+        log.info("{}/{} fulfillment retrieval requests have succeeded.", nbSuccesses, ordersReadyForShopifySync.size());
 
         log.info("Constructing fulfillment creation requests");
-        List<CreateFulfillmentRequestBody> createFulfillmentRequests = new ArrayList<>();
-        for (FulfillmentOrder fulfillmentOrder : fulfillmentOrders) {
-            if (fulfillmentOrder.isOpen()) {
-                PlatformOrderShopSync platformOrderShopSync = syncMap.get(fulfillmentOrder.getOrderId());
-                createFulfillmentRequests.add(new CreateFulfillmentRequestBody(fulfillmentOrder.getId(), platformOrderShopSync));
-            } else {
-                log.info("Order {} is already fulfilled, skipping.", fulfillmentOrder.getOrderId());
-            }
-        }
+        List<CreateFulfillmentRequestBody> createFulfillmentRequests = new ArrayList<>(sourceOrderIds.keySet());
         log.info("{} fulfillment creation requests to be sent to ShopifyAPI", createFulfillmentRequests.size());
 
-        Set<String> syncedPlatformOrderIds = new HashSet<>();
+        Set<String> syncedPlatformOrderIds = ConcurrentHashMap.newKeySet();
         List<CompletableFuture<Boolean>> fulfillmentCreationFutures = createFulfillmentRequests.stream()
                 .map(changeOrderRequestBody -> CompletableFuture.supplyAsync(() -> {
                     boolean success = false;
                     try {
-                        CreateFulfillmentRequest createFulfillmentRequest = new CreateFulfillmentRequest(changeOrderRequestBody);
-                        String responseStr = createFulfillmentRequest.rawSend().getBody();
+                        String responseStr = createFulfillment(changeOrderRequestBody);
                         FulfillmentCreationResponse response = mapper.readValue(responseStr, FulfillmentCreationResponse.class);
                         success = response.getFulfillment().isSuccess();
                         if (success) {
-                            syncedPlatformOrderIds.add(response.getFulfillment().getOrderId());
+                            syncedPlatformOrderIds.add(sourceOrderIds.get(changeOrderRequestBody));
                         }
                     } catch (RuntimeException e) {
                         log.error("Error communicating with ShopifyAPI", e);
@@ -127,6 +116,7 @@ public class ShopifySyncJob implements Job {
                 }, throttlingExecutorService))
                 .collect(Collectors.toList());
         results = fulfillmentCreationFutures.stream().map(CompletableFuture::join).collect(Collectors.toList());
+        throttlingExecutorService.shutdown();
         nbSuccesses = results.stream().filter(b -> b).count();
         log.info("{}/{} fulfillment creation requests have succeeded.", nbSuccesses, createFulfillmentRequests.size());
 
@@ -134,5 +124,13 @@ public class ShopifySyncJob implements Job {
             platformOrderService.updateShopifySynced(syncedPlatformOrderIds);
             log.info("Those orders have been marked as shopify synced : {} ", syncedPlatformOrderIds);
         }
+    }
+
+    protected String fetchFulfillmentOrders(GetFulfillmentRequestBody body) {
+        return new GetFulfillmentRequest(body).rawSend().getBody();
+    }
+
+    protected String createFulfillment(CreateFulfillmentRequestBody body) {
+        return new CreateFulfillmentRequest(body).rawSend().getBody();
     }
 }
