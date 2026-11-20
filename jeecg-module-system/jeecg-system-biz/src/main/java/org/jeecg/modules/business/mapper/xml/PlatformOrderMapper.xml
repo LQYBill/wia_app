@@ -502,25 +502,6 @@
         ORDER BY order_time;
     </select>
 
-    <select id="fetchOrderInShopsWithoutShopifyTags" resultType="org.jeecg.modules.business.entity.PlatformOrderShopSync">
-        SELECT po.platform_order_id, po.tracking_number, s.shopify_prefix, s.shopify_token, po.postcode
-        FROM platform_order po join shop s ON po.shop_id = s.id
-        WHERE erp_code IN
-        <foreach
-                collection="shops"
-                separator=","
-                open="("
-                close=")"
-                index="index"
-                item="shop"
-        >
-            #{shop}
-        </foreach>
-        AND erp_status in (1,2)
-        AND shopify_tags IS NULL
-        ORDER BY order_time;
-    </select>
-
     <select id="fetchOrderInShopsReadyForAbnNumberJob" resultType="org.jeecg.modules.business.entity.PlatformOrder">
         SELECT po.*
         FROM platform_order po join shop s ON po.shop_id = s.id
@@ -1547,11 +1528,17 @@
     </select>
 
     <select id="fetchPlatformOrdersWithShopifyTags" resultType="org.jeecg.modules.business.entity.PlatformOrder">
-        SELECT *
-        FROM platform_order
-        WHERE shopify_tags IS NOT NULL
-        AND erp_status in (1,2)
-        AND already_set_abnormal = 0;
+        SELECT po.id, po.platform_order_id, po.shopify_tags
+        FROM platform_order po
+        JOIN shop s ON s.id = po.shop_id
+        WHERE s.erp_code IN
+        <foreach collection="shops" item="shop" open="(" separator="," close=")">
+            #{shop}
+        </foreach>
+        AND po.shopify_tags != ''
+        AND po.erp_status IN (1, 2)
+        AND po.can_send = 1
+        AND po.already_set_abnormal = 0
     </select>
 
     <select id="countOrdersByShop" resultType="java.lang.Integer">

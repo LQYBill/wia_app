@@ -145,6 +145,19 @@
     </update>
 
 
+    <update id="batchUpdateShopifyTags">
+        UPDATE platform_order
+        SET shopify_tags = CASE id
+        <foreach collection="orders" item="order" separator=" ">
+            WHEN #{order.id} THEN #{order.platformOrderTags}
+        </foreach>
+        END
+        WHERE id IN
+        <foreach collection="orders" item="order" open="(" separator="," close=")">
+            #{order.id}
+        </foreach>
+    </update>
+
     <delete id="batchDeleteByMainID">
         DELETE
         FROM platform_order_content poc
@@ -182,7 +195,7 @@
         INSERT INTO platform_order(id, create_by, create_time, update_by, update_time, shop_id, logistic_channel_name,
         platform_order_id, platform_order_number, erp_order_id, tracking_number, internal_tracking_number, order_time,
         shipping_time, recipient, country, city, postcode, tax_number, erp_status, product_available, can_send,
-        has_phone_number, shipping_service, buyer_message
+        has_phone_number, shipping_service, buyer_message, shopify_tags
         )
         VALUES
         <foreach collection="orders" separator="," open="" close="" item="order" index="index">
@@ -211,7 +224,8 @@
             #{order.canSend},
             #{order.hasPhoneNumber},
             #{order.shippingService},
-            #{order.buyerMessage}
+            #{order.buyerMessage},
+            #{order.platformOrderTags,jdbcType=VARCHAR}
             )
         </foreach>
     </insert>

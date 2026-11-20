@@ -76,6 +76,8 @@ public interface PlatformOrderMabangMapper extends BaseMapper<Order> {
 
     int batchUpdateById(@Param("orders") List<Order> orders);
 
+    int batchUpdateShopifyTags(@Param("orders") List<Order> orders);
+
     /**
      * Batch update erp status of order contents
      *

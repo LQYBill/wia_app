@@ -187,6 +187,10 @@ public class Order {
     @JSONField(name = "buyerMessage")
     private String buyerMessage;
 
+    @JSONField(name = "platformOrderTags")
+    @TableField("shopify_tags")
+    private String platformOrderTags;
+
     @JSONField(name = "paidTime")
     public void setPaidTimeRaw(String paidTime) {
         this.orderTime = parseMabangFranceTime(paidTime);

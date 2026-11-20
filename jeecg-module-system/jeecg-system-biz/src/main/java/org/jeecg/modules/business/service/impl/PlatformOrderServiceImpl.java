@@ -430,11 +430,6 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
     }
 
     @Override
-    public List<PlatformOrderShopSync> fetchOrderInShopsWithoutShopifyTags(List<String> shopCodes) {
-        return platformOrderMap.fetchOrderInShopsWithoutShopifyTags(shopCodes);
-    }
-
-    @Override
     public List<PlatformOrder> fetchOrderInShopsReadyForAbnNumberJob(List<String> shopCodes) {
         return platformOrderMap.fetchOrderInShopsReadyForAbnNumberJob(shopCodes);
     }
@@ -698,8 +693,8 @@ public class PlatformOrderServiceImpl extends ServiceImpl<PlatformOrderMapper, P
         return platformOrderMap.fetchPlatformOrdersByShopifyNotes(shopifyNotes);
     }
 
-    public List<PlatformOrder> fetchPlatformOrdersWithShopifyTags() {
-        return platformOrderMap.fetchPlatformOrdersWithShopifyTags();
+    public List<PlatformOrder> fetchPlatformOrdersWithShopifyTags(List<String> shopCodes) {
+        return platformOrderMap.fetchPlatformOrdersWithShopifyTags(shopCodes);
     }
 
     @Override

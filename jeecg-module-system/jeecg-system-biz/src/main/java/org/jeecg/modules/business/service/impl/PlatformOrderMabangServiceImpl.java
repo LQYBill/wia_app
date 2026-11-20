@@ -94,6 +94,7 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
         ArrayList<Order> ordersFromShippedToCompleted = new ArrayList<>();
         ArrayList<Order> invoicedShippedOrders = new ArrayList<>();
         ArrayList<Order> obsoleteOrders = new ArrayList<>();
+        List<Order> ordersWithChangedTags = new ArrayList<>();
         for (Order retrievedOrder : orders) {
             PlatformOrder orderInDatabase = platformOrderIDToExistOrders.get(retrievedOrder.getPlatformOrderId());
             if (orderInDatabase == null) {
@@ -101,6 +102,11 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
             } else {
                 // re-affect retrieved orders with ID in database
                 retrievedOrder.setId(orderInDatabase.getId());
+                // Refresh tags even when the order status or invoice protects the other fields.
+                String tags = retrievedOrder.getPlatformOrderTags();
+                if (tags != null && !tags.equals(orderInDatabase.getShopifyTags())) {
+                    ordersWithChangedTags.add(retrievedOrder);
+                }
                 // For orders that pass from Shipped to Completed, we must NOT delete then re-insert their contents
                 // Because we would lose all calculated fees (shipping, vat, service)
                 if (retrievedOrder.getStatus().equals(OrderStatus.Completed.getCode())) {
@@ -222,6 +228,10 @@ public class PlatformOrderMabangServiceImpl extends ServiceImpl<PlatformOrderMab
             }
         } catch (RuntimeException e) {
             log.error(e.getLocalizedMessage());
+        }
+
+        if (!ordersWithChangedTags.isEmpty()) {
+            platformOrderMabangMapper.batchUpdateShopifyTags(ordersWithChangedTags);
         }
     }
 
