@@ -1,0 +1,388 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "LC Company Logistics API (read-only)",
+    "version": "1.0",
+    "description": "Read-only access to Japanese translation data. See the Markdown documentation for concepts."
+  },
+  "servers": [
+    {
+      "url": "https://wqrffspljzjivbqpnfng.supabase.co/functions/v1/logistics-api"
+    }
+  ],
+  "security": [
+    {
+      "ApiKey": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "ApiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key"
+      }
+    },
+    "schemas": {
+      "TranslationLine": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "string (uuid) — Unique id of the translation line"
+          },
+          "source": {
+            "description": "\"excel\" | \"tableau\" — excel = Excel Traduction Japonais / Traduction Japonais Agent; tableau = Excel Tableau Agent (frames)"
+          },
+          "order_id": {
+            "description": "string — Shopify order id"
+          },
+          "order_name": {
+            "description": "string — Shopify order number, e.g. \"#95721\""
+          },
+          "line_item_id": {
+            "description": "string|null — Shopify line item id"
+          },
+          "item_index": {
+            "description": "integer — 0-based index of the product inside the order"
+          },
+          "attr_index": {
+            "description": "integer — 0-based index of the personalization inside the product (0 = first)"
+          },
+          "attribute_key": {
+            "description": "string|null — Personalization field name from Shopify (e.g. \"Gravure au dos\")"
+          },
+          "product_sku": {
+            "description": "string|null — Variant SKU"
+          },
+          "product_title": {
+            "description": "string|null — Product title"
+          },
+          "quantity": {
+            "description": "integer|null — Quantity"
+          },
+          "original_text": {
+            "description": "string — Text typed by the customer"
+          },
+          "translation": {
+            "description": "string|null — Final translation (Japanese, runes or hieroglyphs). Agent corrections already applied."
+          },
+          "agent_override": {
+            "description": "boolean — true if the translation/fields were corrected in Traduction Japonais Agent"
+          },
+          "details": {
+            "description": "string|null — Extra info (options, notes)"
+          },
+          "has_gift_box": {
+            "description": "boolean|null — Gift box ordered (excel source only)"
+          },
+          "customer_country_code": {
+            "description": "string|null — ISO country code of delivery"
+          },
+          "sent": {
+            "description": "boolean — true once the line was validated and sent (appears in the Sent tab / an Excel session)"
+          },
+          "email_sent_at": {
+            "description": "string|null (ISO 8601 UTC) — Send time; its UTC date is the session date"
+          },
+          "created_at": {
+            "description": "string (ISO 8601) — Creation time"
+          },
+          "updated_at": {
+            "description": "string (ISO 8601) — Last change"
+          },
+          "rotate": {
+            "description": "string|null — Value for the \"rotate\" Excel column (couple bracelets: 情侣款为男款 for personalization 1, 情侣款为女款 for personalization 2), else null"
+          }
+        }
+      },
+      "Page": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TranslationLine"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Check key",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sessions": {
+      "get": {
+        "summary": "List sent sessions",
+        "responses": {
+          "200": {
+            "description": "Sessions"
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/translations": {
+      "get": {
+        "summary": "List translation lines",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "description": "excel (default) or tableau",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "excel",
+                "tableau"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "1-500, default 100",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "description": "next_cursor from previous page",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "session_date",
+            "in": "query",
+            "required": false,
+            "description": "YYYY-MM-DD",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sent",
+            "in": "query",
+            "required": false,
+            "description": "true|false",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sent_from",
+            "in": "query",
+            "required": false,
+            "description": "YYYY-MM-DD",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sent_to",
+            "in": "query",
+            "required": false,
+            "description": "YYYY-MM-DD",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "created_from",
+            "in": "query",
+            "required": false,
+            "description": "YYYY-MM-DD",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "created_to",
+            "in": "query",
+            "required": false,
+            "description": "YYYY-MM-DD",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order_name",
+            "in": "query",
+            "required": false,
+            "description": "e.g. 95721",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sku",
+            "in": "query",
+            "required": false,
+            "description": "exact SKU",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/{order_number}": {
+      "get": {
+        "summary": "Lines of one order",
+        "parameters": [
+          {
+            "name": "order_number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "description": "excel (default) or tableau",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "excel",
+                "tableau"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "1-500, default 100",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "description": "next_cursor from previous page",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
