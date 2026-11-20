@@ -19,6 +19,8 @@ import javax.mail.internet.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.List;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -98,7 +100,16 @@ public class EmailServiceImpl implements EmailService {
     @Override
     @Transactional
     public void sendMessageWithAttachment(String recipient, String subject, String text, String attachment, Session session) throws MessagingException, IOException {
-        Message message = new MimeMessage(session);
+        sendMessageWithAttachments(recipient, subject, text, Collections.singletonList(attachment), session);
+    }
+
+    @Override
+    public void sendMessageWithAttachments(String recipient, String subject, String text, List<String> attachments, Session session) throws MessagingException, IOException {
+        Transport.send(createMessageWithAttachments(recipient, subject, text, attachments, session));
+    }
+
+    MimeMessage createMessageWithAttachments(String recipient, String subject, String text, List<String> attachments, Session session) throws MessagingException, IOException {
+        MimeMessage message = new MimeMessage(session);
 
         message.setFrom(new InternetAddress(Objects.requireNonNull(env.getProperty("spring.mail.username"))));
         message.setRecipient(Message.RecipientType.TO, InternetAddress.parse(recipient)[0]);
@@ -110,15 +121,16 @@ public class EmailServiceImpl implements EmailService {
         BodyPart messageBodyPart = new MimeBodyPart();
         messageBodyPart.setContent(text, "text/html; charset=utf-8");
 
-        MimeBodyPart attachmentPart = new MimeBodyPart();
-        attachmentPart.attachFile(new File(attachment));
-
         Multipart multipart = new MimeMultipart();
         multipart.addBodyPart(messageBodyPart);
-        multipart.addBodyPart(attachmentPart);
+        for (String attachment : attachments) {
+            MimeBodyPart attachmentPart = new MimeBodyPart();
+            attachmentPart.attachFile(new File(attachment));
+            multipart.addBodyPart(attachmentPart);
+        }
 
         message.setContent(multipart);
-        Transport.send(message);
+        return message;
     }
     @Override
     @Transactional

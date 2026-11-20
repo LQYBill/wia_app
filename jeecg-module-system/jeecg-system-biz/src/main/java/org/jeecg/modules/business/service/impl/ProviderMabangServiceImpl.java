@@ -89,6 +89,17 @@ public class ProviderMabangServiceImpl extends ServiceImpl<ProviderMabangMapper,
     public Responses addPurchaseOrderToMabang(Map<String, Integer> skuQuantities, InvoiceMetaData metaData, AtomicReference<Map<String, LocalDateTime>> providersHistory) {
         LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
         String mabangUsername = sysUser.getMabangUsername();
+        return addPurchaseOrderToMabang(skuQuantities, metaData, providersHistory, mabangUsername, sysUser.getId());
+    }
+
+    @Override
+    public Responses addAutomaticPurchaseOrderToMabang(Map<String, Integer> skuQuantities, InvoiceMetaData metaData,
+            AtomicReference<Map<String, LocalDateTime>> providersHistory, String mabangUsername) {
+        return addPurchaseOrderToMabang(skuQuantities, metaData, providersHistory, mabangUsername, null);
+    }
+
+    private Responses addPurchaseOrderToMabang(Map<String, Integer> skuQuantities, InvoiceMetaData metaData,
+            AtomicReference<Map<String, LocalDateTime>> providersHistory, String mabangUsername, String userId) {
         Responses responses = new Responses();
         String content = metaData.getFilename();
         List<String> stockSkuList = new ArrayList<>();
@@ -134,6 +145,10 @@ public class ProviderMabangServiceImpl extends ServiceImpl<ProviderMabangMapper,
             skuDataMap.put(skuData.getErpCode(), skuData);
         }
         Map<String, String> erpCodeMismatchNotes = logSkuCodeMismatchDiagnostics(skuQuantities, skuDataMap);
+        if (!skuDataMap.keySet().containsAll(skuQuantities.keySet())) {
+            responses.addFailure("Missing SKU data from Mabang; no purchase plan created");
+            return responses;
+        }
         // A paid self-service quote must not silently switch supplier at procurement time.
         for (org.jeecg.modules.business.entity.PurchaseOrder purchase :
                 purchaseOrderService.getPurchasesByInvoiceNumber(metaData.getInvoiceCode())) {
@@ -236,7 +251,7 @@ public class ProviderMabangServiceImpl extends ServiceImpl<ProviderMabangMapper,
                     data.put("invoice", metaData.getInvoiceCode());
                     data.put("groupId", response.getGroupId());
                     msg.put("data", data);
-                    WebSocketSender.sendToUser(sysUser.getId(), msg.toJSONString());
+                    if (userId != null) WebSocketSender.sendToUser(userId, msg.toJSONString());
                     return true;
                 }, throttlingExecutorService))
                 .collect(Collectors.toList());

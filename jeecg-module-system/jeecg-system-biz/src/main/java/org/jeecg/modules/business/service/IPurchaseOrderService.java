@@ -26,6 +26,7 @@ import java.util.Map;
  * @Version: V1.0
  */
 public interface IPurchaseOrderService extends IService<PurchaseOrder> {
+    String addAutomaticPurchase(Client client, List<SkuQuantity> quantities) throws UserException;
     String addQuotedSkuPurchase(List<SkuQuantity> quantities, String invoiceEntityId, String quoteId) throws UserException;
         /**
      * 添加一对多
@@ -108,6 +109,8 @@ public interface IPurchaseOrderService extends IService<PurchaseOrder> {
      * @throws IOException IO error while reading the file.
      */
     InvoiceMetaData makeInvoice(String purchaseID) throws IOException, URISyntaxException, UserException;
+    /** Internal scheduled-task entry point; verifies the saved invoice belongs to the task's client. */
+    InvoiceMetaData makeAutomaticInvoice(String purchaseID, String clientId) throws IOException, UserException;
     InvoiceMetaData makeInvoiceTest(int nbOfLines) throws Exception;
 
     byte[] getInvoiceByte(String invoiceCode) throws IOException;

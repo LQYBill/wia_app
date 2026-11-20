@@ -51,7 +51,12 @@ public class PurchaseShippingQuoteService {
     }
 
     public static Map<String, Integer> quantities(List<SkuQuantity> items) throws UserException {
-        if (items == null || items.isEmpty() || items.size() > 500) throw new UserException("Select between 1 and 500 SKUs");
+        if (items != null && items.size() > 500) throw new UserException("Select between 1 and 500 SKUs");
+        return automaticQuantities(items);
+    }
+
+    static Map<String, Integer> automaticQuantities(List<SkuQuantity> items) throws UserException {
+        if (items == null || items.isEmpty()) throw new UserException("Select at least one SKU");
         Map<String, Integer> result = new TreeMap<>();
         for (SkuQuantity item : items) {
             if (item == null || item.getID() == null || item.getID().trim().isEmpty()
@@ -124,7 +129,7 @@ public class PurchaseShippingQuoteService {
 
     private PurchaseShippingQuote calculateDomesticShipping(Client client, List<SkuQuantity> items) throws UserException {
         PurchaseShippingQuote quote = new PurchaseShippingQuote();
-        quote.setQuantities(quantities(items));
+        quote.setQuantities(automaticQuantities(items));
         quote.setErpCodes(validate(client, quote.getQuantities()));
         quote.setEnabled(Boolean.TRUE.equals(client.getSmallPurchaseShippingFeeEnabled()));
         Map<String, String> byCode = quote.isEnabled() ? suppliers.suppliers(quote.getErpCodes().values()) : Collections.emptyMap();

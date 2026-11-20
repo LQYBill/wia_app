@@ -371,6 +371,21 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
 
     private String createSkuPurchase(List<SkuQuantity> skuQuantities, String invoiceEntityId, Client client,
                                      boolean calculateShipping) throws UserException {
+        return createSkuPurchase(skuQuantities, invoiceEntityId, client, calculateShipping, true);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String addAutomaticPurchase(Client client, List<SkuQuantity> quantities) throws UserException {
+        shippingQuotes.validate(client, PurchaseShippingQuoteService.automaticQuantities(quantities));
+        List<OrderContentDetail> details = platformOrderService.searchPurchaseOrderDetail(quantities);
+        if (details.size() != quantities.size()) throw new UserException("Some SKU prices could not be loaded");
+        String invoiceEntityId = clientService.buildInvoiceClient(client.getId(), null).getInvoiceEntityId();
+        return createSkuPurchase(quantities, invoiceEntityId, client, true, false);
+    }
+
+    private String createSkuPurchase(List<SkuQuantity> skuQuantities, String invoiceEntityId, Client client,
+                                     boolean calculateShipping, boolean notify) throws UserException {
         if (invoiceEntityId != null) {
             // validates the entity exists and belongs to this client
             clientService.buildInvoiceClient(client.getId(), invoiceEntityId);
@@ -435,7 +450,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         Map<String, String> map = new HashMap<>();
         map.put("client", client.getFirstName());
         map.put("order_number", invoiceNumber);
-        TransactionSynchronizationManager.registerSynchronization(
+        if (notify) TransactionSynchronizationManager.registerSynchronization(
                 new TransactionSynchronization() {
                     @Override
                     public void afterCommit() {
@@ -635,6 +650,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         boolean isEmployee = securityService.checkIsEmployee();
         Client client;
         PurchaseOrder purchaseOrder = purchaseOrderMapper.selectById(purchaseID);
+        if (purchaseOrder == null) throw new UserException("Purchase order not found");
         if(!isEmployee) {
             client = clientService.getCurrentClient();
             if (client == null)
@@ -643,7 +659,21 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
                 throw new UserException("Purchase order does not belong to current client");
             }
         }
-        client = clientService.buildInvoiceClient(purchaseOrder.getClientId(), purchaseOrder.getInvoiceEntityId());
+        return writeInvoice(purchaseID, purchaseOrder);
+    }
+
+    @Override
+    public InvoiceMetaData makeAutomaticInvoice(String purchaseID, String clientId) throws IOException, UserException {
+        if (clientId == null || clientId.trim().isEmpty()) throw new UserException("Automatic purchase client is required");
+        PurchaseOrder purchaseOrder = purchaseOrderMapper.selectById(purchaseID);
+        if (purchaseOrder == null) throw new UserException("Purchase order not found");
+        if (!clientId.equals(purchaseOrder.getClientId())) throw new UserException("Purchase order does not belong to automatic purchase client");
+        return writeInvoice(purchaseID, purchaseOrder);
+    }
+
+    /** Shared file rendering after the interactive or scheduled caller has verified access. */
+    protected InvoiceMetaData writeInvoice(String purchaseID, PurchaseOrder purchaseOrder) throws IOException {
+        Client client = clientService.buildInvoiceClient(purchaseOrder.getClientId(), purchaseOrder.getInvoiceEntityId());
         PurchaseShippingQuote savedQuote = shippingQuotes.saved(purchaseID);
         if (savedQuote != null) client.setCurrency(savedQuote.getCurrency());
         List<PurchaseInvoiceEntry> purchaseOrderSkuList = purchaseOrderContentMapper.selectInvoiceDataByID(purchaseID);
