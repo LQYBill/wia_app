@@ -22,19 +22,15 @@ public class SkuListStream implements NetworkDataStream<SkuData> {
 
     private boolean began;
 
-    /**
-     * Flag of current data is already empty,
-     * either currentOrders is null or currentIndex arrives at the end.
-     * In both case, we should call next() of the rawStream.
-     */
-    private boolean empty;
+    /** True after the source ends or returns a successful empty final page. */
+    private boolean exhausted;
 
 
     public SkuListStream(NetworkDataStream<SkuListResponse> rawStream) {
         this.rawStream = rawStream;
-        skus = null;
+        skus = Collections.emptyList();
         this.index = 0;
-        this.empty = true;
+        this.exhausted = false;
         this.began = false;
     }
     @Override
@@ -45,34 +41,42 @@ public class SkuListStream implements NetworkDataStream<SkuData> {
         }
 
         ArrayList<SkuData> res = new ArrayList<>();
-        if (firstElement.getStatus().equals(SkuStatus.Normal)) {
+        if (shouldSync(firstElement)) {
             res.add(firstElement);
         }
         while (hasNext()) {
             SkuData nextSku = next();
-            if(nextSku.getStatus().equals(SkuStatus.Normal)) {
+            if (shouldSync(nextSku)) {
                 res.add(nextSku);
             }
         }
         return res;
     }
+
+    protected boolean shouldSync(SkuData sku) {
+        return SkuStatus.Normal.equals(sku.getStatus());
+    }
     @Override
     public SkuData attempt() {
         began = true;
+        skus = Collections.emptyList();
+        index = 0;
+        exhausted = false;
         log.info("Attempting for the first request");
         SkuListResponse response = rawStream.attempt();
         if (response == null) {
+            exhausted = true;
             log.info("No response");
             return null;
         }
-        if (response.getData().isEmpty()) {
+        if (response.getData() == null || response.getData().isEmpty()) {
+            exhausted = true;
             log.info("Response with empty data");
             return null;
         }
         skus = response.getData().toJavaList(SkuData.class);
         index = 1;
         log.info("Returned the first element");
-        empty = index >= skus.size();
         return skus.get(0);
     }
 
@@ -83,36 +87,28 @@ public class SkuListStream implements NetworkDataStream<SkuData> {
             throw new IllegalStateException("Calling hasNext before begin");
         }
 
-        // Current data is not yet empty
-        if (index < skus.size()) {
-            log.debug("Current order list is not empty yet");
-            return true;
-        }
-
-        /* Current data is empty */
-        this.empty = true;
-        log.debug("Current order list is already empty,");
-        // and raw stream is empty too.
+        if (exhausted) return false;
+        if (index < skus.size()) return true;
         if (!rawStream.hasNext()) {
-            log.debug("and source stream is empty too, hasNext: false");
+            exhausted = true;
             return false;
         }
-        // but raw stream not empty.
-        else {
-            log.debug("but source stream still has data, hasNext: true");
-            return true;
+        // Fetch before promising another item: the cursor may lead to an empty final page.
+        SkuListResponse response = rawStream.next();
+        if (response == null) throw new IllegalStateException("Mabang SKU lookup unavailable");
+        if (response.getData() == null || response.getData().isEmpty()) {
+            exhausted = true;
+            return false;
         }
+        skus = response.getData().toJavaList(SkuData.class);
+        index = 0;
+        return true;
     }
 
     @Override
     public SkuData next() {
         if (!hasNext()) {
             throw new NoSuchElementException("Stream is empty!");
-        }
-        if (empty) {
-            skus = this.rawStream.next().getData().toJavaList(SkuData.class);
-            empty = false;
-            index = 0;
         }
         log.debug("Return data at {}", index);
         SkuData res = skus.get(index);

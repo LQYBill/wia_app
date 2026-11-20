@@ -25,6 +25,10 @@ import io.swagger.annotations.ApiModelProperty;
 @ApiModel(value = "skuPage对象", description = "SKU表")
 public class SkuPage {
 
+    @Excel(name = "允许自动采购", width = 15)
+    @ApiModelProperty(value = "是否允许自动采购")
+    private Boolean autoPurchaseEnabled;
+
     /**
      * 主键
      */

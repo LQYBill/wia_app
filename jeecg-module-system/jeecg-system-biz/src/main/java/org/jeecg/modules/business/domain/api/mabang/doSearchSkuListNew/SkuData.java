@@ -154,6 +154,19 @@ public class SkuData {
     public int getStatusValue() {
         return this.status;
     }
+
+    /** Labels are returned as label; some existing imports also expose labelData. */
+    public boolean hasAutoPurchaseLabel() {
+        return containsAutoPurchaseLabel(label) || containsAutoPurchaseLabel(labelData);
+    }
+
+    private static boolean containsAutoPurchaseLabel(Label[] labels) {
+        if (labels == null) return false;
+        for (Label item : labels) {
+            if (item != null && "缺货采购".equals(item.getName())) return true;
+        }
+        return false;
+    }
     public String toString() {
         return "ID : " + this.id +
                 "\nStockSkuId : " + this.stockSkuId +

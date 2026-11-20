@@ -22,4 +22,43 @@
         WHERE en_name = #{enName}
     </select>
 
+    <select id="skuIdBackfillNow" resultType="java.time.LocalDateTime">
+        SELECT NOW()
+    </select>
+    <select id="skuIdBackfillUpper" resultType="java.time.LocalDateTime">
+        SELECT COALESCE(MAX(create_time), NOW()) FROM platform_order_content
+    </select>
+
+    <select id="findSkuIdBackfillBatch" resultType="org.jeecg.modules.business.vo.SkuIdBackfillRow">
+        SELECT poc.id, poc.sku_id AS skuId, poc.create_time AS createTime
+        FROM platform_order_content poc
+        JOIN sku s ON s.erp_code = poc.sku_id
+        WHERE poc.create_time &gt;= #{cutoff} AND poc.create_time &lt;= #{upper}
+          AND poc.sku_id NOT LIKE '1%'
+          AND poc.sku_id &lt;&gt; s.id
+        <if test="afterTime != null">
+          AND (poc.create_time &gt; #{afterTime}
+               OR (poc.create_time = #{afterTime} AND poc.id &gt; #{afterId}))
+        </if>
+        ORDER BY poc.create_time, poc.id
+        LIMIT #{limit}
+    </select>
+
+    <update id="updateSkuIdBackfillBatch">
+        UPDATE platform_order_content poc
+        JOIN sku s ON s.erp_code = poc.sku_id
+        SET poc.sku_id = s.id
+        WHERE poc.create_time &gt;= #{cutoff} AND poc.create_time &lt;= #{upper}
+          AND poc.sku_id NOT LIKE '1%' AND poc.sku_id &lt;&gt; s.id
+          AND
+        <choose>
+            <when test="rows != null and rows.size() > 0">
+                <foreach collection="rows" item="row" open="(" close=")" separator=" OR ">
+                    (poc.id = #{row.id} AND poc.sku_id = #{row.skuId})
+                </foreach>
+            </when>
+            <otherwise>1 = 0</otherwise>
+        </choose>
+    </update>
+
 </mapper>

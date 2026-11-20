@@ -42,6 +42,8 @@ public interface ISkuListMabangService extends IService<SkuData> {
 
     void mabangSkuStockUpdate(List<String> erpCodes);
 
+    void syncAutoPurchaseLabels(List<String> erpCodes);
+
     ResponsesWithMsg<String> mabangSkuWeightUpdate(List<SkuWeight> skuWeights);
 
     List<SkuData> fetchUnpairedSkus(List<String> stockSkuList);

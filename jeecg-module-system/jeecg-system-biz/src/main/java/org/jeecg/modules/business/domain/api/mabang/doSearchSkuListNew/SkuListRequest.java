@@ -32,6 +32,7 @@ public class SkuListRequest extends Request {
     @Override
     public SkuListResponse send() {
         ResponseEntity<String> res = rawSend();
+        if (res == null || res.getBody() == null) throw new IllegalStateException("Mabang SKU lookup unavailable");
         return SkuListResponse.parse(JSON.parseObject(res.getBody()));
     }
 }

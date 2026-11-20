@@ -86,6 +86,11 @@ public class Sku implements Serializable {
     @Excel(name = "在途数量", width = 15)
     @ApiModelProperty(value = "在途数量")
     private java.lang.Integer purchasingAmount;
+
+    /** Only explicitly enabled SKUs participate in scheduled replenishment. */
+    @Excel(name = "允许自动采购", width = 15)
+    @ApiModelProperty(value = "是否允许自动采购")
+    private Boolean autoPurchaseEnabled;
     /**
      * 图片链接
      */

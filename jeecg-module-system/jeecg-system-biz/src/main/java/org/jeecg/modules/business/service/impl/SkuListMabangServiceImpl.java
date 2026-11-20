@@ -2,12 +2,12 @@ package org.jeecg.modules.business.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.google.common.collect.Lists;
 import freemarker.template.Template;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.jeecg.common.system.vo.LoginUser;
-import org.jeecg.common.util.SpringContextUtils;
 import org.jeecg.modules.business.domain.api.mabang.Response;
 import org.jeecg.modules.business.domain.api.mabang.doSearchSkuListNew.*;
 import org.jeecg.modules.business.domain.api.mabang.getorderlist.Order;
@@ -33,12 +33,13 @@ import org.jeecg.modules.business.util.DateUtils;
 import org.jeecg.modules.business.vo.ResponsesWithMsg;
 import org.jeecg.modules.business.vo.SkuOrderPage;
 import org.jeecg.modules.business.vo.UnpairedSku;
+import org.jeecg.modules.business.vo.SkuIdBackfillRow;
 import org.jeecg.modules.message.websocket.WebSocketSender;
-import org.jeecg.modules.online.cgform.mapper.OnlCgformFieldMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer;
 
@@ -48,6 +49,7 @@ import javax.mail.Session;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.format.DateTimeParseException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -232,6 +234,11 @@ public class SkuListMabangServiceImpl extends ServiceImpl<SkuListMabangMapper, S
                     String remark = "";
                     s.setUpdateBy("mabang api");
                     s.setUpdateTime(new Date());
+                    // Positive-only sync: absent labels must not clear a locally enabled SKU.
+                    if (skuData.hasAutoPurchaseLabel() && !Boolean.TRUE.equals(s.getAutoPurchaseEnabled())) {
+                        s.setAutoPurchaseEnabled(true);
+                        isUpdated = true;
+                    }
                     if (!s.getErpCode().equals(skuData.getErpCode())) {
                         String previousErpCode = s.getErpCode();
                         s.setErpCode(skuData.getErpCode());
@@ -418,6 +425,7 @@ public class SkuListMabangServiceImpl extends ServiceImpl<SkuListMabangMapper, S
             s.setId(UUID.randomUUID().toString());
             s.setErpCode(skuData.getErpCode());
             s.setCreateBy("mabang api");
+            if (skuData.hasAutoPurchaseLabel()) s.setAutoPurchaseEnabled(true);
             s.setHsCode(skuData.getHsCode());
             if (!skuData.getNameEN().isEmpty()) {
                 Matcher enNameMatcher = enNamePattern.matcher(skuData.getNameEN());
@@ -691,18 +699,31 @@ public class SkuListMabangServiceImpl extends ServiceImpl<SkuListMabangMapper, S
     }
 
     /**
-     * Call a routine to replace SKU codes (from MabangAPI)
-     * by SKU IDs for content created within the last six months after creating new SKUs.
+     * Repair SKU codes in recent content in bounded, independently committed batches.
      */
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void updateSkuId() {
-        OnlCgformFieldMapper onlCgformFieldMapper = SpringContextUtils.getBean(OnlCgformFieldMapper.class);
-        Map<String, Object> params = new HashMap<>();
-        String sql = "UPDATE platform_order_content SET sku_id = skuErpToId(sku_id) "
-                + "WHERE create_time >= DATE_SUB(NOW(), INTERVAL 6 MONTH) "
-                + "AND sku_id NOT LIKE '1%'";
-        params.put("execute_sql_string", sql);
-        onlCgformFieldMapper.executeUpdatetSQL(params);
+        final int batchSize = 200;
+        LocalDateTime cutoff = skuListMabangMapper.skuIdBackfillNow().minusMonths(6);
+        // Use a data watermark, rather than NOW(), to retain existing future-dated content.
+        LocalDateTime upper = skuListMabangMapper.skuIdBackfillUpper();
+        LocalDateTime afterTime = null;
+        String afterId = null;
+        long updated = 0;
+        while (true) {
+            List<SkuIdBackfillRow> rows = skuListMabangMapper.findSkuIdBackfillBatch(
+                    cutoff, upper, afterTime, afterId, batchSize);
+            if (rows.isEmpty()) {
+                break;
+            }
+            updated += skuListMabangMapper.updateSkuIdBackfillBatch(rows, cutoff, upper);
+            // Advance even if another importer changed a selected row before our guarded update.
+            SkuIdBackfillRow last = rows.get(rows.size() - 1);
+            afterTime = last.getCreateTime();
+            afterId = last.getId();
+        }
+        log.info("Replaced SKU codes in {} recent order-content rows", updated);
     }
     @Override
     public void mabangSkuStockUpdate(List<String> skuList) {
@@ -743,6 +764,37 @@ public class SkuListMabangServiceImpl extends ServiceImpl<SkuListMabangMapper, S
         }
     }
 
+    /** Stock synchronization also refreshes positive automatic-purchase label flags for its entire scope. */
+    @Override
+    public void syncAutoPurchaseLabels(List<String> erpCodes) {
+        List<String> codes = erpCodes.stream().filter(code -> code != null && !code.trim().isEmpty())
+                .distinct().collect(toList());
+        int taggedCount = 0;
+        for (List<String> batch : Lists.partition(codes, 50)) {
+            SkuListRequestBody body = new SkuListRequestBody().setSkuStockList(String.join(",", batch));
+            body.setShowLabel(1);
+            body.setMaxRows(50);
+            List<String> taggedCodes = fetchAutoPurchaseSkuLabels(body).stream()
+                    .filter(SkuData::hasAutoPurchaseLabel)
+                    .map(SkuData::getErpCode)
+                    .filter(batch::contains)
+                    .distinct().collect(toList());
+            if (!taggedCodes.isEmpty()) {
+                // Only this flag is updated; do not rewrite names, prices, or stock snapshots.
+                skuService.update(new UpdateWrapper<Sku>()
+                        .set("auto_purchase_enabled", 1)
+                        .in("erp_code", taggedCodes)
+                        .and(condition -> condition.isNull("auto_purchase_enabled").or().eq("auto_purchase_enabled", 0)));
+                taggedCount += taggedCodes.size();
+            }
+        }
+        log.info("Automatic purchase label sync: checked {} SKU codes, found {} tagged codes", codes.size(), taggedCount);
+    }
+
+    protected List<SkuData> fetchAutoPurchaseSkuLabels(SkuListRequestBody body) {
+        return new SkuUpdateListStream(new SkuListRawStream(body)).all();
+    }
+
     @Override
     public ResponsesWithMsg<String> mabangSkuWeightUpdate(List<SkuWeight> skuWeights) {
         ResponsesWithMsg<String> responses = new ResponsesWithMsg<>();
@@ -772,7 +824,12 @@ public class SkuListMabangServiceImpl extends ServiceImpl<SkuListMabangMapper, S
             Date effectiveDateToImport = skuWeightMappedById.get(sku.getId()).getEffectiveDate();
             if(latestEffectiveDate.after(effectiveDateToImport)) {
                 log.info("Sku {} has a more recent weight in DB. Therefore won't be imported to Mabang", sku.getErpCode());
-                responses.addSuccess(sku.getErpCode(), "跳过：已有更新的重量，未同步到Mabang");
+                java.time.format.DateTimeFormatter dateFormat = java.time.format.DateTimeFormatter
+                        .ofPattern("yyyy-MM-dd HH:mm:ss").withZone(java.time.ZoneId.of("Asia/Shanghai"));
+                responses.addSkipped(sku.getErpCode(), String.format(
+                        "导入生效日期 %s 早于已有最新重量生效日期 %s（北京时间），未调用马帮接口",
+                        dateFormat.format(effectiveDateToImport.toInstant()),
+                        dateFormat.format(latestEffectiveDate.toInstant())));
                 continue;
             }
             skusToUpdate.add(sku);
@@ -894,25 +951,32 @@ public class SkuListMabangServiceImpl extends ServiceImpl<SkuListMabangMapper, S
         // Wait for all batches to complete
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
-        // After all tasks are completed, calculate success and failure counts and push completion message
+        executor.shutdown();
+
+        // Skipped SKUs were never submitted to Mabang and are not successful updates.
         int successCount = responses.getSuccesses().size();
+        int skippedCount = responses.getSkipped().size();
         int failureCount = responses.getFailures().size();
 
         JSONObject doneMsg = new JSONObject();
         doneMsg.put("cmd", "mabang-result");
         doneMsg.put("type", "complete");
-        doneMsg.put("msgTxt", "SKU重量在马帮更新全部完成！");
+        doneMsg.put("msgTxt", String.format("马帮重量同步处理完成：同步成功 %d，跳过 %d，失败 %d",
+                successCount, skippedCount, failureCount));
         doneMsg.put("data", new JSONObject() {{
-            put("total", skuDataList.size());
+            put("total", successCount + skippedCount + failureCount);
             put("success", successCount);
+            put("skip", skippedCount);
             put("failure", failureCount);
             put("progress", 100);
             put("successes", responses.getSuccesses());
+            put("skipped", responses.getSkipped());
             put("failures", responses.getFailures());
         }});
 
         WebSocketSender.sendToUser(userId, doneMsg.toJSONString());
-        log.info("SKU Weight update completed: total {} items processed, {} succeeded, {} failed", skuDataList.size(), successCount, failureCount);
+        log.info("SKU Weight update completed: total {}, {} synchronized, {} skipped, {} failed",
+                successCount + skippedCount + failureCount, successCount, skippedCount, failureCount);
         return responses;
     }
 

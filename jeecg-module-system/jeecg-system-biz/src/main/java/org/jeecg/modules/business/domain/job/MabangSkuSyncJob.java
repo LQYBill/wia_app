@@ -33,7 +33,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 /**
- * Updates product name (en, zh), sku status, weight and isGift
+ * Updates product name (en, zh), sku status, weight, isGift and automatic-purchase labels.
  * By default checks sku updates within the last 5 days
  * If "skus" param is not empty then, dates are ignored and it will only update the given skus (erpCode)
  * Execution periodicity : everyday at 2:10pm : 10 14 * * *
@@ -102,10 +102,9 @@ public class MabangSkuSyncJob implements Job {
                 while (startDateTime.until(endDateTime, ChronoUnit.HOURS) > 0) {
                     LocalDateTime dayBeforeEndDateTime = endDateTime.minusDays(1);
                     SkuListRequestBody body = SkuListRequestBodys.allSkuOfDateType(dayBeforeEndDateTime, endDateTime, dateType);
-                    SkuListRawStream rawStream = new SkuListRawStream(body);
-                    SkuUpdateListStream stream = new SkuUpdateListStream(rawStream);
+                    body.setShowLabel(1);
                     // the status is directly filtered in all() method
-                    List<SkuData> skusFromMabang = stream.all();
+                    List<SkuData> skusFromMabang = fetchSkus(body);
                     log.info("{} skus from {} to {} ({})to be updated.", skusFromMabang.size(),
                             dayBeforeEndDateTime, endDateTime, dateType);
 
@@ -122,9 +121,8 @@ public class MabangSkuSyncJob implements Job {
                 for(List<String> skuPartition : skusPartition) {
                     SkuListRequestBody body = new SkuListRequestBody();
                     body.setStockSkuList(String.join(",", skuPartition));
-                    SkuListRawStream rawStream = new SkuListRawStream(body);
-                    SkuUpdateListStream stream = new SkuUpdateListStream(rawStream);
-                    List<SkuData> skusFromMabang = stream.all();
+                    body.setShowLabel(1);
+                    List<SkuData> skusFromMabang = fetchSkus(body);
                     log.info("{} skus to be updated.", skusFromMabang.size());
                     if (!skusFromMabang.isEmpty()) {
                         // we save the skuDatas in DB
@@ -177,5 +175,8 @@ public class MabangSkuSyncJob implements Job {
         } catch (Exception e) {
             log.error("Error sending mail: {}", e.getMessage());
         }
+    }
+    protected List<SkuData> fetchSkus(SkuListRequestBody body) {
+        return new SkuUpdateListStream(new SkuListRawStream(body)).all();
     }
 }

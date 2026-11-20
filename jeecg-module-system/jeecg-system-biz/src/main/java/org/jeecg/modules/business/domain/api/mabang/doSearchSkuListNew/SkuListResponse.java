@@ -40,20 +40,22 @@ public class SkuListResponse extends Response {
      */
     public static SkuListResponse parse(JSONObject json) throws SkuListRequestErrorException {
         log.debug("Constructing a response by json.");
+        if (json == null) throw new SkuListRequestErrorException("Mabang SKU lookup returned no response body");
         String code = json.getString("code");
-        if (code.equals(Code.ERROR.value))
-            throw new SkuListRequestErrorException(json.getString("message"));
+        if (!Code.SUCCESS.value.equals(code))
+            throw new SkuListRequestErrorException("Mabang SKU lookup failed (code=" + code + "): " + json.getString("message"));
 
         JSONObject data = json.getJSONObject("data");
-        String cursor = data.getString("nextCursor");
-        JSONArray realData = data.getJSONArray("data");
+        String cursor = data == null ? null : data.getString("nextCursor");
+        JSONArray realData = data == null ? null : data.getJSONArray("data");
         if(realData != null) {
             log.info("Constructed response: data contained {}", realData.size());
         }
         else {
             log.info("Data is null");
         }
-        return new SkuListResponse(Code.SUCCESS, cursor, realData, json);
+        return new SkuListResponse(Code.SUCCESS, cursor == null ? "" : cursor,
+                realData == null ? new JSONArray() : realData, json);
     }
 
 

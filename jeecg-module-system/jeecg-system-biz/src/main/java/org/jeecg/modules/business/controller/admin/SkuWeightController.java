@@ -369,7 +369,7 @@ public class SkuWeightController extends JeecgController<SkuWeight, ISkuWeightSe
 						  boolean sameDateExists = existingWeight.stream()
 								  .anyMatch(e -> sdf.format(e.getEffectiveDate()).equals(dateStr));
 						  if (sameDateExists) {
-							  responses.addSuccess("Row " + (rowIndex + 1), " 已存在相同SKU和日期，跳过");
+							  responses.addSkipped("Row " + (rowIndex + 1), "已存在相同 SKU 和生效日期，未导入数据库或同步马帮");
 							  log.info("Row {} 已存在相同SKU和日期，跳过", rowIndex + 1);
 							  log.info("Row {} has existing weight with same date for SKU {}, skipping",
 									  rowIndex + 1, skuWeight.getSkuId());
@@ -378,7 +378,7 @@ public class SkuWeightController extends JeecgController<SkuWeight, ISkuWeightSe
 
 						  boolean sameLatestWeight = skuWeightService.getBySkuId(skuWeight.getSkuId()).getWeight() == skuWeight.getWeight();
 						  if (sameLatestWeight) {
-							  responses.addSuccess("Row " + (rowIndex + 1), " 内容一致，仅日期不同，跳过");
+							  responses.addSkipped("Row " + (rowIndex + 1), "与最新重量一致，仅日期不同，未导入数据库或同步马帮");
 							  log.info("Row {} has existing weight with same content but different date for SKU {}, skipping",
 									  rowIndex + 1, skuWeight.getSkuId());
 							  continue;
@@ -403,6 +403,7 @@ public class SkuWeightController extends JeecgController<SkuWeight, ISkuWeightSe
 						  detailMsg.put("data", new JSONObject() {{
 							  put("successes", responses.getSuccesses());
 							  put("failures", responses.getFailures());
+							  put("skipped", responses.getSkipped());
 						  }});
 
 						  log.info("import-result 消息体: {}", detailMsg.toJSONString());
@@ -421,8 +422,8 @@ public class SkuWeightController extends JeecgController<SkuWeight, ISkuWeightSe
 										  matchedSuccesses.add(matched);
 									  }
 								  });
-								  log.info("Mabang synchronization completed - successes: {}, failures: {}",
-										  mabangResponses.getSuccesses().size(), mabangResponses.getFailures().size());
+								  log.info("Mabang synchronization completed - synchronized: {}, skipped: {}, failures: {}",
+										  mabangResponses.getSuccesses().size(), mabangResponses.getSkipped().size(), mabangResponses.getFailures().size());
 							  } catch (Exception ex) {
 								  log.error("Mabang synchronization failed", ex);
 							  }
@@ -436,6 +437,7 @@ public class SkuWeightController extends JeecgController<SkuWeight, ISkuWeightSe
 						  detailMsg.put("data", new JSONObject() {{
 							  put("successes", responses.getSuccesses());
 							  put("failures", responses.getFailures());
+							  put("skipped", responses.getSkipped());
 						  }});
 
 						  WebSocketSender.sendToUser(userId, detailMsg.toJSONString());
@@ -517,14 +519,14 @@ public class SkuWeightController extends JeecgController<SkuWeight, ISkuWeightSe
 			wrapper.apply("DATE(effective_date) = {0}", new SimpleDateFormat("yyyy-MM-dd").format(param.getEffectiveDate()));
 			if (skuWeightService.count(wrapper) > 0) {
 				log.warn("SKU {} already has a weight record for the same date, skipping", sku.getErpCode());
-				responses.addSuccess(sku.getErpCode(), ": 相同日期的重量记录已存在，跳过");
+				responses.addSkipped(sku.getErpCode(), "相同日期的重量记录已存在，未更新数据库或同步马帮");
 				continue;
 			}
 			//check if there is the latest existing record with the same sku_id and weight but different effective_date
 			SkuWeight latest = skuWeightService.getLatestBySkuId(skuId);
             if (latest != null && latest.getWeight() == param.getWeight()) {
 				log.warn("SKU {} latest weight equals new weight, skipping", sku.getErpCode());
-				responses.addSuccess(sku.getErpCode(), ": 与最新重量相同，跳过");
+				responses.addSkipped(sku.getErpCode(), "与最新重量相同，未更新数据库或同步马帮");
 				continue;
             }
 			SkuWeight skuWeight = new SkuWeight();
@@ -538,7 +540,18 @@ public class SkuWeightController extends JeecgController<SkuWeight, ISkuWeightSe
 		List<SkuWeight> skuWeights = new ArrayList<>(skuWeightsMap.values());
 		if (skuWeights.isEmpty()) {
 			log.warn("No valid SKU weights to update, task not submitted");
-			return Result.error("日期或者重量重复，没有有效的数据可更新，任务未提交");
+			JSONObject skippedMsg = new JSONObject();
+			skippedMsg.put("cmd", "update-result");
+			String summary = String.format("SKU重量处理完成：跳过 %d，失败 %d，未同步马帮",
+					responses.getSkipped().size(), responses.getFailures().size());
+			skippedMsg.put("msgTxt", summary);
+			JSONObject skippedData = new JSONObject();
+			skippedData.put("successes", responses.getSuccesses());
+			skippedData.put("skipped", responses.getSkipped());
+			skippedData.put("failures", responses.getFailures());
+			skippedMsg.put("data", skippedData);
+			WebSocketSender.sendToUser(userId, skippedMsg.toJSONString());
+			return Result.OK(summary);
 		}
 		// Update Mongo + save to database
 		skuWeightService.saveBatch(skuWeights);
@@ -557,6 +570,7 @@ public class SkuWeightController extends JeecgController<SkuWeight, ISkuWeightSe
 		detailMsg.put("data", new JSONObject() {{
 			put("successes", responses.getSuccesses());
 			put("failures", responses.getFailures());
+			put("skipped", responses.getSkipped());
 		}});
 		log.info("update-result message: {}", detailMsg.toJSONString());
 		WebSocketSender.sendToUser(userId, detailMsg.toJSONString());

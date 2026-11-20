@@ -11,6 +11,11 @@ import java.util.Map;
 public class ResponsesWithMsg<T> {
     protected Map<T, List<String>> successes = new HashMap<>();
     protected Map<T, List<String>> failures = new HashMap<>();
+    protected Map<T, List<String>> skipped = new HashMap<>();
+
+    public void addSkipped(T data, String reason) {
+        skipped.computeIfAbsent(data, k -> new ArrayList<>()).add(reason);
+    }
 
     public void addSuccess(T data) {
         successes.putIfAbsent(data, new ArrayList<>());

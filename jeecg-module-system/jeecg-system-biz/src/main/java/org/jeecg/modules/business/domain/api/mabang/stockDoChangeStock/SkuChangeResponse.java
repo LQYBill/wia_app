@@ -38,17 +38,15 @@ public class SkuChangeResponse extends Response {
     public static SkuChangeResponse parse(JSONObject json, String erpCode) throws SkuChangeRequestErrorException {
         log.debug("Constructing a response by json.");
         String code = json.getString("code");
-        if (code.equals(Code.ERROR.value))
+        if (!Code.SUCCESS.value.equals(code))
             throw new SkuChangeRequestErrorException(json.getString("message"));
 
         JSONObject data = json.getJSONObject("data");
+        if (data == null) {
+            throw new SkuChangeRequestErrorException("马帮返回成功码但缺少更新结果 data");
+        }
         String stockId = data.getString("stockId");
-        if(data != null) {
-            log.info("Constructed response: data contained {}", data);
-        }
-        else {
-            log.info("Data is null");
-        }
+        log.info("Constructed response: data contained {}", data);
         return new SkuChangeResponse(Code.SUCCESS, data, stockId, erpCode);
     }
 
