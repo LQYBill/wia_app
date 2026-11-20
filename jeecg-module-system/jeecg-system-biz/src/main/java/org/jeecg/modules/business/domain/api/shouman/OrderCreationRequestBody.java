@@ -11,7 +11,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -33,6 +35,8 @@ public class OrderCreationRequestBody implements RequestBody {
     private final static Pattern PRINT_4K_PATTERN = Pattern.compile("^\\s*Print 4K:\\s*(\\S+)\\s*$", Pattern.MULTILINE);
     private final static Pattern DESIGN_ID_IN_CUSTOMIZATION_PATTERN = Pattern.compile("(?:^|;)\\s*_designId:([^;]+)");
     private final static Pattern URL_PATTERN = Pattern.compile("https?://\\S+");
+    private final static Pattern ENGRAVING_FILE_PATTERN = Pattern.compile("(?im)^\\s*Engraving file");
+    private final static Pattern CUSTOMIZATION_DESIGN_ID_PATTERN = Pattern.compile("(?i)(?:^|;)\\s*[^:;]*design[^:;]*:([^;]+)");
     private final static String PRODUCT_GROUP_KEY = "_gpo_product_group";
     private final static String PARENT_PRODUCT_GROUP_KEY = "_gpo_parent_product_group";
     private final static Pattern INCH_RANGE_PATTERN = Pattern.compile(
@@ -82,8 +86,9 @@ public class OrderCreationRequestBody implements RequestBody {
                     content.getCustomizationUrl()));
             if (shoumanOrderBase.getBuyerMessage() != null) {
                 String materialCustomizationData = resolveMaterialCustomizationData(content, allContents);
+                int materialGroupIndex = resolveMaterialGroupIndex(content, allContents);
                 addMaterials(contentJson, materialCustomizationData, content.getRegexList(),
-                    shoumanOrderBase.getBuyerMessage());
+                    shoumanOrderBase.getBuyerMessage(), materialGroupIndex);
             }
             putNonNull(contentJson, "sku", content.getSku());
             putNonNull(contentJson, "outboundNumder", content.getQuantity()); // Typo intended
@@ -123,15 +128,30 @@ public class OrderCreationRequestBody implements RequestBody {
                 .orElse(null);
     }
 
+    private int resolveMaterialGroupIndex(ShoumanOrderContent content, List<ShoumanOrderContent> allContents) {
+        if (content.getSkuId() == null || allContents == null) {
+            return 1;
+        }
+        int groupIndex = 1;
+        for (ShoumanOrderContent candidate : allContents) {
+            if (candidate == content) {
+                break;
+            }
+            if (content.getSkuId().equals(candidate.getSkuId())) {
+                groupIndex++;
+            }
+        }
+        return groupIndex;
+    }
     private void addMaterials(JSONObject contentJson, String customizationData, List<ShoumanRegex> regexList,
-                              String buyerMessage) {
+                              String buyerMessage, int materialGroupIndex) {
         if (buyerMessage == null || buyerMessage.trim().isEmpty()
                 || customizationData == null || customizationData.trim().isEmpty()) {
             return;
         }
 
         JSONArray materialUrls = new JSONArray();
-        addBuyerMessageMaterials(materialUrls, customizationData, regexList, buyerMessage);
+        addBuyerMessageMaterials(materialUrls, customizationData, regexList, buyerMessage, materialGroupIndex);
 
         // Keep supporting the original design-id based Print 4K format.
         if (materialUrls.isEmpty()) {
@@ -143,16 +163,18 @@ public class OrderCreationRequestBody implements RequestBody {
     }
 
     private void addBuyerMessageMaterials(JSONArray materialUrls, String customizationData,
-                                          List<ShoumanRegex> regexList, String buyerMessage) {
+                                          List<ShoumanRegex> regexList, String buyerMessage,
+                                          int materialGroupIndex) {
         if (regexList == null) {
             return;
         }
         for (ShoumanRegex regex : regexList) {
-            if (!isEnabled(regex.getUseOnBuyerMessage())) {
+            if (!isEnabled(regex.getUseOnBuyerMessage()) || regex.getContentRecRegex() == null
+                    || regex.getContentExtRegex() == null) {
                 continue;
             }
             for (String customizationPart : customizationData.split(DEFAULT_SPLIT)) {
-                if (!customizationPart.matches(regex.getContentRecRegex())) {
+                if (!matchesCustomizationContent(customizationPart, regex.getContentRecRegex())) {
                     continue;
                 }
                 String extractedContent = extractCustomizationContent(customizationPart, regex.getContentExtRegex());
@@ -160,17 +182,81 @@ public class OrderCreationRequestBody implements RequestBody {
                     continue;
                 }
                 String normalizedContent = extractedContent.trim().toLowerCase();
+                List<String> engravingUrls = findEngravingFileUrls(normalizedContent, customizationData,
+                        buyerMessage, materialGroupIndex);
+                if (!engravingUrls.isEmpty() || ENGRAVING_FILE_PATTERN.matcher(buyerMessage).find()) {
+                    addUniqueMaterialUrls(materialUrls, engravingUrls);
+                    continue;
+                }
+
+                // Preserve the existing matching behavior for older buyer-message formats.
                 Matcher urlMatcher = URL_PATTERN.matcher(buyerMessage);
                 while (urlMatcher.find()) {
                     String url = urlMatcher.group();
                     if (url.toLowerCase().contains(normalizedContent)) {
-                        materialUrls.add(url);
+                        if (!materialUrls.contains(url)) {
+                            materialUrls.add(url);
+                        }
                     }
                 }
             }
         }
     }
 
+    private void addUniqueMaterialUrls(JSONArray materialUrls, List<String> urls) {
+        for (String url : urls) {
+            if (!materialUrls.contains(url)) {
+                materialUrls.add(url);
+            }
+        }
+    }
+    private List<String> findEngravingFileUrls(String normalizedContent, String customizationData,
+                                                String buyerMessage, int materialGroupIndex) {
+        List<String> engravingUrls = new ArrayList<>();
+        Set<String> designIds = extractCustomizationDesignIds(customizationData);
+        String[] lines = buyerMessage.split("\\R", -1);
+        for (int lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+            String line = lines[lineIndex].trim();
+            if (!line.startsWith("Engraving file")) {
+                continue;
+            }
+            Matcher urlMatcher = URL_PATTERN.matcher(line);
+            if (!urlMatcher.find()) {
+                continue;
+            }
+            String url = urlMatcher.group();
+            StringBuilder context = new StringBuilder();
+            int contextStart = Math.max(0, lineIndex - 5);
+            for (int contextIndex = contextStart; contextIndex < lineIndex; contextIndex++) {
+                context.append(lines[contextIndex]).append(LINE_BREAK);
+            }
+            boolean matchesDesignGroup = designIds.stream()
+                    .anyMatch(designId -> url.contains(designId + "-" + materialGroupIndex + "-"));
+            boolean matchesDescription = context.toString().toLowerCase().contains(normalizedContent)
+                    || url.toLowerCase().contains(normalizedContent);
+            if (designIds.isEmpty() ? matchesDescription : matchesDesignGroup) {
+                engravingUrls.add(url);
+            }
+        }
+        return engravingUrls;
+    }
+
+    private Set<String> extractCustomizationDesignIds(String customizationData) {
+        Set<String> designIds = new LinkedHashSet<>();
+        Matcher matcher = CUSTOMIZATION_DESIGN_ID_PATTERN.matcher(customizationData);
+        while (matcher.find()) {
+            designIds.add(matcher.group(1).trim());
+        }
+        return designIds;
+    }
+    private boolean matchesCustomizationContent(String customizationPart, String contentRecRegex) {
+        if (customizationPart.matches(contentRecRegex)) {
+            return true;
+        }
+        // customizationData is split by ';' before matching, while some database
+        // configurations include the delimiter at the end of contentRecRegex.
+        return (customizationPart + DEFAULT_SPLIT).matches(contentRecRegex);
+    }
     private String extractCustomizationContent(String customizationPart, String contentExtRegex) {
         String[] extractedParts = customizationPart.trim().split(contentExtRegex);
         return extractedParts.length == 0 ? null : extractedParts[extractedParts.length - 1].trim();

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.jeecg.modules.business.mapper.ShoumanScheduledOrderErpCodeMapper">
+    <select id="findOrderIds" resultType="string">
+        select distinct po.platform_order_id
+        from platform_order po
+        join shop sh on sh.id = po.shop_id
+        where po.order_time &gt; '2025-09-01'
+          and po.platform_order_id not in (select platform_order_id from shouman_order)
+        <if test="beginOrderTime != null">and po.order_time &gt;= #{beginOrderTime}</if>
+        <if test="endOrderTime != null">and po.order_time &lt;= #{endOrderTime}</if>
+        <if test="shopErpCode != null and shopErpCode != ''">and sh.erp_code = #{shopErpCode}</if>
+        <if test="orderNumbers != null and orderNumbers.size() &gt; 0">
+            and po.platform_order_number in
+            <foreach collection="orderNumbers" item="orderNumber" open="(" separator="," close=")">#{orderNumber}</foreach>
+        </if>
+        order by po.order_time, po.platform_order_id
+    </select>
+</mapper>
