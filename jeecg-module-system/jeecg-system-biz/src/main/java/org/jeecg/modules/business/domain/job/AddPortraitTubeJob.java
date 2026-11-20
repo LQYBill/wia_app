@@ -122,6 +122,26 @@ public class AddPortraitTubeJob implements Job {
                 counts.canvas30Count += quantity;
             }
         },
+        // New ordinary canvas SKUs: JJ25 + two letters + size code + optional suffix.
+        // Triptych prefix rules above must take precedence over these general rules.
+        REGEX_LETTER_30(null, "JJ25[A-Za-z]{2}00.*") {
+            @Override
+            void apply(CanvasCounts counts, int quantity) {
+                counts.canvas30Count += quantity;
+            }
+        },
+        REGEX_LETTER_40(null, "JJ25[A-Za-z]{2}01.*") {
+            @Override
+            void apply(CanvasCounts counts, int quantity) {
+                counts.canvas40Count += quantity;
+            }
+        },
+        REGEX_LETTER_50(null, "JJ25[A-Za-z]{2}02.*") {
+            @Override
+            void apply(CanvasCounts counts, int quantity) {
+                counts.canvas50Count += quantity;
+            }
+        },
         // Regex rules for special canvases
         REGEX_NEW_36(null, REGEX_NEW_36_CANVAS) {
             @Override
