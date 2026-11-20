@@ -126,6 +126,15 @@ public class ShippingInvoiceFactory {
         return logisticChannel == null || !"1".equals(logisticChannel.getSmallParcelTaxExempted());
     }
 
+    BigDecimal calculateSmallParcelTax(PlatformOrder order, LogisticChannel channel, Integer distinctHsCodeCount) {
+        if (!EU_COUNTRY_LIST.contains(order.getCountry()) || !shouldCalculateSmallParcelTax(channel)) {
+            return BigDecimal.ZERO;
+        }
+        // Preserve the existing minimum charge of one HS code for taxable EU parcels.
+        int count = distinctHsCodeCount == null ? 1 : Math.max(1, distinctHsCodeCount);
+        return SMALL_PARCEL_TAX_PER_HSCODE.multiply(BigDecimal.valueOf(count));
+    }
+
     BigDecimal calculateEuCustomsHandlingFee(PlatformOrder order, LogisticChannel channel, Integer distinctHsCodeCount) {
         return calculateEuCustomsHandlingFee(order, channel, distinctHsCodeCount, LocalDate.now(SHIPPING_DATE_ZONE));
     }
@@ -1055,12 +1064,8 @@ public class ShippingInvoiceFactory {
                 uninvoicedOrder.setPackagingMaterialFee(packageMatFee);
             }
             // Regardless whether we charge a client VAT, all parcels into the EU are subject to the small parcel tax
-            if(EU_COUNTRY_LIST.contains(uninvoicedOrder.getCountry())
-                    && shouldCalculateSmallParcelTax(logisticChannelPair.getLeft())) {
-                BigDecimal smallParcelTaxForOrder = SMALL_PARCEL_TAX_PER_HSCODE.multiply(
-                        BigDecimal.valueOf(distinctHsCodeNbInOrders.get(uninvoicedOrder.getPlatformOrderId())));
-                uninvoicedOrder.setSmallParcelTax(BigDecimal.ZERO.equals(smallParcelTaxForOrder) ? SMALL_PARCEL_TAX_PER_HSCODE : smallParcelTaxForOrder);
-            }
+            uninvoicedOrder.setSmallParcelTax(calculateSmallParcelTax(uninvoicedOrder, logisticChannelPair.getLeft(),
+                    distinctHsCodeNbInOrders.get(uninvoicedOrder.getPlatformOrderId())));
             uninvoicedOrder.setEuCustomsHandlingFee(euCustomsHandlingFee);
             uninvoicedOrder.setFretFee(fretFee);
             uninvoicedOrder.setPickingFee(pickingFee);
@@ -1260,12 +1265,8 @@ public class ShippingInvoiceFactory {
             order.setPackagingMaterialFee(packageMatFee);
         }
         // Regardless whether we charge a client VAT, all parcels into the EU are subject to the small parcel tax
-        if(EU_COUNTRY_LIST.contains(order.getCountry())
-                && shouldCalculateSmallParcelTax(logisticChannelPair.getLeft())) {
-            BigDecimal smallParcelTaxForOrder = SMALL_PARCEL_TAX_PER_HSCODE.multiply(
-                    BigDecimal.valueOf(distinctHsCodeNbInOrders.get(order.getPlatformOrderId())));
-            order.setSmallParcelTax(BigDecimal.ZERO.equals(smallParcelTaxForOrder) ? SMALL_PARCEL_TAX_PER_HSCODE : smallParcelTaxForOrder);
-        }
+        order.setSmallParcelTax(calculateSmallParcelTax(order, logisticChannelPair.getLeft(),
+                distinctHsCodeNbInOrders.get(order.getPlatformOrderId())));
         order.setEuCustomsHandlingFee(euCustomsHandlingFee);
         order.setFretFee(fretFee);
         order.setPickingFee(pickingFee);
@@ -1737,6 +1738,8 @@ public class ShippingInvoiceFactory {
             order.setPickingFee(pickingFee);
             order.setOrderServiceFee(orderServiceFee);
             order.setInsuranceFee(skuInsuranceTotal);
+            order.setSmallParcelTax(calculateSmallParcelTax(order, logisticChannelPair.getLeft(),
+                    distinctHsCodeCounts.get(order.getPlatformOrderId())));
             order.setEuCustomsHandlingFee(calculateEuCustomsHandlingFee(order, logisticChannelPair.getLeft(),
                     distinctHsCodeCounts.get(order.getPlatformOrderId())));
 

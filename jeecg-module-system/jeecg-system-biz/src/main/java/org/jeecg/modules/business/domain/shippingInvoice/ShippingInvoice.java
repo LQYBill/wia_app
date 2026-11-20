@@ -80,7 +80,9 @@ public class ShippingInvoice extends AbstractInvoice<String, Object, Integer, Ob
             BigDecimal countryPackageMatFeePerOrder = BigDecimal.ZERO;
             BigDecimal countryInsuranceFees = BigDecimal.ZERO;
             for (PlatformOrder po : orders) {
-                totalSmallParcelTax = totalSmallParcelTax.add(po.getSmallParcelTax());
+                if (po.getSmallParcelTax() != null) {
+                    totalSmallParcelTax = totalSmallParcelTax.add(po.getSmallParcelTax());
+                }
                 if (po.getEuCustomsHandlingFee() != null) {
                     totalEuCustomsHandlingFee = totalEuCustomsHandlingFee.add(po.getEuCustomsHandlingFee());
                 }
