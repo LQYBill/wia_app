@@ -1,0 +1,63 @@
+name: Build WIA App
+
+on:
+  push:
+    branches: [dev]
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Package WIA App
+        shell: bash
+        run: |
+          # The deployment script carries over the installed environment configuration.
+          rm -f -- jeecg-module-system/jeecg-system-start/src/main/resources/application-*.yml
+          mvn -B -ntp -Pprod "-Dwia-git-commit=$GITHUB_SHA" \
+            -pl jeecg-module-system/jeecg-system-start -am \
+            -Dmaven.test.skip=true package
+
+      - name: Verify JAR version and Git commit
+        id: release
+        shell: bash
+        run: |
+          shopt -s nullglob
+          jars=(jeecg-module-system/jeecg-system-start/target/jeecg-system-start-*.jar)
+          if ((${#jars[@]} != 1)); then
+            echo 'Expected exactly one WIA App release JAR' >&2
+            exit 1
+          fi
+          jar=${jars[0]}
+          version=$(sed -n 's/^[[:space:]]*<wia-app\.version>\([^<]*\)<\/wia-app\.version>[[:space:]]*$/\1/p' pom.xml)
+          [[ $version =~ ^[0-9][0-9A-Za-z.+_-]*$ ]]
+          metadata=$(unzip -p "$jar" BOOT-INF/classes/wia-release.properties | tr -d '\r')
+          grep -Fx "app_version=$version" <<< "$metadata"
+          grep -Fx "git_commit=$GITHUB_SHA" <<< "$metadata"
+          unzip -p "$jar" BOOT-INF/classes/banner.txt | tr -d '\r' | grep -Fx "WIA APP Version: $version"
+          entries=$(unzip -Z1 "$jar")
+          if grep -Eq '^BOOT-INF/classes/application-[^/]+\.yml$' <<< "$entries"; then
+            echo 'Environment configuration must be supplied by the deployment target' >&2
+            exit 1
+          fi
+          printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
+
+      - name: Upload application JAR
+        uses: actions/upload-artifact@v7
+        with:
+          name: wia-app-${{ steps.release.outputs.version }}-${{ github.sha }}
+          path: jeecg-module-system/jeecg-system-start/target/jeecg-system-start-*.jar
+          if-no-files-found: error
+          compression-level: 0
