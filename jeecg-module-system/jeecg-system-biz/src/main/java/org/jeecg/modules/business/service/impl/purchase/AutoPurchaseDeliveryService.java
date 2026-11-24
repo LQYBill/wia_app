@@ -23,13 +23,16 @@ public class AutoPurchaseDeliveryService {
     private final EmailService emails;
     private final Environment environment;
     private final PurchaseDetailExportService details;
+    private final PlatformOrderShippingInvoiceService invoiceFiles;
     @Value("${jeecg.path.purchaseInvoiceDir}") private String invoiceDir;
 
     public AutoPurchaseDeliveryService(AutoPurchaseMapper runs, IPurchaseOrderService purchases,
-            IProviderMabangService providers, EmailService emails, Environment environment, PurchaseDetailExportService details) {
+            IProviderMabangService providers, EmailService emails, Environment environment,
+            PurchaseDetailExportService details, PlatformOrderShippingInvoiceService invoiceFiles) {
         this.runs = runs; this.purchases = purchases; this.providers = providers;
         this.emails = emails; this.environment = environment;
         this.details = details;
+        this.invoiceFiles = invoiceFiles;
     }
 
     public void deliver(AutoPurchaseRun run) throws Exception {
@@ -76,15 +79,16 @@ public class AutoPurchaseDeliveryService {
     }
 
     private void sendInvoice(AutoPurchaseRun run, InvoiceMetaData meta) throws Exception {
+        String invoicePdf = invoiceFiles.convertToPdf(Paths.get(invoiceDir, meta.getFilename())).toString();
+        String detailFile = details.export(run.getPurchaseId(), meta).toString();
         Session session = Session.getInstance(emails.getMailSender(), new Authenticator() {
             @Override protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication(environment.getProperty("spring.mail.username"), environment.getProperty("spring.mail.password"));
             }
         });
-        String detailFile = details.export(run.getPurchaseId(), meta).toString();
         emails.sendMessageWithAttachments(run.getRecipient(), "Automatic purchase invoice " + meta.getInvoiceCode(),
                 "Please find your automatic replenishment invoice and purchase details attached. "
                         + "Detail amounts are in EUR before promotions; please refer to the invoice for the final payable amount.",
-                Arrays.asList(Paths.get(invoiceDir, meta.getFilename()).toString(), detailFile), session);
+                Arrays.asList(invoicePdf, detailFile), session);
     }
 }

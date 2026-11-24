@@ -961,30 +961,32 @@ public class PlatformOrderShippingInvoiceService {
             if (m.matches()) {
                 pdfFilePath = INVOICE_PDF_DIR + "/" + m.group(2) + ".pdf";
             }
-            // Créé un classeur pour charger le fichier Excel
-            PdfSaveOptions saveOptions = new PdfSaveOptions();
-            saveOptions.setDefaultFont("Arial");
-            saveOptions.setCheckWorkbookDefaultFont(false);
-            Workbook workbook = new Workbook(excelFilePath);
-            Worksheet sheet = workbook.getWorksheets().get(0);
-            // get number of lines
-            Cells cells = sheet.getCells();
-            int maxRow = cells.getMaxDataRow();
-            PageSetup pageSetup = sheet.getPageSetup();
-            // Setting the number of pages to which the length of the worksheet will
-            if(maxRow < 63) {
-                // be spanned
-                pageSetup.setFitToPagesTall(1);
-
-                // Setting the number of pages to which the width of the worksheet will be spanned
-                pageSetup.setFitToPagesWide(1);
-            }
-            // On enregistre le document au format PDF
-            workbook.save(pdfFilePath, saveOptions);
+             convertToPdf(Paths.get(excelFilePath), Paths.get(pdfFilePath));
             return pdfFilePath;
         }
         return "ERROR";
     }
+    public Path convertToPdf(Path spreadsheet) throws Exception {
+        String name = spreadsheet.getFileName().toString();
+        Path directory = Files.createDirectories(Paths.get(INVOICE_PDF_DIR));
+        Path pdf = directory.resolve(name.substring(0, name.lastIndexOf('.')) + ".pdf");
+        convertToPdf(spreadsheet, pdf);
+        return pdf;
+    }
+
+    private void convertToPdf(Path spreadsheet, Path pdf) throws Exception {
+        PdfSaveOptions options = new PdfSaveOptions();
+        options.setDefaultFont("Arial");
+        options.setCheckWorkbookDefaultFont(false);
+        Workbook workbook = new Workbook(spreadsheet.toString());
+        Worksheet sheet = workbook.getWorksheets().get(0);
+        if (sheet.getCells().getMaxDataRow() < 63) {
+            sheet.getPageSetup().setFitToPagesTall(1);
+            sheet.getPageSetup().setFitToPagesWide(1);
+        }
+        workbook.save(pdf.toString(), options);
+    }
+
     @Transactional
     public String zipInvoices(List<String> invoiceList) throws IOException {
         log.info("Zipping Invoices ...");
