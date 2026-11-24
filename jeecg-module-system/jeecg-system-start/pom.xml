@@ -10,6 +10,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>jeecg-system-start</artifactId>
+
+    <properties>
+        <wia-git-commit>unknown</wia-git-commit>
+    </properties>
     
     <dependencies>
         <!-- SYSTEM 系统管理模块 -->
