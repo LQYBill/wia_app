@@ -77,6 +77,36 @@ class ShopifyTagJobTest {
     }
 
     @Test
+    void routesEachShopUsingOnlyItsOwnTagsAndCategory() throws JobExecutionException {
+        when(orders.fetchPlatformOrdersWithShopifyTags(Collections.singletonList("AC")))
+                .thenReturn(Arrays.asList(order("ac", "Promo, Subscription"), order("ac-wrong", "Priority")));
+        when(orders.fetchPlatformOrdersWithShopifyTags(Collections.singletonList("OTHER")))
+                .thenReturn(Arrays.asList(order("other", "Priority"), order("other-wrong", "Subscription")));
+        expectReview("ac", "AC复购订单", "200");
+        expectReview("other", "优先审核", "200");
+        when(orders.updateBatchById(argThat(updates -> updates.size() == 2))).thenReturn(true);
+
+        job.execute(context("{\"rules\":["
+                + "{\"shop\":\"AC\",\"tags\":[\"Subscription\"],\"abnormalLabelName\":\"AC复购订单\"},"
+                + "{\"shop\":\"OTHER\",\"tags\":[\"Priority\"],\"abnormalLabelName\":\"优先审核\"}]}"));
+
+        mabang.verify();
+        verify(orders).updateBatchById(argThat(updates -> updates.size() == 2
+                && updates.stream().anyMatch(order -> "local-ac".equals(order.getId()))
+                && updates.stream().anyMatch(order -> "local-other".equals(order.getId()))));
+    }
+
+    @Test
+    void duplicateShopRulesFailBeforeReadingOrders() {
+        assertThrows(JobExecutionException.class, () -> job.execute(context("{\"rules\":["
+                + "{\"shop\":\"AC\",\"tags\":[\"Subscription\"],\"abnormalLabelName\":\"复购\"},"
+                + "{\"shop\":\"ac\",\"tags\":[\"Priority\"],\"abnormalLabelName\":\"优先\"}]}")));
+
+        verifyNoInteractions(orders);
+        mabang.verify();
+    }
+
+    @Test
     void emptyShopListSkipsProcessingAndInvalidParametersFailBeforeReadingOrders() throws JobExecutionException {
         job.execute(context("{\"includedShops\":[]}"));
         assertThrows(JobExecutionException.class, () -> job.execute(context("{\"tags\":\"Subscription\"}")));

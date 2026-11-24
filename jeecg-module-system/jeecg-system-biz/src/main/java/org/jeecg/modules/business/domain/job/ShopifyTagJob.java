@@ -17,8 +17,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -38,49 +43,27 @@ public class ShopifyTagJob implements Job {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-        List<String> shops = DEFAULT_INCLUDED_SHOPS;
-        List<String> tags = DEFAULT_TAGS;
-        String labelName = DEFAULT_ABNORMAL_LABEL_NAME;
         String parameter = context.getMergedJobDataMap().getString("parameter");
-        if (parameter != null && !parameter.trim().isEmpty()) {
-            try {
-                JSONObject json = new JSONObject(parameter);
-                if (!json.isNull("includedShops")) {
-                    shops = readValues(json.getJSONArray("includedShops"));
-                }
-                if (!json.isNull("tags")) {
-                    tags = readValues(json.getJSONArray("tags"));
-                }
-                if (!json.isNull("abnormalLabelName")) {
-                    labelName = json.getString("abnormalLabelName").trim();
-                }
-            } catch (JSONException e) {
-                throw new JobExecutionException("Invalid ShopifyTagJob parameters", e);
+        Map<PlatformOrder, String> matchingOrders = new LinkedHashMap<>();
+        for (ReviewRule rule : readRules(parameter)) {
+            if (!rule.shops.isEmpty() && !rule.tags.isEmpty()) {
+                platformOrderService.fetchPlatformOrdersWithShopifyTags(rule.shops).stream()
+                        .filter(order -> Arrays.stream(order.getShopifyTags().split(","))
+                                .map(String::trim)
+                                .anyMatch(rule.tags::contains))
+                        .forEach(order -> matchingOrders.put(order, rule.labelName));
             }
         }
-        if (labelName.isEmpty()) {
-            throw new JobExecutionException("abnormalLabelName must not be blank");
-        }
-        if (shops.isEmpty() || tags.isEmpty()) {
-            return;
-        }
-
-        List<String> requiredTags = tags;
-        List<PlatformOrder> matchingOrders = platformOrderService.fetchPlatformOrdersWithShopifyTags(shops).stream()
-                .filter(order -> Arrays.stream(order.getShopifyTags().split(","))
-                        .map(String::trim)
-                        .anyMatch(requiredTags::contains))
-                .collect(Collectors.toList());
         if (matchingOrders.isEmpty()) {
             return;
         }
 
-        String reviewLabel = labelName;
         ExecutorService executor = ThrottlingExecutorService.createExecutorService(
                 2, MABANG_API_RATE_LIMIT_PER_MINUTE, TimeUnit.MINUTES);
         try {
-            List<CompletableFuture<PlatformOrder>> requests = matchingOrders.stream()
-                    .map(order -> CompletableFuture.supplyAsync(() -> sendToReview(order, reviewLabel), executor))
+            List<CompletableFuture<PlatformOrder>> requests = matchingOrders.entrySet().stream()
+                    .map(entry -> CompletableFuture.supplyAsync(
+                            () -> sendToReview(entry.getKey(), entry.getValue()), executor))
                     .collect(Collectors.toList());
             List<PlatformOrder> reviewedOrders = requests.stream()
                     .map(CompletableFuture::join)
@@ -89,11 +72,52 @@ public class ShopifyTagJob implements Job {
             if (!reviewedOrders.isEmpty() && !platformOrderService.updateBatchById(reviewedOrders)) {
                 throw new JobExecutionException("Failed to record Shopify tag review results");
             }
-            log.info("ShopifyTagJob moved {}/{} orders to Mabang review category {}.",
-                    reviewedOrders.size(), matchingOrders.size(), reviewLabel);
+            log.info("ShopifyTagJob moved {}/{} matching orders to Mabang review.",
+                    reviewedOrders.size(), matchingOrders.size());
         } finally {
             executor.shutdown();
         }
+    }
+
+    private static List<ReviewRule> readRules(String parameter) throws JobExecutionException {
+        try {
+            JSONObject json = parameter == null || parameter.trim().isEmpty()
+                    ? new JSONObject() : new JSONObject(parameter);
+            if (json.has("rules")) {
+                return readShopRules(json.getJSONArray("rules"));
+            }
+            List<String> shops = json.isNull("includedShops")
+                    ? DEFAULT_INCLUDED_SHOPS : readValues(json.getJSONArray("includedShops"));
+            List<String> tags = json.isNull("tags") ? DEFAULT_TAGS : readValues(json.getJSONArray("tags"));
+            String labelName = json.isNull("abnormalLabelName")
+                    ? DEFAULT_ABNORMAL_LABEL_NAME : json.getString("abnormalLabelName").trim();
+            return Collections.singletonList(new ReviewRule(shops, tags, labelName));
+        } catch (JSONException e) {
+            throw new JobExecutionException("Invalid ShopifyTagJob parameters", e);
+        }
+    }
+
+    private static List<ReviewRule> readShopRules(JSONArray array) throws JSONException, JobExecutionException {
+        List<ReviewRule> rules = new ArrayList<>();
+        Set<String> shops = new HashSet<>();
+        for (int i = 0; i < array.length(); i++) {
+            JSONObject rule = array.getJSONObject(i);
+            String shop = readRequiredString(rule, "shop");
+            if (!shops.add(shop.toUpperCase(Locale.ROOT))) {
+                throw new JobExecutionException("Duplicate Shopify tag rule for shop " + shop);
+            }
+            rules.add(new ReviewRule(Collections.singletonList(shop), readValues(rule.getJSONArray("tags")),
+                    readRequiredString(rule, "abnormalLabelName")));
+        }
+        return rules;
+    }
+
+    private static String readRequiredString(JSONObject rule, String key) throws JSONException, JobExecutionException {
+        Object value = rule.get(key);
+        if (!(value instanceof String) || ((String) value).trim().isEmpty()) {
+            throw new JobExecutionException("Rule " + key + " must be a non-blank string");
+        }
+        return ((String) value).trim();
     }
 
     private static List<String> readValues(JSONArray array) throws JSONException {
@@ -122,5 +146,20 @@ public class ShopifyTagJob implements Job {
             log.warn("Failed to move order {} to review category {}.", order.getPlatformOrderId(), labelName, e);
         }
         return null;
+    }
+
+    private static final class ReviewRule {
+        private final List<String> shops;
+        private final List<String> tags;
+        private final String labelName;
+
+        private ReviewRule(List<String> shops, List<String> tags, String labelName) throws JobExecutionException {
+            if (labelName.isEmpty()) {
+                throw new JobExecutionException("abnormalLabelName must not be blank");
+            }
+            this.shops = shops;
+            this.tags = tags;
+            this.labelName = labelName;
+        }
     }
 }
