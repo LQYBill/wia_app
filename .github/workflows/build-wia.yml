@@ -10,6 +10,7 @@ permissions:
 jobs:
   package:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
@@ -26,7 +27,27 @@ jobs:
         run: |
           # The deployment script carries over the installed environment configuration.
           rm -f -- jeecg-module-system/jeecg-system-start/src/main/resources/application-*.yml
-          mvn -B -ntp -Pprod "-Dwia-git-commit=$GITHUB_SHA" \
+          # Resolve dependencies from Central before trying the repositories in the POM.
+          cat > "$RUNNER_TEMP/wia-maven-settings.xml" <<'XML'
+          <settings>
+            <profiles>
+              <profile>
+                <id>ci-central</id>
+                <repositories>
+                  <repository>
+                    <id>central</id>
+                    <url>https://repo.maven.apache.org/maven2</url>
+                    <snapshots><enabled>false</enabled></snapshots>
+                  </repository>
+                </repositories>
+              </profile>
+            </profiles>
+            <activeProfiles><activeProfile>ci-central</activeProfile></activeProfiles>
+          </settings>
+          XML
+          mvn -B -ntp --settings "$RUNNER_TEMP/wia-maven-settings.xml" -Pprod \
+            -Daether.connector.connectTimeout=10000 -Daether.connector.requestTimeout=30000 \
+            "-Dwia-git-commit=$GITHUB_SHA" \
             -pl jeecg-module-system/jeecg-system-start -am \
             -Dmaven.test.skip=true package
 
