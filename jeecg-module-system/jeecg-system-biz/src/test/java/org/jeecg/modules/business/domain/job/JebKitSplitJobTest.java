@@ -45,38 +45,57 @@ class JebKitSplitJobTest {
 
     @Test
     void splitsBothExampleSelectionsAndAggregatesQuantities() {
+        OrderItem standaloneCow = item("standalone-cow", "WZ101COW-JEB", null, 1, "2");
+        standaloneCow.setOriginTitle("Glen The Highland Cow");
         Order order = order(
                 item("line-1", BUNDLE, COW_PENGUIN_DOG, 2, "2"),
                 item("line-2", BUNDLE, KOALA_SANTA_COW, 1, "2"),
-                item("standalone-cow", "WZ101COW-JEB", null, 1, "2"),
+                standaloneCow,
                 item("removed-bundle", BUNDLE, KOALA_SANTA_COW, 1, "4"));
 
         ChangeOrderRequestBody change = JebKitSplitJob.buildChange(order,
                 Arrays.asList(line(COW_PENGUIN_DOG, 2), line(KOALA_SANTA_COW, 1)));
 
-        Map<String, Integer> removals = new HashMap<>();
-        Map<String, Integer> additions = new HashMap<>();
-        for (Object value : JSON.parseArray(change.parameters().getString("stockData"))) {
-            JSONObject operation = (JSONObject) value;
-            int quantity = operation.getIntValue("quantity");
-            if (operation.getIntValue("type") == 2) {
-                removals.put(operation.getString("erpOrderItemId"), quantity);
-            } else {
-                assertEquals(3, operation.getIntValue("type"));
-                additions.put(operation.getString("stockSku"), quantity);
-            }
-        }
-        Map<String, Integer> expectedRemovals = new HashMap<>();
-        expectedRemovals.put("line-1", 2);
-        expectedRemovals.put("line-2", 1);
-        assertEquals(expectedRemovals, removals);
         Map<String, Integer> expectedAdditions = new HashMap<>();
         expectedAdditions.put("WZ101COW-JEB", 3);
         expectedAdditions.put("WZ101PENGUIN-JEB", 2);
         expectedAdditions.put("WZ101DOG-JEB", 2);
         expectedAdditions.put("WZ101KOALA-JEB", 1);
         expectedAdditions.put("WZ101SANTA-JEB", 1);
-        assertEquals(expectedAdditions, additions);
+        assertEquals(expectedAdditions, addedQuantities(change));
+    }
+
+    @Test
+    void addsOnlyMissingComponentsWhenBundleRemainsActive() {
+        OrderItem bundle = item("bundle", BUNDLE, COW_PENGUIN_DOG, 2, "2");
+        OrderItem cow = item("added-cow", "WZ101COW-JEB", null, 1, "2");
+        OrderItem penguin = item("added-penguin", "WZ101PENGUIN-JEB", null, 2, "2");
+        OrderItem removedDog = item("removed-dog", "WZ101DOG-JEB", null, 2, "4");
+        Order order = order(bundle, cow, penguin, removedDog);
+
+        ChangeOrderRequestBody change = JebKitSplitJob.buildChange(order,
+                Collections.singletonList(line(COW_PENGUIN_DOG, 2)));
+
+        Map<String, Integer> expected = new HashMap<>();
+        expected.put("WZ101COW-JEB", 1);
+        expected.put("WZ101DOG-JEB", 2);
+        assertEquals(expected, addedQuantities(change));
+    }
+
+    @Test
+    void doesNotChangeOrderAgainAfterAllComponentsWereAdded() {
+        Order order = order(
+                item("bundle", BUNDLE, COW_PENGUIN_DOG, 1, "2"),
+                item("added-cow", "WZ101COW-JEB", null, 1, "2"),
+                item("added-penguin", "WZ101PENGUIN-JEB", null, 1, "2"),
+                item("added-dog", "WZ101DOG-JEB", null, 1, "2"));
+        order.setLogisticChannelName("assigned channel");
+        JebKitSplitJob job = spy(new JebKitSplitJob());
+
+        job.splitOrder(order, Collections.singletonList(line(COW_PENGUIN_DOG, 1)));
+
+        verify(job, never()).clearChannel(any());
+        verify(job, never()).changeOrder(any());
     }
 
     @Test
@@ -214,6 +233,16 @@ class JebKitSplitJobTest {
         assertTrue(summary.startsWith("2 JEB kit orders could not be processed"));
         assertTrue(summary.contains("missing-order (Mabang order lookup returned no matching order)"));
         assertTrue(summary.contains(ORDER_ID + " (Mabang order lookup returned 2 matching orders)"));
+    }
+
+    private static Map<String, Integer> addedQuantities(ChangeOrderRequestBody change) {
+        Map<String, Integer> additions = new HashMap<>();
+        for (Object value : JSON.parseArray(change.parameters().getString("stockData"))) {
+            JSONObject operation = (JSONObject) value;
+            assertEquals(3, operation.getIntValue("type"));
+            additions.put(operation.getString("stockSku"), operation.getIntValue("quantity"));
+        }
+        return additions;
     }
 
     private static Order order(OrderItem... items) {

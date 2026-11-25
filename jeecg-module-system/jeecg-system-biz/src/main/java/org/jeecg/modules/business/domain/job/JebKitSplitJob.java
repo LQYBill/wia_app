@@ -6,7 +6,6 @@ import com.google.common.collect.Multiset;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.jeecg.modules.business.domain.api.mabang.dochangeorder.ChangeOrderRequest;
@@ -172,7 +171,7 @@ public class JebKitSplitJob implements Job {
         List<OrderItem> activeBundles = order.getOrderItems().stream()
                 .filter(item -> skuCode.equals(item.getErpCode()) && !"4".equals(item.getStatus()))
                 .collect(Collectors.toList());
-        // The local sync may still contain the old line after a successful split.
+        // The previous job version removed the bundle after splitting it.
         if (activeBundles.isEmpty()) {
             return null;
         }
@@ -185,7 +184,6 @@ public class JebKitSplitJob implements Job {
         }
 
         Set<String> itemIds = new HashSet<>();
-        HashSet<Triple<String, String, Integer>> removals = new HashSet<>();
         for (OrderItem item : activeBundles) {
             String itemId = item.getErpOrderItemId();
             if (StringUtils.isBlank(item.getStatus())) {
@@ -197,15 +195,32 @@ public class JebKitSplitJob implements Job {
             if (!expectedLines.remove(Pair.of(StringUtils.trimToEmpty(item.getSpecifics()), item.getQuantity()))) {
                 throw new IllegalStateException("Mabang bundle line attributes or quantity do not match local data");
             }
-            removals.add(Triple.of(skuCode, itemId, item.getQuantity()));
         }
         if (!expectedLines.isEmpty()) {
             throw new IllegalStateException("Mabang is missing one or more active local bundle lines");
         }
 
+        Map<String, Integer> existingComponents = new HashMap<>();
+        for (OrderItem item : order.getOrderItems()) {
+            if (targetQuantities.containsKey(item.getErpCode()) && "2".equals(item.getStatus())
+                    && StringUtils.isBlank(item.getOriginTitle()) && item.getQuantity() > 0) {
+                // Mabang additions have no original platform product title.
+                existingComponents.merge(item.getErpCode(), item.getQuantity(), Math::addExact);
+            }
+        }
+
         HashSet<Pair<String, Integer>> additions = new HashSet<>();
-        targetQuantities.forEach((sku, quantity) -> additions.add(Pair.of(sku, quantity)));
-        return new ChangeOrderRequestBody(order.getPlatformOrderId(), null, removals, additions, null);
+        targetQuantities.forEach((sku, quantity) -> {
+            int missing = quantity - existingComponents.getOrDefault(sku, 0);
+            if (missing > 0) {
+                additions.add(Pair.of(sku, missing));
+            }
+        });
+        if (additions.isEmpty()) {
+            return null;
+        }
+        return ChangeOrderRequestBody.buildChangeOrderRequestBody(
+                order.getPlatformOrderId(), null, null, additions, null);
     }
 
     private static void addKitProducts(String customizationData, Integer quantity, Map<String, Integer> quantities) {
