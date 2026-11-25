@@ -1,6 +1,7 @@
 package org.jeecg.modules.business.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import lombok.Data;
 import org.apache.ibatis.annotations.Param;
 import org.jeecg.modules.business.entity.ClientPlatformOrderContent;
 import org.jeecg.modules.business.entity.PlatformOrderContent;
@@ -24,6 +25,20 @@ import java.util.Map;
  */
 @Repository
 public interface PlatformOrderContentMapper extends BaseMapper<PlatformOrderContent> {
+
+    List<JebKitOrderLine> findJebKitOrderLines(@Param("shopCode") String shopCode,
+                                               @Param("skuId") String skuId,
+                                               @Param("pendingStatus") String pendingStatus,
+                                               @Param("obsoleteStatus") String obsoleteStatus,
+                                               @Param("orderId") String orderId);
+
+    @Data
+    class JebKitOrderLine {
+        private String orderId;
+        private String skuCode;
+        private Integer quantity;
+        private String customizationData;
+    }
 
     boolean deleteByMainId(@Param("mainId") String mainId);
 

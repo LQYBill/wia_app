@@ -600,4 +600,20 @@
         </foreach>
         group by po.platform_order_id;
     </select>
+    <select id="findJebKitOrderLines"
+            resultType="org.jeecg.modules.business.mapper.PlatformOrderContentMapper$JebKitOrderLine">
+        SELECT po.platform_order_id AS orderId, sku.erp_code AS skuCode,
+               poc.quantity, poc.customization_data AS customizationData
+        FROM platform_order_content poc
+        JOIN platform_order po ON po.id = poc.platform_order_id
+        JOIN shop s ON s.id = po.shop_id
+        JOIN sku ON sku.id = poc.sku_id
+        WHERE s.erp_code = #{shopCode}
+          AND poc.sku_id = #{skuId}
+          AND poc.erp_status &lt;&gt; #{obsoleteStatus}
+          AND po.erp_status = #{pendingStatus}
+        <if test="orderId != null">
+          AND po.platform_order_id = #{orderId}
+        </if>
+    </select>
 </mapper>
