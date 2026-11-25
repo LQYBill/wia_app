@@ -5,9 +5,15 @@ import com.alibaba.fastjson.JSONObject;
 import org.jeecg.modules.business.domain.api.mabang.dochangeorder.ChangeOrderRequestBody;
 import org.jeecg.modules.business.domain.api.mabang.getorderlist.Order;
 import org.jeecg.modules.business.domain.api.mabang.getorderlist.OrderItem;
+import org.jeecg.modules.business.mapper.PlatformOrderContentMapper;
 import org.jeecg.modules.business.mapper.PlatformOrderContentMapper.JebKitOrderLine;
+import org.jeecg.modules.business.service.IPlatformOrderMabangService;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
+import org.quartz.JobDataMap;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -22,9 +28,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class JebKitSplitJobTest {
 
@@ -85,6 +93,14 @@ class JebKitSplitJobTest {
             ChangeOrderRequestBody change = JebKitSplitJob.buildChange(order, Collections.singletonList(line(selection, 1)));
             assertTrue(change.parameters().getString("stockData").contains(skuCodes[i]));
         }
+    }
+
+    @Test
+    void mapsBunnyToRabbitSku() {
+        String selection = "Kit 1:Tiki The Duck;Kit 2:Pinguy The Penguin;Kit 3:Luna The Bunny";
+        Order order = order(item("line-1", BUNDLE, selection, 1, "2"));
+        ChangeOrderRequestBody change = JebKitSplitJob.buildChange(order, Collections.singletonList(line(selection, 1)));
+        assertTrue(change.parameters().getString("stockData").contains("WZ101RABBIT-JEB"));
     }
 
     @Test
@@ -152,6 +168,52 @@ class JebKitSplitJobTest {
         job.splitOrder(order, Collections.singletonList(line(COW_PENGUIN_DOG, 1)));
         verify(job, never()).clearChannel(any());
         verify(job, never()).changeOrder(any());
+    }
+
+    @Test
+    void skipsOrderWithBlankCustomizationWithoutCallingMabang() throws JobExecutionException {
+        JebKitSplitJob job = new JebKitSplitJob();
+        PlatformOrderContentMapper mapper = mock(PlatformOrderContentMapper.class);
+        IPlatformOrderMabangService mabang = mock(IPlatformOrderMabangService.class);
+        ReflectionTestUtils.setField(job, "orderContentMapper", mapper);
+        ReflectionTestUtils.setField(job, "platformOrderMabangService", mabang);
+
+        JebKitOrderLine missingSelections = line("  ", 1);
+        missingSelections.setOrderId(ORDER_ID);
+        JebKitOrderLine validSelections = line(COW_PENGUIN_DOG, 1);
+        validSelections.setOrderId(ORDER_ID);
+        when(mapper.findJebKitOrderLines("JEB", "54e2c09b-cab5-45a4-bf09-5f4e1d96e569", "1", "5", null))
+                .thenReturn(Arrays.asList(missingSelections, validSelections));
+        JobExecutionContext context = mock(JobExecutionContext.class);
+        when(context.getMergedJobDataMap()).thenReturn(new JobDataMap());
+
+        job.execute(context);
+
+        verify(mabang, never()).getOrdersFromMabang(any(), any());
+    }
+
+    @Test
+    void includesOrderIdsAndDistinctLookupFailuresInQuartzSummary() {
+        JebKitSplitJob job = new JebKitSplitJob();
+        PlatformOrderContentMapper mapper = mock(PlatformOrderContentMapper.class);
+        IPlatformOrderMabangService mabang = mock(IPlatformOrderMabangService.class);
+        ReflectionTestUtils.setField(job, "orderContentMapper", mapper);
+        ReflectionTestUtils.setField(job, "platformOrderMabangService", mabang);
+
+        JebKitOrderLine missingOrder = line(COW_PENGUIN_DOG, 1);
+        missingOrder.setOrderId("missing-order");
+        JebKitOrderLine duplicateOrder = line(COW_PENGUIN_DOG, 1);
+        duplicateOrder.setOrderId(ORDER_ID);
+        when(mapper.findJebKitOrderLines("JEB", "54e2c09b-cab5-45a4-bf09-5f4e1d96e569", "1", "5", null))
+                .thenReturn(Arrays.asList(missingOrder, duplicateOrder));
+        when(mabang.getOrdersFromMabang(any(), any())).thenReturn(Arrays.asList(order(), order()));
+        JobExecutionContext context = mock(JobExecutionContext.class);
+        when(context.getMergedJobDataMap()).thenReturn(new JobDataMap());
+
+        String summary = assertThrows(JobExecutionException.class, () -> job.execute(context)).getMessage();
+        assertTrue(summary.startsWith("2 JEB kit orders could not be processed"));
+        assertTrue(summary.contains("missing-order (Mabang order lookup returned no matching order)"));
+        assertTrue(summary.contains(ORDER_ID + " (Mabang order lookup returned 2 matching orders)"));
     }
 
     private static Order order(OrderItem... items) {

@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -50,7 +51,7 @@ public class JebKitSplitJob implements Job {
     private static final Pattern KIT_FIELD = Pattern.compile("Kit\\s+(\\d+)(.*)", Pattern.CASE_INSENSITIVE);
     private static final Pattern PRODUCT_WORD = Pattern.compile(
             "\\b(DRAGON|CAT|COW|DOG|DUCK|FOX|FROG|GIRAFFE|KOALA|MONKEY|OCTOPUS|PANDA|PENGUIN|PIG|"
-                    + "RABBIT|SANTA|SNOWMAN|TURTLE|WHALE)\\b", Pattern.CASE_INSENSITIVE);
+                    + "RABBIT|BUNNY|SANTA|SNOWMAN|TURTLE|WHALE)\\b", Pattern.CASE_INSENSITIVE);
 
     @Autowired
     private PlatformOrderContentMapper orderContentMapper;
@@ -76,6 +77,13 @@ public class JebKitSplitJob implements Job {
                 .findJebKitOrderLines(SHOP_CODE, BUNDLE_SKU_ID, OrderStatus.Pending.getCode(),
                         OrderStatus.Obsolete.getCode(), orderId)
                 .stream().collect(Collectors.groupingBy(JebKitOrderLine::getOrderId));
+        candidates.entrySet().removeIf(entry -> {
+            if (entry.getValue().stream().noneMatch(line -> StringUtils.isBlank(line.getCustomizationData()))) {
+                return false;
+            }
+            log.warn("Skipping JEB kit order {}: missing kit selections in customization_data", entry.getKey());
+            return true;
+        });
         if (candidates.isEmpty()) {
             return;
         }
@@ -88,30 +96,37 @@ public class JebKitSplitJob implements Job {
         try {
             Map<String, List<Order>> currentOrders = platformOrderMabangService.getOrdersFromMabang(requests, executor)
                     .stream().collect(Collectors.groupingBy(Order::getPlatformOrderId));
-            List<CompletableFuture<Boolean>> results = candidates.entrySet().stream()
+            List<CompletableFuture<String>> results = candidates.entrySet().stream()
                     .map(entry -> CompletableFuture.supplyAsync(
                             () -> splitOrder(entry.getKey(), entry.getValue(), currentOrders.get(entry.getKey())),
                             executor))
                     .collect(Collectors.toList());
-            long failures = results.stream().map(CompletableFuture::join).filter(success -> !success).count();
-            if (failures > 0) {
-                throw new JobExecutionException(failures + " JEB kit orders could not be processed");
+            List<String> failures = results.stream().map(CompletableFuture::join)
+                    .filter(Objects::nonNull).collect(Collectors.toList());
+            if (!failures.isEmpty()) {
+                String examples = failures.stream().limit(10).collect(Collectors.joining("; "));
+                throw new JobExecutionException(failures.size() + " JEB kit orders could not be processed: " + examples);
             }
         } finally {
             executor.shutdown();
         }
     }
 
-    private boolean splitOrder(String orderId, List<JebKitOrderLine> lines, List<Order> currentOrders) {
+    private String splitOrder(String orderId, List<JebKitOrderLine> lines, List<Order> currentOrders) {
         try {
-            if (currentOrders == null || currentOrders.size() != 1) {
-                throw new IllegalStateException("Mabang did not return exactly one matching order");
+            if (currentOrders == null || currentOrders.isEmpty()) {
+                throw new IllegalStateException("Mabang order lookup returned no matching order");
+            }
+            if (currentOrders.size() != 1) {
+                throw new IllegalStateException("Mabang order lookup returned " + currentOrders.size() + " matching orders");
             }
             splitOrder(currentOrders.get(0), lines);
-            return true;
+            return null;
         } catch (RuntimeException e) {
-            log.warn("JEB kit split failed for order {}: {}", orderId, e.getMessage());
-            return false;
+            String reason = StringUtils.abbreviate(StringUtils.normalizeSpace(
+                    StringUtils.defaultIfBlank(e.getMessage(), e.getClass().getSimpleName())), 240);
+            log.warn("JEB kit split failed for order {}: {}", orderId, reason);
+            return orderId + " (" + reason + ")";
         }
     }
 
@@ -173,14 +188,19 @@ public class JebKitSplitJob implements Job {
         HashSet<Triple<String, String, Integer>> removals = new HashSet<>();
         for (OrderItem item : activeBundles) {
             String itemId = item.getErpOrderItemId();
-            if (StringUtils.isBlank(item.getStatus()) || StringUtils.isBlank(itemId) || !itemIds.add(itemId)
-                    || !expectedLines.remove(Pair.of(StringUtils.trimToEmpty(item.getSpecifics()), item.getQuantity()))) {
-                throw new IllegalStateException("Local and Mabang bundle lines do not match");
+            if (StringUtils.isBlank(item.getStatus())) {
+                throw new IllegalStateException("Mabang bundle line is missing its status");
+            }
+            if (StringUtils.isBlank(itemId) || !itemIds.add(itemId)) {
+                throw new IllegalStateException("Mabang bundle line ID is missing or duplicated");
+            }
+            if (!expectedLines.remove(Pair.of(StringUtils.trimToEmpty(item.getSpecifics()), item.getQuantity()))) {
+                throw new IllegalStateException("Mabang bundle line attributes or quantity do not match local data");
             }
             removals.add(Triple.of(skuCode, itemId, item.getQuantity()));
         }
         if (!expectedLines.isEmpty()) {
-            throw new IllegalStateException("Local and Mabang bundle lines do not match");
+            throw new IllegalStateException("Mabang is missing one or more active local bundle lines");
         }
 
         HashSet<Pair<String, Integer>> additions = new HashSet<>();
@@ -189,8 +209,11 @@ public class JebKitSplitJob implements Job {
     }
 
     private static void addKitProducts(String customizationData, Integer quantity, Map<String, Integer> quantities) {
-        if (StringUtils.isBlank(customizationData) || quantity == null || quantity <= 0) {
-            throw new IllegalArgumentException("Missing kit selections or invalid bundle quantity");
+        if (StringUtils.isBlank(customizationData)) {
+            throw new IllegalArgumentException("Missing kit selections in customization_data");
+        }
+        if (quantity == null || quantity <= 0) {
+            throw new IllegalArgumentException("Invalid bundle quantity");
         }
         Set<Integer> slots = new HashSet<>();
         for (String attribute : customizationData.split(";")) {
@@ -207,9 +230,9 @@ public class JebKitSplitJob implements Job {
             if (!product.find()) {
                 throw new IllegalArgumentException("Unknown product in Kit " + slot);
             }
-            String productName = product.group().toUpperCase(Locale.ROOT);
+            String productName = canonicalProductName(product.group());
             while (product.find()) {
-                if (!productName.equalsIgnoreCase(product.group())) {
+                if (!productName.equals(canonicalProductName(product.group()))) {
                     throw new IllegalArgumentException("Ambiguous product in Kit " + slot);
                 }
             }
@@ -219,5 +242,9 @@ public class JebKitSplitJob implements Job {
         if (slots.isEmpty() || slots.stream().anyMatch(slot -> slot > slots.size())) {
             throw new IllegalArgumentException("Missing kit selections or nonconsecutive Kit numbers");
         }
+    }
+
+    private static String canonicalProductName(String word) {
+        return "BUNNY".equalsIgnoreCase(word) ? "RABBIT" : word.toUpperCase(Locale.ROOT);
     }
 }
